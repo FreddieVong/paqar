@@ -56,11 +56,13 @@ export function withTimeout(
         checkedAt:    new Date(),
       }
 
+      let timerId: ReturnType<typeof setTimeout>
+
       return Promise.race([
-        adapter.check(plate, ic),
-        new Promise<SourceResult>((resolve) =>
-          setTimeout(() => resolve(timeoutResult), ms)
-        ),
+        adapter.check(plate, ic).finally(() => clearTimeout(timerId)),
+        new Promise<SourceResult>((resolve) => {
+          timerId = setTimeout(() => resolve(timeoutResult), ms)
+        }),
       ])
     },
   }
