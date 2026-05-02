@@ -1,0 +1,36 @@
+export interface Check {
+  id: string
+  user_id: string | null
+  vehicle_id: string | null
+  country: string
+  status: 'pending' | 'running' | 'complete' | 'expired'
+  claim_token: string | null
+  idempotency_key: string | null
+  expires_at: string | null
+  created_at: string
+  updated_at: string
+  completed_at: string | null
+}
+
+export interface CheckResult {
+  id: string
+  check_id: string
+  source: string
+  status: 'pending' | 'clear' | 'hit' | 'unavailable' | 'timeout' | 'partial' | 'error'
+  label: string
+  data: unknown | null
+  error_message: string | null
+  attempt_count: number
+  created_at: string
+  checked_at: string | null
+}
+
+export interface Vehicle {
+  id: string
+  user_id: string
+  plate_hash: string
+  label: string | null
+  country: string
+  created_at: string
+  updated_at: string
+}
