@@ -1,0 +1,86 @@
+<h2>Auth flow — sign in screen</h2>
+<p class="subtitle">Phone OTP is primary. Email magic link is a small secondary escape hatch. Two layout options.</p>
+
+<div class="split">
+
+  <div class="mockup">
+    <div class="mockup-header">Option A — Phone-first, email collapsed</div>
+    <div class="mockup-body" style="font-family:Inter,sans-serif;background:#fff;padding:22px;min-height:380px;">
+      <div style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.03em;margin-bottom:4px;">Sign in</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:24px;">Save your check and get alerts when anything changes.</div>
+
+      <!-- Phone field -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Phone number</div>
+        <div style="display:flex;gap:8px;">
+          <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:9px;padding:10px 12px;font-size:14px;font-weight:600;color:#0f172a;white-space:nowrap;">+60</div>
+          <div style="flex:1;background:#f8fafc;border:1.5px solid #0f766e;border-radius:9px;padding:10px 12px;font-size:14px;color:#0f172a;">12-345 6789</div>
+        </div>
+      </div>
+
+      <button style="width:100%;background:#0f766e;color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;margin-bottom:16px;">Send OTP →</button>
+
+      <!-- Email escape hatch — small, secondary -->
+      <div style="text-align:center;">
+        <span style="font-size:12px;color:#94a3b8;">Prefer email? </span>
+        <span style="font-size:12px;color:#0f766e;font-weight:600;cursor:pointer;">Get a magic link</span>
+      </div>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f1f5f9;">
+        <div style="font-size:11px;color:#cbd5e1;text-align:center;">We'll never share your number. OTP valid for 10 minutes.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Option B — Tabbed (Phone / Email)</div>
+    <div class="mockup-body" style="font-family:Inter,sans-serif;background:#fff;padding:22px;min-height:380px;">
+      <div style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.03em;margin-bottom:4px;">Sign in</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Save your check and get alerts when anything changes.</div>
+
+      <!-- Tabs -->
+      <div style="display:flex;background:#f8fafc;border-radius:9px;padding:3px;margin-bottom:18px;">
+        <div style="flex:1;text-align:center;padding:8px;background:#fff;border-radius:7px;font-size:13px;font-weight:700;color:#0f172a;box-shadow:0 1px 3px rgba(0,0,0,.08);">Phone</div>
+        <div style="flex:1;text-align:center;padding:8px;font-size:13px;font-weight:600;color:#94a3b8;">Email</div>
+      </div>
+
+      <!-- Phone field -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Phone number</div>
+        <div style="display:flex;gap:8px;">
+          <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:9px;padding:10px 12px;font-size:14px;font-weight:600;color:#0f172a;white-space:nowrap;">+60</div>
+          <div style="flex:1;background:#f8fafc;border:1.5px solid #0f766e;border-radius:9px;padding:10px 12px;font-size:14px;color:#0f172a;">12-345 6789</div>
+        </div>
+      </div>
+
+      <button style="width:100%;background:#0f766e;color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;margin-bottom:16px;">Send OTP →</button>
+
+      <div style="margin-top:4px;padding-top:16px;border-top:1px solid #f1f5f9;">
+        <div style="font-size:11px;color:#cbd5e1;text-align:center;">OTP valid for 10 minutes · Max 3 per hour</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:16px;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+  <div style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">After OTP sent</div>
+  <div style="font-size:13px;color:#0f172a;">Same screen transitions to a 6-digit OTP entry field. Verify → Supabase creates/finds user → redirect back to the check result page with the account now attached (claim_token exchange). No separate dashboard redirect on first sign-in.</div>
+</div>
+
+<div class="options" style="margin-top:16px;">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Phone-first, email as text link</h3>
+      <p>Phone is 90% of usage. Email is a footnote. Cleaner, less visual noise, fewer people accidentally choosing the wrong method.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Tabbed — Phone / Email equal weight</h3>
+      <p>Tabs make both options equally discoverable. Slightly more complex but no hidden functionality.</p>
+    </div>
+  </div>
+</div>

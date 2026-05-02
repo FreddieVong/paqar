@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash /home/freddievong/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh --project-dir /home/freddievong/Paqar)",
+      "Bash(node -e \"const p = require\\('/home/freddievong/Paqar/package.json'\\); console.log\\('zod major:', p.dependencies.zod\\); console.log\\('lucide major:', p.dependencies['lucide-react']\\); console.log\\('supabase-ssr:', p.dependencies['@supabase/ssr']\\);\")",
+      "Bash(node -e \"const p = require\\('/home/freddievong/Paqar/package.json'\\); console.log\\('radix-ui unified pkg:', p.dependencies['radix-ui']\\); console.log\\('@radix-ui/react-slot:', p.dependencies['@radix-ui/react-slot'] || 'ABSENT'\\)\")",
+      "Bash(pnpm tsc *)"
+    ],
+    "additionalDirectories": [
+      "/home/freddievong/Paqar/docs/superpowers"
+    ]
+  }
+}

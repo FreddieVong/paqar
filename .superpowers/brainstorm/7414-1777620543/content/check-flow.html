@@ -1,0 +1,142 @@
+<h2>Check flow — 3 screens</h2>
+<p class="subtitle">Input → streaming in-progress → completed with save prompt. Teal-700 brand, Inter font.</p>
+
+<div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+
+  <!-- Screen 1: Input -->
+  <div style="flex:1;min-width:220px;max-width:280px;">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;text-align:center;">1 — Input</div>
+    <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);">
+      <div style="padding:20px 18px 0;">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:22px;">
+          <div style="width:28px;height:28px;background:#0f766e;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+            <div style="width:12px;height:12px;background:#fff;border-radius:2px;"></div>
+          </div>
+          <span style="font-weight:800;font-size:15px;color:#0f172a;letter-spacing:-.02em;font-family:Inter,sans-serif;">Paqar</span>
+        </div>
+        <div style="font-size:20px;font-weight:800;color:#0f172a;line-height:1.2;margin-bottom:6px;font-family:Inter,sans-serif;letter-spacing:-.03em;">Check your car.</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:22px;font-family:Inter,sans-serif;">Saman, blacklist &amp; document status in one place.</div>
+
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:600;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-family:Inter,sans-serif;">Plate number</div>
+          <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 13px;font-size:16px;font-weight:700;color:#0f172a;letter-spacing:.06em;font-family:Inter,sans-serif;">WVP 1234</div>
+        </div>
+        <div style="margin-bottom:18px;">
+          <div style="font-size:11px;font-weight:600;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-family:Inter,sans-serif;">IC number</div>
+          <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 13px;font-size:15px;font-weight:500;color:#0f172a;font-family:Inter,sans-serif;">880614-10-5421</div>
+        </div>
+        <button style="width:100%;background:#0f766e;color:#fff;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;letter-spacing:-.01em;margin-bottom:18px;">Run check →</button>
+      </div>
+      <div style="padding:12px 18px;background:#f8fafc;border-top:1px solid #e2e8f0;">
+        <div style="font-size:11px;color:#94a3b8;font-family:Inter,sans-serif;text-align:center;">Your IC is encrypted and never stored in plain text.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: In-progress streaming -->
+  <div style="flex:1;min-width:220px;max-width:280px;">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;text-align:center;">2 — Checking (live)</div>
+    <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:20px 18px;font-family:Inter,sans-serif;">
+
+      <!-- Progress bar -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="font-size:12px;font-weight:600;color:#0f766e;">Checking 8 sources</div>
+          <div style="font-size:12px;color:#64748b;">3 of 8</div>
+        </div>
+        <div style="height:4px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+          <div style="width:37.5%;height:100%;background:#0f766e;border-radius:4px;transition:width .4s ease;"></div>
+        </div>
+      </div>
+
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px;">WVP 1234 &nbsp;·&nbsp; 880614-10-5421</div>
+
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <!-- Clear -->
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:9px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:10px;color:#15803d;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">PDRM Saman</div>
+            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:2px;">Clear</div>
+          </div>
+          <div style="width:9px;height:9px;background:#16a34a;border-radius:50%;"></div>
+        </div>
+        <!-- Hit -->
+        <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:9px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:10px;color:#b91c1c;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">JPJ Saman</div>
+            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:2px;">2 saman · RM340</div>
+          </div>
+          <div style="width:9px;height:9px;background:#dc2626;border-radius:50%;"></div>
+        </div>
+        <!-- Clear -->
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:9px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:10px;color:#15803d;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">AES Saman</div>
+            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:2px;">Clear</div>
+          </div>
+          <div style="width:9px;height:9px;background:#16a34a;border-radius:50%;"></div>
+        </div>
+        <!-- Checking (pending) -->
+        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:9px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;opacity:.6;">
+          <div>
+            <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Local Councils</div>
+            <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-top:2px;">Checking…</div>
+          </div>
+          <div style="width:9px;height:9px;background:#e2e8f0;border-radius:50%;"></div>
+        </div>
+        <!-- Checking (pending) -->
+        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:9px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;opacity:.4;">
+          <div>
+            <div style="font-size:10px;color:#cbd5e1;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Immigration</div>
+            <div style="font-size:14px;font-weight:600;color:#cbd5e1;margin-top:2px;">Checking…</div>
+          </div>
+          <div style="width:9px;height:9px;background:#f1f5f9;border-radius:50%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 3: Complete -->
+  <div style="flex:1;min-width:220px;max-width:280px;">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;text-align:center;">3 — Complete + save prompt</div>
+    <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:20px 18px;font-family:Inter,sans-serif;">
+
+      <div style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">WVP 1234</div>
+      <div style="font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.03em;margin-bottom:2px;">Check complete</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:16px;">8 sources · 2 issues found</div>
+
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px;">
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:9px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:10px;color:#15803d;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">PDRM Saman</div><div style="font-size:13px;font-weight:700;color:#0f172a;margin-top:1px;">Clear</div></div>
+          <div style="width:8px;height:8px;background:#16a34a;border-radius:50%;"></div>
+        </div>
+        <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:9px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:10px;color:#b91c1c;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">JPJ Saman</div><div style="font-size:13px;font-weight:700;color:#0f172a;margin-top:1px;">2 saman · RM340</div></div>
+          <div style="width:8px;height:8px;background:#dc2626;border-radius:50%;"></div>
+        </div>
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:9px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:10px;color:#15803d;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">AES Saman</div><div style="font-size:13px;font-weight:700;color:#0f172a;margin-top:1px;">Clear</div></div>
+          <div style="width:8px;height:8px;background:#16a34a;border-radius:50%;"></div>
+        </div>
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:9px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:10px;color:#15803d;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Immigration</div><div style="font-size:13px;font-weight:700;color:#0f172a;margin-top:1px;">Clear</div></div>
+          <div style="width:8px;height:8px;background:#16a34a;border-radius:50%;"></div>
+        </div>
+        <!-- Unavailable — honest error -->
+        <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:9px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">LHDN</div><div style="font-size:12px;color:#94a3b8;margin-top:1px;">Couldn't reach this source</div></div>
+          <div style="width:8px;height:8px;background:#e2e8f0;border-radius:50%;"></div>
+        </div>
+      </div>
+
+      <!-- Save prompt -->
+      <div style="background:#f0fdfa;border:1.5px solid #99f6e4;border-radius:10px;padding:13px 14px;">
+        <div style="font-size:13px;font-weight:700;color:#0f766e;margin-bottom:2px;">Get notified if anything changes</div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:10px;">Save this vehicle to your account and we'll alert you if new saman or blacklist entries appear.</div>
+        <button style="width:100%;background:#0f766e;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;">Save &amp; create account</button>
+        <div style="text-align:center;margin-top:8px;font-size:11px;color:#94a3b8;">Already have an account? <span style="color:#0f766e;font-weight:600;">Sign in</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
