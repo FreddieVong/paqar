@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { plateSchema } from '@/lib/validation/plate'
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
   if (idempotencyKey) {
     const existing = await getCheckByIdempotencyKey(idempotencyKey)
     if (existing) {
-      return NextResponse.json({ checkId: existing.id })
+      return NextResponse.json({ checkId: existing.id, claimToken: existing.claim_token })
     }
   }
 
@@ -59,33 +60,40 @@ export async function POST(request: NextRequest) {
   const claimToken = crypto.randomUUID()
   const expiresAt  = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
-  await createCheck({
-    id:             checkId,
-    plateEncrypted: encrypt(plate),
-    plateHash,
-    icEncrypted:    encrypt(ic),
-    icHash,
-    claimToken,
-    idempotencyKey,
-    expiresAt,
-  })
+  try {
+    await createCheck({
+      id:             checkId,
+      plateEncrypted: encrypt(plate),
+      plateHash,
+      icEncrypted:    encrypt(ic),
+      icHash,
+      claimToken,
+      idempotencyKey,
+      expiresAt,
+    })
+  } catch (err) {
+    console.error('[checks] createCheck failed', err)
+    return NextResponse.json({ error: 'Failed to create check' }, { status: 500 })
+  }
 
-  // Fire-and-forget processing
-  void (async () => {
-    try {
-      await setCheckRunning(checkId)
-      const adapters = getAdapters().map((a) => withTimeout(a))
-      await Promise.all(
-        adapters.map(async (adapter) => {
-          const result = await adapter.check(plate, ic)
-          await updateCheckResult(checkId, result)
-        })
-      )
-      await setCheckComplete(checkId)
-    } catch (err) {
-      console.error('[checks] processing error', checkId, err)
-    }
-  })()
+  // Background processing — waitUntil ensures Vercel keeps the function alive
+  waitUntil(
+    (async () => {
+      try {
+        await setCheckRunning(checkId)
+        const adapters = getAdapters().map((a) => withTimeout(a))
+        await Promise.all(
+          adapters.map(async (adapter) => {
+            const result = await adapter.check(plate, ic)
+            await updateCheckResult(checkId, result)
+          })
+        )
+        await setCheckComplete(checkId)
+      } catch (err) {
+        console.error('[checks] processing error', checkId, err)
+      }
+    })()
+  )
 
   return NextResponse.json({ checkId, claimToken }, { status: 201 })
 }

@@ -145,6 +145,7 @@ export async function getCachedCheck(
     .eq('ic_hash', icHash)
     .eq('status', 'complete')
     .gt('expires_at', new Date().toISOString())
+    .not('claim_token', 'is', null)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -156,11 +157,11 @@ export async function getCachedCheck(
 
 export async function getCheckByIdempotencyKey(
   key: string
-): Promise<{ id: string } | null> {
+): Promise<{ id: string; claim_token: string | null } | null> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('checks')
-    .select('id')
+    .select('id, claim_token')
     .eq('idempotency_key', key)
     .single()
   if (error && error.code !== 'PGRST116') throw error
