@@ -7,11 +7,11 @@ describe('plate validation', () => {
     expect(normalise('W-VP-1234')).toBe('WVP1234')
   })
 
-  it('accepts 3-9 alphanumeric chars after normalisation', () => {
+  it('accepts 3-12 alphanumeric chars after normalisation', () => {
     expect(plateSchema.safeParse('WVP1234').success).toBe(true)
     expect(plateSchema.safeParse('W1234').success).toBe(true)
-    expect(plateSchema.safeParse('AB').success).toBe(false)  // too short
-    expect(plateSchema.safeParse('ABCDEFGHIJ').success).toBe(false) // too long
+    expect(plateSchema.safeParse('AB').success).toBe(false)              // too short
+    expect(plateSchema.safeParse('ABCDEFGHIJKLM').success).toBe(false)   // 13 chars, too long
   })
 
   it('rejects empty string', () => {
