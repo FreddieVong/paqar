@@ -8,6 +8,7 @@ const ratelimit = new Ratelimit({
   redis:   Redis.fromEnv(),
   limiter: Ratelimit.slidingWindow(60, '1 m'),
   prefix:  'paqar:poll',
+  timeout: 1000, // Fail open if Redis doesn't respond within 1s
 })
 
 export async function GET(
@@ -16,8 +17,14 @@ export async function GET(
 ) {
   // Rate limit by IP
   const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1'
-  const { success } = await ratelimit.limit(ip)
-  if (!success) {
+  let rateLimitResult: { success: boolean }
+  try {
+    rateLimitResult = await ratelimit.limit(ip)
+  } catch {
+    // Redis unavailable — fail open, allow request through
+    rateLimitResult = { success: true }
+  }
+  if (!rateLimitResult.success) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
