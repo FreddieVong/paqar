@@ -9,6 +9,10 @@ export type SourceData =
   | { source: 'lhdn';           blacklisted: boolean }
   | { source: 'ptptn';          blacklisted: boolean; outstanding: number | null }
 
+/** The closed set of data source identifiers. Derived from the SourceData union. */
+export type SourceKey = SourceData['source']
+// Resolves to: 'pdrm' | 'jpj' | 'aes' | 'local_councils' | 'immigration' | 'lhdn' | 'ptptn'
+
 export interface SamanRecord {
   offence:    string
   /** ISO 8601: "2026-04-15". All adapters must normalise to this format. */
@@ -18,8 +22,8 @@ export interface SamanRecord {
   currency:   string
   location:   string | null
   discounted: number | null
-  /** Always null in stub phase. Real URLs arrive in Phase 2. */
-  paymentUrl: null
+  /** Payment URL. Always null in stub phase; real adapters populate in Phase 2. */
+  paymentUrl: string | null
 }
 
 export interface CreateCheckRequest {

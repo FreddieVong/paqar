@@ -1,3 +1,5 @@
+import type { SourceKey } from './api'
+
 export interface Check {
   id: string
   user_id: string | null
@@ -15,7 +17,7 @@ export interface Check {
 export interface CheckResult {
   id: string
   check_id: string
-  source: string
+  source: SourceKey
   status: 'pending' | 'clear' | 'hit' | 'unavailable' | 'timeout' | 'partial' | 'error'
   label: string
   data: unknown | null
