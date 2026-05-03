@@ -1,13 +1,123 @@
-import { Nav }   from '@/components/layout/Nav'
-import { Shell } from '@/components/layout/Shell'
+import { redirect }                  from 'next/navigation'
+import { Nav }                       from '@/components/layout/Nav'
+import { Shell }                     from '@/components/layout/Shell'
+import { ExpiryCard }                from '@/components/dashboard/ExpiryCard'
+import { createClient }              from '@/lib/supabase/server'
+import { getUserDocumentExpiries }   from '@/lib/db/document-expiries'
+import { getOrCreateVehicleForUser } from '@/lib/db/vehicles'
+import type { DocType, DocumentExpiry } from '@/types/domain'
 
-export default function DashboardPage() {
+const DOC_TYPES: DocType[] = ['roadtax', 'insurance', 'driving_licence']
+
+function overallStatus(expiries: DocumentExpiry[]): 'all_clear' | 'attention' | 'urgent' {
+  const statuses = DOC_TYPES.map(dt => {
+    const e = expiries.find(x => x.document_type === dt)
+    if (!e) return 'missing'
+    const days = Math.floor(
+      (new Date(e.expires_on).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000
+    )
+    if (days < 0)   return 'expired'
+    if (days <= 29) return 'urgent'
+    if (days <= 60) return 'warning'
+    return 'safe'
+  })
+  if (statuses.some(s => s === 'expired' || s === 'urgent')) return 'urgent'
+  if (statuses.some(s => s === 'warning' || s === 'missing')) return 'attention'
+  return 'all_clear'
+}
+
+export default async function DashboardPage() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) redirect('/auth?next=/dashboard')
+
+  const [expiries, vehicleResult] = await Promise.all([
+    getUserDocumentExpiries(user.id),
+    getOrCreateVehicleForUser(user.id),
+  ])
+
+  const status = overallStatus(expiries)
+
   return (
     <>
       <Nav />
       <Shell>
-        <div className="pt-8 text-center">
-          <p className="text-slate-400 text-sm">Dashboard coming in Feature 3.</p>
+        <div className="pt-6 space-y-5">
+
+          {/* Status banner */}
+          <div className={`rounded-[14px] px-4 py-3.5 flex items-center gap-3 ${
+            status === 'all_clear' ? 'bg-[#064E4A]' :
+            status === 'attention' ? 'bg-[#B45309]' : 'bg-[#DC2626]'
+          }`}>
+            <span className="text-2xl">
+              {status === 'all_clear' ? '✅' : status === 'attention' ? '⚠️' : '🔴'}
+            </span>
+            <div>
+              <p className="font-heading font-bold text-[14px] text-white">
+                {status === 'all_clear'
+                  ? 'Semua dokumen dalam order'
+                  : status === 'attention'
+                  ? 'Beberapa dokumen perlu perhatian'
+                  : 'Ada dokumen perlu tindakan segera'}
+              </p>
+              <p className="font-body text-[12px] text-white/70 mt-0.5">
+                {status === 'all_clear'
+                  ? 'Tiada dokumen tamat tempoh dalam masa terdekat'
+                  : 'Semak kad di bawah untuk butiran'}
+              </p>
+            </div>
+          </div>
+
+          {/* Vehicle pill */}
+          {vehicleResult ? (
+            <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3 flex items-center justify-between">
+              <div>
+                <p className="font-heading font-extrabold text-[18px] text-[#111827] tracking-[.06em]">
+                  {vehicleResult.platePlain.toUpperCase()}
+                </p>
+                <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5">Kenderaan anda</p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-[#FEF9C3] border border-[#FDE68A] rounded-xl px-4 py-3">
+              <p className="font-heading font-bold text-[13px] text-[#B45309]">
+                Tiada kenderaan ditemui
+              </p>
+              <p className="font-body text-[12px] text-[#6B7280] mt-0.5">
+                Buat semakan kenderaan dahulu untuk mulakan penjejakan.
+              </p>
+            </div>
+          )}
+
+          {/* Section title */}
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280]">
+            Status Dokumen
+          </p>
+
+          {/* Expiry cards — revalidatePath handles refresh, onSaved is a no-op */}
+          <div className="space-y-3">
+            {DOC_TYPES.map(dt => (
+              <ExpiryCard
+                key={dt}
+                docType={dt}
+                expiry={expiries.find(e => e.document_type === dt) ?? null}
+                onSaved={() => {}}
+              />
+            ))}
+          </div>
+
+          {/* Email reminder note */}
+          <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3.5 flex items-center gap-3">
+            <span className="text-lg">📧</span>
+            <div>
+              <p className="font-heading font-bold text-[13px] text-[#111827]">Peringatan E-mel Aktif</p>
+              <p className="font-body text-[12px] text-[#6B7280] mt-0.5">
+                Kami akan hantar e-mel 90, 60, 30, 7 &amp; 1 hari sebelum tamat tempoh.
+              </p>
+            </div>
+          </div>
+
         </div>
       </Shell>
     </>
