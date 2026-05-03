@@ -71,6 +71,7 @@ export function ResultsStream({ checkId, claimToken }: Props) {
   const completedCount = results.filter((r) => r.status !== 'pending').length
   const isComplete     = check?.status === 'complete'
   const showSaveCta    = isComplete && check?.user_id == null && authedUser === null
+  const showDocsCta    = isComplete && authedUser != null
 
   if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
@@ -111,6 +112,23 @@ export function ResultsStream({ checkId, claimToken }: Props) {
             className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[14px]"
           >
             Simpan &amp; buat akaun
+          </Button>
+        </div>
+      )}
+
+      {showDocsCta && (
+        <div className="border-[1.5px] border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
+          <p className="font-heading font-bold text-[14px] text-[#064E4A] mb-1">
+            Pantau dokumen kenderaan anda
+          </p>
+          <p className="font-body text-[12px] text-[#6B7280] mb-3">
+            Tambah tarikh tamat cukai jalan, insurans &amp; lesen. Kami akan ingatkan anda sebelum tamat tempoh.
+          </p>
+          <Button
+            onClick={() => router.push('/dashboard')}
+            className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[14px]"
+          >
+            Tambah Dokumen →
           </Button>
         </div>
       )}
