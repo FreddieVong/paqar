@@ -15,9 +15,9 @@ export function AuthShell({ claimToken, redirectTo }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Sign in</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Save your check and get alerts when anything changes.
+        <h1 className="font-heading font-extrabold text-[24px] text-[#111827] tracking-tight">Log Masuk</h1>
+        <p className="font-body text-[14px] text-[#6B7280] mt-1">
+          Simpan semakan dan dapatkan notifikasi jika ada perubahan.
         </p>
       </div>
       {mode === 'phone'
