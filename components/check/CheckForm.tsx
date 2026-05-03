@@ -70,7 +70,7 @@ export function CheckForm() {
             className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
                        font-heading font-extrabold text-[22px] tracking-[.12em] text-[#111827]
                        text-center uppercase placeholder:text-[#D1D5DB] placeholder:font-normal
-                       placeholder:text-[16px] placeholder:tracking-normal
+                       placeholder:text-[16px] placeholder:tracking-normal placeholder:normal-case
                        focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
                        transition-all"
           />
