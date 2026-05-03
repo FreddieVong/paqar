@@ -166,7 +166,7 @@ export async function saveDocumentExpiry(params: {
 
 Validates:
 - User is authenticated (reads session from cookies)
-- `expiresOn` is a valid future date (reject obviously wrong dates like year 1900)
+- `expiresOn` is between today and 15 years from now (rejects past dates and clearly wrong values)
 - `vehicleId` is null for `driving_licence`, non-null for the other two
 
 ---
@@ -195,7 +195,7 @@ Subject: `⚠️ [Document] anda tamat dalam [N] hari — WVP 1234`
 
 Body (plain HTML):
 ```
-Hai [name / email],
+Hai,
 
 [Document BM name] kenderaan anda (WVP 1234) akan tamat tempoh dalam [N] hari.
 
