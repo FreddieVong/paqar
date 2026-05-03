@@ -8,6 +8,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        heading: ['var(--font-heading)', 'ui-sans-serif', 'system-ui'],
+        body:    ['var(--font-body)', 'ui-sans-serif', 'system-ui'],
+        sans:    ['var(--font-body)', 'ui-sans-serif', 'system-ui'],
+      },
       colors: {
         background:  'hsl(var(--background))',
         foreground:  'hsl(var(--foreground))',
@@ -42,12 +47,16 @@ const config: Config = {
         border:  'hsl(var(--border))',
         input:   'hsl(var(--input))',
         ring:    'hsl(var(--ring))',
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))',
+        brand: {
+          primary:    '#064E4A',
+          dark:       '#053D3A',
+          accent:     '#FACC15',
+          bg:         '#F8FAF7',
+          text:       '#111827',
+          muted:      '#6B7280',
+          border:     '#E5E7EB',
+          success:    '#16A34A',
+          danger:     '#DC2626',
         },
       },
       borderRadius: {
