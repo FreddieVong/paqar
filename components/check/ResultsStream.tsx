@@ -37,16 +37,17 @@ export function ResultsStream({ checkId, claimToken }: Props) {
       const res = await fetch(
         `/api/checks/${checkId}?claim_token=${encodeURIComponent(claimToken)}`
       )
-      if (!res.ok) { setError('Could not load results'); return }
+      if (!res.ok) { setError('Tidak dapat memuatkan keputusan'); return }
       const data = await res.json() as PollCheckResponse
       setCheck(data.check)
       setResults(data.results)
     } catch {
-      setError('Network error — retrying…')
+      setError('Ralat rangkaian — cuba semula…')
     }
   }, [checkId, claimToken])
 
   useEffect(() => {
+    if (check?.status === 'complete') return  // Already done — don't fire another poll
     void poll()
     const interval = setInterval(() => {
       if (check?.status === 'complete') { clearInterval(interval); return }
@@ -63,7 +64,7 @@ export function ResultsStream({ checkId, claimToken }: Props) {
       check.user_id == null &&
       check.claim_token != null
     ) {
-      void claimCheck(check.claim_token, authedUser).then(() => void poll())
+      void claimCheck(check.claim_token, authedUser)
     }
   }, [check, authedUser, poll])
 
@@ -71,20 +72,20 @@ export function ResultsStream({ checkId, claimToken }: Props) {
   const isComplete     = check?.status === 'complete'
   const showSaveCta    = isComplete && check?.user_id == null && authedUser === null
 
-  if (error) return <p className="text-sm text-red-600 py-4">{error}</p>
+  if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
         <div className="flex justify-between text-xs text-slate-500">
-          <span className="font-semibold text-teal-700">
-            {isComplete ? 'Check complete' : 'Checking 7 sources'}
+          <span className="font-heading font-bold text-[#064E4A]">
+            {isComplete ? 'Semakan selesai' : 'Menyemak 7 sumber…'}
           </span>
-          <span>{completedCount} of {TOTAL_SOURCES}</span>
+          <span className="font-body text-[#6B7280]">{completedCount} daripada {TOTAL_SOURCES}</span>
         </div>
         <Progress
           value={(completedCount / TOTAL_SOURCES) * 100}
-          className="h-1 bg-slate-100 [&>div]:bg-teal-700"
+          className="h-1 bg-[#E5E7EB] [&>div]:bg-[#064E4A]"
         />
       </div>
 
@@ -95,21 +96,21 @@ export function ResultsStream({ checkId, claimToken }: Props) {
       </div>
 
       {showSaveCta && (
-        <div className="border-[1.5px] border-dashed border-teal-300 rounded-xl p-4 bg-teal-50/50">
-          <p className="text-sm font-semibold text-teal-800 mb-1">
-            Get notified if anything changes
+        <div className="border-[1.5px] border-dashed border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
+          <p className="font-heading font-bold text-[14px] text-[#064E4A] mb-1">
+            Dapatkan notifikasi jika ada perubahan
           </p>
-          <p className="text-xs text-slate-500 mb-3">
-            Save this vehicle to your account and we'll alert you if new saman or blacklist entries appear.
+          <p className="font-body text-[12px] text-[#6B7280] mb-3">
+            Simpan kenderaan ini dan kami akan maklumkan jika ada saman atau blacklist baru.
           </p>
           <Button
             onClick={() => {
               const next = `/check/${checkId}?claim_token=${claimToken}`
               router.push(`/auth?claim_token=${claimToken}&next=${encodeURIComponent(next)}`)
             }}
-            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm"
+            className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[14px]"
           >
-            Save &amp; create account
+            Simpan &amp; buat akaun
           </Button>
         </div>
       )}
