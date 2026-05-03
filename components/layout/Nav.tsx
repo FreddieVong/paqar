@@ -11,7 +11,7 @@ export function Nav() {
             alt="Paqar"
             width={96}
             height={32}
-            className="h-9 w-auto object-contain"
+            className="h-12 w-auto object-contain"
             priority
           />
         </Link>
