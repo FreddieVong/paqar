@@ -158,14 +158,13 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner' }: Props) {
             ))}
           </div>
           <button
-            disabled
-            className="w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl py-4 opacity-90 cursor-not-allowed"
-            title="Akan datang — daftar minat"
+            onClick={() => router.push(`/laporan-pembeli/${checkId}?claim_token=${claimToken}`)}
+            className="w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl py-4 cursor-pointer hover:bg-yellow-300 transition-colors"
           >
             Dapatkan Laporan Penuh — RM19 →
           </button>
           <p className="font-body text-[11px] text-white/40 text-center mt-2">
-            Akan datang · Daftar minat di bawah
+            FPX · Kad kredit · Bayar sekali
           </p>
         </div>
       )}
