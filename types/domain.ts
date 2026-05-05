@@ -12,6 +12,7 @@ export interface Check {
   created_at: string
   updated_at: string
   completed_at: string | null
+  plate_encrypted: string | null
 }
 
 export interface CheckResult {
