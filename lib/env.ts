@@ -17,6 +17,9 @@ const schema = z.object({
   SENTRY_DSN:               z.string().url(),
   RESEND_API_KEY: z.string().min(1).optional(),
   CRON_SECRET:    z.string().min(1).optional(),
+  BILLPLZ_API_KEY:          z.string().min(1).optional(),
+  BILLPLZ_COLLECTION_ID:    z.string().min(1).optional(),
+  BILLPLZ_X_SIGNATURE_KEY:  z.string().min(1).optional(),
 })
 
 const parsed = schema.safeParse(process.env)
