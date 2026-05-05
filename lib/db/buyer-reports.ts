@@ -1,0 +1,59 @@
+import { createServiceClient } from '@/lib/supabase/server'
+import type { BuyerReport }    from '@/types/domain'
+
+export async function createBuyerReport(params: {
+  checkId:       string
+  buyerEmail:    string
+  billplzBillId: string
+}): Promise<BuyerReport> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .insert({
+      check_id:        params.checkId,
+      buyer_email:     params.buyerEmail,
+      billplz_bill_id: params.billplzBillId,
+      amount_cents:    1900,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data as BuyerReport
+}
+
+export async function getBuyerReport(checkId: string): Promise<BuyerReport | null> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .select('*')
+    .eq('check_id', checkId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data as BuyerReport | null
+}
+
+export async function markReportPaid(billplzBillId: string): Promise<void> {
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('buyer_reports')
+    .update({
+      status:     'paid',
+      paid_at:    new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('billplz_bill_id', billplzBillId)
+  if (error) throw error
+}
+
+export async function getBuyerReportByBillId(billId: string): Promise<BuyerReport | null> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .select('*')
+    .eq('billplz_bill_id', billId)
+    .single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data as BuyerReport | null
+}

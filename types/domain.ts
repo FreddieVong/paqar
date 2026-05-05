@@ -48,3 +48,15 @@ export interface DocumentExpiry {
   created_at: string
   updated_at: string
 }
+
+export interface BuyerReport {
+  id:              string
+  check_id:        string
+  buyer_email:     string
+  status:          'pending' | 'paid' | 'expired'
+  billplz_bill_id: string | null
+  amount_cents:    number
+  paid_at:         string | null
+  created_at:      string
+  updated_at:      string
+}
