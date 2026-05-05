@@ -26,10 +26,13 @@ export interface SamanRecord {
   paymentUrl: string | null
 }
 
+export type CheckMode = 'owner' | 'buyer'
+
 export interface CreateCheckRequest {
   plate: string
   ic: string
   idempotencyKey?: string
+  mode?: CheckMode
 }
 
 export interface CreateCheckResponse {

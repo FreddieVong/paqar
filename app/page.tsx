@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Nav }       from '@/components/layout/Nav'
-import { CheckForm } from '@/components/check/CheckForm'
+import { Nav }           from '@/components/layout/Nav'
+import { DualCheckForm } from '@/components/check/DualCheckForm'
 
 export default function HomePage() {
   return (
@@ -40,7 +40,7 @@ export default function HomePage() {
 
           {/* Checking card */}
           <div>
-            <CheckForm />
+            <DualCheckForm />
           </div>
         </div>
       </section>

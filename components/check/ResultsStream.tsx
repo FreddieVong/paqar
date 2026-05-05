@@ -8,7 +8,7 @@ import { ResultCard }   from './ResultCard'
 import { createClient } from '@/lib/supabase/client'
 import { claimCheck }   from '@/app/auth/_actions'
 import type { Check, CheckResult } from '@/types/domain'
-import type { PollCheckResponse } from '@/types/api'
+import type { PollCheckResponse, CheckMode } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
 const TOTAL_SOURCES    = 7
@@ -16,9 +16,10 @@ const TOTAL_SOURCES    = 7
 interface Props {
   checkId:    string
   claimToken: string
+  mode?:      CheckMode
 }
 
-export function ResultsStream({ checkId, claimToken }: Props) {
+export function ResultsStream({ checkId, claimToken, mode = 'owner' }: Props) {
   const router = useRouter()
   const [check,      setCheck]      = useState<Check | null>(null)
   const [results,    setResults]    = useState<CheckResult[]>([])
@@ -70,8 +71,10 @@ export function ResultsStream({ checkId, claimToken }: Props) {
 
   const completedCount = results.filter((r) => r.status !== 'pending').length
   const isComplete     = check?.status === 'complete'
-  const showSaveCta    = isComplete && check?.user_id == null && authedUser === null
-  const showDocsCta    = isComplete && authedUser != null
+  const isBuyer        = mode === 'buyer'
+  const showSaveCta    = isComplete && !isBuyer && check?.user_id == null && authedUser === null
+  const showDocsCta    = isComplete && !isBuyer && authedUser != null
+  const showBuyerCta   = isComplete && isBuyer
 
   if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
@@ -92,7 +95,7 @@ export function ResultsStream({ checkId, claimToken }: Props) {
 
       <div className="space-y-2">
         {results.map((result) => (
-          <ResultCard key={result.source} result={result} />
+          <ResultCard key={result.source} result={result} buyerMode={isBuyer} />
         ))}
       </div>
 
@@ -130,6 +133,40 @@ export function ResultsStream({ checkId, claimToken }: Props) {
           >
             Tambah Dokumen →
           </Button>
+        </div>
+      )}
+
+      {showBuyerCta && (
+        <div className="bg-[#064E4A] rounded-[16px] p-5">
+          <p className="font-heading font-extrabold text-[16px] text-white mb-2">
+            Jangan bagi deposit dulu.
+          </p>
+          <p className="font-body text-[12px] text-white/70 mb-4 leading-relaxed">
+            Semakan asas selesai. Laporan penuh mendedahkan lebih banyak — sebelum anda rugi RM40K.
+          </p>
+          <div className="flex flex-col gap-2 mb-4">
+            {[
+              'Sejarah saman lengkap semua sumber',
+              'Semak hutang pinjaman (panduan JPJ)',
+              'Analisis harga pasaran terperinci',
+              'Senarai soalan untuk penjual',
+              'Cadangan rundingan harga',
+            ].map((item) => (
+              <span key={item} className="font-body text-[12px] text-white/80 flex gap-2">
+                <span className="text-[#FACC15] flex-shrink-0">✓</span>{item}
+              </span>
+            ))}
+          </div>
+          <button
+            disabled
+            className="w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl py-4 opacity-90 cursor-not-allowed"
+            title="Akan datang — daftar minat"
+          >
+            Dapatkan Laporan Penuh — RM19 →
+          </button>
+          <p className="font-body text-[11px] text-white/40 text-center mt-2">
+            Akan datang · Daftar minat di bawah
+          </p>
         </div>
       )}
     </div>

@@ -69,7 +69,7 @@ function renderDetail(result: CheckResult): string {
   return 'Tiada Isu'
 }
 
-export function ResultCard({ result }: { result: CheckResult }) {
+export function ResultCard({ result, buyerMode = false }: { result: CheckResult; buyerMode?: boolean }) {
   const s = result.source as SourceKey
   const status = result.status
 
@@ -88,6 +88,11 @@ export function ResultCard({ result }: { result: CheckResult }) {
         </p>
         <p className="font-heading font-bold text-[14px] text-[#111827] mt-0.5">
           {renderDetail(result)}
+          {buyerMode && result.status === 'hit' && (
+            <span className="font-body font-normal text-[11px] text-[#9CA3AF] ml-1.5">
+              (perlu pengesahan)
+            </span>
+          )}
         </p>
       </div>
       <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${DOT_STYLES[status] ?? DOT_STYLES['pending']}`} />
