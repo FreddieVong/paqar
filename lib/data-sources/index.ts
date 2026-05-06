@@ -1,4 +1,4 @@
-import type { Country, DataSourceAdapter, SourceResult, SourceId } from './types'
+import type { Country, DataSourceAdapter, SourceResult } from './types'
 
 import { PdrmStub }          from './stubs/pdrm'
 import { JpjStub }           from './stubs/jpj'
