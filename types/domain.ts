@@ -64,3 +64,17 @@ export interface BuyerReport {
   created_at:         string
   updated_at:         string
 }
+
+export interface SellerTrustCard {
+  id:              string
+  check_id:        string
+  seller_email:    string
+  public_token:    string
+  status:          'pending' | 'paid' | 'expired'
+  billplz_bill_id: string | null
+  amount_cents:    number
+  paid_at:         string | null
+  expires_at:      string | null
+  created_at:      string
+  updated_at:      string
+}
