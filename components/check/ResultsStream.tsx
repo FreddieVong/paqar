@@ -161,10 +161,10 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner' }: Props) {
             onClick={() => router.push(`/laporan-pembeli/${checkId}?claim_token=${claimToken}`)}
             className="w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl py-4 cursor-pointer hover:bg-yellow-300 transition-colors"
           >
-            Dapatkan Laporan Penuh — RM19 →
+            Buka Laporan Risiko Pembeli — RM19 →
           </button>
           <p className="font-body text-[11px] text-white/40 text-center mt-2">
-            FPX · Kad kredit · Bayar sekali
+            Semak harga · Saman · Soalan penjual · Rundingan · FPX &amp; kad kredit
           </p>
         </div>
       )}

@@ -60,7 +60,10 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   <div className="text-center mb-4">
                     <span className="text-2xl">🔒</span>
                     <p className="font-heading font-bold text-[15px] text-[#111827] mt-2">
-                      Bayar RM19 untuk buka laporan penuh
+                      Buka Laporan Risiko Pembeli — RM19
+                    </p>
+                    <p className="font-body text-[12px] text-[#6B7280] mt-1">
+                      Semak harga · Saman · Soalan penjual · Tips rundingan
                     </p>
                   </div>
                 </div>
