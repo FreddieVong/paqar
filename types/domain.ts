@@ -56,8 +56,11 @@ export interface BuyerReport {
   buyer_email:     string
   status:          'pending' | 'paid' | 'expired'
   billplz_bill_id: string | null
-  amount_cents:    number
-  paid_at:         string | null
-  created_at:      string
-  updated_at:      string
+  amount_cents:       number
+  asking_price_rm:    number | null
+  claimed_mileage_km: number | null
+  listing_url:        string | null
+  paid_at:            string | null
+  created_at:         string
+  updated_at:         string
 }

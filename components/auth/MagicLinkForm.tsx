@@ -5,6 +5,9 @@ import { Button }       from '@/components/ui/button'
 import { Input }        from '@/components/ui/input'
 import { Label }        from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
+import { claimCheck }   from '@/app/auth/_actions'
+
+type EmailState = 'email' | 'otp'
 
 interface Props {
   claimToken?: string
@@ -13,47 +16,67 @@ interface Props {
 }
 
 export function MagicLinkForm({ claimToken, redirectTo, onBack }: Props) {
+  const [state,   setState]   = useState<EmailState>('email')
   const [email,   setEmail]   = useState('')
-  const [sent,    setSent]    = useState(false)
+  const [otp,     setOtp]     = useState('')
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
 
   const supabase = createClient()
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function sendOtp(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
-    const callbackUrl = new URL('/auth/callback', window.location.origin)
-    callbackUrl.searchParams.set('next', redirectTo)
-    if (claimToken) callbackUrl.searchParams.set('claim_token', claimToken)
-
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: callbackUrl.toString() },
-    })
+    const { error: err } = await supabase.auth.signInWithOtp({ email })
     if (err) { setError(err.message); setLoading(false); return }
-    setSent(true)
+    setState('otp')
     setLoading(false)
   }
 
-  if (sent) {
+  async function verifyOtp(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    const { data, error: err } = await supabase.auth.verifyOtp({
+      email, token: otp, type: 'email',
+    })
+    if (err ?? !data.user) {
+      setError(err?.message ?? 'Verification failed')
+      setLoading(false)
+      return
+    }
+    if (claimToken && data.user) await claimCheck(claimToken, data.user.id)
+    window.location.href = redirectTo
+  }
+
+  if (state === 'otp') {
     return (
-      <div className="space-y-3 text-center">
-        <p className="text-sm font-semibold text-slate-900">Check your email</p>
+      <form onSubmit={verifyOtp} className="space-y-4">
         <p className="text-sm text-slate-500">
-          We sent a sign-in link to <strong>{email}</strong>. It expires in 10 minutes.
+          Enter the 6-digit code sent to <strong>{email}</strong>
         </p>
-        <button onClick={onBack} className="text-sm text-teal-700 font-semibold hover:underline">
-          ← Back to phone
+        <div>
+          <Label htmlFor="email-otp" className="text-xs font-semibold uppercase tracking-widest">Code</Label>
+          <Input id="email-otp" value={otp} onChange={(e) => setOtp(e.target.value)}
+            placeholder="12345678" inputMode="numeric"
+            className="mt-1.5 tracking-[.3em] text-lg font-bold" required />
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <Button type="submit" disabled={loading}
+          className="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3">
+          {loading ? 'Verifying…' : 'Verify →'}
+        </Button>
+        <button type="button" onClick={() => setState('email')}
+          className="w-full text-sm text-slate-400 hover:text-teal-700 text-center">
+          ← Change email
         </button>
-      </div>
+      </form>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={sendOtp} className="space-y-4">
       <div>
         <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-widest">Email</Label>
         <Input id="email" type="email" value={email}
@@ -63,7 +86,7 @@ export function MagicLinkForm({ claimToken, redirectTo, onBack }: Props) {
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading}
         className="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3">
-        {loading ? 'Sending…' : 'Send magic link →'}
+        {loading ? 'Sending…' : 'Send code →'}
       </Button>
       <button type="button" onClick={onBack}
         className="w-full text-sm text-slate-400 hover:text-teal-700 text-center">

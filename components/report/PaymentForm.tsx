@@ -9,8 +9,11 @@ interface Props {
 }
 
 export function PaymentForm({ checkId, claimToken }: Props) {
-  const [email,     setEmail]     = useState('')
-  const [error,     setError]     = useState<string | null>(null)
+  const [email,    setEmail]    = useState('')
+  const [price,    setPrice]    = useState('')
+  const [mileage,  setMileage]  = useState('')
+  const [listing,  setListing]  = useState('')
+  const [error,    setError]    = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(e: React.FormEvent) {
@@ -20,8 +23,11 @@ export function PaymentForm({ checkId, claimToken }: Props) {
       const result = await initiateBuyerReport({
         checkId,
         claimToken,
-        buyerEmail: email,
-        baseUrl:    window.location.origin,
+        buyerEmail:       email,
+        baseUrl:          window.location.origin,
+        askingPriceRm:    price    ? parseInt(price, 10)    : undefined,
+        claimedMileageKm: mileage  ? parseInt(mileage, 10)  : undefined,
+        listingUrl:       listing  || undefined,
       })
       if (result.error) { setError(result.error); return }
       if (result.billUrl) window.location.href = result.billUrl
@@ -37,12 +43,76 @@ export function PaymentForm({ checkId, claimToken }: Props) {
         Semak harga pasaran · Ringkasan saman · Soalan untuk penjual · Tips rundingan · Senarai semak deposit
       </p>
       <p className="font-body text-[12px] text-[#6B7280] mb-4">
-        Masukkan e-mel untuk resit pembayaran.
+        Masukkan butiran kereta untuk analisis yang lebih tepat.
       </p>
-      <form onSubmit={handleSubmit} className="space-y-3">
+
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+
+        {/* Asking price */}
         <div>
           <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
-            Alamat E-mel
+            Harga Diminta (RM) <span className="text-[#9CA3AF] font-normal normal-case tracking-normal">— pilihan</span>
+          </label>
+          <input
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="contoh: 45000"
+            min="1000"
+            max="500000"
+            className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
+                       font-heading font-semibold text-[15px] text-[#111827]
+                       placeholder:text-[#D1D5DB] placeholder:font-normal
+                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       transition-all"
+          />
+        </div>
+
+        {/* Mileage */}
+        <div>
+          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+            Jarak Tempuh (km) <span className="text-[#9CA3AF] font-normal normal-case tracking-normal">— pilihan</span>
+          </label>
+          <input
+            type="number"
+            value={mileage}
+            onChange={(e) => setMileage(e.target.value)}
+            placeholder="contoh: 85000"
+            min="0"
+            max="999999"
+            className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
+                       font-heading font-semibold text-[15px] text-[#111827]
+                       placeholder:text-[#D1D5DB] placeholder:font-normal
+                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       transition-all"
+          />
+        </div>
+
+        {/* Listing link */}
+        <div>
+          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+            Link Iklan <span className="text-[#9CA3AF] font-normal normal-case tracking-normal">— pilihan (Mudah, Carlist, dll)</span>
+          </label>
+          <input
+            type="url"
+            value={listing}
+            onChange={(e) => setListing(e.target.value)}
+            placeholder="https://www.mudah.my/..."
+            className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
+                       font-heading font-semibold text-[14px] text-[#111827]
+                       placeholder:text-[#D1D5DB] placeholder:font-normal
+                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       transition-all"
+          />
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-[#F3F4F6]" />
+
+        {/* Email */}
+        <div>
+          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+            Alamat E-mel <span className="text-[#DC2626] ml-0.5">*</span>
           </label>
           <input
             type="email"
@@ -57,7 +127,9 @@ export function PaymentForm({ checkId, claimToken }: Props) {
                        transition-all"
           />
         </div>
+
         {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
+
         <button
           type="submit"
           disabled={isPending}
@@ -67,6 +139,7 @@ export function PaymentForm({ checkId, claimToken }: Props) {
         >
           {isPending ? 'Memproses…' : <>Bayar RM19 &amp; Buka Laporan →</>}
         </button>
+
         <p className="font-body text-[11px] text-[#9CA3AF] text-center">
           FPX · Kad Kredit/Debit · Bayar sekali · Tiada langganan
         </p>

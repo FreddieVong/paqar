@@ -28,13 +28,18 @@ const SELLER_QUESTIONS = [
   'Boleh bawa ke bengkel untuk pemeriksaan sebelum saya buat keputusan?',
 ]
 
+const MARKET_LOW  = 35_000
+const MARKET_HIGH = 55_000
+
 interface Props {
-  check:   Check
-  results: CheckResult[]
-  plate:   string
+  check:            Check
+  results:          CheckResult[]
+  plate:            string
+  askingPriceRm?:   number | null
+  claimedMileageKm?: number | null
 }
 
-export function BuyerReportContent({ check: _check, results, plate: _plate }: Props) {
+export function BuyerReportContent({ check: _check, results, plate: _plate, askingPriceRm, claimedMileageKm }: Props) {
   const samanTotal   = getSamanTotal(results)
   const samanCount   = getSamanCount(results)
   const hasBlacklist = results.some(r => r.status === 'hit' && r.source === 'immigration')
@@ -76,25 +81,63 @@ export function BuyerReportContent({ check: _check, results, plate: _plate }: Pr
         </div>
       </div>
 
-      {/* Section 2: Market Price (stubbed) */}
+      {/* Section 2: Market Price */}
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">💰</span>
           <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280]">
             Anggaran Harga Pasaran
           </p>
+          <span className="ml-auto font-body text-[10px] text-[#9CA3AF]">Anggaran sahaja</span>
         </div>
         <p className="font-heading font-extrabold text-[22px] text-[#111827] mb-1">
-          RM35,000 – RM55,000
+          RM{MARKET_LOW.toLocaleString()} – RM{MARKET_HIGH.toLocaleString()}
         </p>
-        <p className="font-body text-[12px] text-[#9CA3AF]">
-          Anggaran — berdasarkan listing Mudah, Carlist &amp; MyTukar
+        <p className="font-body text-[12px] text-[#9CA3AF] mb-3">
+          Berdasarkan listing Mudah, Carlist &amp; MyTukar · Anggaran umum
         </p>
-        <div className="mt-3 bg-[#FEF9C3] border border-[#FDE68A] rounded-lg px-3 py-2">
-          <p className="font-body text-[12px] text-[#B45309]">
-            ⚠️ Anggaran umum. Harga sebenar bergantung pada model, tahun, dan kondisi.
-          </p>
-        </div>
+
+        {/* Price comparison if buyer provided asking price */}
+        {askingPriceRm != null && (
+          <div className={`rounded-lg px-3 py-2.5 border ${
+            askingPriceRm > MARKET_HIGH
+              ? 'bg-[#FEF2F2] border-[#FECACA]'
+              : askingPriceRm < MARKET_LOW
+              ? 'bg-[#F0FDF4] border-[#BBF7D0]'
+              : 'bg-[#FEF9C3] border-[#FDE68A]'
+          }`}>
+            <p className={`font-heading font-bold text-[13px] ${
+              askingPriceRm > MARKET_HIGH ? 'text-[#B91C1C]' :
+              askingPriceRm < MARKET_LOW  ? 'text-[#15803D]' : 'text-[#B45309]'
+            }`}>
+              {askingPriceRm > MARKET_HIGH
+                ? `⚠️ Harga diminta RM${askingPriceRm.toLocaleString()} melebihi anggaran pasaran — kemungkinan terlalu mahal`
+                : askingPriceRm < MARKET_LOW
+                ? `✓ Harga diminta RM${askingPriceRm.toLocaleString()} — di bawah anggaran pasaran, boleh pertimbangkan`
+                : `Harga diminta RM${askingPriceRm.toLocaleString()} — dalam lingkungan anggaran pasaran`}
+            </p>
+          </div>
+        )}
+
+        {/* Mileage note */}
+        {claimedMileageKm != null && (
+          <div className="mt-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2">
+            <p className="font-body text-[12px] text-[#6B7280]">
+              Jarak tempuh didakwa: <span className="font-heading font-bold text-[#111827]">{claimedMileageKm.toLocaleString()} km</span>
+              {claimedMileageKm > 150_000 && (
+                <span className="text-[#B45309]"> — tinggi, semak rekod servis dengan penjual</span>
+              )}
+            </p>
+          </div>
+        )}
+
+        {(askingPriceRm == null || claimedMileageKm == null) && (
+          <div className="mt-2 bg-[#F3F4F6] rounded-lg px-3 py-2">
+            <p className="font-body text-[11px] text-[#9CA3AF]">
+              Tambah harga &amp; jarak tempuh semasa beli laporan untuk analisis perbandingan harga yang lebih tepat.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Section 3: Risk Flags */}

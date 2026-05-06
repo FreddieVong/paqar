@@ -2,18 +2,24 @@ import { createServiceClient } from '@/lib/supabase/server'
 import type { BuyerReport }    from '@/types/domain'
 
 export async function createBuyerReport(params: {
-  checkId:       string
-  buyerEmail:    string
-  billplzBillId: string
+  checkId:          string
+  buyerEmail:       string
+  billplzBillId:    string
+  askingPriceRm?:   number
+  claimedMileageKm?: number
+  listingUrl?:      string
 }): Promise<BuyerReport> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('buyer_reports')
     .insert({
-      check_id:        params.checkId,
-      buyer_email:     params.buyerEmail,
-      billplz_bill_id: params.billplzBillId,
-      amount_cents:    1900,
+      check_id:            params.checkId,
+      buyer_email:         params.buyerEmail,
+      billplz_bill_id:     params.billplzBillId,
+      amount_cents:        1900,
+      asking_price_rm:     params.askingPriceRm ?? null,
+      claimed_mileage_km:  params.claimedMileageKm ?? null,
+      listing_url:         params.listingUrl ?? null,
     })
     .select()
     .single()

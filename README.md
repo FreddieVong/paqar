@@ -4,12 +4,12 @@ The product solves the cognitive load and anxiety of car ownership in Malaysia b
 I am building this solo with Claude Code as my primary engineering tool. The MVP must be capital-light, solo-operable, and shippable in approximately 12 weeks.
 Strategic Context
 This is a two-stage business:
-Stage 1 (Years 1-2): Build the leading consumer app for Malaysian car ownership through a focused five-feature product. Acquire users through saman/blacklist search intent. Retain through document expiry tracking. Monetise through used car buyer reports and seller trust packs. Reach 100K+ active users and RM500K-1.5M revenue in Year 1.
+Stage 1 (Years 1-2): Build the leading consumer app for Malaysian car ownership through a focused five-feature product. Acquire users through saman/blacklist search intent. Retain through document expiry tracking. Monetise through used car buyer reports and seller trust packs. Reach 100K+ active users and RM150K-400K revenue in Year 1 (honest, achievable without partnership capital; see financial model below).
 Stage 2 (Years 2-3+): Once brand and audience are established, extend the same brand into financial wellness for the warm car-owner audience (hire purchase refinancing, debt management, eventually broader PFM).
 The current build focuses entirely on Stage 1. Stage 2 is not in scope for the MVP or Year 1 roadmap.
 Target Users
 Primary acquisition audience: Malaysian car owners aged 25-55, urban and suburban, who experience anxiety about saman, blacklist status, and document expiries. Acquired through search ("semak saman," "blacklist imigresen," etc.).
-Buyer monetisation audience: Used car buyers about to purchase from Mudah, Carlist, or Facebook Marketplace, willing to pay RM39-69 for verification before spending RM30-80K on a vehicle.
+Buyer monetisation audience: Used car buyers about to purchase from Mudah, Carlist, or Facebook Marketplace. Standard tier at RM12-19; Premium tier (Year 2) at RM39-49. Volume strategy at an honest price beats premium strategy with overpromised data.
 Seller monetisation audience: Used car sellers wanting to close sales faster and justify higher prices by attaching a verified trust report to their listing, willing to pay RM29-49 for the report.
 Brand and Voice
 Voice principles:
@@ -58,18 +58,20 @@ Wave 2 — Monetisation (Months 3-6)
 Feature 3: Health Dashboard
 The organising layer that ties everything together. Status cards show green/amber/red across all categories (saman, blacklist, documents). The user opens the app, sees the state of their car at a glance, and either acts or feels relieved.
 Notifications fire only on status changes — green to amber to red. No spam, no daily noise. The "all clear" experience is as important as the alert experience.
-Feature 4: Used Car Buyer Report (Paid — RM39-69)
-The primary revenue line. A user about to buy a used car runs a check on the vehicle they're considering before paying deposit. The report includes:
+Feature 4: Used Car Buyer Report (Pre-Purchase Verification Toolkit)
+The primary revenue line. Positioned as a verification toolkit that helps buyers confirm what the seller is claiming, spot red flags, and know what to verify themselves — not a Carfax-equivalent history report. Priced honestly to match what free/scraped data can actually deliver.
 
-Mileage history (from Puspakom B5 inspection records)
-Outstanding loan check (JPJ ownership records show charges in favour)
-Accident/insurance claims history (where data is accessible)
-Real market price benchmark (scraped from Carlist, Mudah, MyTukar)
-Grant authenticity check
-Number of previous owners
-Service history if the seller is a Paqar user (consent-based)
+Three tiers:
 
-Sold as a one-time report purchase. Massive willingness to pay because the alternative cost (buying a problem car) is RM10K-50K of risk.
+FREE — Basic verdict (Green/Amber/Red), saman/blacklist check on the vehicle, market price benchmark vs current listings. Acquisition and lead generation.
+
+STANDARD (RM12-19) — Year 1 primary monetisation. Full report with all sections: market position analysis, outstanding issues, AI document parsing of buyer-uploaded documents, AI photo analysis for repair signs, guided JPJ check with AI parsing of buyer-uploaded printout, listing history, manufacturer recall lookup, public mention scan, specific actionable recommendations.
+
+PREMIUM (RM39-49) — Year 2 unlock. Adds paid accident history from third-party data provider (insurance industry data). Requires partnership research; not committed for Year 1.
+
+Every finding in the report is tagged with a verification status: Verified (confirmed via Paqar's data), Self-declared (seller stated, no proof), Needs proof (supporting document not yet provided), Unable to verify (no source available in Malaysia), or High-risk signal (inconsistency detected). Honesty about what we know vs. what we're taking the seller's word for is the core trust mechanic.
+
+Every report ends with specific, dollar-quantified recommendations: negotiate X amount based on market data, request this document before paying deposit, investigate this inconsistency. The buyer doesn't figure out what to do — Paqar tells them.
 Feature 5: Seller Trust Pack (Paid — RM29-49)
 The two-sided monetisation feature. Users selling a car (private sale on Mudah, Carlist, Facebook) generate a verified trust report they can attach to their listing. Includes:
 
@@ -84,20 +86,27 @@ Solves a real seller pain (closing sales faster, justifying higher prices, stand
 How Money Is Made
 Year 1 revenue stacks across exactly two transactional products:
 
-Used Car Buyer Reports (largest revenue line)
-Seller Trust Packs (second revenue line)
+Used Car Buyer Reports — Standard tier at RM12-19 (primary revenue line)
+Seller Trust Packs — at RM29-49 (second revenue line)
 
 Both are one-time purchases at high-intent moments. No subscriptions, no affiliate revenue, no ad revenue, no transactional fees on third-party services. This is deliberately narrow — the goal is to validate willingness-to-pay on these two products before adding monetisation complexity.
+
+Pricing rationale: Without MyEG/JPJ partnership (RM5K-50K setup capital, not committed in Year 1), we cannot deliver full Carfax-equivalent data. The honest product at the honest price is RM12-19 Standard. Volume strategy at accessible pricing beats premium strategy with overpromised scope. Premium tier (RM39-49) unlocks in Year 2 when paid accident history partnerships are in place.
+
 Realistic Year 1 targets:
 
 100K+ users acquired through saman/blacklist wedge
-1-3% of audience purchases a Used Car Buyer Report
+1-3% of audience purchases a Used Car Buyer Report (Standard tier)
 0.5-1.5% of audience purchases a Seller Trust Pack
-Average revenue per buying user: RM40-60
-Year 1 revenue: RM500K-1.5M
+Average revenue per buying user: RM12-19 (Buyer Report), RM29-49 (Seller Trust Pack)
+Year 1 revenue: RM150K-400K (honest, achievable without partnership capital)
+
+Year 2 trajectory: 2-4% conversion as brand trust builds, Premium tier launches → RM800K-2M ARR
+Year 3 trajectory: established player, multiple data partnerships secured → RM3-5M ARR
 
 Year 2 monetisation expansion (out of scope for current build but signalled):
 
+Buyer Report Premium tier (RM39-49) — paid accident history via third-party provider
 Affiliate revenue (insurance, refinancing, used car platforms)
 SMB pro tier for fleet operators
 Saman payment routing
@@ -160,7 +169,36 @@ It is not an insurance broker, a marketplace, or a super-app.
 It is not subscription-dependent. The Year 1 business works through transactional revenue only.
 It is not a generalist e-government app like MyEG. It stays vertically focused on car ownership.
 What Success Looks Like
-Year 1: 100K+ users acquired, 5 features shipped, RM500K-1.5M revenue, profitable solo operation, brand and audience established. Validation of willingness-to-pay on both Used Car Buyer Report and Seller Trust Pack.
-Year 2: Wave 3 features added based on Year 1 signal (likely Loan Health Check, Roadtax Renewal Bundle, or Affiliate Layer). 500K+ users. RM2-4M ARR. First hire likely. Indonesia or Thailand expansion mapped.
-Year 3: 1M+ users in Malaysia, second market launching, RM5-8M ARR, possible Stage 2 financial wellness expansion to warm audience, possible acquisition interest from regional players.
+Year 1: 100K+ users acquired, 5 features shipped, RM150K-400K revenue, profitable solo operation at honest pricing, brand and audience established. Validation of willingness-to-pay on both Used Car Buyer Report (Standard tier) and Seller Trust Pack. Volume data to justify Premium tier and partnership investments in Year 2.
+Year 2: Premium Buyer Report tier launches (RM39-49 with paid accident history). Wave 3 features added (Loan Health Check, Roadtax Renewal Bundle, or Affiliate Layer). 500K+ users. RM800K-2M ARR. First hire likely. Indonesia or Thailand expansion mapped.
+Year 3: 1M+ users in Malaysia, second market launching, RM3-5M ARR, full data partnership stack in place, possible Stage 2 financial wellness expansion to warm audience, possible acquisition interest from regional players.
 Year 5+: Regional player with multi-market presence, potential RM20-50M revenue or strategic exit.
+
+Year 2 Upgrade Paths
+These are options the business holds, not commitments it has made. Year 1 plan does not depend on any of them.
+
+A. MyEG / JPJ Partnership
+Trigger: 5,000+ monthly Buyer Reports sustained for 3+ months.
+Investment: RM5K-50K setup, RM2-10 per query, possible monthly minimum.
+Unlocks: deeper JPJ ownership/encumbrance data integration (currently handled via guided self-service check).
+Decision criteria: monthly volume × premium pricing increase must exceed setup amortisation.
+
+B. Paid Accident History Provider
+Trigger: research phase identifies viable provider with reasonable per-query cost.
+Investment: per-query cost passed through to buyer in Premium tier pricing.
+Unlocks: insurance claim and accident history data for Premium tier (RM39-49).
+Path: investigate Bjak's data sources, PIAM, ISM, Allianz/Etiqa B2B data products.
+Decision criteria: provider availability + pricing that supports Premium tier margin.
+
+C. Insurance Industry Direct Partnerships
+Trigger: established brand + significant volume + relationships built over Year 1-2.
+Unlocks: deeper accident/claim data, possibly real-time.
+Path: PIAM relationships, individual insurer partnerships.
+
+D. Manufacturer Service Record Access
+Trigger: partnerships with specific manufacturers.
+Unlocks: verified service history beyond user-supplied documents.
+Path: individual manufacturer business development conversations.
+
+E. Full Carfax-Equivalent (Year 3+)
+Combination of all above partnerships. Long-term ambition, not Year 1-2 plan.

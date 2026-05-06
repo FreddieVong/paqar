@@ -5,10 +5,13 @@ import { createBuyerReport } from '@/lib/db/buyer-reports'
 import { getCheck }          from '@/lib/db/checks'
 
 export async function initiateBuyerReport(params: {
-  checkId:    string
-  claimToken: string
-  buyerEmail: string
-  baseUrl:    string
+  checkId:          string
+  claimToken:       string
+  buyerEmail:       string
+  baseUrl:          string
+  askingPriceRm?:   number
+  claimedMileageKm?: number
+  listingUrl?:      string
 }): Promise<{ error: string | null; billUrl?: string }> {
   if (!params.buyerEmail.includes('@')) {
     return { error: 'Alamat e-mel tidak sah' }
@@ -29,9 +32,12 @@ export async function initiateBuyerReport(params: {
     })
 
     await createBuyerReport({
-      checkId:       params.checkId,
-      buyerEmail:    params.buyerEmail,
-      billplzBillId: bill.id,
+      checkId:          params.checkId,
+      buyerEmail:       params.buyerEmail,
+      billplzBillId:    bill.id,
+      askingPriceRm:    params.askingPriceRm,
+      claimedMileageKm: params.claimedMileageKm,
+      listingUrl:       params.listingUrl,
     })
 
     return { error: null, billUrl: bill.url }

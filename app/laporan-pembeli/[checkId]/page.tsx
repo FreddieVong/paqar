@@ -45,6 +45,8 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               check={row.check}
               results={row.results}
               plate={plate}
+              askingPriceRm={report?.asking_price_rm ?? null}
+              claimedMileageKm={report?.claimed_mileage_km ?? null}
             />
           ) : (
             <>
