@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse }             from 'next/server'
 import { verifyWebhookSignature }                from '@/lib/billplz'
 import { markReportPaid, getBuyerReportByBillId } from '@/lib/db/buyer-reports'
+import { markTrustCardPaid, getTrustCardByBillId } from '@/lib/db/seller-trust-cards'
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
@@ -22,10 +23,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const report = await getBuyerReportByBillId(billId)
-    if (report && report.status === 'pending') {
-      await markReportPaid(billId)
-    }
+    const [buyerReport, trustCard] = await Promise.all([
+      getBuyerReportByBillId(billId),
+      getTrustCardByBillId(billId),
+    ])
+    if (buyerReport && buyerReport.status === 'pending') await markReportPaid(billId)
+    if (trustCard  && trustCard.status  === 'pending') await markTrustCardPaid(billId)
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('[billplz-webhook]', err)
