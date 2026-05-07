@@ -17,6 +17,8 @@ const schema = z.object({
   SENTRY_DSN:               z.string().url().optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
   CRON_SECRET:    z.string().min(1).optional(),
+  SCRAPER_URL:     z.string().url().optional(),
+  SCRAPER_API_KEY: z.string().min(1).optional(),
   BILLPLZ_API_KEY:              z.string().min(1).optional(),
   BILLPLZ_COLLECTION_ID:        z.string().min(1).optional(),
   BILLPLZ_COLLECTION_ID_BUYER:  z.string().min(1).optional(),
