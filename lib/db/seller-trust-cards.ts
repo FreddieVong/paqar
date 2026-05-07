@@ -47,6 +47,31 @@ export async function getTrustCardByBillId(billId: string): Promise<SellerTrustC
   return data as SellerTrustCard | null
 }
 
+export async function getUserTrustCards(userId: string): Promise<SellerTrustCard[]> {
+  const supabase = createServiceClient()
+
+  const { data: checks, error: checksError } = await supabase
+    .from('checks')
+    .select('id')
+    .eq('user_id', userId)
+
+  if (checksError) throw checksError
+  if (!checks?.length) return []
+
+  const checkIds = checks.map(c => c.id as string)
+
+  const { data: cards, error } = await supabase
+    .from('seller_trust_cards')
+    .select('*')
+    .in('check_id', checkIds)
+    .eq('status', 'paid')
+    .order('paid_at', { ascending: false })
+    .limit(10)
+
+  if (error) throw error
+  return (cards ?? []) as SellerTrustCard[]
+}
+
 export async function markTrustCardPaid(billplzBillId: string): Promise<void> {
   const supabase = createServiceClient()
   const now     = new Date()

@@ -53,6 +53,38 @@ export async function markReportPaid(billplzBillId: string): Promise<void> {
   if (error) throw error
 }
 
+export async function getUserBuyerReports(userId: string): Promise<Array<{
+  report:         BuyerReport
+  plateEncrypted: string | null
+}>> {
+  const supabase = createServiceClient()
+
+  const { data: checks, error: checksError } = await supabase
+    .from('checks')
+    .select('id, plate_encrypted')
+    .eq('user_id', userId)
+
+  if (checksError) throw checksError
+  if (!checks?.length) return []
+
+  const checkIds = checks.map(c => c.id as string)
+
+  const { data: reports, error } = await supabase
+    .from('buyer_reports')
+    .select('*')
+    .in('check_id', checkIds)
+    .eq('status', 'paid')
+    .order('paid_at', { ascending: false })
+    .limit(10)
+
+  if (error) throw error
+
+  return (reports ?? []).map(r => ({
+    report:         r as BuyerReport,
+    plateEncrypted: (checks.find(c => c.id === r.check_id)?.plate_encrypted as string | null) ?? null,
+  }))
+}
+
 export async function getBuyerReportByBillId(billId: string): Promise<BuyerReport | null> {
   const supabase = createServiceClient()
   const { data, error } = await supabase

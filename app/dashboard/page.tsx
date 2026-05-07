@@ -1,10 +1,14 @@
 import { redirect }                  from 'next/navigation'
+import Link                          from 'next/link'
 import { Nav }                       from '@/components/layout/Nav'
 import { Shell }                     from '@/components/layout/Shell'
 import { ExpiryCard }                from '@/components/dashboard/ExpiryCard'
 import { createClient }              from '@/lib/supabase/server'
 import { getUserDocumentExpiries }   from '@/lib/db/document-expiries'
 import { getOrCreateVehicleForUser } from '@/lib/db/vehicles'
+import { getUserBuyerReports }       from '@/lib/db/buyer-reports'
+import { getUserTrustCards }         from '@/lib/db/seller-trust-cards'
+import { decrypt }                   from '@/lib/crypto'
 import type { DocType, DocumentExpiry } from '@/types/domain'
 
 const DOC_TYPES: DocType[] = ['roadtax', 'insurance', 'driving_licence']
@@ -26,18 +30,39 @@ function overallStatus(expiries: DocumentExpiry[]): 'all_clear' | 'attention' | 
   return 'all_clear'
 }
 
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('ms-MY', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  })
+}
+
+function trustCardExpiry(expiresAt: string | null): { label: string; isExpired: boolean } {
+  if (!expiresAt) return { label: '—', isExpired: false }
+  const days = Math.floor((new Date(expiresAt).getTime() - Date.now()) / 86_400_000)
+  if (days < 0)  return { label: 'Tamat tempoh',        isExpired: true }
+  if (days === 0) return { label: 'Tamat hari ini',     isExpired: false }
+  return { label: `Sah ${days} hari lagi`, isExpired: false }
+}
+
 export default async function DashboardPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/auth?next=/dashboard')
 
-  const [expiries, vehicleResult] = await Promise.all([
+  const [expiries, vehicleResult, buyerReportRows, trustCards] = await Promise.all([
     getUserDocumentExpiries(user.id),
     getOrCreateVehicleForUser(user.id),
+    getUserBuyerReports(user.id),
+    getUserTrustCards(user.id),
   ])
 
   const status = overallStatus(expiries)
+
+  const buyerReports = buyerReportRows.map(({ report, plateEncrypted }) => ({
+    report,
+    plate: plateEncrypted ? decrypt(plateEncrypted).toUpperCase() : '—',
+  }))
 
   return (
     <>
@@ -83,12 +108,10 @@ export default async function DashboardPage() {
             </div>
           )}
 
-          {/* Section title */}
+          {/* Document expiry */}
           <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280]">
             Status Dokumen
           </p>
-
-          {/* Expiry cards */}
           <div className="space-y-3">
             {DOC_TYPES.map(dt => (
               <ExpiryCard
@@ -107,6 +130,67 @@ export default async function DashboardPage() {
               Kami akan hantar e-mel 90, 60, 30, 7 &amp; 1 hari sebelum tamat tempoh.
             </p>
           </div>
+
+          {/* Past Buyer Reports */}
+          {buyerReports.length > 0 && (
+            <>
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280]">
+                Laporan Pembeli
+              </p>
+              <div className="space-y-2">
+                {buyerReports.map(({ report, plate }) => (
+                  <div key={report.id} className="bg-white border border-[#E5E7EB] rounded-[14px] px-4 py-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-heading font-extrabold text-[16px] text-[#111827] tracking-[.06em]">
+                        {plate}
+                      </p>
+                      <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5">
+                        {report.paid_at ? formatDate(report.paid_at) : '—'}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/laporan-pembeli/${report.check_id}`}
+                      className="flex-shrink-0 font-heading font-bold text-[12px] text-[#064E4A] border border-[#064E4A]/30 rounded-lg px-3 py-1.5 hover:bg-[#064E4A]/5 transition-colors"
+                    >
+                      Lihat →
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Past Trust Cards */}
+          {trustCards.length > 0 && (
+            <>
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280]">
+                Seller Trust Card
+              </p>
+              <div className="space-y-2">
+                {trustCards.map(card => {
+                  const { label: expiryLabel, isExpired } = trustCardExpiry(card.expires_at)
+                  return (
+                    <div key={card.id} className="bg-white border border-[#E5E7EB] rounded-[14px] px-4 py-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-heading font-extrabold text-[16px] text-[#111827] tracking-[.06em]">
+                          {card.plate_plain ?? '—'}
+                        </p>
+                        <p className={`font-body text-[11px] mt-0.5 ${isExpired ? 'text-[#B91C1C]' : 'text-[#9CA3AF]'}`}>
+                          {expiryLabel}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/trust/${card.public_token}`}
+                        className="flex-shrink-0 font-heading font-bold text-[12px] text-[#064E4A] border border-[#064E4A]/30 rounded-lg px-3 py-1.5 hover:bg-[#064E4A]/5 transition-colors"
+                      >
+                        Lihat →
+                      </Link>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
 
         </div>
       </Shell>
