@@ -23,12 +23,13 @@ export async function initiateBuyerReport(params: {
 
   try {
     const bill = await createBill({
-      email:       params.buyerEmail,
-      name:        params.buyerEmail,
-      amountCents: 2900,
-      description: `Laporan Pembeli Paqar - ${params.checkId}`,
-      callbackUrl: `${params.baseUrl}/api/webhooks/billplz`,
-      redirectUrl: `${params.baseUrl}/laporan-pembeli/${params.checkId}?status=success`,
+      email:        params.buyerEmail,
+      name:         params.buyerEmail,
+      amountCents:  1900,
+      description:  `Laporan Pembeli Paqar - ${params.checkId}`,
+      callbackUrl:  `${params.baseUrl}/api/webhooks/billplz`,
+      redirectUrl:  `${params.baseUrl}/laporan-pembeli/${params.checkId}?status=success`,
+      collectionId: process.env.BILLPLZ_COLLECTION_ID_BUYER ?? process.env.BILLPLZ_COLLECTION_ID,
     })
 
     await createBuyerReport({

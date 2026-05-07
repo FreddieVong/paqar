@@ -9,19 +9,21 @@ export interface BillplzBill {
 }
 
 export async function createBill(params: {
-  email:       string
-  name:        string
-  amountCents: number
-  description: string
-  callbackUrl: string
-  redirectUrl: string
+  email:        string
+  name:         string
+  amountCents:  number
+  description:  string
+  callbackUrl:  string
+  redirectUrl:  string
+  collectionId?: string
 }): Promise<BillplzBill> {
-  if (!env.BILLPLZ_API_KEY || !env.BILLPLZ_COLLECTION_ID) {
+  if (!params.collectionId) params.collectionId = env.BILLPLZ_COLLECTION_ID ?? ''
+  if (!env.BILLPLZ_API_KEY || !params.collectionId) {
     throw new Error('Billplz credentials not configured')
   }
 
   const body = new URLSearchParams({
-    collection_id:    env.BILLPLZ_COLLECTION_ID,
+    collection_id:    params.collectionId,
     email:            params.email,
     name:             params.name,
     amount:           params.amountCents.toString(),
