@@ -34,6 +34,7 @@ app.post('/check/pdrm', async (req, res) => {
   const { plate } = req.body as { plate?: string }
   if (!plate) { res.status(400).json({ error: 'plate required' }); return }
   const result = await scrapePdrm(plate)
+  console.log('[pdrm]', JSON.stringify({ status: result.status, error: (result as {error?:string}).error, debug: (result as {debug?:string}).debug?.slice(0,500) }))
   res.json(result)
 })
 
@@ -41,6 +42,7 @@ app.post('/check/jpj', async (req, res) => {
   const { plate } = req.body as { plate?: string }
   if (!plate) { res.status(400).json({ error: 'plate required' }); return }
   const result = await scrapeJpj(plate)
+  console.log('[jpj]', JSON.stringify({ status: result.status, error: (result as {error?:string}).error, debug: (result as {debug?:string}).debug?.slice(0,500) }))
   res.json(result)
 })
 
