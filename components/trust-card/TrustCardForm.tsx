@@ -158,10 +158,10 @@ export function TrustCardForm() {
             Layak
           </p>
           <p className="font-heading font-bold text-[16px] text-[#111827] mb-1">
-            Good news. This car is eligible for a Paqar Seller Trust Card.
+            Kereta ini layak untuk Paqar Seller Trust Card.
           </p>
           <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
-            Generate a shareable verification link buyers can check before viewing your car.
+            Jana link verifikasi yang boleh dikongsi dengan pembeli sebelum mereka datang melihat kereta anda.
           </p>
         </div>
 
@@ -202,10 +202,10 @@ export function TrustCardForm() {
           Tidak Layak Buat Masa Ini
         </p>
         <p className="font-heading font-bold text-[16px] text-[#111827] mb-1">
-          Trust Card cannot be generated yet.
+          Trust Card belum boleh dijana.
         </p>
         <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
-          We found an issue that should be settled before sharing this car with buyers.
+          Terdapat isu yang perlu diselesaikan sebelum berkongsi kereta ini dengan pembeli.
         </p>
       </div>
 
