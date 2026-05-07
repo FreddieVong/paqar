@@ -28,7 +28,7 @@ export async function initiateBuyerReport(params: {
       amountCents:  1900,
       description:  `Laporan Pembeli Paqar - ${params.checkId}`,
       callbackUrl:  `${params.baseUrl}/api/webhooks/billplz`,
-      redirectUrl:  `${params.baseUrl}/laporan-pembeli/${params.checkId}?status=success`,
+      redirectUrl:  `${params.baseUrl}/laporan-pembeli/${params.checkId}?claim_token=${params.claimToken}&status=success`,
       collectionId: process.env.BILLPLZ_COLLECTION_ID_BUYER ?? process.env.BILLPLZ_COLLECTION_ID,
     })
 
