@@ -1,6 +1,17 @@
+import type { Metadata }  from 'next'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { TrustCardForm } from '@/components/trust-card/TrustCardForm'
+
+export const metadata: Metadata = {
+  title: 'Paqar Seller Trust Card — Buktikan Kereta Anda Tiada Saman',
+  description: 'Jana kad verifikasi boleh kongsi ke Mudah, WhatsApp & Facebook. Semak kelayakan percuma — bayar RM29 hanya jika layak.',
+  openGraph: {
+    title: 'Paqar Seller Trust Card',
+    description: 'Jana kad verifikasi untuk buktikan kereta anda tiada saman. Kongsi dengan pembeli sebelum mereka datang melihat.',
+    images: [{ url: '/api/og', width: 1200, height: 630 }],
+  },
+}
 
 export default function BuatTrustCardPage() {
   return (

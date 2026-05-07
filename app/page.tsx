@@ -33,13 +33,9 @@ export default function HomePage({ searchParams }: Props) {
               Paqar bantu anda semak status penting kenderaan dengan cepat, jelas dan mudah faham.
             </p>
 
-            <div className="hidden md:flex gap-5 mt-6">
-              {[['🔒', 'Data disulitkan'], ['⚡', 'Keputusan dalam 60 saat'], ['✓', 'Percuma sepenuhnya']].map(([icon, text]) => (
-                <span key={text} className="flex items-center gap-1.5 font-body text-[13px] text-[#6B7280]">
-                  <span>{icon}</span>{text}
-                </span>
-              ))}
-            </div>
+            <p className="hidden md:block font-body text-[13px] text-[#6B7280] mt-6">
+              Data disulitkan · Keputusan dalam 60 saat · Percuma sepenuhnya
+            </p>
           </div>
 
           {/* Checking card */}
@@ -63,21 +59,16 @@ export default function HomePage({ searchParams }: Props) {
 
           <div className="flex flex-col md:grid md:grid-cols-3 gap-3">
             {[
-              { icon: '🚗', title: 'Saman Kenderaan', desc: 'PDRM, JPJ, AES & Majlis Tempatan', badge: 'Tersedia', badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
-              { icon: '🚫', title: 'Status Blacklist',  desc: 'Imigresen, LHDN & PTPTN',           badge: 'Tersedia', badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
-              { icon: '📄', title: 'Dokumen Kenderaan', desc: 'Cukai jalan, insurans & lesen',      badge: 'Akan Datang', badgeStyle: 'bg-[#F3F4F6] text-[#6B7280]' },
+              { title: 'Saman Kenderaan', desc: 'PDRM, JPJ, AES & Majlis Tempatan', badge: 'Tersedia',    badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
+              { title: 'Status Blacklist', desc: 'Imigresen, LHDN & PTPTN',          badge: 'Tersedia',    badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
+              { title: 'Dokumen Kenderaan', desc: 'Cukai jalan, insurans & lesen',   badge: 'Akan Datang', badgeStyle: 'bg-[#F3F4F6] text-[#6B7280]' },
             ].map((item) => (
-              <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-4 flex items-center gap-3 md:flex-col md:items-start md:p-5">
-                <div className="w-11 h-11 rounded-xl bg-[#F3F4F6] flex items-center justify-center text-xl flex-shrink-0">
-                  {item.icon}
-                </div>
-                <div className="flex-1">
-                  <p className="font-heading font-bold text-[15px] text-[#111827] mb-0.5">{item.title}</p>
-                  <p className="font-body text-[13px] text-[#6B7280]">{item.desc}</p>
-                  <span className={`inline-block mt-2 font-heading font-bold text-[11px] px-2.5 py-1 rounded-full ${item.badgeStyle}`}>
-                    {item.badge}
-                  </span>
-                </div>
+              <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-4 md:p-5">
+                <p className="font-heading font-bold text-[15px] text-[#111827] mb-0.5">{item.title}</p>
+                <p className="font-body text-[13px] text-[#6B7280] mb-2">{item.desc}</p>
+                <span className={`inline-block font-heading font-bold text-[11px] px-2.5 py-1 rounded-full ${item.badgeStyle}`}>
+                  {item.badge}
+                </span>
               </div>
             ))}
           </div>
@@ -144,12 +135,11 @@ export default function HomePage({ searchParams }: Props) {
 
           <div className="flex flex-col md:grid md:grid-cols-3 gap-3">
             {[
-              { icon: '⚡', title: 'Pantas', desc: 'Keputusan dalam 60 saat. Tiada menunggu, tiada keliru.' },
-              { icon: '🎯', title: 'Jelas',  desc: 'Hijau atau merah. Anda tahu apa yang perlu dilakukan serta-merta.' },
-              { icon: '🔒', title: 'Selamat', desc: 'IC disulitkan dengan AES-256. Kami tidak simpan data anda tanpa izin.' },
+              { title: 'Pantas',  desc: 'Keputusan dalam 60 saat. Tiada menunggu, tiada keliru.' },
+              { title: 'Jelas',   desc: 'Hijau atau merah. Anda tahu apa yang perlu dilakukan serta-merta.' },
+              { title: 'Selamat', desc: 'IC disulitkan dengan AES-256. Kami tidak simpan data anda tanpa izin.' },
             ].map((item) => (
               <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[16px] p-5">
-                <span className="text-3xl mb-3 block">{item.icon}</span>
                 <p className="font-heading font-bold text-[16px] text-[#111827] mb-1">{item.title}</p>
                 <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">{item.desc}</p>
               </div>

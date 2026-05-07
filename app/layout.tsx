@@ -28,11 +28,13 @@ export const metadata: Metadata = {
     siteName: 'Paqar',
     locale: 'ms_MY',
     type: 'website',
+    images: [{ url: '/api/og', width: 1200, height: 630 }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Paqar — Semak Saman & Blacklist Kenderaan',
     description: 'Semak saman PDRM, JPJ, AES dan status blacklist kenderaan anda dengan cepat. Percuma.',
+    images: ['/api/og'],
   },
   alternates: {
     canonical: 'https://paqar.my',
