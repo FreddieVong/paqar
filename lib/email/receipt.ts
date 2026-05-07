@@ -82,7 +82,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
   `
 
   await resend.emails.send({
-    from:    'Paqar <onboarding@resend.dev>',
+    from:    'Paqar <noreply@paqar.my>',
     to:      params.toEmail,
     subject,
     html,
