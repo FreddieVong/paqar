@@ -26,7 +26,7 @@ export async function initiateBuyerReport(params: {
       email:       params.buyerEmail,
       name:        params.buyerEmail,
       amountCents: 1900,
-      description: `Laporan Pembeli Paqar — ${params.checkId}`,
+      description: `Laporan Pembeli Paqar - ${params.checkId}`,
       callbackUrl: `${params.baseUrl}/api/webhooks/billplz`,
       redirectUrl: `${params.baseUrl}/laporan-pembeli/${params.checkId}?status=success`,
     })

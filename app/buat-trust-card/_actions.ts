@@ -26,7 +26,7 @@ export async function initiateTrustCard(params: {
       email:       params.sellerEmail,
       name:        params.sellerEmail,
       amountCents: 2900,
-      description: `Paqar Seller Trust Card — ${params.checkId}`,
+      description: `Paqar Seller Trust Card - ${params.checkId}`,
       callbackUrl: `${params.baseUrl}/api/webhooks/billplz`,
       redirectUrl: `${params.baseUrl}/buat-trust-card/selesai?token=${publicToken}`,
     })
