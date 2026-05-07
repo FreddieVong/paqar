@@ -1,0 +1,71 @@
+import { Nav }   from '@/components/layout/Nav'
+import { Shell } from '@/components/layout/Shell'
+
+export default function TermaPage() {
+  return (
+    <>
+      <Nav />
+      <Shell>
+        <div className="pt-8 pb-16 max-w-xl mx-auto space-y-8">
+
+          <div>
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+              Terma Penggunaan
+            </p>
+            <h1 className="font-heading font-extrabold text-[26px] tracking-tight text-[#111827] mb-2">
+              Terma &amp; Syarat
+            </h1>
+            <p className="font-body text-[13px] text-[#9CA3AF]">
+              Dikemaskini: Mei 2026
+            </p>
+          </div>
+
+          {[
+            {
+              title: 'Perkhidmatan Pihak Ketiga',
+              body: 'Paqar adalah perkhidmatan semakan status kenderaan pihak ketiga yang tidak berafiliasi dengan mana-mana agensi kerajaan Malaysia. Maklumat yang dipaparkan bersumber daripada pangkalan data yang boleh diakses awam dan mungkin tidak mencerminkan status terkini pada setiap masa.',
+            },
+            {
+              title: 'Ketepatan Maklumat',
+              body: 'Kami berusaha untuk menyediakan maklumat yang tepat, tetapi kami tidak menjamin kesempurnaan atau ketepatan sepenuhnya hasil semakan. Gunakan maklumat ini sebagai panduan sahaja, bukan sebagai keputusan muktamad. Sila sahkan dengan pihak berkuasa berkaitan untuk urusan rasmi.',
+            },
+            {
+              title: 'Penggunaan yang Dibenarkan',
+              body: 'Perkhidmatan ini boleh digunakan untuk semakan peribadi status kenderaan anda sendiri atau kenderaan yang anda pertimbangkan untuk dibeli. Penggunaan untuk tujuan komersial secara besar-besaran, pengikisan data automatik, atau sebarang tujuan yang melanggar undang-undang adalah dilarang.',
+            },
+            {
+              title: 'Pembayaran dan Bayaran Balik',
+              body: 'Semua pembayaran adalah muktamad. Laporan Pembeli (RM19) dan Seller Trust Card (RM29) tidak boleh dikembalikan setelah semakan dijalankan dan laporan dijana. Jika anda menghadapi masalah teknikal yang menghalang akses kepada laporan anda, hubungi kami dalam masa 7 hari.',
+            },
+            {
+              title: 'Seller Trust Card',
+              body: 'Trust Card adalah dokumen verifikasi yang mengesahkan tiada saman kritikal pada masa semakan dibuat. Kesahan Trust Card adalah 30 hari dari tarikh pembayaran. Paqar tidak bertanggungjawab atas sebarang tuntutan yang timbul selepas tarikh semakan atau berkaitan dengan maklumat yang tidak diliputi oleh semakan.',
+            },
+            {
+              title: 'Had Liabiliti',
+              body: 'Paqar tidak bertanggungjawab atas sebarang kerugian langsung, tidak langsung, atau berbangkit yang timbul daripada penggunaan perkhidmatan ini, termasuk keputusan kewangan yang dibuat berdasarkan hasil semakan kami.',
+            },
+            {
+              title: 'Pengubahsuaian Terma',
+              body: 'Kami berhak untuk mengubah terma ini pada bila-bila masa. Perubahan akan dikuatkuasakan setelah disiarkan di halaman ini. Penggunaan berterusan perkhidmatan kami selepas perubahan dianggap sebagai penerimaan terma baharu.',
+            },
+            {
+              title: 'Undang-undang yang Terpakai',
+              body: 'Terma ini tertakluk kepada undang-undang Malaysia. Sebarang pertikaian akan diselesaikan di bawah bidang kuasa mahkamah Malaysia.',
+            },
+            {
+              title: 'Hubungi Kami',
+              body: 'Untuk sebarang pertanyaan berkaitan terma ini, hubungi kami di hello@paqar.my.',
+            },
+          ].map(({ title, body }) => (
+            <div key={title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+              <p className="font-heading font-bold text-[14px] text-[#111827] mb-2">{title}</p>
+              <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">{body}</p>
+            </div>
+          ))}
+
+        </div>
+      </Shell>
+    </>
+  )
+}

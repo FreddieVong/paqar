@@ -271,11 +271,16 @@ export default function HomePage({ searchParams }: Props) {
 
       {/* ── FOOTER ── */}
       <footer className="bg-white border-t border-[#E5E7EB] px-5 py-6 text-center">
-        <p className="font-body text-[12px] text-[#D1D5DB] leading-relaxed">
+        <p className="font-body text-[12px] text-[#D1D5DB] leading-relaxed mb-2">
           © 2026 Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
-          <br />
-          <span className="text-[#9CA3AF]">Privasi · Terma · Hubungi Kami</span>
         </p>
+        <div className="flex items-center justify-center gap-4">
+          <Link href="/privasi" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Privasi</Link>
+          <span className="text-[#E5E7EB]">·</span>
+          <Link href="/terma" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Terma</Link>
+          <span className="text-[#E5E7EB]">·</span>
+          <a href="mailto:hello@paqar.my" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Hubungi Kami</a>
+        </div>
       </footer>
     </>
   )
