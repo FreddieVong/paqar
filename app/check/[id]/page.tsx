@@ -19,12 +19,9 @@ export default function CheckPage({ params, searchParams }: Props) {
     <>
       <Nav />
       <Shell>
-        <div className="pt-4 pb-4">
-          <p className="text-[11px] font-bold text-[#064E4A] uppercase tracking-widest mb-1">
-            {params.id}
-          </p>
+        <div className="pt-4">
+          <ResultsStream checkId={params.id} claimToken={claimToken} mode={mode} />
         </div>
-        <ResultsStream checkId={params.id} claimToken={claimToken} mode={mode} />
       </Shell>
     </>
   )

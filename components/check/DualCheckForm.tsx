@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CreateCheckResponse, CheckMode } from '@/types/api'
 
-export function DualCheckForm() {
+export function DualCheckForm({ defaultMode = 'owner' }: { defaultMode?: CheckMode }) {
   const router = useRouter()
-  const [mode, setMode]       = useState<CheckMode>('owner')
+  const [mode, setMode]       = useState<CheckMode>(defaultMode)
   const [plate, setPlate]     = useState('')
   const [ic, setIc]           = useState('')
   const [loading, setLoading] = useState(false)
