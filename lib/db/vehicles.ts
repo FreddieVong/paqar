@@ -44,20 +44,7 @@ export async function getOrCreateVehicleForUser(userId: string): Promise<{
 } | null> {
   const supabase = createServiceClient()
 
-  const { data: existing } = await supabase
-    .from('vehicles')
-    .select('*')
-    .eq('user_id', userId)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
-
-  if (existing) {
-    const platePlain = decrypt(existing.plate_encrypted as string)
-    return { vehicle: existing as Vehicle, platePlain }
-  }
-
+  // Always use the most recent completed check as the source of truth
   const { data: check } = await supabase
     .from('checks')
     .select('plate_encrypted, plate_hash')
@@ -70,6 +57,38 @@ export async function getOrCreateVehicleForUser(userId: string): Promise<{
 
   if (!check) return null
 
+  const { data: existing } = await supabase
+    .from('vehicles')
+    .select('*')
+    .eq('user_id', userId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (existing) {
+    // Update plate if the user's most recent check used a different plate
+    if (existing.plate_hash !== check.plate_hash) {
+      const { data: updated } = await supabase
+        .from('vehicles')
+        .update({
+          plate_encrypted: check.plate_encrypted,
+          plate_hash:      check.plate_hash,
+          updated_at:      new Date().toISOString(),
+        })
+        .eq('id', existing.id)
+        .select()
+        .single()
+
+      const platePlain = decrypt(check.plate_encrypted as string)
+      return { vehicle: (updated ?? existing) as Vehicle, platePlain }
+    }
+
+    const platePlain = decrypt(existing.plate_encrypted as string)
+    return { vehicle: existing as Vehicle, platePlain }
+  }
+
+  // No vehicle yet — create one from the most recent check
   const { data: newVehicle, error } = await supabase
     .from('vehicles')
     .insert({
