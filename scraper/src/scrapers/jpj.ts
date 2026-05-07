@@ -1,7 +1,7 @@
 import { withPage } from '../browser.js'
 import type { SamanResult, SamanRecord } from '../types.js'
 
-const URL = 'https://www.jpj.gov.my/en/web/main-site/semakan-saman'
+const URL = 'https://www.jpj.gov.my/web/main-site/semakan-saman'
 
 function parseTable(html: string): SamanRecord[] {
   const rows: SamanRecord[] = []

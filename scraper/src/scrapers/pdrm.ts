@@ -1,7 +1,9 @@
 import { withPage } from '../browser.js'
 import type { SamanResult, SamanRecord } from '../types.js'
 
-const URL = 'https://www.pdrm.gov.my/index.php/eng/Home/Online-Services/E-Services/Summons-Inquiry'
+// Primary: iLaksana (PDRM's payment/inquiry portal, more accessible than main site)
+// Fallback: www.pdrm.gov.my main domain (may be blocked from cloud IPs)
+const URL = 'https://www.ilaksana.com.my/carian/index.cfm'
 
 function parseTable(html: string): SamanRecord[] {
   const rows: SamanRecord[] = []
