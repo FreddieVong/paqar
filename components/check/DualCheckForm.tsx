@@ -175,7 +175,7 @@ export function DualCheckForm() {
             <div className="bg-[#F9FAFB] rounded-xl px-3.5 py-2.5 text-center">
               <p className="font-body text-[11px] text-[#6B7280]">
                 Semakan asas percuma &nbsp;·&nbsp;
-                <span className="font-heading font-bold text-[#064E4A]">Laporan penuh RM19</span>
+                <span className="font-heading font-bold text-[#064E4A]">Laporan penuh RM29</span>
               </p>
             </div>
           ) : (

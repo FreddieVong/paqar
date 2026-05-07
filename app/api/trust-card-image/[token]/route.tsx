@@ -4,7 +4,7 @@ import { getTrustCardByToken } from '@/lib/db/seller-trust-cards'
 import { getCheck }            from '@/lib/db/checks'
 import { decrypt }             from '@/lib/crypto'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 
 export async function GET(
   _req: NextRequest,
@@ -52,7 +52,7 @@ export async function GET(
           color: 'white', borderRadius: '100px', padding: '8px 24px',
           fontSize: '18px', fontWeight: 700,
         }}>
-          {hasIssues ? '⚠ Ada Isu — Semak Butiran' : '✓ Saman Clear'}
+          {hasIssues ? 'Ada Isu - Semak Butiran' : 'SAMAN CLEAR'}
         </div>
         <div style={{ display: 'flex', gap: '32px', marginTop: '8px' }}>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', textAlign: 'center' as const }}>

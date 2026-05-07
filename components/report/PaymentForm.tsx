@@ -37,7 +37,7 @@ export function PaymentForm({ checkId, claimToken }: Props) {
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-5">
       <p className="font-heading font-bold text-[14px] text-[#111827] mb-1">
-        Buka Laporan Risiko Pembeli — RM19
+        Buka Laporan Risiko Pembeli — RM29
       </p>
       <p className="font-body text-[12px] text-[#6B7280] mb-3">
         Semak harga pasaran · Ringkasan saman · Soalan untuk penjual · Tips rundingan · Senarai semak deposit
@@ -137,7 +137,7 @@ export function PaymentForm({ checkId, claimToken }: Props) {
                      rounded-[14px] py-4 flex items-center justify-center gap-2
                      disabled:opacity-60 transition-colors"
         >
-          {isPending ? 'Memproses…' : <>Bayar RM19 &amp; Buka Laporan →</>}
+          {isPending ? 'Memproses…' : <>Bayar RM29 &amp; Buka Laporan →</>}
         </button>
 
         <p className="font-body text-[11px] text-[#9CA3AF] text-center">

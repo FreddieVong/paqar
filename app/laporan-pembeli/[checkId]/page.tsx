@@ -36,7 +36,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               {plate}
             </h1>
             <p className="font-body text-[13px] text-[#6B7280] mt-1">
-              {isPaid ? 'Laporan penuh — dibayar' : 'Bayar RM19 untuk akses laporan penuh'}
+              {isPaid ? 'Laporan penuh — dibayar' : 'Bayar RM29 untuk akses laporan penuh'}
             </p>
           </div>
 
@@ -62,7 +62,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   <div className="text-center mb-4">
                     <span className="text-2xl">🔒</span>
                     <p className="font-heading font-bold text-[15px] text-[#111827] mt-2">
-                      Buka Laporan Risiko Pembeli — RM19
+                      Buka Laporan Risiko Pembeli — RM29
                     </p>
                     <p className="font-body text-[12px] text-[#6B7280] mt-1">
                       Semak harga · Saman · Soalan penjual · Tips rundingan
