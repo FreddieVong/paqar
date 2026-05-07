@@ -4,6 +4,7 @@ import { nanoid }          from 'nanoid'
 import { createBill }      from '@/lib/billplz'
 import { createTrustCard } from '@/lib/db/seller-trust-cards'
 import { getCheck }        from '@/lib/db/checks'
+import { decrypt }         from '@/lib/crypto'
 
 export async function initiateTrustCard(params: {
   checkId:     string
@@ -31,11 +32,14 @@ export async function initiateTrustCard(params: {
       redirectUrl: `${params.baseUrl}/buat-trust-card/selesai?token=${publicToken}`,
     })
 
+    const platePlain = decrypt(row.check.plate_encrypted as string).toUpperCase()
+
     await createTrustCard({
       checkId:       params.checkId,
       sellerEmail:   params.sellerEmail,
       publicToken,
       billplzBillId: bill.id,
+      platePlain,
     })
 
     return { error: null, billUrl: bill.url }

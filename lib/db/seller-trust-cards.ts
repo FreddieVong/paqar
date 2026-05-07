@@ -6,6 +6,7 @@ export async function createTrustCard(params: {
   sellerEmail:   string
   publicToken:   string
   billplzBillId: string
+  platePlain:    string
 }): Promise<SellerTrustCard> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
@@ -16,6 +17,7 @@ export async function createTrustCard(params: {
       public_token:    params.publicToken,
       billplz_bill_id: params.billplzBillId,
       amount_cents:    2900,
+      plate_plain:     params.platePlain,
     })
     .select()
     .single()

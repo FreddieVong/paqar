@@ -2,9 +2,8 @@ import { ImageResponse } from 'next/og'
 import { NextRequest }   from 'next/server'
 import { getTrustCardByToken } from '@/lib/db/seller-trust-cards'
 import { getCheck }            from '@/lib/db/checks'
-import { decrypt }             from '@/lib/crypto'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 
 export async function GET(
   _req: NextRequest,
@@ -15,8 +14,8 @@ export async function GET(
     return new Response('Not found', { status: 404 })
   }
 
-  const row   = await getCheck(card.check_id)
-  const plate = row ? decrypt(row.check.plate_encrypted as string).toUpperCase() : '—'
+  const row       = await getCheck(card.check_id)
+  const plate     = card.plate_plain ?? (row ? '—' : '—')
   const hasIssues = row?.results.some(r => r.status === 'hit') ?? false
 
   function fmtDate(iso: string) {

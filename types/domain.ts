@@ -70,6 +70,7 @@ export interface SellerTrustCard {
   check_id:        string
   seller_email:    string
   public_token:    string
+  plate_plain:     string | null
   status:          'pending' | 'paid' | 'expired'
   billplz_bill_id: string | null
   amount_cents:    number
