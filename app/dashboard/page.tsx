@@ -46,38 +46,31 @@ export default async function DashboardPage() {
         <div className="pt-6 space-y-5">
 
           {/* Status banner */}
-          <div className={`rounded-[14px] px-4 py-3.5 flex items-center gap-3 ${
+          <div className={`rounded-[14px] px-4 py-3.5 ${
             status === 'all_clear' ? 'bg-[#064E4A]' :
             status === 'attention' ? 'bg-[#B45309]' : 'bg-[#DC2626]'
           }`}>
-            <span className="text-2xl">
-              {status === 'all_clear' ? '✅' : status === 'attention' ? '⚠️' : '🔴'}
-            </span>
-            <div>
-              <p className="font-heading font-bold text-[14px] text-white">
-                {status === 'all_clear'
-                  ? 'Semua dokumen dalam order'
-                  : status === 'attention'
-                  ? 'Beberapa dokumen perlu perhatian'
-                  : 'Ada dokumen perlu tindakan segera'}
-              </p>
-              <p className="font-body text-[12px] text-white/70 mt-0.5">
-                {status === 'all_clear'
-                  ? 'Tiada dokumen tamat tempoh dalam masa terdekat'
-                  : 'Semak kad di bawah untuk butiran'}
-              </p>
-            </div>
+            <p className="font-heading font-bold text-[14px] text-white">
+              {status === 'all_clear'
+                ? 'Semua dokumen dalam order'
+                : status === 'attention'
+                ? 'Beberapa dokumen perlu perhatian'
+                : 'Ada dokumen perlu tindakan segera'}
+            </p>
+            <p className="font-body text-[12px] text-white/70 mt-0.5">
+              {status === 'all_clear'
+                ? 'Tiada dokumen tamat tempoh dalam masa terdekat'
+                : 'Semak kad di bawah untuk butiran'}
+            </p>
           </div>
 
           {/* Vehicle pill */}
           {vehicleResult ? (
-            <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="font-heading font-extrabold text-[18px] text-[#111827] tracking-[.06em]">
-                  {vehicleResult.platePlain.toUpperCase()}
-                </p>
-                <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5">Kenderaan anda</p>
-              </div>
+            <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3">
+              <p className="font-heading font-extrabold text-[18px] text-[#111827] tracking-[.06em]">
+                {vehicleResult.platePlain.toUpperCase()}
+              </p>
+              <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5">Kenderaan anda</p>
             </div>
           ) : (
             <div className="bg-[#FEF9C3] border border-[#FDE68A] rounded-xl px-4 py-3">
@@ -95,7 +88,7 @@ export default async function DashboardPage() {
             Status Dokumen
           </p>
 
-          {/* Expiry cards — revalidatePath handles refresh, onSaved is a no-op */}
+          {/* Expiry cards */}
           <div className="space-y-3">
             {DOC_TYPES.map(dt => (
               <ExpiryCard
@@ -108,14 +101,11 @@ export default async function DashboardPage() {
           </div>
 
           {/* Email reminder note */}
-          <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3.5 flex items-center gap-3">
-            <span className="text-lg">📧</span>
-            <div>
-              <p className="font-heading font-bold text-[13px] text-[#111827]">Peringatan E-mel Aktif</p>
-              <p className="font-body text-[12px] text-[#6B7280] mt-0.5">
-                Kami akan hantar e-mel 90, 60, 30, 7 &amp; 1 hari sebelum tamat tempoh.
-              </p>
-            </div>
+          <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3.5">
+            <p className="font-heading font-bold text-[13px] text-[#111827]">Peringatan E-mel Aktif</p>
+            <p className="font-body text-[12px] text-[#6B7280] mt-0.5">
+              Kami akan hantar e-mel 90, 60, 30, 7 &amp; 1 hari sebelum tamat tempoh.
+            </p>
           </div>
 
         </div>

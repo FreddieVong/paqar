@@ -18,8 +18,25 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Paqar — Semak Saman & Blacklist',
-  description: 'Semak saman, status blacklist dan dokumen kenderaan anda dengan cepat dan mudah.',
+  title: 'Paqar — Semak Saman & Blacklist Kenderaan',
+  description: 'Semak saman PDRM, JPJ, AES dan status blacklist kenderaan anda dengan cepat. Percuma. Keputusan dalam 60 saat.',
+  metadataBase: new URL('https://paqar.my'),
+  openGraph: {
+    title: 'Paqar — Semak Saman & Blacklist Kenderaan',
+    description: 'Semak saman PDRM, JPJ, AES dan status blacklist kenderaan anda dengan cepat. Percuma. Keputusan dalam 60 saat.',
+    url: 'https://paqar.my',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Paqar — Semak Saman & Blacklist Kenderaan',
+    description: 'Semak saman PDRM, JPJ, AES dan status blacklist kenderaan anda dengan cepat. Percuma.',
+  },
+  alternates: {
+    canonical: 'https://paqar.my',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

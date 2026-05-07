@@ -6,10 +6,10 @@ import type { DocType, DocumentExpiry } from '@/types/domain'
 
 type ExpiryStatus = 'safe' | 'warning' | 'urgent' | 'expired' | 'missing'
 
-const DOC_CONFIG: Record<DocType, { label: string; icon: string }> = {
-  roadtax:         { label: 'Cukai Jalan',  icon: '🚗' },
-  insurance:       { label: 'Insurans',      icon: '🛡️' },
-  driving_licence: { label: 'Lesen Memandu', icon: '🪪' },
+const DOC_CONFIG: Record<DocType, { label: string; abbr: string }> = {
+  roadtax:         { label: 'Cukai Jalan',  abbr: 'CJ' },
+  insurance:       { label: 'Insurans',      abbr: 'IN' },
+  driving_licence: { label: 'Lesen Memandu', abbr: 'LM' },
 }
 
 const CARD_STYLES: Record<ExpiryStatus, string> = {
@@ -56,7 +56,7 @@ function getDaysLabel(expiresOn: string | null): string {
   if (days < 0)   return `Tamat ${Math.abs(days)} hari lepas`
   if (days === 0) return 'Tamat hari ini!'
   if (days <= 29) return `${days} hari lagi — Segera!`
-  if (days <= 60) return `${days} hari lagi ⚠`
+  if (days <= 60) return `${days} hari lagi — Perhatian`
   return `${days} hari lagi`
 }
 
@@ -94,8 +94,10 @@ export function ExpiryCard({ docType, expiry, onSaved }: Props) {
   return (
     <div className={`border-[1.5px] rounded-[14px] p-4 transition-all ${CARD_STYLES[status]}`}>
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${ICON_BG[status]}`}>
-          {cfg.icon}
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${ICON_BG[status]}`}>
+          <span className={`font-heading font-extrabold text-[11px] tracking-wide ${DAYS_COLOR[status]}`}>
+            {cfg.abbr}
+          </span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-heading font-bold text-[13px] text-[#111827]">{cfg.label}</p>
