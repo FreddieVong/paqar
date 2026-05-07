@@ -118,7 +118,6 @@ export default async function DashboardPage() {
                 key={dt}
                 docType={dt}
                 expiry={expiries.find(e => e.document_type === dt) ?? null}
-                onSaved={() => {}}
               />
             ))}
           </div>

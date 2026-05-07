@@ -69,10 +69,9 @@ function formatDisplayDate(iso: string): string {
 interface Props {
   docType: DocType
   expiry:  DocumentExpiry | null
-  onSaved: () => void
 }
 
-export function ExpiryCard({ docType, expiry, onSaved }: Props) {
+export function ExpiryCard({ docType, expiry }: Props) {
   const [expanded,    setExpanded]     = useState(false)
   const [dateValue,   setDateValue]    = useState(expiry?.expires_on ?? '')
   const [fieldError,  setFieldError]   = useState<string | null>(null)
@@ -87,7 +86,6 @@ export function ExpiryCard({ docType, expiry, onSaved }: Props) {
       const result = await saveDocumentExpiry({ docType, expiresOn: dateValue })
       if (result.error) { setFieldError(result.error); return }
       setExpanded(false)
-      onSaved()
     })
   }
 
