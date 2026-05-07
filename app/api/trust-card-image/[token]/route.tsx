@@ -4,7 +4,7 @@ import { getTrustCardByToken } from '@/lib/db/seller-trust-cards'
 import { getCheck }            from '@/lib/db/checks'
 import { decrypt }             from '@/lib/crypto'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 export async function GET(
   _req: NextRequest,
@@ -19,12 +19,12 @@ export async function GET(
   const plate = row ? decrypt(row.check.plate_encrypted as string).toUpperCase() : '—'
   const hasIssues = row?.results.some(r => r.status === 'hit') ?? false
 
-  const checkedDate = new Date(card.paid_at ?? card.created_at).toLocaleDateString('ms-MY', {
-    day: 'numeric', month: 'long', year: 'numeric',
-  })
-  const expiryDate = card.expires_at
-    ? new Date(card.expires_at).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' })
-    : '—'
+  function fmtDate(iso: string) {
+    const d = new Date(iso)
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`
+  }
+  const checkedDate = fmtDate(card.paid_at ?? card.created_at)
+  const expiryDate  = card.expires_at ? fmtDate(card.expires_at) : '-'
 
   return new ImageResponse(
     (
