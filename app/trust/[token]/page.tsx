@@ -132,11 +132,13 @@ export default async function TrustCardPage({ params }: Props) {
       <Nav />
       <Shell>
         <div className="pt-6 pb-10 max-w-sm mx-auto space-y-4">
-          <div className="text-center">
-            <span className="inline-block font-heading font-bold text-[10px] uppercase tracking-[.1em] text-[#9CA3AF] border border-[#E5E7EB] rounded-full px-3 py-1">
-              Beta · Data semakan adalah demonstrasi
-            </span>
-          </div>
+          {process.env.DATA_SOURCE_MODE !== 'real' && (
+            <div className="text-center">
+              <span className="inline-block font-heading font-bold text-[10px] uppercase tracking-[.1em] text-[#9CA3AF] border border-[#E5E7EB] rounded-full px-3 py-1">
+                Beta · Data semakan adalah demonstrasi
+              </span>
+            </div>
+          )}
 
           <div className={`rounded-[16px] p-6 text-center ${isClean ? 'bg-[#064E4A]' : 'bg-[#B45309]'}`}>
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.12em] text-white/50 mb-3">

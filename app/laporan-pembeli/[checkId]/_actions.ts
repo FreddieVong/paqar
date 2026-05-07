@@ -3,6 +3,7 @@
 import { createBill }        from '@/lib/billplz'
 import { createBuyerReport } from '@/lib/db/buyer-reports'
 import { getCheck }          from '@/lib/db/checks'
+import { env }               from '@/lib/env'
 
 export async function initiateBuyerReport(params: {
   checkId:          string
@@ -29,7 +30,7 @@ export async function initiateBuyerReport(params: {
       description:  `Laporan Pembeli Paqar - ${params.checkId}`,
       callbackUrl:  `${params.baseUrl}/api/webhooks/billplz`,
       redirectUrl:  `${params.baseUrl}/laporan-pembeli/${params.checkId}/selesai?claim_token=${params.claimToken}`,
-      collectionId: process.env.BILLPLZ_COLLECTION_ID_BUYER ?? process.env.BILLPLZ_COLLECTION_ID,
+      collectionId: env.BILLPLZ_COLLECTION_ID_BUYER ?? env.BILLPLZ_COLLECTION_ID,
     })
 
     await createBuyerReport({

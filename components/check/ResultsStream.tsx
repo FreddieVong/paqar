@@ -11,6 +11,7 @@ import type { Check, CheckResult } from '@/types/domain'
 import type { PollCheckResponse, CheckMode } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
+const POLL_TIMEOUT_MS  = 90_000
 const TOTAL_SOURCES    = 7
 
 interface Props {
@@ -48,13 +49,17 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner' }: Props) {
   }, [checkId, claimToken])
 
   useEffect(() => {
-    if (check?.status === 'complete') return  // Already done — don't fire another poll
+    if (check?.status === 'complete') return
     void poll()
     const interval = setInterval(() => {
       if (check?.status === 'complete') { clearInterval(interval); return }
       void poll()
     }, POLL_INTERVAL_MS)
-    return () => clearInterval(interval)
+    const timeout = setTimeout(() => {
+      clearInterval(interval)
+      setError('Semakan mengambil masa terlalu lama — sila muat semula halaman')
+    }, POLL_TIMEOUT_MS)
+    return () => { clearInterval(interval); clearTimeout(timeout) }
   }, [poll, check?.status])
 
   // Auto-claim: authenticated user lands on unclaimed check
@@ -94,7 +99,10 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner' }: Props) {
       </div>
 
       <div className="space-y-2">
-        {results.map((result) => (
+        {(isBuyer
+          ? results.filter(r => ['pdrm','jpj','aes','local_councils'].includes(r.source))
+          : results
+        ).map((result) => (
           <ResultCard key={result.source} result={result} buyerMode={isBuyer} />
         ))}
       </div>

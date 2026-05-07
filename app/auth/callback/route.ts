@@ -12,15 +12,22 @@ export async function GET(request: NextRequest) {
 
   const supabase = createClient()
   let userId: string | undefined
+  let authError = false
 
   if (code) {
-    // PKCE flow — used by @supabase/ssr browser client
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error && data.user) userId = data.user.id
+    if (error) authError = true
+    else if (data.user) userId = data.user.id
   } else if (tokenHash && type) {
-    // Token hash flow — used by some Supabase project configurations
     const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
-    if (!error && data.user) userId = data.user.id
+    if (error) authError = true
+    else if (data.user) userId = data.user.id
+  } else {
+    authError = true
+  }
+
+  if (authError) {
+    return NextResponse.redirect(new URL('/auth?error=link_expired', request.url))
   }
 
   if (userId && claimToken) {
