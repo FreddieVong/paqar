@@ -8,6 +8,14 @@ import { ImmigrationStub }   from './stubs/immigration'
 import { LhdnStub }          from './stubs/lhdn'
 import { PtptnStub }         from './stubs/ptptn'
 
+import { PdrmAdapter }          from './real/pdrm'
+import { JpjAdapter }           from './real/jpj'
+import { AesAdapter }           from './real/aes'
+import { LocalCouncilsAdapter } from './real/local-councils'
+import { ImmigrationAdapter }   from './real/immigration'
+import { LhdnAdapter }          from './real/lhdn'
+import { PtptnAdapter }         from './real/ptptn'
+
 function getStubAdapters(): DataSourceAdapter[] {
   return [
     new PdrmStub(),
@@ -21,8 +29,15 @@ function getStubAdapters(): DataSourceAdapter[] {
 }
 
 function getRealAdapters(_country: Country): DataSourceAdapter[] {
-  // Phase 2: import real adapters here
-  throw new Error('Real adapters not implemented — set DATA_SOURCE_MODE=stub')
+  return [
+    new PdrmAdapter(),
+    new JpjAdapter(),
+    new AesAdapter(),
+    new LocalCouncilsAdapter(),
+    new ImmigrationAdapter(),
+    new LhdnAdapter(),
+    new PtptnAdapter(),
+  ]
 }
 
 /**
