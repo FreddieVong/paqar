@@ -8,7 +8,7 @@ export default function HomePage() {
       <Nav />
 
       {/* ── HERO ── */}
-      <section className="bg-white px-5 pt-10 pb-12 md:pt-16 md:pb-20">
+      <section id="semak" className="bg-white px-5 pt-10 pb-12 md:pt-16 md:pb-20">
         <div className="max-w-5xl mx-auto md:grid md:grid-cols-2 md:gap-14 md:items-center">
 
           {/* Copy */}
@@ -151,6 +151,29 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── BELI KERETA TERPAKAI? ── */}
+      <section className="bg-[#111827] px-5 py-10">
+        <div className="max-w-5xl mx-auto md:flex md:items-center md:justify-between md:gap-8">
+          <div className="mb-5 md:mb-0">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-white/50 mb-2">
+              Untuk Pembeli
+            </p>
+            <h2 className="font-heading font-extrabold text-[22px] text-white mb-2">
+              Nak beli kereta terpakai? Semak dahulu.
+            </h2>
+            <p className="font-body text-[14px] text-white/70 leading-relaxed">
+              Penjual tidak selalu dedahkan semua risiko. Laporan Pembeli Paqar bantu anda semak saman, nilai harga pasaran, dan sedia soalan sebelum bayar deposit.
+            </p>
+          </div>
+          <a
+            href="/#semak"
+            className="block w-full md:w-auto bg-[#DC2626] text-white font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 text-center hover:bg-[#B91C1C] transition-colors whitespace-nowrap"
+          >
+            Semak Kereta Yang Nak Dibeli →
+          </a>
         </div>
       </section>
 

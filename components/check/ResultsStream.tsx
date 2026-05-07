@@ -146,11 +146,11 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner' }: Props) {
           </p>
           <div className="flex flex-col gap-2 mb-4">
             {[
-              'Sejarah saman lengkap semua sumber',
-              'Semak hutang pinjaman (panduan JPJ)',
-              'Analisis harga pasaran terperinci',
-              'Senarai soalan untuk penjual',
-              'Cadangan rundingan harga',
+              'Verdict jelas: Risiko Rendah, Perlu Tanya, atau Semak Dahulu',
+              'Status saman PDRM, JPJ, AES & Majlis Tempatan dengan jumlah',
+              'Anggaran harga pasaran vs harga diminta',
+              'Soalan untuk tanya penjual',
+              'Skrip rundingan harga siap guna',
             ].map((item) => (
               <span key={item} className="font-body text-[12px] text-white/80 flex gap-2">
                 <span className="text-[#FACC15] flex-shrink-0">✓</span>{item}
