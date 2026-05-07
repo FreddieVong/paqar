@@ -17,8 +17,9 @@ import {
 
 const requestSchema = z.object({
   plate:           plateSchema,
-  ic:              icSchema,
+  ic:              z.union([icSchema, z.literal('')]).optional().default(''),
   idempotencyKey:  z.string().uuid().optional(),
+  mode:            z.enum(['owner', 'buyer']).optional().default('owner'),
 })
 
 export async function POST(request: NextRequest) {
