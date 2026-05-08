@@ -1,13 +1,12 @@
 import { withPage } from '../browser.js'
 import type { SamanResult, SamanRecord } from '../types.js'
 
-// JPJ source discovery order:
-//   1. www.jpj.gov.my      — main WordPress portal (200 OK, publicly reachable)
-//   2. myjpj.jpj.gov.my    — app companion portal (redirects to FAQ; login-gated saman check)
-//   3. public.jpj.gov.my   — ZK Framework portal (redirects to /public/login.zul; login required)
+// JPJ source discovery:
+//   myjpj.jpj.gov.my   — app companion portal (redirects to FAQ; login-gated)
+//   public.jpj.gov.my  — ZK Framework portal (redirects to /public/login.zul; login required)
+// www.jpj.gov.my is skipped — WordPress info site with no saman form, wastes 10s per attempt
 // eservices.jpj.gov.my is not used — DNS does not resolve from cloud IPs
 const CANDIDATES = [
-  'https://www.jpj.gov.my',
   'https://myjpj.jpj.gov.my',
   'https://public.jpj.gov.my',
 ] as const
