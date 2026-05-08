@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     (async () => {
       try {
         await setCheckRunning(checkId)
-        const adapters = getAdapters().map((a) => withTimeout(a))
+        const adapters = getAdapters().map((a) => withTimeout(a, 40_000))
         await Promise.all(
           adapters.map(async (adapter) => {
             const result = await adapter.check(plate, ic)

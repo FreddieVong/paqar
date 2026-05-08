@@ -1,5 +1,6 @@
 import type { Check, CheckResult } from '@/types/domain'
 import type { SourceData, SamanRecord } from '@/types/api'
+import { SellerVerifyCTA } from './SellerVerifyCTA'
 
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
@@ -39,12 +40,17 @@ function getSamanAmountForSource(result: CheckResult): number {
   return data.samans.reduce((s: number, x: SamanRecord) => s + x.amount, 0)
 }
 
-function getVerdict(vehicleResults: CheckResult[]): 'low' | 'caution' | 'high' {
+function getVerdict(vehicleResults: CheckResult[]): 'low' | 'caution' | 'high' | 'incomplete' {
   const hits = vehicleResults.filter(r => r.status === 'hit')
-  if (hits.length === 0) return 'low'
-  const total = getSamanTotal(hits)
-  if (hits.length >= 2 || total >= 500) return 'high'
-  return 'caution'
+  const unverifiedCritical = vehicleResults.filter(r =>
+    ['pdrm', 'jpj', 'aes'].includes(r.source) && r.status === 'requires_user_action'
+  )
+  if (hits.length > 0) {
+    const total = getSamanTotal(hits)
+    return hits.length >= 2 || total >= 500 ? 'high' : 'caution'
+  }
+  if (unverifiedCritical.length > 0) return 'incomplete'
+  return 'low'
 }
 
 const SELLER_QUESTIONS = [
@@ -64,36 +70,49 @@ interface Props {
   claimedMileageKm?: number | null
 }
 
-export function BuyerReportContent({ check: _check, results, plate: _plate, askingPriceRm, claimedMileageKm }: Props) {
-  const vehicleResults = results.filter(r => VEHICLE_SOURCES.includes(r.source as VehicleSource))
-  const samanTotal     = getSamanTotal(vehicleResults)
-  const samanCount     = getSamanCount(vehicleResults)
-  const verdict        = getVerdict(vehicleResults)
+export function BuyerReportContent({ check: _check, results, plate, askingPriceRm, claimedMileageKm }: Props) {
+  const vehicleResults      = results.filter(r => VEHICLE_SOURCES.includes(r.source as VehicleSource))
+  const samanTotal          = getSamanTotal(vehicleResults)
+  const samanCount          = getSamanCount(vehicleResults)
+  const verdict             = getVerdict(vehicleResults)
+  const needsSellerVerify   = verdict === 'incomplete'
+  const criticalUnverified  = vehicleResults.some(r =>
+    ['pdrm', 'jpj', 'aes'].includes(r.source) && r.status === 'requires_user_action'
+  )
+  const hasPdrmJpjUnverified = vehicleResults.some(r =>
+    ['pdrm', 'jpj'].includes(r.source) && r.status === 'requires_user_action'
+  )
 
   return (
     <div className="space-y-5">
 
       {/* Section 1: Overall Verdict */}
       <div className={`rounded-[16px] p-5 border ${
-        verdict === 'low'     ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
-        verdict === 'caution' ? 'bg-[#FFFBEB] border-[#FDE68A]' :
-                                'bg-[#FEF2F2] border-[#FECACA]'
+        verdict === 'low'        ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
+        verdict === 'incomplete' ? 'bg-[#EFF6FF] border-[#BFDBFE]' :
+        verdict === 'caution'    ? 'bg-[#FFFBEB] border-[#FDE68A]' :
+                                   'bg-[#FEF2F2] border-[#FECACA]'
       }`}>
         <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
           Keputusan Semakan
         </p>
         <p className={`font-heading font-extrabold text-[20px] mb-1 ${
-          verdict === 'low'     ? 'text-[#15803D]' :
-          verdict === 'caution' ? 'text-[#B45309]' :
-                                  'text-[#B91C1C]'
+          verdict === 'low'        ? 'text-[#15803D]' :
+          verdict === 'incomplete' ? 'text-[#1D4ED8]' :
+          verdict === 'caution'    ? 'text-[#B45309]' :
+                                     'text-[#B91C1C]'
         }`}>
-          {verdict === 'low'     ? 'Risiko Rendah — Layak Diteruskan' :
-           verdict === 'caution' ? 'Perlu Tanya Penjual' :
-                                   'Semak Dahulu'}
+          {verdict === 'low'        ? 'Risiko Rendah — Layak Diteruskan' :
+           verdict === 'incomplete' ? 'Semakan Separa Lengkap' :
+           verdict === 'caution'    ? 'Perlu Tanya Penjual' :
+                                      'Semak Dahulu'}
         </p>
         <p className="font-body text-[13px] text-[#374151] leading-relaxed">
           {verdict === 'low'
             ? 'Tiada isu kritikal dijumpai daripada semakan ini.'
+            : verdict === 'incomplete'
+            ? 'Tiada isu disahkan setakat ini. PDRM dan JPJ memerlukan pengesahan penjual — laporan ini masih memberikan maklumat penting untuk keputusan anda.'
+            // reassurance rendered separately below
             : verdict === 'caution'
             ? `Terdapat ${samanCount} saman berjumlah RM${samanTotal.toLocaleString()}. Minta penjual jelaskan sebelum bayar deposit.`
             : 'Beberapa isu ditemui. Jangan bayar deposit sebelum mendapat penjelasan penjual.'}
@@ -105,7 +124,15 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
             RM{samanTotal.toLocaleString()} saman dijumpai
           </p>
         )}
+        {verdict === 'incomplete' && (
+          <p className="font-body text-[11px] text-[#6B7280] mt-2 leading-relaxed">
+            Laporan ini masih membantu anda membuat keputusan awal sebelum bayar deposit. Untuk kepastian rasmi PDRM/JPJ, minta penjual verify.
+          </p>
+        )}
       </div>
+
+      {/* Seller Verify CTA — only when PDRM/JPJ need seller verification */}
+      {needsSellerVerify && <SellerVerifyCTA plate={plate} />}
 
       {/* Section 2: Saman & Status Kenderaan */}
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -114,9 +141,13 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
             Saman &amp; Status Kenderaan
           </p>
           <span className={`font-heading font-bold text-[11px] px-2.5 py-1 rounded-full ${
-            samanCount === 0 ? 'bg-[#DCFCE7] text-[#15803D]' : 'bg-[#FEE2E2] text-[#B91C1C]'
+            samanCount > 0              ? 'bg-[#FEE2E2] text-[#B91C1C]' :
+            criticalUnverified          ? 'bg-[#EFF6FF] text-[#1D4ED8]' :
+                                          'bg-[#DCFCE7] text-[#15803D]'
           }`}>
-            {samanCount === 0 ? 'Tiada Saman' : `${samanCount} Saman`}
+            {samanCount > 0        ? `${samanCount} Saman` :
+             criticalUnverified    ? '0 isu disahkan' :
+                                     'Tiada Saman'}
           </span>
         </div>
         <div className="space-y-2">
@@ -125,23 +156,31 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
             const status = r?.status ?? 'unavailable'
             const amount = r ? getSamanAmountForSource(r) : 0
             return (
-              <div key={source} className={`flex items-center justify-between px-3 py-2.5 rounded-lg border ${
-                status === 'hit'   ? 'bg-[#FEF2F2] border-[#FECACA]' :
-                status === 'clear' ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
-                                     'bg-[#F9FAFB] border-[#E5E7EB]'
+              <div key={source} className={`px-3 py-2.5 rounded-lg border ${
+                status === 'hit'                  ? 'bg-[#FEF2F2] border-[#FECACA]' :
+                status === 'clear'                ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
+                status === 'requires_user_action' ? 'bg-[#EFF6FF] border-[#BFDBFE]' :
+                                                    'bg-[#F9FAFB] border-[#E5E7EB]'
               }`}>
-                <span className="font-heading font-bold text-[12px] text-[#111827]">
-                  {SOURCE_LABELS[source]}
-                </span>
-                <span className={`font-body text-[11px] ${
-                  status === 'hit'   ? 'text-[#B91C1C]' :
-                  status === 'clear' ? 'text-[#15803D]' :
-                                       'text-[#9CA3AF]'
-                }`}>
-                  {status === 'clear' ? 'Tiada Saman' :
-                   status === 'hit'   ? `Ada Saman${amount > 0 ? ` — RM${amount.toLocaleString()}` : ''}` :
-                                        'Tidak dapat disahkan'}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="font-heading font-bold text-[12px] text-[#111827]">
+                    {SOURCE_LABELS[source]}
+                  </span>
+                  <span className={`font-body text-[11px] ${
+                    status === 'hit'                  ? 'text-[#B91C1C]' :
+                    status === 'clear'                ? 'text-[#15803D]' :
+                    status === 'requires_user_action' ? 'text-[#1D4ED8]' :
+                                                        'text-[#9CA3AF]'
+                  }`}>
+                    {status === 'clear'                ? 'Tiada Saman' :
+                     status === 'hit'                  ? `Ada Saman${amount > 0 ? ` — RM${amount.toLocaleString()}` : ''}` :
+                     status === 'requires_user_action' ? 'Belum Disahkan' :
+                                                          'Tidak dapat disahkan'}
+                  </span>
+                </div>
+                {status === 'requires_user_action' && (
+                  <p className="font-body text-[10px] text-[#6B7280] mt-0.5">Perlu pengesahan penjual</p>
+                )}
               </div>
             )
           })}
@@ -210,10 +249,18 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
           Soalan untuk Penjual
         </p>
         <div className="space-y-3">
+          {hasPdrmJpjUnverified && (
+            <div className="flex gap-3">
+              <span className="font-heading font-bold text-[12px] text-[#1D4ED8] flex-shrink-0 mt-0.5">1.</span>
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                Boleh sahkan status saman PDRM/JPJ secara rasmi di Paqar sebelum saya bayar deposit?
+              </p>
+            </div>
+          )}
           {SELLER_QUESTIONS.map((q, i) => (
             <div key={i} className="flex gap-3">
               <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">
-                {i + 1}.
+                {hasPdrmJpjUnverified ? i + 2 : i + 1}.
               </span>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">{q}</p>
             </div>
@@ -221,10 +268,20 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
           {samanCount > 0 && (
             <div className="flex gap-3">
               <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">
-                {SELLER_QUESTIONS.length + 1}.
+                {(hasPdrmJpjUnverified ? 1 : 0) + SELLER_QUESTIONS.length + 1}.
               </span>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                 Boleh selesaikan saman ini dahulu, atau tolak RM{samanTotal.toLocaleString()} dari harga jual?
+              </p>
+            </div>
+          )}
+          {(claimedMileageKm ?? 0) > 150_000 && (
+            <div className="flex gap-3">
+              <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">
+                {(hasPdrmJpjUnverified ? 1 : 0) + SELLER_QUESTIONS.length + (samanCount > 0 ? 1 : 0) + 1}.
+              </span>
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                Mileage nampak tinggi untuk tahun kereta ini. Boleh tunjukkan rekod servis atau buku servis?
               </p>
             </div>
           )}
@@ -264,7 +321,7 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
         ) : (
           <>
             <p className="font-body text-[13px] text-white/80 leading-relaxed mb-4">
-              Tiada saman dijumpai. Gunakan kondisi fizikal dan harga pasaran sebagai asas rundingan.
+              Tiada isu disahkan setakat ini. Sumber penting seperti PDRM/JPJ masih memerlukan pengesahan penjual. Gunakan kondisi fizikal dan harga pasaran sebagai asas rundingan.
             </p>
             <div className="space-y-2.5">
               {[

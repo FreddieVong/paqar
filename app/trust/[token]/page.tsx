@@ -30,7 +30,7 @@ function computeState(results: CheckResult[], isExpired: boolean): TrustCardStat
     CRITICAL_SOURCES.includes(r.source as typeof CRITICAL_SOURCES[number])
   )
   if (criticalResults.some(r => r.status === 'hit'))     return 'issue'
-  if (criticalResults.some(r => ['unavailable', 'timeout', 'error'].includes(r.status))) return 'limited'
+  if (criticalResults.some(r => ['unavailable', 'timeout', 'error', 'requires_user_action'].includes(r.status))) return 'limited'
   return 'clean'
 }
 

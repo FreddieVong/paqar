@@ -14,6 +14,7 @@ export type SourceId =
 export type SourceStatus =
   | 'pending' | 'clear' | 'hit'
   | 'unavailable' | 'timeout' | 'partial' | 'error'
+  | 'requires_user_action' | 'proof_required'
 
 export interface SourceResult {
   source:       SourceId

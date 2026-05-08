@@ -5,7 +5,7 @@ import type { SourceData } from '@/types/api'
 type ScraperPayload = { plate?: string; ic?: string }
 
 interface ScraperResponse {
-  status:      'clear' | 'hit' | 'unavailable'
+  status:      'clear' | 'hit' | 'unavailable' | 'requires_user_action'
   samans?:     Array<{
     offence: string; date: string; amount: number; currency: string
     location: string | null; discounted: number | null; paymentUrl: string | null
@@ -51,6 +51,9 @@ export async function callScraper(
 
     if (data.status === 'unavailable') {
       return { ...base, status: 'unavailable', data: null, errorMessage: data.error ?? 'Unavailable' }
+    }
+    if (data.status === 'requires_user_action') {
+      return { ...base, status: 'requires_user_action', data: null, errorMessage: data.error ?? 'Requires user action' }
     }
 
     // Saman sources

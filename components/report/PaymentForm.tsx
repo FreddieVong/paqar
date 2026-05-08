@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { initiateBuyerReport }     from '@/app/laporan-pembeli/[checkId]/_actions'
 
 interface Props {
@@ -15,6 +15,12 @@ export function PaymentForm({ checkId, claimToken }: Props) {
   const [listing,  setListing]  = useState('')
   const [error,    setError]    = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const emailRef = useRef<HTMLInputElement>(null)
+
+  function handleSkip() {
+    setPrice(''); setMileage(''); setListing('')
+    emailRef.current?.focus()
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -39,14 +45,24 @@ export function PaymentForm({ checkId, claimToken }: Props) {
       <p className="font-heading font-bold text-[14px] text-[#111827] mb-1">
         Buka Laporan Risiko Pembeli — RM19
       </p>
-      <p className="font-body text-[12px] text-[#6B7280] mb-3">
+      <p className="font-body text-[12px] text-[#6B7280] mb-4">
         Semak harga pasaran · Ringkasan saman · Soalan untuk penjual · Tips rundingan · Senarai semak deposit
       </p>
-      <p className="font-body text-[12px] text-[#6B7280] mb-4">
-        Masukkan butiran kereta untuk analisis yang lebih tepat.
-      </p>
-
       <form onSubmit={handleSubmit} className="space-y-3.5">
+
+        {/* Optional section header */}
+        <div className="flex items-center justify-between">
+          <p className="font-body text-[11px] text-[#9CA3AF] uppercase tracking-[.06em]">
+            Optional — tambah untuk laporan lebih tepat
+          </p>
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="font-body text-[12px] text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+          >
+            Teruskan tanpa ini →
+          </button>
+        </div>
 
         {/* Asking price */}
         <div>
@@ -115,6 +131,7 @@ export function PaymentForm({ checkId, claimToken }: Props) {
             Alamat E-mel <span className="text-[#DC2626] ml-0.5">*</span>
           </label>
           <input
+            ref={emailRef}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}

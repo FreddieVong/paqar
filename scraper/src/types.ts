@@ -8,7 +8,7 @@ export interface SamanRecord {
   paymentUrl: string | null
 }
 
-export type ScraperStatus = 'clear' | 'hit' | 'unavailable'
+export type ScraperStatus = 'clear' | 'hit' | 'unavailable' | 'requires_user_action'
 
 export interface SamanResult {
   status:  ScraperStatus

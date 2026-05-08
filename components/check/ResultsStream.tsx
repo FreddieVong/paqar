@@ -5,6 +5,7 @@ import { useRouter }    from 'next/navigation'
 import { Progress }     from '@/components/ui/progress'
 import { Button }       from '@/components/ui/button'
 import { ResultCard }   from './ResultCard'
+import { SellerVerifyCTA } from '@/components/report/SellerVerifyCTA'
 import { createClient } from '@/lib/supabase/client'
 import { claimCheck }   from '@/app/auth/_actions'
 import type { Check, CheckResult } from '@/types/domain'
@@ -14,13 +15,16 @@ const POLL_INTERVAL_MS = 1_500
 const POLL_TIMEOUT_MS  = 90_000
 const TOTAL_SOURCES    = 7
 
+const CRITICAL_SOURCES = ['pdrm', 'jpj', 'aes']
+
 interface Props {
   checkId:    string
   claimToken: string
   mode?:      CheckMode
+  plate?:     string
 }
 
-export function ResultsStream({ checkId, claimToken, mode = 'owner' }: Props) {
+export function ResultsStream({ checkId, claimToken, mode = 'owner', plate }: Props) {
   const router = useRouter()
   const [check,      setCheck]      = useState<Check | null>(null)
   const [results,    setResults]    = useState<CheckResult[]>([])
@@ -74,12 +78,14 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner' }: Props) {
     }
   }, [check, authedUser, poll])
 
-  const completedCount = results.filter((r) => r.status !== 'pending').length
-  const isComplete     = check?.status === 'complete'
-  const isBuyer        = mode === 'buyer'
-  const showSaveCta    = isComplete && !isBuyer && check?.user_id == null && authedUser === null
-  const showDocsCta    = isComplete && !isBuyer && authedUser != null
-  const showBuyerCta   = isComplete && isBuyer
+  const completedCount     = results.filter((r) => r.status !== 'pending').length
+  const isComplete         = check?.status === 'complete'
+  const isBuyer            = mode === 'buyer'
+  const showSaveCta        = isComplete && !isBuyer && check?.user_id == null && authedUser === null
+  const showDocsCta        = isComplete && !isBuyer && authedUser != null
+  const showBuyerCta       = isComplete && isBuyer
+  const showSellerVerifyCta = isComplete && isBuyer && !!plate &&
+    results.some(r => CRITICAL_SOURCES.includes(r.source) && r.status === 'requires_user_action')
 
   if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
@@ -106,6 +112,8 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner' }: Props) {
           <ResultCard key={result.source} result={result} buyerMode={isBuyer} />
         ))}
       </div>
+
+      {showSellerVerifyCta && plate && <SellerVerifyCTA plate={plate} />}
 
       {showSaveCta && (
         <div className="border-[1.5px] border-dashed border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">

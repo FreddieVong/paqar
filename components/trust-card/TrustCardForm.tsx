@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useSearchParams }         from 'next/navigation'
 import { initiateTrustCard }       from '@/app/buat-trust-card/_actions'
 import type { CreateCheckResponse } from '@/types/api'
 
-// Sources that block eligibility if they have a hit
+// Sources that block eligibility if they have a hit or require user action
 const CRITICAL_SOURCES = ['pdrm', 'jpj', 'aes']
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -14,22 +15,31 @@ const SOURCE_LABELS: Record<string, string> = {
   local_councils:'Majlis Tempatan',
 }
 
+const PORTAL_LINKS: Record<string, { label: string; url: string }> = {
+  pdrm: { label: 'Semak di MyBayar PDRM →', url: 'https://mybayar.rmp.gov.my' },
+  jpj:  { label: 'Semak di MyJPJ →',        url: 'https://myjpj.jpj.gov.my'   },
+}
+
 interface CheckResultSummary {
   source: string
   status: string
 }
 
-function isEligible(results: CheckResultSummary[]): boolean {
-  return !results.some(r =>
-    CRITICAL_SOURCES.includes(r.source) && r.status === 'hit'
-  )
+type EligibilityState = 'eligible' | 'has_hit' | 'needs_verification'
+
+function getEligibility(results: CheckResultSummary[]): EligibilityState {
+  const criticals = results.filter(r => CRITICAL_SOURCES.includes(r.source))
+  if (criticals.some(r => r.status === 'hit'))                    return 'has_hit'
+  if (criticals.some(r => r.status === 'requires_user_action'))   return 'needs_verification'
+  return 'eligible'
 }
 
-type Step = 'check' | 'eligible' | 'ineligible'
+type Step = 'check' | 'eligible' | 'ineligible' | 'needs_verification'
 
 export function TrustCardForm() {
+  const searchParams = useSearchParams()
   const [step,       setStep]       = useState<Step>('check')
-  const [plate,      setPlate]      = useState('')
+  const [plate,      setPlate]      = useState(() => searchParams.get('plate')?.toUpperCase() ?? '')
   const [ic,         setIc]         = useState('')
   const [email,      setEmail]      = useState('')
   const [checkId,    setCheckId]    = useState('')
@@ -70,9 +80,16 @@ export function TrustCardForm() {
       }
 
       const results = await poll()
+      const eligibility = getEligibility(results)
 
-      if (isEligible(results)) {
+      if (eligibility === 'eligible') {
         setStep('eligible')
+      } else if (eligibility === 'needs_verification') {
+        const unverified = results.filter(r =>
+          CRITICAL_SOURCES.includes(r.source) && r.status === 'requires_user_action'
+        )
+        setIssues(unverified)
+        setStep('needs_verification')
       } else {
         const hitIssues = results.filter(r =>
           CRITICAL_SOURCES.includes(r.source) && r.status === 'hit'
@@ -193,7 +210,62 @@ export function TrustCardForm() {
     )
   }
 
-  // ── Step 2b: Ineligible — private issue page, no payment ──────────────────
+  // ── Step 2b: Needs verification — guide to official portal ───────────────
+
+  if (step === 'needs_verification') {
+    return (
+      <div className="space-y-4">
+        <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-[16px] p-5">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#1D4ED8] mb-2">
+            Semakan Rasmi Diperlukan
+          </p>
+          <p className="font-heading font-bold text-[16px] text-[#111827] mb-1">
+            Trust Card belum boleh dijana.
+          </p>
+          <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
+            Semakan rasmi PDRM atau JPJ diperlukan sebelum Trust Card boleh dijana. Sila semak di portal rasmi terlebih dahulu.
+          </p>
+        </div>
+
+        <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
+            Portal Rasmi Untuk Semak
+          </p>
+          <div className="space-y-2">
+            {issues.map(r => {
+              const portal = PORTAL_LINKS[r.source]
+              return (
+                <div key={r.source} className="flex items-center justify-between px-3 py-2.5 bg-[#EFF6FF] rounded-lg">
+                  <span className="font-heading font-bold text-[13px] text-[#111827]">
+                    {SOURCE_LABELS[r.source] ?? r.source}
+                  </span>
+                  {portal && (
+                    <a href={portal.url} target="_blank" rel="noopener noreferrer"
+                      className="font-body text-[12px] text-[#1D4ED8] underline underline-offset-2">
+                      {portal.label}
+                    </a>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <button
+          onClick={() => { setStep('check'); setError(null); setPlate(''); setIc('') }}
+          className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors"
+        >
+          Semak Semula →
+        </button>
+
+        <p className="font-body text-[12px] text-[#9CA3AF] text-center">
+          Selepas semak di portal rasmi, semak semula di sini untuk menjana Trust Card.
+        </p>
+      </div>
+    )
+  }
+
+  // ── Step 2c: Ineligible — private issue page, no payment ──────────────────
 
   return (
     <div className="space-y-4">

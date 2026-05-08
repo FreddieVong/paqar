@@ -19,7 +19,7 @@ export interface CheckResult {
   id: string
   check_id: string
   source: SourceKey
-  status: 'pending' | 'clear' | 'hit' | 'unavailable' | 'timeout' | 'partial' | 'error'
+  status: 'pending' | 'clear' | 'hit' | 'unavailable' | 'timeout' | 'partial' | 'error' | 'requires_user_action' | 'proof_required'
   label: string
   data: unknown | null
   error_message: string | null
