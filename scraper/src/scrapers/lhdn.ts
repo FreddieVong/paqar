@@ -1,48 +1,56 @@
 import { withPage } from '../browser.js'
 import type { BlacklistResult } from '../types.js'
 
+// MyTax LHDN compliance check — public, no login required
+// Form requires selecting document type before IC input becomes enabled
 const URL = 'https://mytax.hasil.gov.my/pttUI/myTaxWS/checkCompliance'
 
 export async function scrapeLhdn(ic: string): Promise<BlacklistResult> {
   if (!ic || ic.replace(/[-\s]/g, '').length < 12) {
     return { status: 'unavailable', error: 'IC required for LHDN check' }
   }
-  const icClean = ic.replace(/[-\s]/g, '')
+  const icClean = ic.replace(/[-\s]/g, '').slice(0, 12)
 
   return withPage(async page => {
     try {
       await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 30_000 })
 
-      const input = page.locator([
-        'input[name="ic_no"]',
-        'input[name="icNo"]',
-        'input[name="nric"]',
-        'input[placeholder*="IC"]',
-        'input[type="text"]:visible',
-      ].join(', ')).first()
+      // Wait for Angular to render the form (select element signals readiness)
+      const select = page.locator('select').first()
+      await select.waitFor({ timeout: 20_000 })
+      await select.selectOption('1')
+      await page.waitForTimeout(500)
 
-      await input.waitFor({ timeout: 8_000 })
+      // IC input is now enabled — wait for Angular to remove disabled attribute
+      const input = page.locator('input[type="text"]').first()
+      await page.waitForFunction(
+        () => {
+          const el = document.querySelector('input[type="text"]') as HTMLInputElement | null
+          return el != null && !el.disabled
+        },
+        { timeout: 5_000 }
+      )
       await input.fill(icClean)
+      await page.waitForTimeout(300)
 
-      await Promise.all([
-        page.waitForNavigation({ timeout: 15_000 }).catch(() => {}),
-        page.locator('button[type="submit"], input[type="submit"]').first().click(),
-      ])
+      await page.locator('button[type="submit"]').first().click()
 
-      await page.waitForTimeout(2000)
-      const html = await page.content()
+      // Wait up to 8s for a result phrase to appear in the visible page text
+      await page.waitForFunction(
+        () => /tidak wujud|tidak patuh|^patuh/im.test(document.body.innerText),
+        { timeout: 8_000 }
+      ).catch(() => {})
 
-      if (/compliant|patuh|no outstanding/i.test(html)) {
-        return { status: 'clear', blacklisted: false }
-      }
-      if (/non.compliant|tidak patuh|outstanding|blacklist/i.test(html)) {
-        return { status: 'hit', blacklisted: true }
-      }
+      const text = await page.locator('body').innerText().catch(() => '')
 
-      return { status: 'unavailable', error: 'No result pattern matched', debug: html.slice(0, 3000) }
+      if (/tidak wujud/i.test(text)) return { status: 'clear', blacklisted: false }
+      if (/tidak patuh|non.compliant|outstanding/i.test(text)) return { status: 'hit', blacklisted: true }
+      if (/^patuh$/im.test(text)) return { status: 'clear', blacklisted: false }
+
+      return { status: 'unavailable', error: 'No result pattern matched', debug: text.slice(0, 1000) }
     } catch (err) {
-      const html = await page.content().catch(() => '')
-      return { status: 'unavailable', error: String(err), debug: html.slice(0, 3000) }
+      const text = await page.locator('body').innerText().catch(() => '')
+      return { status: 'unavailable', error: String(err), debug: text.slice(0, 1000) }
     }
   })
 }
