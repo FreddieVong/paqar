@@ -1,9 +1,7 @@
 import type { SourceData } from '@/types/api'
 
 export type Country  = 'MY' | 'ID' | 'TH'
-export type SourceId =
-  | 'pdrm' | 'jpj' | 'aes' | 'local_councils'
-  | 'immigration' | 'lhdn' | 'ptptn'
+export type SourceId = 'pdrm' | 'jpj' | 'aes' | 'local_councils'
 
 /**
  * 'pending'     — pre-check state, matches DB schema

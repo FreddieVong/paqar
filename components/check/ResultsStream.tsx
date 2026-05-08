@@ -13,7 +13,7 @@ import type { PollCheckResponse, CheckMode } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
 const POLL_TIMEOUT_MS  = 90_000
-const TOTAL_SOURCES    = 7
+const TOTAL_SOURCES    = 4
 
 const CRITICAL_SOURCES = ['pdrm', 'jpj', 'aes']
 

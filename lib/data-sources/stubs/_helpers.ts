@@ -19,7 +19,4 @@ export const STUB_DELAYS: Record<string, number> = {
   jpj:           350,
   aes:           500,
   local_councils:650,
-  immigration:   800,
-  lhdn:          950,
-  ptptn:         1100,
 }

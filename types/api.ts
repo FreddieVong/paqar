@@ -5,13 +5,10 @@ export type SourceData =
   | { source: 'jpj';            samans: SamanRecord[] }
   | { source: 'aes';            samans: SamanRecord[] }
   | { source: 'local_councils'; samans: SamanRecord[]; council: string }
-  | { source: 'immigration';    blacklisted: boolean; reason: string | null }
-  | { source: 'lhdn';           blacklisted: boolean }
-  | { source: 'ptptn';          blacklisted: boolean; outstanding: number | null }
 
 /** The closed set of data source identifiers. Derived from the SourceData union. */
 export type SourceKey = SourceData['source']
-// Resolves to: 'pdrm' | 'jpj' | 'aes' | 'local_councils' | 'immigration' | 'lhdn' | 'ptptn'
+// Resolves to: 'pdrm' | 'jpj' | 'aes' | 'local_councils'
 
 export interface SamanRecord {
   offence:    string

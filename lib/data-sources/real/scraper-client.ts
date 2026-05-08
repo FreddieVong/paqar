@@ -10,9 +10,6 @@ interface ScraperResponse {
     offence: string; date: string; amount: number; currency: string
     location: string | null; discounted: number | null; paymentUrl: string | null
   }>
-  blacklisted?: boolean
-  reason?:     string | null
-  outstanding?: number | null
   error?:      string
 }
 
@@ -65,17 +62,6 @@ export async function callScraper(
         return { ...base, status: data.status, data: { source: 'local_councils', samans: data.samans, council }, errorMessage: null }
       }
       return { ...base, status: data.status, data: sourceData, errorMessage: null }
-    }
-
-    // Blacklist sources
-    if (sourceId === 'immigration') {
-      return { ...base, status: data.status, data: { source: 'immigration', blacklisted: data.blacklisted ?? false, reason: data.reason ?? null }, errorMessage: null }
-    }
-    if (sourceId === 'lhdn') {
-      return { ...base, status: data.status, data: { source: 'lhdn', blacklisted: data.blacklisted ?? false }, errorMessage: null }
-    }
-    if (sourceId === 'ptptn') {
-      return { ...base, status: data.status, data: { source: 'ptptn', blacklisted: data.blacklisted ?? false, outstanding: data.outstanding ?? null }, errorMessage: null }
     }
 
     return { ...base, status: 'unavailable', data: null, errorMessage: 'Unknown response shape' }

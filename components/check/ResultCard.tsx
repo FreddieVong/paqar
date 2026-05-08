@@ -6,9 +6,6 @@ const BM_LABELS: Record<SourceKey, string> = {
   jpj:            'JPJ Saman',
   aes:            'AES Saman',
   local_councils: 'Majlis Tempatan',
-  immigration:    'Blacklist Imigresen',
-  lhdn:           'LHDN',
-  ptptn:          'PTPTN',
 }
 
 const PORTAL_LINKS: Partial<Record<SourceKey, { label: string; url: string }>> = {

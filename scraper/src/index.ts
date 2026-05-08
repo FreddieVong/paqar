@@ -3,9 +3,6 @@ import { scrapePdrm }          from './scrapers/pdrm.js'
 import { scrapeJpj }           from './scrapers/jpj.js'
 import { scrapeAes }           from './scrapers/aes.js'
 import { scrapeLocalCouncils } from './scrapers/local-councils.js'
-import { scrapeImmigration }   from './scrapers/immigration.js'
-import { scrapeLhdn }          from './scrapers/lhdn.js'
-import { scrapePtptn }         from './scrapers/ptptn.js'
 
 const app  = express()
 const PORT = process.env.PORT ?? '3001'
@@ -34,7 +31,7 @@ app.post('/check/pdrm', async (req, res) => {
   const { plate } = req.body as { plate?: string }
   if (!plate) { res.status(400).json({ error: 'plate required' }); return }
   const result = await scrapePdrm(plate)
-  console.log('[pdrm]', JSON.stringify({ status: result.status, error: (result as {error?:string}).error, debug: (result as {debug?:string}).debug?.slice(0,500) }))
+  console.log('[pdrm]', JSON.stringify({ status: result.status, error: (result as {error?:string}).error }))
   res.json(result)
 })
 
@@ -42,7 +39,7 @@ app.post('/check/jpj', async (req, res) => {
   const { plate } = req.body as { plate?: string }
   if (!plate) { res.status(400).json({ error: 'plate required' }); return }
   const result = await scrapeJpj(plate)
-  console.log('[jpj]', JSON.stringify({ status: result.status, error: (result as {error?:string}).error, debug: (result as {debug?:string}).debug?.slice(0,500) }))
+  console.log('[jpj]', JSON.stringify({ status: result.status, error: (result as {error?:string}).error }))
   res.json(result)
 })
 
@@ -57,27 +54,6 @@ app.post('/check/local_councils', async (req, res) => {
   const { plate } = req.body as { plate?: string }
   if (!plate) { res.status(400).json({ error: 'plate required' }); return }
   const result = await scrapeLocalCouncils(plate)
-  res.json(result)
-})
-
-app.post('/check/immigration', async (req, res) => {
-  const { ic } = req.body as { ic?: string }
-  if (!ic) { res.status(400).json({ error: 'ic required' }); return }
-  const result = await scrapeImmigration(ic)
-  res.json(result)
-})
-
-app.post('/check/lhdn', async (req, res) => {
-  const { ic } = req.body as { ic?: string }
-  if (!ic) { res.status(400).json({ error: 'ic required' }); return }
-  const result = await scrapeLhdn(ic)
-  res.json(result)
-})
-
-app.post('/check/ptptn', async (req, res) => {
-  const { ic } = req.body as { ic?: string }
-  if (!ic) { res.status(400).json({ error: 'ic required' }); return }
-  const result = await scrapePtptn(ic)
   res.json(result)
 })
 

@@ -7,12 +7,9 @@ const SOURCE_LABELS: Record<string, string | undefined> = {
   jpj:           'JPJ Saman',
   aes:           'AES Saman',
   local_councils:'Local Councils',
-  immigration:   'Immigration Blacklist',
-  lhdn:          'LHDN',
-  ptptn:         'PTPTN',
 }
 
-const SOURCE_ORDER = ['pdrm','jpj','aes','local_councils','immigration','lhdn','ptptn']
+const SOURCE_ORDER = ['pdrm', 'jpj', 'aes', 'local_councils']
 
 export async function createCheck(params: {
   id: string
