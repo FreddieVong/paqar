@@ -131,9 +131,9 @@ export default function HomePage() {
 
           <div className="flex flex-col md:grid md:grid-cols-3 gap-3">
             {[
-              { title: 'Pantas',  desc: 'Keputusan dalam 60 saat. Tiada menunggu, tiada keliru.' },
-              { title: 'Jelas',   desc: 'Hijau atau merah. Anda tahu apa yang perlu dilakukan serta-merta.' },
-              { title: 'Selamat', desc: 'IC disulitkan dengan AES-256. Kami tidak simpan data anda tanpa izin.' },
+              { title: 'Mudah',   desc: 'Masukkan plat, ikut panduan, buat keputusan. Tiada jargon teknikal.' },
+              { title: 'Jujur',   desc: 'Kami cakap terus apa yang boleh dan tidak boleh disemak secara automatik.' },
+              { title: 'Selamat', desc: 'Data anda disulitkan dengan AES-256. Kami tidak simpan tanpa izin.' },
             ].map((item) => (
               <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[16px] p-5">
                 <p className="font-heading font-bold text-[16px] text-[#111827] mb-1">{item.title}</p>
@@ -212,7 +212,7 @@ export default function HomePage() {
               },
               {
                 q: 'Berapa lama keputusan mengambil masa?',
-                a: 'Biasanya dalam 60 saat. Masa mungkin berbeza bergantung kepada kesediaan sumber luar.',
+                a: 'Semakan asas selesai dalam beberapa saat. Laporan pembeli boleh diakses terus selepas bayar.',
               },
               {
                 q: 'Adakah data saya selamat?',
@@ -244,7 +244,7 @@ export default function HomePage() {
             <span className="inline-block w-1.5 h-1.5 bg-[#FACC15] rounded-full mx-2 align-middle" />
             Tiada bayaran.
             <span className="inline-block w-1.5 h-1.5 bg-[#FACC15] rounded-full mx-2 align-middle" />
-            Hasil dalam 60 saat.
+            Panduan saman + laporan pembeli.
           </p>
           <Link
             href="/"
