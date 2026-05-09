@@ -8,7 +8,16 @@
       "Bash(openssl rand *)",
       "Bash(pnpm test *)",
       "Bash(git -C /home/freddievong/Paqar status)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(# Search for where \"request\" is exported or created *)",
+      "Read(//tmp/**)",
+      "Bash(curl -s https://api.data.gov.my)",
+      "Bash(curl -s https://myjpj.jpj.gov.my)",
+      "Bash(curl -s -w '\\\\nHTTP_CODE:%{http_code}\\\\n' -X POST https://mybayar.rmp.gov.my/api/v3/cops/summon/paging -H 'Content-Type: application/json' -d '{\"vehicleNumber\":\"WA1234B\",\"size\":10,\"page\":0}')",
+      "Bash(curl -s -w '\\\\nHTTP_CODE:%{http_code}\\\\n' https://mybayar.rmp.gov.my/public/api/v3/app/status -H 'Content-Type: application/json' -d '{}')",
+      "Bash(curl -s 'https://data.gov.my/data-catalogue')",
+      "WebFetch(domain:bjak.my)",
+      "WebSearch"
     ],
     "additionalDirectories": [
       "/home/freddievong/Paqar/docs/superpowers"

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse }              from 'next/server'
 import { verifyWebhookSignature }                 from '@/lib/billplz'
 import { markReportPaid, getBuyerReportByBillId } from '@/lib/db/buyer-reports'
-import { markTrustCardPaid, getTrustCardByBillId } from '@/lib/db/seller-trust-cards'
 import { sendReceiptEmail }                       from '@/lib/email/receipt'
 
 export async function POST(request: NextRequest) {
@@ -25,10 +24,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const [buyerReport, trustCard] = await Promise.all([
-      getBuyerReportByBillId(billId),
-      getTrustCardByBillId(billId),
-    ])
+    const buyerReport = await getBuyerReportByBillId(billId)
 
     if (buyerReport && buyerReport.status === 'pending') {
       await markReportPaid(billId)
@@ -39,20 +35,6 @@ export async function POST(request: NextRequest) {
         paidAt,
         plate:       null,
       }).catch(err => console.error('[receipt-email:buyer_report]', err))
-    }
-
-    if (trustCard && trustCard.status === 'pending') {
-      await markTrustCardPaid(billId)
-      const expiresAt = new Date(Date.now() + 30 * 86_400_000).toISOString()
-      sendReceiptEmail({
-        product:     'trust_card',
-        toEmail:     trustCard.seller_email,
-        amountCents: trustCard.amount_cents,
-        paidAt,
-        plate:       trustCard.plate_plain,
-        publicToken: trustCard.public_token,
-        expiresAt,
-      }).catch(err => console.error('[receipt-email:trust_card]', err))
     }
 
     return NextResponse.json({ ok: true })

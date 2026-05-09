@@ -5,7 +5,7 @@ import { useRouter }    from 'next/navigation'
 import { Progress }     from '@/components/ui/progress'
 import { Button }       from '@/components/ui/button'
 import { ResultCard }   from './ResultCard'
-import { SellerVerifyCTA } from '@/components/report/SellerVerifyCTA'
+
 import { createClient } from '@/lib/supabase/client'
 import { claimCheck }   from '@/app/auth/_actions'
 import type { Check, CheckResult } from '@/types/domain'
@@ -84,8 +84,6 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner', plate }: Pr
   const showSaveCta        = isComplete && !isBuyer && check?.user_id == null && authedUser === null
   const showDocsCta        = isComplete && !isBuyer && authedUser != null
   const showBuyerCta       = isComplete && isBuyer
-  const showSellerVerifyCta = isComplete && isBuyer && !!plate &&
-    results.some(r => CRITICAL_SOURCES.includes(r.source) && r.status === 'requires_user_action')
 
   if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
@@ -112,8 +110,6 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner', plate }: Pr
           <ResultCard key={result.source} result={result} buyerMode={isBuyer} />
         ))}
       </div>
-
-      {showSellerVerifyCta && plate && <SellerVerifyCTA plate={plate} />}
 
       {showSaveCta && (
         <div className="border-[1.5px] border-dashed border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">

@@ -1,6 +1,6 @@
 import type { Check, CheckResult } from '@/types/domain'
 import type { SourceData, SamanRecord } from '@/types/api'
-import { SellerVerifyCTA } from './SellerVerifyCTA'
+
 
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
@@ -75,7 +75,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
   const samanTotal          = getSamanTotal(vehicleResults)
   const samanCount          = getSamanCount(vehicleResults)
   const verdict             = getVerdict(vehicleResults)
-  const needsSellerVerify   = verdict === 'incomplete'
+
   const criticalUnverified  = vehicleResults.some(r =>
     ['pdrm', 'jpj', 'aes'].includes(r.source) && r.status === 'requires_user_action'
   )
@@ -131,7 +131,6 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
       </div>
 
       {/* Seller Verify CTA — only when PDRM/JPJ need seller verification */}
-      {needsSellerVerify && <SellerVerifyCTA plate={plate} />}
 
       {/* Section 2: Saman & Status Kenderaan */}
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
