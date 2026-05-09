@@ -5,26 +5,24 @@ import { useRouter }    from 'next/navigation'
 import { Progress }     from '@/components/ui/progress'
 import { Button }       from '@/components/ui/button'
 import { ResultCard }   from './ResultCard'
-
+import { SamanGuide }  from './SamanGuide'
+import { ReportCTA }   from './ReportCTA'
 import { createClient } from '@/lib/supabase/client'
 import { claimCheck }   from '@/app/auth/_actions'
 import type { Check, CheckResult } from '@/types/domain'
-import type { PollCheckResponse, CheckMode } from '@/types/api'
+import type { PollCheckResponse } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
 const POLL_TIMEOUT_MS  = 90_000
 const TOTAL_SOURCES    = 4
 
-const CRITICAL_SOURCES = ['pdrm', 'jpj', 'aes']
-
 interface Props {
   checkId:    string
   claimToken: string
-  mode?:      CheckMode
   plate?:     string
 }
 
-export function ResultsStream({ checkId, claimToken, mode = 'owner', plate }: Props) {
+export function ResultsStream({ checkId, claimToken }: Props) {
   const router = useRouter()
   const [check,      setCheck]      = useState<Check | null>(null)
   const [results,    setResults]    = useState<CheckResult[]>([])
@@ -66,7 +64,6 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner', plate }: Pr
     return () => { clearInterval(interval); clearTimeout(timeout) }
   }, [poll, check?.status])
 
-  // Auto-claim: authenticated user lands on unclaimed check
   useEffect(() => {
     if (
       check?.status === 'complete' &&
@@ -78,21 +75,20 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner', plate }: Pr
     }
   }, [check, authedUser, poll])
 
-  const completedCount     = results.filter((r) => r.status !== 'pending').length
-  const isComplete         = check?.status === 'complete'
-  const isBuyer            = mode === 'buyer'
-  const showSaveCta        = isComplete && !isBuyer && check?.user_id == null && authedUser === null
-  const showDocsCta        = isComplete && !isBuyer && authedUser != null
-  const showBuyerCta       = isComplete && isBuyer
+  const completedCount = results.filter((r) => r.status !== 'pending').length
+  const isComplete     = check?.status === 'complete'
+  const showSaveCta    = isComplete && check?.user_id == null && authedUser === null
+  const showDocsCta    = isComplete && authedUser != null
 
   if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
   return (
     <div className="space-y-3">
+      {/* Progress */}
       <div className="space-y-1.5">
-        <div className="flex justify-between text-xs text-slate-500">
+        <div className="flex justify-between text-xs">
           <span className="font-heading font-bold text-[#064E4A]">
-            {isComplete ? 'Semakan selesai' : 'Menyemak 7 sumber…'}
+            {isComplete ? 'Semakan selesai' : 'Menyemak kereta anda…'}
           </span>
           <span className="font-body text-[#6B7280]">{completedCount} daripada {TOTAL_SOURCES}</span>
         </div>
@@ -102,22 +98,29 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner', plate }: Pr
         />
       </div>
 
+      {/* Source result cards */}
       <div className="space-y-2">
-        {(isBuyer
-          ? results.filter(r => ['pdrm','jpj','aes','local_councils'].includes(r.source))
-          : results
-        ).map((result) => (
-          <ResultCard key={result.source} result={result} buyerMode={isBuyer} />
+        {results.map((result) => (
+          <ResultCard key={result.source} result={result} />
         ))}
       </div>
 
+      {/* After check completes: guide + report CTA */}
+      {isComplete && (
+        <>
+          <SamanGuide />
+          <ReportCTA checkId={checkId} claimToken={claimToken} />
+        </>
+      )}
+
+      {/* Secondary: save / track documents */}
       {showSaveCta && (
         <div className="border-[1.5px] border-dashed border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
-          <p className="font-heading font-bold text-[14px] text-[#064E4A] mb-1">
-            Dapatkan notifikasi jika ada perubahan
+          <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">
+            Simpan semakan ini
           </p>
           <p className="font-body text-[12px] text-[#6B7280] mb-3">
-            Simpan kenderaan ini dan kami akan maklumkan jika ada saman atau blacklist baru.
+            Buat akaun percuma untuk akses semula semakan ini pada bila-bila masa.
           </p>
           <Button
             onClick={() => {
@@ -133,51 +136,18 @@ export function ResultsStream({ checkId, claimToken, mode = 'owner', plate }: Pr
 
       {showDocsCta && (
         <div className="border-[1.5px] border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
-          <p className="font-heading font-bold text-[14px] text-[#064E4A] mb-1">
+          <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">
             Pantau dokumen kenderaan anda
           </p>
           <p className="font-body text-[12px] text-[#6B7280] mb-3">
-            Tambah tarikh tamat cukai jalan, insurans &amp; lesen. Kami akan ingatkan anda sebelum tamat tempoh.
+            Tambah tarikh tamat cukai jalan, insurans &amp; lesen.
           </p>
           <Button
             onClick={() => router.push('/dashboard')}
             className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[14px]"
           >
-            Tambah Dokumen →
+            Pantau Dokumen →
           </Button>
-        </div>
-      )}
-
-      {showBuyerCta && (
-        <div className="bg-[#064E4A] rounded-[16px] p-5">
-          <p className="font-heading font-extrabold text-[16px] text-white mb-2">
-            Jangan bagi deposit dulu.
-          </p>
-          <p className="font-body text-[12px] text-white/70 mb-4 leading-relaxed">
-            Semakan asas selesai. Laporan penuh mendedahkan lebih banyak — sebelum anda rugi RM40K.
-          </p>
-          <div className="flex flex-col gap-2 mb-4">
-            {[
-              'Verdict jelas: Risiko Rendah, Perlu Tanya, atau Semak Dahulu',
-              'Status saman PDRM, JPJ, AES & Majlis Tempatan dengan jumlah',
-              'Anggaran harga pasaran vs harga diminta',
-              'Soalan untuk tanya penjual',
-              'Skrip rundingan harga siap guna',
-            ].map((item) => (
-              <span key={item} className="font-body text-[12px] text-white/80 flex gap-2">
-                <span className="text-[#FACC15] flex-shrink-0">✓</span>{item}
-              </span>
-            ))}
-          </div>
-          <button
-            onClick={() => router.push(`/laporan-pembeli/${checkId}?claim_token=${claimToken}`)}
-            className="w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl py-4 cursor-pointer hover:bg-yellow-300 transition-colors"
-          >
-            Buka Laporan Risiko Pembeli — RM19 →
-          </button>
-          <p className="font-body text-[11px] text-white/40 text-center mt-2">
-            Semak harga · Saman · Soalan penjual · Rundingan · FPX &amp; kad kredit
-          </p>
         </div>
       )}
     </div>

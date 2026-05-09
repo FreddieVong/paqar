@@ -83,7 +83,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               {plate}
             </h1>
             <p className="font-body text-[13px] text-[#6B7280] mt-1">
-              Bayar RM19 untuk akses laporan penuh
+              Bayar RM29 untuk akses laporan penuh
             </p>
           </div>
 
@@ -98,7 +98,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/60 to-white flex flex-col items-center justify-end pb-6 px-5">
               <div className="text-center mb-4">
                 <p className="font-heading font-bold text-[15px] text-[#111827]">
-                  Buka Laporan Risiko Pembeli — RM19
+                  Laporan Pembeli Lengkap — RM29
                 </p>
                 <p className="font-body text-[12px] text-[#6B7280] mt-1">
                   Semak harga · Saman · Soalan penjual · Tips rundingan

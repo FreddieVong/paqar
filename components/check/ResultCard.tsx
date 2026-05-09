@@ -76,15 +76,11 @@ function renderDetail(result: CheckResult): string {
   return 'Tiada saman'
 }
 
-export function ResultCard({ result, buyerMode = false }: { result: CheckResult; buyerMode?: boolean }) {
+export function ResultCard({ result }: { result: CheckResult }) {
   const s = result.source as SourceKey
   const status = result.status
-  // Portal links only for owner — buyers cannot verify someone else's car
-  const portal = !buyerMode && status === 'requires_user_action' ? (PORTAL_LINKS[s] ?? null) : null
-
-  const detailText = buyerMode && status === 'requires_user_action'
-    ? 'Tidak dapat disemak — tanya penjual semak sendiri'
-    : renderDetail(result)
+  const portal = status === 'requires_user_action' ? (PORTAL_LINKS[s] ?? null) : null
+  const detailText = renderDetail(result)
 
   return (
     <div
@@ -101,11 +97,6 @@ export function ResultCard({ result, buyerMode = false }: { result: CheckResult;
           </p>
           <p className="font-heading font-bold text-[14px] text-[#111827] mt-0.5">
             {detailText}
-            {buyerMode && result.status === 'hit' && (
-              <span className="font-body font-normal text-[11px] text-[#9CA3AF] ml-1.5">
-                (perlu pengesahan)
-              </span>
-            )}
           </p>
         </div>
         <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ml-3 ${DOT_STYLES[status] ?? DOT_STYLES['pending']}`} />

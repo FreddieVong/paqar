@@ -1,6 +1,6 @@
 import type { Check, CheckResult } from '@/types/domain'
 import type { SourceData, SamanRecord } from '@/types/api'
-
+import { InsuranceCTA } from './InsuranceCTA'
 
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
@@ -185,7 +185,25 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         </div>
       </div>
 
-      {/* Section 3: Anggaran Harga Pasaran */}
+      {/* Section 3: Sejarah Kenderaan (MyCarAPI placeholder) */}
+      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280]">
+            Sejarah Kenderaan
+          </p>
+          <span className="font-body text-[10px] text-white bg-[#9CA3AF] rounded-full px-2 py-0.5">
+            Akan Datang
+          </span>
+        </div>
+        <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
+          Rekod kemalangan, tuntutan insurans, dan bilangan pemilik terdahulu.
+        </p>
+        <p className="font-body text-[12px] text-[#9CA3AF]">
+          Kami sedang bekerjasama dengan penyedia data untuk membawa maklumat ini kepada anda.
+        </p>
+      </div>
+
+      {/* Section 4: Anggaran Harga Pasaran */}
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
         <div className="flex items-center justify-between mb-3">
           <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280]">
@@ -336,6 +354,9 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
           </>
         )}
       </div>
+
+      {/* Insurance referral */}
+      <InsuranceCTA />
 
     </div>
   )
