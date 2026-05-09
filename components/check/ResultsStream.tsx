@@ -75,7 +75,9 @@ export function ResultsStream({ checkId, claimToken }: Props) {
     }
   }, [check, authedUser, poll])
 
-  const completedCount = results.filter((r) => r.status !== 'pending').length
+  const CAR_SOURCES    = ['pdrm', 'jpj', 'aes', 'local_councils']
+  const carResults     = results.filter(r => CAR_SOURCES.includes(r.source))
+  const completedCount = Math.min(carResults.filter(r => r.status !== 'pending').length, TOTAL_SOURCES)
   const isComplete     = check?.status === 'complete'
   const showSaveCta    = isComplete && check?.user_id == null && authedUser === null
   const showDocsCta    = isComplete && authedUser != null
@@ -98,9 +100,9 @@ export function ResultsStream({ checkId, claimToken }: Props) {
         />
       </div>
 
-      {/* Source result cards */}
+      {/* Source result cards — only car-relevant sources */}
       <div className="space-y-2">
-        {results.map((result) => (
+        {carResults.map((result) => (
           <ResultCard key={result.source} result={result} />
         ))}
       </div>
