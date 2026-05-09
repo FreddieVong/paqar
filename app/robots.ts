@@ -4,11 +4,10 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
-      allow: ['/', '/buat-trust-card', '/privasi', '/terma'],
+      allow: ['/', '/panduan-semak-saman', '/privasi', '/terma'],
       disallow: [
         '/check/',
         '/laporan-pembeli/',
-        '/trust/',
         '/dashboard/',
         '/auth/',
         '/api/',

@@ -1,12 +1,8 @@
 import Link from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
-import type { CheckMode } from '@/types/api'
 
-interface Props { searchParams: { tab?: string } }
-
-export default function HomePage({ searchParams }: Props) {
-  const defaultMode: CheckMode = searchParams.tab === 'buyer' ? 'buyer' : 'owner'
+export default function HomePage() {
   return (
     <>
       <Nav />
@@ -40,7 +36,7 @@ export default function HomePage({ searchParams }: Props) {
 
           {/* Checking card */}
           <div>
-            <DualCheckForm defaultMode={defaultMode} />
+            <DualCheckForm />
           </div>
         </div>
       </section>
@@ -163,7 +159,7 @@ export default function HomePage({ searchParams }: Props) {
             </p>
           </div>
           <a
-            href="/?tab=buyer#semak"
+            href="/#semak"
             className="block w-full md:w-auto bg-[#DC2626] text-white font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 text-center hover:bg-[#B91C1C] transition-colors whitespace-nowrap"
           >
             Semak Kereta Yang Nak Dibeli →

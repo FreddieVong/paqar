@@ -35,11 +35,7 @@ export default function TermaPage() {
             },
             {
               title: 'Pembayaran dan Bayaran Balik',
-              body: 'Semua pembayaran adalah muktamad. Laporan Pembeli (RM19) dan Seller Trust Card (RM29) tidak boleh dikembalikan setelah semakan dijalankan dan laporan dijana. Jika anda menghadapi masalah teknikal yang menghalang akses kepada laporan anda, hubungi kami dalam masa 7 hari.',
-            },
-            {
-              title: 'Seller Trust Card',
-              body: 'Trust Card adalah dokumen verifikasi yang mengesahkan tiada saman kritikal pada masa semakan dibuat. Kesahan Trust Card adalah 30 hari dari tarikh pembayaran. Paqar tidak bertanggungjawab atas sebarang tuntutan yang timbul selepas tarikh semakan atau berkaitan dengan maklumat yang tidak diliputi oleh semakan.',
+              body: 'Semua pembayaran adalah muktamad. Laporan Pembeli (RM29) tidak boleh dikembalikan setelah laporan dijana. Jika anda menghadapi masalah teknikal yang menghalang akses kepada laporan anda, hubungi kami dalam masa 7 hari.',
             },
             {
               title: 'Had Liabiliti',
