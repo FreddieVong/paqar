@@ -1,13 +1,15 @@
-import { notFound }           from 'next/navigation'
-import { Nav }                from '@/components/layout/Nav'
-import { Shell }              from '@/components/layout/Shell'
-import { getCheck }           from '@/lib/db/checks'
-import { getBuyerReport }     from '@/lib/db/buyer-reports'
+import { notFound }             from 'next/navigation'
+import { Nav }                  from '@/components/layout/Nav'
+import { Shell }                from '@/components/layout/Shell'
+import { getCheck }             from '@/lib/db/checks'
+import { getBuyerReport, setVehicleApiData } from '@/lib/db/buyer-reports'
 import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
-import { decrypt }            from '@/lib/crypto'
-import { createClient }       from '@/lib/supabase/server'
+import { decrypt }              from '@/lib/crypto'
+import { createClient }         from '@/lib/supabase/server'
+import { lookupVehicle }        from '@/lib/vehicleapi'
+import { getValuationByNvic }   from '@/lib/db/vehicle-valuations'
 
 interface Props {
   params:       { checkId: string }
@@ -39,7 +41,18 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
   const plate  = decrypt(row.check.plate_encrypted as string).toUpperCase()
 
   // ── Paid — full report ─────────────────────────────────────────────────────
-  if (isPaid) {
+  if (isPaid && report) {
+    // Lazy fetch: call VehicleAPI once, store in DB, serve from cache on subsequent views
+    let vehicleData = report.vehicleapi_data as Record<string, unknown> | null ?? null
+    if (!vehicleData) {
+      const apiResult = await lookupVehicle(plate)
+      if (apiResult) {
+        const valuation = await getValuationByNvic(apiResult.nvic).catch(() => null)
+        vehicleData = { ...apiResult, valuation: valuation ?? null }
+        setVehicleApiData(report.id, vehicleData).catch(() => {}) // non-blocking
+      }
+    }
+
     return (
       <>
         <Nav />
@@ -58,8 +71,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               check={row.check}
               results={row.results}
               plate={plate}
-              askingPriceRm={report?.asking_price_rm ?? null}
-              claimedMileageKm={report?.claimed_mileage_km ?? null}
+              askingPriceRm={report.asking_price_rm ?? null}
+              claimedMileageKm={report.claimed_mileage_km ?? null}
+              vehicleData={vehicleData}
             />
           </div>
         </Shell>

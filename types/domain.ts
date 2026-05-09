@@ -60,6 +60,7 @@ export interface BuyerReport {
   asking_price_rm:    number | null
   claimed_mileage_km: number | null
   listing_url:        string | null
+  vehicleapi_data:    Record<string, unknown> | null
   paid_at:            string | null
   created_at:         string
   updated_at:         string

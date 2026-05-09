@@ -62,15 +62,37 @@ const SELLER_QUESTIONS = [
   'Boleh bawa ke bengkel untuk pemeriksaan sebelum saya buat keputusan?',
 ]
 
+interface VehicleData {
+  description?:      string
+  registrationYear?: string
+  make?:             string
+  model?:            string
+  body?:             string
+  engineCc?:         string
+  vin?:              string
+  nvic?:             string
+  insurance?: {
+    insurer:      string
+    coverType:    string
+    policyStatus: string
+  } | null
+  valuation?: {
+    wmNewPrice: number
+    sumInsured: number
+  } | null
+}
+
 interface Props {
   check:             Check
   results:           CheckResult[]
   plate:             string
   askingPriceRm?:    number | null
   claimedMileageKm?: number | null
+  vehicleData?:      Record<string, unknown> | null
 }
 
-export function BuyerReportContent({ check: _check, results, plate: _plate, askingPriceRm, claimedMileageKm }: Props) {
+export function BuyerReportContent({ check: _check, results, plate: _plate, askingPriceRm, claimedMileageKm, vehicleData: rawVehicleData }: Props) {
+  const vehicleData = rawVehicleData as VehicleData | null | undefined
   const vehicleResults      = results.filter(r => VEHICLE_SOURCES.includes(r.source as VehicleSource))
   const samanTotal          = getSamanTotal(vehicleResults)
   const samanCount          = getSamanCount(vehicleResults)
@@ -83,8 +105,60 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
     ['pdrm', 'jpj'].includes(r.source) && r.status === 'requires_user_action'
   )
 
+  const ins = vehicleData?.insurance
+
   return (
     <div className="space-y-5">
+
+      {/* Section 0a: Data Kenderaan Rasmi (if available) */}
+      {vehicleData?.make && (
+        <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280]">
+              Data Kenderaan Rasmi
+            </p>
+            <span className="font-body text-[10px] text-[#9CA3AF]">Sumber: JPJ</span>
+          </div>
+          <p className="font-heading font-extrabold text-[18px] text-[#111827] mb-3 leading-tight">
+            {vehicleData.description ?? `${vehicleData.make} ${vehicleData.model}`}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: 'Tahun Daftar', value: vehicleData.registrationYear },
+              { label: 'Enjin',        value: vehicleData.engineCc ? `${vehicleData.engineCc}cc` : null },
+              { label: 'Jenis Badan',  value: vehicleData.body },
+              { label: 'VIN',          value: vehicleData.vin ? `${vehicleData.vin.slice(0, -4)}****` : null },
+            ].filter(r => r.value).map(row => (
+              <div key={row.label} className="bg-[#F9FAFB] rounded-lg px-3 py-2">
+                <p className="font-body text-[10px] text-[#9CA3AF] uppercase tracking-[.05em]">{row.label}</p>
+                <p className="font-heading font-bold text-[13px] text-[#111827] mt-0.5">{row.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Section 0b: Status Insurans (if available) */}
+      {ins && (
+        <div className={`border rounded-[14px] p-5 ${
+          ins.policyStatus?.toLowerCase().includes('active') ? 'bg-[#F0FDF4] border-[#BBF7D0]' : 'bg-[#FEF2F2] border-[#FECACA]'
+        }`}>
+          <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
+            Status Insurans
+          </p>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className={`font-heading font-extrabold text-[15px] ${
+                ins.policyStatus?.toLowerCase().includes('active') ? 'text-[#15803D]' : 'text-[#B91C1C]'
+              }`}>
+                {ins.policyStatus?.toLowerCase().includes('active') ? '✓ Aktif' : '✕ Tamat Tempoh'}
+              </span>
+            </div>
+            <p className="font-body text-[13px] text-[#374151]">{ins.insurer}</p>
+            <p className="font-body text-[12px] text-[#6B7280]">{ins.coverType}</p>
+          </div>
+        </div>
+      )}
 
       {/* Section 1: Overall Verdict */}
       <div className={`rounded-[16px] p-5 border ${
@@ -208,6 +282,19 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
         <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
           Perbandingan Harga
         </p>
+
+        {/* Real valuation from VehicleAPI database */}
+        {vehicleData?.valuation && (
+          <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3 space-y-1">
+            <p className="font-body text-[11px] text-[#9CA3AF] uppercase tracking-[.05em]">Data penilaian kenderaan</p>
+            <p className="font-body text-[12px] text-[#374151]">
+              Harga baru asal: <span className="font-bold text-[#111827]">RM{(vehicleData.valuation as {wmNewPrice:number}).wmNewPrice?.toLocaleString()}</span>
+            </p>
+            <p className="font-body text-[12px] text-[#374151]">
+              Anggaran nilai semasa: <span className="font-bold text-[#111827]">RM{(vehicleData.valuation as {sumInsured:number}).sumInsured?.toLocaleString()}</span>
+            </p>
+          </div>
+        )}
 
         {askingPriceRm == null && (
           <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">

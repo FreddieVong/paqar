@@ -85,6 +85,15 @@ export async function getUserBuyerReports(userId: string): Promise<Array<{
   }))
 }
 
+export async function setVehicleApiData(reportId: string, data: unknown): Promise<void> {
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('buyer_reports')
+    .update({ vehicleapi_data: data, updated_at: new Date().toISOString() })
+    .eq('id', reportId)
+  if (error) throw error
+}
+
 export async function getBuyerReportByBillId(billId: string): Promise<BuyerReport | null> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
