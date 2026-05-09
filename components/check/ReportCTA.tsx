@@ -12,16 +12,15 @@ export function ReportCTA({ checkId, claimToken }: Props) {
         Laporan Pembeli
       </p>
       <p className="font-heading font-extrabold text-[20px] text-white mb-3">
-        Nak buat keputusan dengan lebih yakin?
+        Jangan bayar deposit tanpa laporan ini
       </p>
 
       <ul className="space-y-1.5 mb-5">
         {[
-          'Anggaran harga pasaran kereta ini',
-          'Soalan yang perlu tanya penjual',
+          'Adakah harga yang diminta berbaloi?',
+          'Soalan tepat untuk tanya penjual',
           'Skrip rundingan harga siap guna',
           'Checklist sebelum bayar deposit',
-          'Sejarah kemalangan — akan datang',
         ].map((item, i) => (
           <li key={i} className="flex items-start gap-2 font-body text-[13px] text-white/90">
             <span className="text-[#FACC15] flex-shrink-0 mt-0.5">✓</span>

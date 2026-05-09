@@ -205,18 +205,20 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
 
       {/* Section 4: Anggaran Harga Pasaran */}
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-        <div className="flex items-center justify-between mb-3">
-          <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280]">
-            Anggaran Harga Pasaran
-          </p>
-          <span className="font-body text-[10px] text-[#9CA3AF]">Anggaran sahaja</span>
-        </div>
-        <p className="font-heading font-extrabold text-[22px] text-[#111827] mb-1">
-          RM{MARKET_LOW.toLocaleString()} – RM{MARKET_HIGH.toLocaleString()}
+        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
+          Perbandingan Harga
         </p>
-        <p className="font-body text-[12px] text-[#9CA3AF] mb-3">
-          Berdasarkan listing Mudah, Carlist &amp; MyTukar · Anggaran umum — angka sebenar bergantung pada model dan tahun
-        </p>
+
+        {askingPriceRm == null && (
+          <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+            <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
+              Berapa harga yang penjual minta?
+            </p>
+            <p className="font-body text-[12px] text-[#6B7280]">
+              Masukkan harga jualan ketika beli laporan untuk tahu sama ada harga berpatutan atau tidak.
+            </p>
+          </div>
+        )}
 
         {askingPriceRm != null && (
           <div className={`rounded-lg px-3 py-2.5 border ${
@@ -250,13 +252,6 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
           </div>
         )}
 
-        {(askingPriceRm == null || claimedMileageKm == null) && (
-          <div className="mt-2 bg-[#F3F4F6] rounded-lg px-3 py-2">
-            <p className="font-body text-[11px] text-[#9CA3AF]">
-              Tambah harga &amp; jarak tempuh semasa beli laporan untuk analisis perbandingan yang lebih tepat.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Section 4: Soalan untuk Penjual */}
