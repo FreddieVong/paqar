@@ -152,12 +152,13 @@ export default function ChecklistBeliKeretaTerpakaiPage() {
             <p className="font-body text-[11px] text-white/40 mt-2">Panduan saman percuma · Laporan penuh RM29</p>
           </div>
 
-          <Link
-            href="/cara-beli-kereta-terpakai"
-            className="block text-center font-body text-[13px] text-[#064E4A] underline underline-offset-2"
-          >
-            Baca panduan lengkap cara beli kereta terpakai →
-          </Link>
+          <div className="space-y-2">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
+            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Panduan lengkap cara beli kereta terpakai →</Link>
+            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Risiko beli kereta terpakai →</Link>
+            <Link href="/panduan-semak-saman" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak saman kereta →</Link>
+            <Link href="/cara-semak-geran-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak geran kereta →</Link>
+          </div>
 
         </div>
       </Shell>

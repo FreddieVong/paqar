@@ -167,26 +167,40 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── PANDUAN SEMAK SAMAN ── */}
-      <section className="bg-[#064E4A] px-5 py-10">
-        <div className="max-w-5xl mx-auto md:flex md:items-center md:justify-between md:gap-8">
-          <div className="mb-5 md:mb-0">
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-white/60 mb-2">
+      {/* ── PANDUAN PERCUMA ── */}
+      <section className="bg-[#F8FAF7] px-5 py-12">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-6 md:text-center">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
               Panduan Percuma
             </p>
-            <h2 className="font-heading font-extrabold text-[22px] text-white mb-2">
-              Cara semak saman kereta secara rasmi
+            <h2 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827]">
+              Semua yang perlu anda tahu sebelum beli
             </h2>
-            <p className="font-body text-[14px] text-white/70 leading-relaxed">
-              Panduan lengkap semak saman PDRM dan JPJ — step by step, percuma, tanpa daftar.
-            </p>
           </div>
-          <Link
-            href="/panduan-semak-saman"
-            className="block w-full md:w-auto bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 text-center hover:bg-yellow-300 transition-colors whitespace-nowrap"
-          >
-            Baca Panduan →
-          </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { href: '/panduan-semak-saman',         title: 'Cara semak saman kereta',          desc: 'PDRM & JPJ step by step' },
+              { href: '/cara-beli-kereta-terpakai',   title: 'Cara beli kereta terpakai',        desc: '6 langkah dari semak hingga deposit' },
+              { href: '/checklist-beli-kereta-terpakai', title: 'Checklist sebelum bayar deposit', desc: 'Tandakan semua ini dulu' },
+              { href: '/risiko-beli-kereta-terpakai', title: 'Risiko beli kereta terpakai',      desc: '7 risiko dan cara elaknya' },
+              { href: '/cara-semak-geran-kereta',     title: 'Cara semak geran kereta',          desc: 'Apa perlu disemak dalam VOC' },
+            ].map((guide) => (
+              <Link
+                key={guide.href}
+                href={guide.href}
+                className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group"
+              >
+                <div>
+                  <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">
+                    {guide.title}
+                  </p>
+                  <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{guide.desc}</p>
+                </div>
+                <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 

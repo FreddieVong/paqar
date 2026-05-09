@@ -140,6 +140,14 @@ export default function PanduanSemakSamanPage() {
             </p>
           </div>
 
+          {/* Related guides */}
+          <div className="space-y-2">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
+            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
+            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Risiko beli kereta terpakai →</Link>
+          </div>
+
           <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
             Paqar adalah perkhidmatan pihak ketiga. Kami tidak mengendalikan portal rasmi PDRM atau JPJ.
           </p>
