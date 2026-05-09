@@ -27,7 +27,7 @@ export default function PrivasiPage() {
             },
             {
               title: 'Data Yang Kami Kumpul',
-              body: 'Kami mengumpul nombor plat kenderaan dan nombor kad pengenalan (IC) untuk menjalankan semakan. IC anda disulitkan menggunakan AES-256-GCM sebelum disimpan — kami tidak menyimpan IC dalam teks biasa. Kami juga mengumpul alamat e-mel apabila anda membuat akaun atau membuat pembayaran.',
+              body: 'Kami mengumpul nombor plat kenderaan untuk menjalankan semakan. Nombor plat disulitkan menggunakan AES-256-GCM sebelum disimpan — kami tidak menyimpan data dalam teks biasa. Kami juga mengumpul alamat e-mel apabila anda membuat akaun atau membuat pembayaran.',
             },
             {
               title: 'Cara Kami Menggunakan Data Anda',
