@@ -26,7 +26,7 @@ export async function initiateBuyerReport(params: {
     const bill = await createBill({
       email:        params.buyerEmail,
       name:         params.buyerEmail,
-      amountCents:  2900,
+      amountCents:  100, // TEST ONLY — change back to 2900 before going live
       description:  `Laporan Pembeli Paqar - ${params.checkId}`,
       callbackUrl:  `${params.baseUrl}/api/webhooks/billplz`,
       redirectUrl:  `${params.baseUrl}/laporan-pembeli/${params.checkId}/selesai?claim_token=${params.claimToken}`,
