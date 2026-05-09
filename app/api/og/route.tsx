@@ -23,21 +23,21 @@ export async function GET() {
         {/* Headline */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <span style={{ color: 'white', fontSize: '58px', fontWeight: 900, lineHeight: 1.1, textAlign: 'center' as const }}>
-            Semak Saman &amp;
+            Semak Sebelum
           </span>
-          <span style={{ color: 'white', fontSize: '58px', fontWeight: 900, lineHeight: 1.1, textAlign: 'center' as const }}>
-            Blacklist Kenderaan
+          <span style={{ color: '#FACC15', fontSize: '58px', fontWeight: 900, lineHeight: 1.1, textAlign: 'center' as const }}>
+            Bayar Deposit
           </span>
         </div>
 
         {/* Sub */}
         <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '22px', marginTop: '4px', textAlign: 'center' as const }}>
-          Percuma · Keputusan dalam 60 saat · 7 sumber serentak
+          Panduan saman rasmi · Laporan pembeli · Anggaran harga
         </span>
 
-        {/* Source badges */}
+        {/* Feature badges */}
         <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' as const, justifyContent: 'center' }}>
-          {['PDRM', 'JPJ', 'AES', 'Majlis Tempatan', 'Imigresen', 'LHDN', 'PTPTN'].map(s => (
+          {['Panduan Saman PDRM/JPJ', 'Laporan Pembeli RM29', 'Sejarah Kemalangan'].map(s => (
             <div key={s} style={{
               background: 'rgba(255,255,255,0.12)',
               borderRadius: '100px', padding: '7px 18px',

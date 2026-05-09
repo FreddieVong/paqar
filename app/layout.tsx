@@ -18,12 +18,12 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Paqar — Semak Saman & Blacklist Kenderaan',
-  description: 'Semak saman PDRM, JPJ, AES dan status blacklist kenderaan anda dengan cepat. Percuma. Keputusan dalam 60 saat.',
+  title: 'Paqar — Semak Sebelum Bayar Deposit',
+  description: 'Paqar bantu anda faham risiko kereta sebelum beli — panduan semak saman rasmi, anggaran harga, soalan penjual, dan skrip rundingan.',
   metadataBase: new URL('https://paqar.my'),
   openGraph: {
-    title: 'Paqar — Semak Saman & Blacklist Kenderaan',
-    description: 'Semak saman PDRM, JPJ, AES dan status blacklist kenderaan anda dengan cepat. Percuma. Keputusan dalam 60 saat.',
+    title: 'Paqar — Semak Sebelum Bayar Deposit',
+    description: 'Paqar bantu anda faham risiko kereta sebelum beli — panduan semak saman rasmi, anggaran harga, soalan penjual, dan skrip rundingan.',
     url: 'https://paqar.my',
     siteName: 'Paqar',
     locale: 'ms_MY',
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Paqar — Semak Saman & Blacklist Kenderaan',
-    description: 'Semak saman PDRM, JPJ, AES dan status blacklist kenderaan anda dengan cepat. Percuma.',
+    title: 'Paqar — Semak Sebelum Bayar Deposit',
+    description: 'Panduan semak saman rasmi + laporan pembeli kereta terpakai. Semak sebelum bayar deposit.',
     images: ['/api/og'],
   },
   alternates: {

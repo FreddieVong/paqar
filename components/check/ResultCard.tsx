@@ -62,12 +62,9 @@ function renderDetail(result: CheckResult): string {
 
   if (result.status === 'clear') return 'Tiada saman'
 
-  if (result.status === 'hit' && data) {
-    if ('samans' in data && data.samans.length > 0) {
-      const total = data.samans.reduce((s: number, r: SamanRecord) => s + r.amount, 0)
-      return `${data.samans.length} saman · RM${total.toLocaleString()}`
-    }
-    if ('blacklisted' in data && data.blacklisted) return 'Disenarai hitam'
+  if (result.status === 'hit' && data && 'samans' in data && data.samans.length > 0) {
+    const total = data.samans.reduce((s: number, r: SamanRecord) => s + r.amount, 0)
+    return `${data.samans.length} saman · RM${total.toLocaleString()}`
   }
 
   if (result.status === 'partial') return 'Data tidak lengkap'
