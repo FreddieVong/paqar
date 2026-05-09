@@ -94,7 +94,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                                    'bg-[#FEF2F2] border-[#FECACA]'
       }`}>
         <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
-          Keputusan Semakan
+          Apa yang kami jumpa
         </p>
         <p className={`font-heading font-extrabold text-[20px] mb-1 ${
           verdict === 'low'        ? 'text-[#15803D]' :
@@ -102,20 +102,19 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
           verdict === 'caution'    ? 'text-[#B45309]' :
                                      'text-[#B91C1C]'
         }`}>
-          {verdict === 'low'        ? 'Risiko Rendah — Layak Diteruskan' :
-           verdict === 'incomplete' ? 'Semakan Separa Lengkap' :
-           verdict === 'caution'    ? 'Perlu Tanya Penjual' :
-                                      'Semak Dahulu'}
+          {verdict === 'low'        ? 'Tiada isu dijumpai' :
+           verdict === 'incomplete' ? 'Ada yang perlu anda semak sendiri' :
+           verdict === 'caution'    ? 'Ada saman — tanya penjual dulu' :
+                                      'Berhati-hati — ada isu serius'}
         </p>
         <p className="font-body text-[13px] text-[#374151] leading-relaxed">
           {verdict === 'low'
-            ? 'Tiada isu kritikal dijumpai daripada semakan ini.'
+            ? 'Tiada saman atau isu yang kami temui. Gunakan maklumat di bawah untuk buat keputusan.'
             : verdict === 'incomplete'
-            ? 'Tiada isu disahkan setakat ini. PDRM dan JPJ memerlukan pengesahan penjual — laporan ini masih memberikan maklumat penting untuk keputusan anda.'
-            // reassurance rendered separately below
+            ? 'Tiada isu yang kami jumpa. Saman PDRM/JPJ perlu disemak sendiri di portal rasmi — klik pautan di atas.'
             : verdict === 'caution'
-            ? `Terdapat ${samanCount} saman berjumlah RM${samanTotal.toLocaleString()}. Minta penjual jelaskan sebelum bayar deposit.`
-            : 'Beberapa isu ditemui. Jangan bayar deposit sebelum mendapat penjelasan penjual.'}
+            ? `Ada ${samanCount} saman berjumlah RM${samanTotal.toLocaleString()}. Minta penjual selesaikan atau tolak dari harga.`
+            : 'Ada beberapa isu serius. Jangan bayar deposit sebelum penjual beri penjelasan.'}
         </p>
         {samanTotal > 0 && (
           <p className={`font-heading font-extrabold text-[22px] mt-3 ${
@@ -126,7 +125,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         )}
         {verdict === 'incomplete' && (
           <p className="font-body text-[11px] text-[#6B7280] mt-2 leading-relaxed">
-            Laporan ini masih membantu anda membuat keputusan awal sebelum bayar deposit. Untuk kepastian rasmi PDRM/JPJ, minta penjual verify.
+            Gunakan maklumat di bawah untuk bantu keputusan anda sebelum bayar deposit.
           </p>
         )}
       </div>
@@ -138,16 +137,16 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
         <div className="flex items-center justify-between mb-4">
           <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280]">
-            Saman &amp; Status Kenderaan
+            Status Saman
           </p>
           <span className={`font-heading font-bold text-[11px] px-2.5 py-1 rounded-full ${
             samanCount > 0              ? 'bg-[#FEE2E2] text-[#B91C1C]' :
             criticalUnverified          ? 'bg-[#EFF6FF] text-[#1D4ED8]' :
                                           'bg-[#DCFCE7] text-[#15803D]'
           }`}>
-            {samanCount > 0        ? `${samanCount} Saman` :
-             criticalUnverified    ? '0 isu disahkan' :
-                                     'Tiada Saman'}
+            {samanCount > 0        ? `${samanCount} saman dijumpai` :
+             criticalUnverified    ? 'Perlu semak sendiri' :
+                                     'Tiada saman'}
           </span>
         </div>
         <div className="space-y-2">
@@ -174,12 +173,12 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                   }`}>
                     {status === 'clear'                ? 'Tiada Saman' :
                      status === 'hit'                  ? `Ada Saman${amount > 0 ? ` — RM${amount.toLocaleString()}` : ''}` :
-                     status === 'requires_user_action' ? 'Belum Disahkan' :
-                                                          'Tidak dapat disahkan'}
+                     status === 'requires_user_action' ? 'Semak sendiri' :
+                                                          'Tidak dapat disemak'}
                   </span>
                 </div>
                 {status === 'requires_user_action' && (
-                  <p className="font-body text-[10px] text-[#6B7280] mt-0.5">Perlu pengesahan penjual</p>
+                  <p className="font-body text-[10px] text-[#6B7280] mt-0.5">Tanya penjual semak sendiri di portal rasmi</p>
                 )}
               </div>
             )
@@ -321,7 +320,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         ) : (
           <>
             <p className="font-body text-[13px] text-white/80 leading-relaxed mb-4">
-              Tiada isu disahkan setakat ini. Sumber penting seperti PDRM/JPJ masih memerlukan pengesahan penjual. Gunakan kondisi fizikal dan harga pasaran sebagai asas rundingan.
+              Tiada saman yang kami jumpa. Gunakan kondisi fizikal dan harga pasaran untuk rundingan.
             </p>
             <div className="space-y-2.5">
               {[

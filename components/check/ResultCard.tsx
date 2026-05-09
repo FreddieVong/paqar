@@ -9,8 +9,8 @@ const BM_LABELS: Record<SourceKey, string> = {
 }
 
 const PORTAL_LINKS: Partial<Record<SourceKey, { label: string; url: string }>> = {
-  pdrm: { label: 'Semak di MyBayar PDRM →', url: 'https://mybayar.rmp.gov.my' },
-  jpj:  { label: 'Semak di MyJPJ →',        url: 'https://myjpj.jpj.gov.my'   },
+  pdrm: { label: 'Buka MyBayar PDRM →', url: 'https://mybayar.rmp.gov.my' },
+  jpj:  { label: 'Buka MyJPJ →',        url: 'https://myjpj.jpj.gov.my'   },
 }
 
 const CARD_STYLES: Record<string, string> = {
@@ -52,27 +52,28 @@ function renderDetail(result: CheckResult): string {
   const source = result.source as SourceKey
 
   if (result.status === 'pending') return 'Sedang disemak…'
-  if (result.status === 'unavailable' || result.status === 'timeout' || result.status === 'error')
-    return 'Tidak dapat disemak buat masa ini'
-  if (result.status === 'requires_user_action') return 'Semakan memerlukan tindakan di portal rasmi'
+  if (result.status === 'requires_user_action') return 'Perlu log masuk — semak sendiri di portal rasmi'
+  if (result.status === 'unavailable' || result.status === 'timeout' || result.status === 'error') {
+    if (source === 'aes') return 'Kini digabungkan dengan PDRM/JPJ — semak di atas'
+    if (source === 'local_councils') return 'Semak kompaun dengan majlis tempatan kawasan anda'
+    return 'Tidak dapat disemak'
+  }
 
   const data = result.data as SourceData | null
 
-  if (result.status === 'clear') {
-    return SAMAN_SOURCES.includes(source) ? 'Tiada Saman' : 'Tiada Isu'
-  }
+  if (result.status === 'clear') return 'Tiada saman'
 
   if (result.status === 'hit' && data) {
     if ('samans' in data && data.samans.length > 0) {
       const total = data.samans.reduce((s: number, r: SamanRecord) => s + r.amount, 0)
-      return `${data.samans.length} saman · RM${total}`
+      return `${data.samans.length} saman · RM${total.toLocaleString()}`
     }
     if ('blacklisted' in data && data.blacklisted) return 'Disenarai hitam'
   }
 
   if (result.status === 'partial') return 'Data tidak lengkap'
 
-  return 'Tiada Isu'
+  return 'Tiada saman'
 }
 
 export function ResultCard({ result, buyerMode = false }: { result: CheckResult; buyerMode?: boolean }) {
@@ -82,7 +83,7 @@ export function ResultCard({ result, buyerMode = false }: { result: CheckResult;
   const portal = !buyerMode && status === 'requires_user_action' ? (PORTAL_LINKS[s] ?? null) : null
 
   const detailText = buyerMode && status === 'requires_user_action'
-    ? 'Belum Disahkan — Perlu Pengesahan Penjual'
+    ? 'Tidak dapat disemak — tanya penjual semak sendiri'
     : renderDetail(result)
 
   return (
