@@ -36,18 +36,18 @@ export function SamanGuide() {
               Saman JPJ (jalan raya)
             </p>
             <ol className="space-y-1.5 font-body text-[13px] text-[#374151] list-decimal list-inside leading-relaxed">
-              <li>Buka <span className="font-bold">myjpj.jpj.gov.my</span></li>
+              <li>Buka <span className="font-bold">public.jpj.gov.my</span></li>
               <li>Log masuk dengan MyDigital ID atau IC</li>
               <li>Pilih &quot;Semakan Saman&quot;</li>
               <li>Masukkan nombor plat → lihat keputusan</li>
             </ol>
             <a
-              href="https://myjpj.jpj.gov.my"
+              href="https://public.jpj.gov.my"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-2.5 inline-block font-body text-[13px] text-[#1D4ED8] underline underline-offset-2"
             >
-              Buka MyJPJ →
+              Buka Portal JPJ →
             </a>
           </div>
 

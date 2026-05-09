@@ -73,7 +73,7 @@ export default function PanduanSemakSamanPage() {
             </h2>
             <ol className="space-y-3">
               {[
-                'Buka myjpj.jpj.gov.my di browser anda',
+                'Buka public.jpj.gov.my di browser anda',
                 'Log masuk dengan MyDigital ID atau nombor IC',
                 'Pilih menu "Semakan Saman" dari dashboard',
                 'Masukkan nombor plat kenderaan',
@@ -88,12 +88,12 @@ export default function PanduanSemakSamanPage() {
               ))}
             </ol>
             <a
-              href="https://myjpj.jpj.gov.my"
+              href="https://public.jpj.gov.my"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 inline-block w-full bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#053D3A] transition-colors"
             >
-              Buka MyJPJ →
+              Buka Portal JPJ →
             </a>
           </div>
 

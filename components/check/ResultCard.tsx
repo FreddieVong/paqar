@@ -10,7 +10,7 @@ const BM_LABELS: Record<SourceKey, string> = {
 
 const PORTAL_LINKS: Partial<Record<SourceKey, { label: string; url: string }>> = {
   pdrm: { label: 'Buka MyBayar PDRM →', url: 'https://mybayar.rmp.gov.my' },
-  jpj:  { label: 'Buka MyJPJ →',        url: 'https://myjpj.jpj.gov.my'   },
+  jpj:  { label: 'Buka Portal JPJ →',    url: 'https://public.jpj.gov.my'  },
 }
 
 const CARD_STYLES: Record<string, string> = {
