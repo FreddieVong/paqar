@@ -21,16 +21,16 @@ export default function HomePage() {
             </div>
 
             <h1 className="font-heading font-extrabold text-[32px] md:text-[40px] leading-[1.08] tracking-[-0.03em] text-[#111827] mb-3">
-              Semak <span className="text-[#064E4A]">Saman</span> &amp; Blacklist<br />
-              Dengan Mudah
+              Semak Sebelum<br />
+              <span className="text-[#064E4A]">Bayar Deposit</span>
             </h1>
 
             <p className="font-body text-[15px] md:text-[16px] text-[#6B7280] leading-relaxed mb-8 md:mb-0">
-              Paqar bantu anda semak status penting kenderaan dengan cepat, jelas dan mudah faham.
+              Paqar bantu anda faham risiko kereta sebelum beli — panduan saman rasmi, anggaran harga, soalan penjual, dan skrip rundingan.
             </p>
 
             <p className="hidden md:block font-body text-[13px] text-[#6B7280] mt-6">
-              Data disulitkan · Keputusan dalam 60 saat · Percuma sepenuhnya
+              Panduan saman percuma · Laporan penuh RM29 · Tanpa daftar akaun
             </p>
           </div>
 
@@ -49,15 +49,15 @@ export default function HomePage() {
               Apa Yang Anda Boleh Semak
             </p>
             <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827]">
-              Semua status penting, dalam satu tempat
+              Semua yang anda perlu tahu sebelum beli
             </h2>
           </div>
 
           <div className="flex flex-col md:grid md:grid-cols-3 gap-3">
             {[
-              { title: 'Saman Kenderaan', desc: 'PDRM, JPJ, AES & Majlis Tempatan', badge: 'Tersedia',    badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
-              { title: 'Status Blacklist', desc: 'Imigresen, LHDN & PTPTN',          badge: 'Tersedia',    badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
-              { title: 'Dokumen Kenderaan', desc: 'Cukai jalan, insurans & lesen',   badge: 'Akan Datang', badgeStyle: 'bg-[#F3F4F6] text-[#6B7280]' },
+              { title: 'Panduan Semak Saman', desc: 'Cara semak PDRM & JPJ secara rasmi, step by step', badge: 'Percuma',     badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
+              { title: 'Laporan Pembeli',    desc: 'Harga pasaran, soalan penjual, skrip rundingan',    badge: 'RM29',        badgeStyle: 'bg-[#FEF9C3] text-[#B45309]' },
+              { title: 'Sejarah Kemalangan', desc: 'Rekod kemalangan & tuntutan insurans',              badge: 'Akan Datang', badgeStyle: 'bg-[#F3F4F6] text-[#6B7280]' },
             ].map((item) => (
               <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-4 md:p-5">
                 <p className="font-heading font-bold text-[15px] text-[#111827] mb-0.5">{item.title}</p>
@@ -88,18 +88,18 @@ export default function HomePage() {
             {[
               {
                 n: '1',
-                title: 'Masukkan maklumat',
-                desc:  'Nombor plat dan No. IC anda. Data disulitkan — tidak disimpan dalam teks biasa.',
+                title: 'Masukkan nombor plat',
+                desc:  'Tiada IC diperlukan. Masukkan plat kereta yang anda nak beli.',
               },
               {
                 n: '2',
-                title: 'Paqar semak status',
-                desc:  'Sistem kami semak 7 sumber serentak — PDRM, JPJ, AES, Imigresen dan lain-lain.',
+                title: 'Dapatkan panduan saman',
+                desc:  'Kami tunjukkan cara semak saman PDRM & JPJ secara rasmi, plus apa yang perlu buat.',
               },
               {
                 n: '3',
-                title: 'Lihat keputusan dengan jelas',
-                desc:  'Hijau bermakna selamat. Merah bermakna perlu tindakan. Tiada istilah teknikal.',
+                title: 'Buat keputusan dengan yakin',
+                desc:  'Dapatkan laporan lengkap — harga pasaran, soalan untuk penjual, skrip rundingan.',
               },
             ].map((step, i) => (
               <div key={step.n} className="flex gap-4 pb-6 relative">
@@ -208,15 +208,15 @@ export default function HomePage() {
               },
               {
                 q: 'Adakah semakan ini percuma?',
-                a: 'Ya, semakan asas saman dan blacklist adalah percuma sepenuhnya. Tiada kad kredit diperlukan.',
+                a: 'Ya, panduan semak saman adalah percuma. Laporan pembeli lengkap (harga pasaran, soalan penjual, skrip rundingan) tersedia pada RM29.',
               },
               {
                 q: 'Berapa lama keputusan mengambil masa?',
                 a: 'Biasanya dalam 60 saat. Masa mungkin berbeza bergantung kepada kesediaan sumber luar.',
               },
               {
-                q: 'Adakah No. IC saya selamat?',
-                a: 'No. IC anda disulitkan menggunakan AES-256-GCM sebelum disimpan. Kami tidak menyimpan dalam teks biasa dan mematuhi PDPA Malaysia.',
+                q: 'Adakah data saya selamat?',
+                a: 'Nombor plat disulitkan menggunakan AES-256-GCM. Kami tidak menyimpan dalam teks biasa dan mematuhi PDPA Malaysia.',
               },
             ].map((faq) => (
               <details key={faq.q} className="group bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
@@ -237,7 +237,7 @@ export default function HomePage() {
       <section className="bg-[#064E4A] px-5 py-14 text-center md:py-20">
         <div className="max-w-lg mx-auto">
           <h2 className="font-heading font-extrabold text-[24px] md:text-[30px] leading-tight tracking-tight text-white mb-3">
-            Semak kenderaan anda<br />sekarang — percuma
+            Semak sebelum<br />bayar deposit
           </h2>
           <p className="font-body text-[14px] text-white/70 mb-7">
             Tiada pendaftaran.
