@@ -11,7 +11,7 @@ export function InsuranceCTA() {
         Bandingkan harga insurans dari semua syarikat dalam satu tempat — percuma, tiada komisen tersembunyi.
       </p>
       <a
-        href="https://bjak.my/car-insurance?ref=PAQAR"
+        href="https://bjak.my/?p=FREDDIE-0FC9AL"
         target="_blank"
         rel="noopener noreferrer"
         className="block w-full bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-[#053D3A] transition-colors"
