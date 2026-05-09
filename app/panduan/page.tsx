@@ -44,6 +44,20 @@ const GUIDES = [
     tag:     null,
     tagStyle: '',
   },
+  {
+    href:    '/cara-semak-roadtax-kereta',
+    title:   'Cara semak roadtax kereta',
+    desc:    'Status roadtax aktif atau tamat, apa buat kalau tamat, dan cara kira kos pembaharuan.',
+    tag:     null,
+    tagStyle: '',
+  },
+  {
+    href:    '/cara-semak-insurans-kereta',
+    title:   'Cara semak insurans kereta',
+    desc:    'Semak status insurans, faham NCD, dan bandingkan harga insurans baharu.',
+    tag:     null,
+    tagStyle: '',
+  },
 ]
 
 export default function PanduanPage() {

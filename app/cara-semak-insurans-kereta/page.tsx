@@ -1,0 +1,138 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { Nav }           from '@/components/layout/Nav'
+import { Shell }         from '@/components/layout/Shell'
+import { DualCheckForm } from '@/components/check/DualCheckForm'
+
+export const metadata: Metadata = {
+  title: 'Cara Semak Insurans Kereta Malaysia 2025 | Paqar',
+  description: 'Cara semak status insurans kereta Malaysia — sama ada masih aktif, tamat, atau perlu diperbaharui. Penting sebelum beli atau pandu kereta terpakai.',
+}
+
+export default function CaraSemakInsuransPage() {
+  return (
+    <>
+      <Nav />
+      <Shell>
+        <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">
+
+          <div>
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
+              Panduan Pembeli
+            </p>
+            <h1 className="font-heading font-extrabold text-[26px] text-[#111827] leading-tight mb-3">
+              Cara semak insurans kereta Malaysia
+            </h1>
+            <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
+              Insurans kereta wajib di Malaysia. Sebelum beli kereta terpakai, semak status insurans — tamat atau tidak aktif bermakna anda tidak dilindungi sebaik bawa balik.
+            </p>
+          </div>
+
+          {/* Why check */}
+          <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
+            <h2 className="font-heading font-bold text-[15px] text-[#B45309] mb-2">
+              Kenapa perlu semak sebelum beli?
+            </h2>
+            <ul className="space-y-2">
+              {[
+                'Insurans tamat — anda bertanggungjawab sebaik jadi pemilik baru',
+                'Kereta tanpa insurans boleh disaman dan tidak boleh perbaharui roadtax',
+                'Sesetengah insurans mempunyai tuntutan tertunggak yang mempengaruhi nilai',
+                'No-claim discount (NCD) pemilik lama tidak dipindah kepada anda',
+              ].map((item, i) => (
+                <li key={i} className="flex gap-2 font-body text-[13px] text-[#374151]">
+                  <span className="text-[#B45309] flex-shrink-0">!</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Method 1 - Bjak */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+            <h2 className="font-heading font-bold text-[17px] text-[#111827] mb-4">
+              Cara semak dan bandingkan insurans di Bjak
+            </h2>
+            <p className="font-body text-[13px] text-[#6B7280] mb-4 leading-relaxed">
+              Bjak membolehkan anda semak dan bandingkan harga insurans dari semua syarikat dalam satu tempat. Sesuai untuk pembeli yang nak tahu kos insurans sebelum buat keputusan.
+            </p>
+            <ol className="space-y-3">
+              {[
+                'Buka bjak.my',
+                'Masukkan nombor plat atau maklumat kenderaan',
+                'Bandingkan sebutan harga dari pelbagai syarikat insurans',
+                'Pilih pelan yang sesuai dan beli terus dalam talian',
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5 w-5">{i + 1}.</span>
+                  <p className="font-body text-[13px] text-[#374151] leading-relaxed">{step}</p>
+                </li>
+              ))}
+            </ol>
+            <a
+              href="https://bjak.my/?p=FREDDIE-0FC9AL"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block w-full bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#053D3A] transition-colors"
+            >
+              Bandingkan Insurans di Bjak →
+            </a>
+          </div>
+
+          {/* Method 2 - Direct insurer */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+            <h2 className="font-heading font-bold text-[17px] text-[#111827] mb-3">
+              Cara semak status insurans sedia ada
+            </h2>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
+              Untuk semak sama ada insurans kereta masih aktif, anda boleh:
+            </p>
+            <ul className="space-y-2.5">
+              {[
+                { method: 'Tanya penjual', detail: 'Minta dokumen polisi insurans. Nama syarikat insurans, nombor polisi, dan tarikh tamat tempoh mestilah jelas.' },
+                { method: 'Hubungi syarikat insurans', detail: 'Dengan nombor polisi dan nombor plat, syarikat insurans boleh sahkan status polisi.' },
+                { method: 'Semak stiker windscreen', detail: 'Kebanyakan insurans ada stiker di cermin hadapan yang tunjukkan tarikh tamat. Tapi ini bukan pengesahan rasmi.' },
+              ].map((item, i) => (
+                <li key={i}>
+                  <p className="font-heading font-bold text-[13px] text-[#111827]">{i + 1}. {item.method}</p>
+                  <p className="font-body text-[12px] text-[#6B7280] mt-0.5">{item.detail}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* NCD explanation */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+            <h2 className="font-heading font-bold text-[17px] text-[#111827] mb-3">
+              Pasal NCD (No-Claim Discount)
+            </h2>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
+              NCD adalah diskaun yang pemilik kumpul setiap tahun tiada tuntutan. NCD <strong>tidak dipindah</strong> kepada pembeli baru — ia kekal dengan pemilik lama.
+            </p>
+            <div className="bg-[#F9FAFB] rounded-lg p-3 space-y-1">
+              <p className="font-body text-[12px] text-[#6B7280]">• Tahun 1 tanpa tuntutan: 25% diskaun</p>
+              <p className="font-body text-[12px] text-[#6B7280]">• Tahun 2: 30% · Tahun 3: 38.33% · Tahun 4: 45% · Tahun 5+: 55%</p>
+              <p className="font-body text-[12px] text-[#374151] mt-2 font-bold">Sebagai pembeli baru, anda mula dari 0% NCD.</p>
+            </div>
+          </div>
+
+          {/* Check form */}
+          <div className="space-y-3">
+            <p className="font-heading font-bold text-[14px] text-[#111827]">
+              Semak kereta yang anda minat secara lengkap:
+            </p>
+            <DualCheckForm />
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
+            <Link href="/cara-semak-roadtax-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak roadtax kereta →</Link>
+            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
+          </div>
+
+        </div>
+      </Shell>
+    </>
+  )
+}
