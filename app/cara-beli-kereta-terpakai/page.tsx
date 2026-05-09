@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Nav }   from '@/components/layout/Nav'
-import { Shell } from '@/components/layout/Shell'
+import { Nav }           from '@/components/layout/Nav'
+import { Shell }         from '@/components/layout/Shell'
+import { DualCheckForm } from '@/components/check/DualCheckForm'
 
 export const metadata: Metadata = {
   title: 'Cara Beli Kereta Terpakai Malaysia 2025 — Panduan Lengkap | Paqar',
@@ -150,20 +151,11 @@ export default function CaraBelihKeretaTerpakaiPage() {
           </div>
 
           {/* CTA */}
-          <div className="bg-[#064E4A] rounded-[16px] p-5 text-center">
-            <p className="font-heading font-extrabold text-[18px] text-white mb-2">
-              Nak beli kereta terpakai?
+          <div className="space-y-3">
+            <p className="font-heading font-bold text-[14px] text-[#111827]">
+              Dah jumpa kereta? Semak plat sekarang:
             </p>
-            <p className="font-body text-[13px] text-white/70 mb-4 leading-relaxed">
-              Masukkan nombor plat, dapatkan panduan saman rasmi dan laporan pembeli lengkap — anggaran harga, soalan penjual, dan skrip rundingan.
-            </p>
-            <Link
-              href="/"
-              className="block bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-[12px] py-4 hover:bg-yellow-300 transition-colors"
-            >
-              Semak Kereta — RM29 →
-            </Link>
-            <p className="font-body text-[11px] text-white/40 mt-2">Panduan saman percuma · Laporan penuh RM29</p>
+            <DualCheckForm />
           </div>
 
           {/* Related guides */}

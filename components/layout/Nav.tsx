@@ -19,7 +19,13 @@ export async function Nav() {
             priority
           />
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/panduan"
+            className="font-heading font-semibold text-[13px] text-[#6B7280] hover:text-[#064E4A] transition-colors px-2 py-1.5"
+          >
+            Panduan
+          </Link>
           {user ? (
             <Link
               href="/dashboard"

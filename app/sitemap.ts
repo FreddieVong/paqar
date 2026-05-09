@@ -6,6 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     { url: base,                                          lastModified: now, changeFrequency: 'weekly',  priority: 1.0 },
+    { url: `${base}/panduan`,                            lastModified: now, changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${base}/panduan-semak-saman`,                lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/cara-beli-kereta-terpakai`,          lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/checklist-beli-kereta-terpakai`,     lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
