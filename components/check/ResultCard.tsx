@@ -46,7 +46,6 @@ const LABEL_STYLES: Record<string, string> = {
   requires_user_action: 'text-[#1D4ED8]',
 }
 
-const SAMAN_SOURCES: SourceKey[] = ['pdrm', 'jpj', 'aes', 'local_councils']
 
 function renderDetail(result: CheckResult): string {
   const source = result.source as SourceKey

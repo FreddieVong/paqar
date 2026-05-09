@@ -70,7 +70,7 @@ interface Props {
   claimedMileageKm?: number | null
 }
 
-export function BuyerReportContent({ check: _check, results, plate, askingPriceRm, claimedMileageKm }: Props) {
+export function BuyerReportContent({ check: _check, results, plate: _plate, askingPriceRm, claimedMileageKm }: Props) {
   const vehicleResults      = results.filter(r => VEHICLE_SOURCES.includes(r.source as VehicleSource))
   const samanTotal          = getSamanTotal(vehicleResults)
   const samanCount          = getSamanCount(vehicleResults)
