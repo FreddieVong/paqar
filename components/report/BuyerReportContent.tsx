@@ -329,6 +329,25 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
               ))}
             </div>
           </>
+        ) : verdict === 'incomplete' ? (
+          <>
+            <p className="font-body text-[13px] text-white/80 leading-relaxed mb-4">
+              Tiada isu yang kami jumpa setakat ini. Selesaikan langkah di bawah sebelum commit.
+            </p>
+            <div className="space-y-2.5">
+              {[
+                'Tanya penjual semak saman di MyBayar PDRM dan Portal JPJ — minta bukti screenshot.',
+                'Bawa ke bengkel untuk pemeriksaan fizikal sebelum bayar deposit.',
+                'Semak geran, insurans, dan roadtax sebelum tanda tangan.',
+                'Pastikan tiada pinjaman aktif sebelum tukar milik.',
+              ].map((step, i) => (
+                <div key={i} className="flex gap-3 items-start">
+                  <span className="font-heading font-bold text-[12px] text-white/50 flex-shrink-0 mt-0.5">{i + 1}.</span>
+                  <p className="font-body text-[13px] text-white/90 leading-relaxed">{step}</p>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
           <>
             <p className="font-body text-[13px] text-white/80 leading-relaxed mb-4">
