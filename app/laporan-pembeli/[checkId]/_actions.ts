@@ -4,6 +4,7 @@ import { createBill }        from '@/lib/billplz'
 import { createBuyerReport } from '@/lib/db/buyer-reports'
 import { getCheck }          from '@/lib/db/checks'
 import { env }               from '@/lib/env'
+import { createClient }      from '@/lib/supabase/server'
 
 export async function initiateBuyerReport(params: {
   checkId:          string
@@ -18,7 +19,16 @@ export async function initiateBuyerReport(params: {
     return { error: 'Alamat e-mel tidak sah' }
   }
 
-  const row = await getCheck(params.checkId, params.claimToken)
+  let row = await getCheck(params.checkId, params.claimToken)
+  // Fallback: check was auto-claimed (claim_token set to null) — allow if user owns it
+  if (!row) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const candidate = await getCheck(params.checkId)
+      if (candidate?.check.user_id === user.id) row = candidate
+    }
+  }
   if (!row) return { error: 'Semakan tidak dijumpai' }
   if (row.check.status !== 'complete') return { error: 'Semakan belum selesai' }
 

@@ -34,7 +34,14 @@ export async function GET(
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const row = await getCheck(params.id, claimToken)
+  let row = await getCheck(params.id, claimToken)
+
+  // Fallback: if claim_token lookup failed (auto-claimed), allow owner access
+  if (!row && user) {
+    const candidate = await getCheck(params.id)
+    if (candidate?.check.user_id === user.id) row = candidate
+  }
+
   if (!row) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
