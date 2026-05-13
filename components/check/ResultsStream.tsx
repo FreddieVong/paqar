@@ -7,7 +7,7 @@ import { Button }       from '@/components/ui/button'
 import { SamanGuide }  from './SamanGuide'
 import { ReportCTA }   from './ReportCTA'
 import { createClient } from '@/lib/supabase/client'
-import { claimCheck }   from '@/app/auth/_actions'
+
 import type { Check, CheckResult } from '@/types/domain'
 import type { PollCheckResponse } from '@/types/api'
 
@@ -63,16 +63,9 @@ export function ResultsStream({ checkId, claimToken, plate }: Props) {
     return () => { clearInterval(interval); clearTimeout(timeout) }
   }, [poll, check?.status])
 
-  useEffect(() => {
-    if (
-      check?.status === 'complete' &&
-      authedUser != null &&
-      check.user_id == null &&
-      check.claim_token != null
-    ) {
-      void claimCheck(check.claim_token, authedUser)
-    }
-  }, [check, authedUser, poll])
+  // Auto-claim removed: it was invalidating claim_token before the user
+  // could complete the purchase flow, causing 404s on laporan-pembeli.
+  // Dashboard access works via buyer_reports (email + check_id join).
 
   const completedCount = Math.min(
     results.filter(r => r.status !== 'pending').length,
