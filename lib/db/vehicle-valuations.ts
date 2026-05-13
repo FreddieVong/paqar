@@ -14,13 +14,13 @@ export async function getValuationByNvic(nvic: string): Promise<VehicleValuation
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('vehicle_valuations')
-    .select('wm_new_price, sum_insured, make, family, variant, year')
+    .select('wm_new_pr, sum_insured, make, family, variant, year')
     .eq('nvic', nvic.toUpperCase())
     .single()
 
   if (error || !data) return null
   return {
-    wmNewPrice: data.wm_new_price,
+    wmNewPrice: data.wm_new_pr,
     sumInsured: data.sum_insured,
     make:       data.make,
     family:     data.family,
