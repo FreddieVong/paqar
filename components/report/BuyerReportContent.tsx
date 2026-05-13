@@ -208,8 +208,8 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         </div>
       )}
 
-      {/* Section 1: Overall Verdict */}
-      <div className={`rounded-[16px] p-5 border ${
+      {/* Section 1: Overall Verdict — only shown when samans are confirmed */}
+      {samanCount > 0 && <div className={`rounded-[16px] p-5 border ${
         verdict === 'low'        ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
         verdict === 'incomplete' ? 'bg-[#EFF6FF] border-[#BFDBFE]' :
         verdict === 'caution'    ? 'bg-[#FFFBEB] border-[#FDE68A]' :
@@ -250,7 +250,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
             Gunakan maklumat di bawah untuk bantu keputusan anda sebelum bayar deposit.
           </p>
         )}
-      </div>
+      </div>}
 
       {/* Section 4: Soalan untuk Penjual */}
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
