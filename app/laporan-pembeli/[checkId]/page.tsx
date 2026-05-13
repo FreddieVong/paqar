@@ -24,8 +24,10 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
 
   if (claimToken) {
     row = await getCheck(params.checkId, claimToken)
-  } else {
-    // Authenticated access: check belongs to the logged-in user
+  }
+  // Fallback: if claim_token lookup failed (e.g. check was auto-claimed by
+  // a logged-in user, setting claim_token to NULL), check by ownership
+  if (!row) {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
