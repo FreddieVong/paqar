@@ -6,12 +6,6 @@ import { InspectionCTA } from './InspectionCTA'
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
 
-const SOURCE_LABELS: Record<string, string> = {
-  pdrm:          'PDRM Saman',
-  jpj:           'JPJ Saman',
-  aes:           'AES Saman',
-  local_councils:'Majlis Tempatan',
-}
 
 const MARKET_LOW  = 35_000
 const MARKET_HIGH = 55_000
@@ -34,12 +28,6 @@ function getSamanCount(results: CheckResult[]): number {
   }, 0)
 }
 
-function getSamanAmountForSource(result: CheckResult): number {
-  if (result.status !== 'hit') return 0
-  const data = result.data as SourceData | null
-  if (!data || !('samans' in data)) return 0
-  return data.samans.reduce((s: number, x: SamanRecord) => s + x.amount, 0)
-}
 
 function getVerdict(vehicleResults: CheckResult[]): 'low' | 'caution' | 'high' | 'incomplete' {
   const hits = vehicleResults.filter(r => r.status === 'hit')
@@ -99,9 +87,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
   const samanCount          = getSamanCount(vehicleResults)
   const verdict             = getVerdict(vehicleResults)
 
-  const criticalUnverified  = vehicleResults.some(r =>
-    ['pdrm', 'jpj', 'aes'].includes(r.source) && r.status === 'requires_user_action'
-  )
+
   const hasPdrmJpjUnverified = vehicleResults.some(r =>
     ['pdrm', 'jpj'].includes(r.source) && r.status === 'requires_user_action'
   )
