@@ -111,7 +111,68 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
   return (
     <div className="space-y-5">
 
-      {/* Section 0a: Data Kenderaan Rasmi (if available) */}
+      {/* Section 1: Perbandingan Harga — HERO (price is buyer's #1 question) */}
+      {(vehicleData?.valuation || askingPriceRm != null) && (
+      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
+          Perbandingan Harga
+        </p>
+
+        {vehicleData?.valuation && (
+          <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3 space-y-1">
+            <p className="font-body text-[11px] text-[#9CA3AF] uppercase tracking-[.05em]">
+              Nilai anggaran berdasarkan data insurans
+            </p>
+            <p className="font-body text-[12px] text-[#374151]">
+              Harga baru asal:{' '}
+              <span className="font-bold text-[#111827]">
+                RM{(vehicleData.valuation as {wmNewPrice:number}).wmNewPrice?.toLocaleString()}
+              </span>
+            </p>
+            <p className="font-body text-[12px] text-[#374151]">
+              Anggaran nilai semasa:{' '}
+              <span className="font-bold text-[#111827]">
+                RM{(vehicleData.valuation as {sumInsured:number}).sumInsured?.toLocaleString()}
+              </span>
+            </p>
+          </div>
+        )}
+
+        {askingPriceRm != null && (
+          <div className={`rounded-lg px-3 py-2.5 border ${
+            askingPriceRm > MARKET_HIGH ? 'bg-[#FEF2F2] border-[#FECACA]' :
+            askingPriceRm < MARKET_LOW  ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
+                                          'bg-[#FFFBEB] border-[#FDE68A]'
+          }`}>
+            <p className={`font-heading font-bold text-[13px] ${
+              askingPriceRm > MARKET_HIGH ? 'text-[#B91C1C]' :
+              askingPriceRm < MARKET_LOW  ? 'text-[#15803D]' :
+                                            'text-[#B45309]'
+            }`}>
+              {askingPriceRm > MARKET_HIGH
+                ? `Harga diminta RM${askingPriceRm.toLocaleString()} melebihi anggaran pasaran — semak perbandingan sebelum setuju harga`
+                : askingPriceRm < MARKET_LOW
+                ? `Harga diminta RM${askingPriceRm.toLocaleString()} di bawah anggaran pasaran — boleh pertimbangkan`
+                : `Harga diminta RM${askingPriceRm.toLocaleString()} — dalam lingkungan anggaran pasaran`}
+            </p>
+          </div>
+        )}
+
+        {claimedMileageKm != null && (
+          <div className="mt-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2">
+            <p className="font-body text-[12px] text-[#6B7280]">
+              Jarak tempuh didakwa:{' '}
+              <span className="font-heading font-bold text-[#111827]">{claimedMileageKm.toLocaleString()} km</span>
+              {claimedMileageKm > 150_000 && (
+                <span className="text-[#B45309]"> — tinggi, semak rekod servis dengan penjual</span>
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* Section 2: Data Kenderaan Rasmi (if available) */}
       {vehicleData?.make && (
         <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
           <div className="flex items-center justify-between mb-3">
@@ -205,68 +266,6 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         )}
       </div>
 
-      {/* Section 2: Perbandingan Harga — only when valuation or asking price available */}
-      {(vehicleData?.valuation || askingPriceRm != null) && (
-      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
-          Perbandingan Harga
-        </p>
-
-        {vehicleData?.valuation && (
-          <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3 space-y-1">
-            <p className="font-body text-[11px] text-[#9CA3AF] uppercase tracking-[.05em]">
-              Nilai anggaran berdasarkan data insurans
-            </p>
-            <p className="font-body text-[12px] text-[#374151]">
-              Harga baru asal:{' '}
-              <span className="font-bold text-[#111827]">
-                RM{(vehicleData.valuation as {wmNewPrice:number}).wmNewPrice?.toLocaleString()}
-              </span>
-            </p>
-            <p className="font-body text-[12px] text-[#374151]">
-              Anggaran nilai semasa:{' '}
-              <span className="font-bold text-[#111827]">
-                RM{(vehicleData.valuation as {sumInsured:number}).sumInsured?.toLocaleString()}
-              </span>
-            </p>
-          </div>
-        )}
-
-        {askingPriceRm != null && (
-          <div className={`rounded-lg px-3 py-2.5 border ${
-            askingPriceRm > MARKET_HIGH ? 'bg-[#FEF2F2] border-[#FECACA]' :
-            askingPriceRm < MARKET_LOW  ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
-                                          'bg-[#FFFBEB] border-[#FDE68A]'
-          }`}>
-            <p className={`font-heading font-bold text-[13px] ${
-              askingPriceRm > MARKET_HIGH ? 'text-[#B91C1C]' :
-              askingPriceRm < MARKET_LOW  ? 'text-[#15803D]' :
-                                            'text-[#B45309]'
-            }`}>
-              {askingPriceRm > MARKET_HIGH
-                ? `Harga diminta RM${askingPriceRm.toLocaleString()} melebihi anggaran pasaran — semak perbandingan sebelum setuju harga`
-                : askingPriceRm < MARKET_LOW
-                ? `Harga diminta RM${askingPriceRm.toLocaleString()} di bawah anggaran pasaran — boleh pertimbangkan`
-                : `Harga diminta RM${askingPriceRm.toLocaleString()} — dalam lingkungan anggaran pasaran`}
-            </p>
-          </div>
-        )}
-
-        {claimedMileageKm != null && (
-          <div className="mt-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2">
-            <p className="font-body text-[12px] text-[#6B7280]">
-              Jarak tempuh didakwa:{' '}
-              <span className="font-heading font-bold text-[#111827]">{claimedMileageKm.toLocaleString()} km</span>
-              {claimedMileageKm > 150_000 && (
-                <span className="text-[#B45309]"> — tinggi, semak rekod servis dengan penjual</span>
-              )}
-            </p>
-          </div>
-        )}
-
-      </div>
-      )} {/* end Perbandingan Harga conditional */}
-
       {/* Section 4: Soalan untuk Penjual */}
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
         <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-4">
@@ -274,11 +273,19 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         </p>
         <div className="space-y-3">
           {hasPdrmJpjUnverified && (
-            <div className="flex gap-3">
-              <span className="font-heading font-bold text-[12px] text-[#1D4ED8] flex-shrink-0 mt-0.5">1.</span>
-              <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Boleh sahkan status saman PDRM/JPJ secara rasmi di Paqar sebelum saya bayar deposit?
-              </p>
+            <div className="space-y-2">
+              <div className="flex gap-3">
+                <span className="font-heading font-bold text-[12px] text-[#1D4ED8] flex-shrink-0 mt-0.5">1.</span>
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                  Boleh tunjuk bukti semakan saman PDRM/JPJ untuk kereta ini sebelum saya bayar deposit?
+                </p>
+              </div>
+              <div className="ml-6 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2.5">
+                <p className="font-body text-[10px] text-[#9CA3AF] uppercase tracking-[.05em] mb-1">Mesej untuk penjual — salin dan hantar</p>
+                <p className="font-body text-[12px] text-[#374151] italic leading-relaxed">
+                  &ldquo;Hi, sebelum saya bayar deposit, boleh tunjuk bukti semakan saman PDRM/JPJ untuk kereta ini?&rdquo;
+                </p>
+              </div>
             </div>
           )}
           {SELLER_QUESTIONS.map((q, i) => (
@@ -383,10 +390,11 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
       </div>
 
       {/* Insurance referral */}
-      <InsuranceCTA />
-
-      {/* Workshop inspection */}
+      {/* Workshop inspection — pre-decision (before insurance) */}
       <InspectionCTA plate={plate} />
+
+      {/* Insurance — post-decision */}
+      <InsuranceCTA />
 
     </div>
   )

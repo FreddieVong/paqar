@@ -26,7 +26,7 @@ export default function HomePage() {
             </h1>
 
             <p className="font-body text-[15px] md:text-[16px] text-[#6B7280] leading-relaxed mb-8 md:mb-0">
-              Paqar bantu anda faham risiko kereta sebelum beli — panduan saman rasmi, anggaran harga, soalan penjual, dan skrip rundingan.
+              Masukkan nombor plat kereta yang anda nak beli. Paqar bantu anda faham harga, risiko, soalan untuk penjual, dan langkah sebelum bayar deposit.
             </p>
 
             <p className="hidden md:block font-body text-[13px] text-[#6B7280] mt-6">
@@ -44,7 +44,7 @@ export default function HomePage() {
                   Percuma
                 </p>
                 <ul className="space-y-1.5">
-                  {['Panduan semak saman PDRM/JPJ', 'Cara minta penjual buktikan'].map(t => (
+                  {['Panduan semak saman PDRM/JPJ', 'Cara minta penjual tunjuk bukti', 'Persediaan asas pembeli'].map(t => (
                     <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
                       <span className="text-[#15803D] flex-shrink-0">✓</span>{t}
                     </li>

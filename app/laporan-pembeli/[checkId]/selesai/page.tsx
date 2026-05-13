@@ -46,6 +46,17 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
             Lihat Laporan Saya →
           </Link>
 
+          {plate && (
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`Laporan Paqar untuk ${plate} sedia!\n\nLihat laporan di sini:\nhttps://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}\n\nJuga boleh tempah inspection sebelum bayar deposit.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full border-[1.5px] border-[#25D366] text-[#25D366] font-heading font-bold text-[14px] rounded-[14px] py-3.5 hover:bg-[#25D366]/5 transition-colors"
+            >
+              Kongsi Laporan via WhatsApp →
+            </a>
+          )}
+
           <p className="font-body text-[11px] text-[#9CA3AF]">
             Resit akan dihantar ke e-mel anda.
           </p>
