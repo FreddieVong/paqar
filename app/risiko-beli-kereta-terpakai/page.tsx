@@ -121,7 +121,7 @@ export default function RisikoBelihKeretaTerpakaiPage() {
               href="/"
               className="block bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-[12px] py-4 hover:bg-yellow-300 transition-colors"
             >
-              Semak Kereta — RM29 →
+              Semak Kereta — RM12 →
             </Link>
           </div>
 

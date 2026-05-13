@@ -3,21 +3,25 @@ import Link from 'next/link'
 interface Props {
   checkId:    string
   claimToken: string
+  plate?:     string
 }
 
-export function ReportCTA({ checkId, claimToken }: Props) {
+export function ReportCTA({ checkId, claimToken, plate }: Props) {
   return (
     <div className="bg-[#064E4A] rounded-[16px] p-5">
       <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-white/60 mb-2">
         Laporan Pembeli
       </p>
       <p className="font-heading font-extrabold text-[20px] text-white mb-3">
-        Jangan bayar deposit tanpa laporan ini
+        {plate
+          ? `Untuk kereta ${plate}, kami boleh tunjukkan:`
+          : 'Untuk kenderaan ini, kami boleh tunjukkan:'}
       </p>
 
       <ul className="space-y-1.5 mb-5">
         {[
-          'Adakah harga yang diminta berbaloi?',
+          'Data kenderaan rasmi dari JPJ',
+          'Status insurans semasa',
           'Soalan tepat untuk tanya penjual',
           'Skrip rundingan harga siap guna',
           'Checklist sebelum bayar deposit',
@@ -33,7 +37,7 @@ export function ReportCTA({ checkId, claimToken }: Props) {
         href={`/laporan-pembeli/${checkId}?claim_token=${claimToken}`}
         className="block w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-yellow-300 transition-colors"
       >
-        Dapatkan Laporan — RM29 →
+        Dapatkan Laporan — RM12 →
       </Link>
 
       <p className="font-body text-[11px] text-white/50 text-center mt-2">

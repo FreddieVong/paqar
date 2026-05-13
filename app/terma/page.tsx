@@ -35,7 +35,7 @@ export default function TermaPage() {
             },
             {
               title: 'Pembayaran dan Bayaran Balik',
-              body: 'Semua pembayaran adalah muktamad. Laporan Pembeli (RM29) tidak boleh dikembalikan setelah laporan dijana. Jika anda menghadapi masalah teknikal yang menghalang akses kepada laporan anda, hubungi kami dalam masa 7 hari.',
+              body: 'Semua pembayaran adalah muktamad. Laporan Pembeli (RM12) tidak boleh dikembalikan setelah laporan dijana. Jika anda menghadapi masalah teknikal yang menghalang akses kepada laporan anda, hubungi kami dalam masa 7 hari.',
             },
             {
               title: 'Had Liabiliti',

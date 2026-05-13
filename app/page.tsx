@@ -30,13 +30,40 @@ export default function HomePage() {
             </p>
 
             <p className="hidden md:block font-body text-[13px] text-[#6B7280] mt-6">
-              Panduan saman percuma · Laporan penuh RM29 · Tanpa daftar akaun
+              Panduan saman percuma · Laporan penuh RM12 · Tanpa daftar akaun
             </p>
           </div>
 
           {/* Checking card */}
-          <div>
+          <div className="space-y-3">
             <DualCheckForm />
+            {/* Free vs RM12 split */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-4">
+                <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#15803D] mb-2">
+                  Percuma
+                </p>
+                <ul className="space-y-1.5">
+                  {['Panduan semak saman PDRM/JPJ', 'Cara minta penjual buktikan'].map(t => (
+                    <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
+                      <span className="text-[#15803D] flex-shrink-0">✓</span>{t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-[#FEF9C3] border border-[#FDE68A] rounded-[14px] p-4">
+                <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#B45309] mb-2">
+                  Laporan RM12
+                </p>
+                <ul className="space-y-1.5">
+                  {['Data kenderaan rasmi JPJ', 'Status insurans semasa', 'Soalan & skrip rundingan'].map(t => (
+                    <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
+                      <span className="text-[#B45309] flex-shrink-0">✓</span>{t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -56,7 +83,7 @@ export default function HomePage() {
           <div className="flex flex-col md:grid md:grid-cols-3 gap-3">
             {[
               { title: 'Panduan Semak Saman', desc: 'Cara semak PDRM & JPJ secara rasmi, step by step', badge: 'Percuma',     badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
-              { title: 'Laporan Pembeli',    desc: 'Harga pasaran, soalan penjual, skrip rundingan',    badge: 'RM29',        badgeStyle: 'bg-[#FEF9C3] text-[#B45309]' },
+              { title: 'Laporan Pembeli',    desc: 'Harga pasaran, soalan penjual, skrip rundingan',    badge: 'RM12',        badgeStyle: 'bg-[#FEF9C3] text-[#B45309]' },
               { title: 'Sejarah Kemalangan', desc: 'Rekod kemalangan & tuntutan insurans',              badge: 'Akan Datang', badgeStyle: 'bg-[#F3F4F6] text-[#6B7280]' },
             ].map((item) => (
               <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-4 md:p-5">
@@ -222,7 +249,7 @@ export default function HomePage() {
               },
               {
                 q: 'Adakah semakan ini percuma?',
-                a: 'Ya, panduan semak saman adalah percuma. Laporan pembeli lengkap (harga pasaran, soalan penjual, skrip rundingan) tersedia pada RM29.',
+                a: 'Ya, panduan semak saman adalah percuma. Laporan pembeli lengkap (harga pasaran, soalan penjual, skrip rundingan) tersedia pada RM12.',
               },
               {
                 q: 'Berapa lama keputusan mengambil masa?',

@@ -1,6 +1,7 @@
 import type { Check, CheckResult } from '@/types/domain'
 import type { SourceData, SamanRecord } from '@/types/api'
-import { InsuranceCTA } from './InsuranceCTA'
+import { InsuranceCTA }  from './InsuranceCTA'
+import { InspectionCTA } from './InspectionCTA'
 
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
@@ -91,7 +92,7 @@ interface Props {
   vehicleData?:      Record<string, unknown> | null
 }
 
-export function BuyerReportContent({ check: _check, results, plate: _plate, askingPriceRm, claimedMileageKm, vehicleData: rawVehicleData }: Props) {
+export function BuyerReportContent({ check: _check, results, plate, askingPriceRm, claimedMileageKm, vehicleData: rawVehicleData }: Props) {
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const vehicleResults      = results.filter(r => VEHICLE_SOURCES.includes(r.source as VehicleSource))
   const samanTotal          = getSamanTotal(vehicleResults)
@@ -204,105 +205,29 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
         )}
       </div>
 
-      {/* Seller Verify CTA — only when PDRM/JPJ need seller verification */}
-
-      {/* Section 2: Saman & Status Kenderaan */}
-      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-        <div className="flex items-center justify-between mb-4">
-          <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280]">
-            Status Saman
-          </p>
-          <span className={`font-heading font-bold text-[11px] px-2.5 py-1 rounded-full ${
-            samanCount > 0              ? 'bg-[#FEE2E2] text-[#B91C1C]' :
-            criticalUnverified          ? 'bg-[#EFF6FF] text-[#1D4ED8]' :
-                                          'bg-[#DCFCE7] text-[#15803D]'
-          }`}>
-            {samanCount > 0        ? `${samanCount} saman dijumpai` :
-             criticalUnverified    ? 'Perlu semak sendiri' :
-                                     'Tiada saman'}
-          </span>
-        </div>
-        <div className="space-y-2">
-          {VEHICLE_SOURCES.map(source => {
-            const r      = vehicleResults.find(x => x.source === source)
-            const status = r?.status ?? 'unavailable'
-            const amount = r ? getSamanAmountForSource(r) : 0
-            return (
-              <div key={source} className={`px-3 py-2.5 rounded-lg border ${
-                status === 'hit'                  ? 'bg-[#FEF2F2] border-[#FECACA]' :
-                status === 'clear'                ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
-                status === 'requires_user_action' ? 'bg-[#EFF6FF] border-[#BFDBFE]' :
-                                                    'bg-[#F9FAFB] border-[#E5E7EB]'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-heading font-bold text-[12px] text-[#111827]">
-                    {SOURCE_LABELS[source]}
-                  </span>
-                  <span className={`font-body text-[11px] ${
-                    status === 'hit'                  ? 'text-[#B91C1C]' :
-                    status === 'clear'                ? 'text-[#15803D]' :
-                    status === 'requires_user_action' ? 'text-[#1D4ED8]' :
-                                                        'text-[#9CA3AF]'
-                  }`}>
-                    {status === 'clear'                ? 'Tiada Saman' :
-                     status === 'hit'                  ? `Ada Saman${amount > 0 ? ` — RM${amount.toLocaleString()}` : ''}` :
-                     status === 'requires_user_action' ? 'Semak sendiri' :
-                                                          'Tidak dapat disemak'}
-                  </span>
-                </div>
-                {status === 'requires_user_action' && (
-                  <p className="font-body text-[10px] text-[#6B7280] mt-0.5">Tanya penjual semak sendiri di portal rasmi</p>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Section 3: Sejarah Kenderaan (MyCarAPI placeholder) */}
-      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-        <div className="flex items-center justify-between mb-3">
-          <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280]">
-            Sejarah Kenderaan
-          </p>
-          <span className="font-body text-[10px] text-white bg-[#9CA3AF] rounded-full px-2 py-0.5">
-            Akan Datang
-          </span>
-        </div>
-        <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
-          Rekod kemalangan, tuntutan insurans, dan bilangan pemilik terdahulu.
-        </p>
-        <p className="font-body text-[12px] text-[#9CA3AF]">
-          Kami sedang bekerjasama dengan penyedia data untuk membawa maklumat ini kepada anda.
-        </p>
-      </div>
-
-      {/* Section 4: Anggaran Harga Pasaran */}
+      {/* Section 2: Perbandingan Harga — only when valuation or asking price available */}
+      {(vehicleData?.valuation || askingPriceRm != null) && (
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
         <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
           Perbandingan Harga
         </p>
 
-        {/* Real valuation from VehicleAPI database */}
         {vehicleData?.valuation && (
           <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3 space-y-1">
-            <p className="font-body text-[11px] text-[#9CA3AF] uppercase tracking-[.05em]">Data penilaian kenderaan</p>
-            <p className="font-body text-[12px] text-[#374151]">
-              Harga baru asal: <span className="font-bold text-[#111827]">RM{(vehicleData.valuation as {wmNewPrice:number}).wmNewPrice?.toLocaleString()}</span>
+            <p className="font-body text-[11px] text-[#9CA3AF] uppercase tracking-[.05em]">
+              Nilai anggaran berdasarkan data insurans
             </p>
             <p className="font-body text-[12px] text-[#374151]">
-              Anggaran nilai semasa: <span className="font-bold text-[#111827]">RM{(vehicleData.valuation as {sumInsured:number}).sumInsured?.toLocaleString()}</span>
+              Harga baru asal:{' '}
+              <span className="font-bold text-[#111827]">
+                RM{(vehicleData.valuation as {wmNewPrice:number}).wmNewPrice?.toLocaleString()}
+              </span>
             </p>
-          </div>
-        )}
-
-        {askingPriceRm == null && (
-          <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-            <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
-              Berapa harga yang penjual minta?
-            </p>
-            <p className="font-body text-[12px] text-[#6B7280]">
-              Masukkan harga jualan ketika beli laporan untuk tahu sama ada harga berpatutan atau tidak.
+            <p className="font-body text-[12px] text-[#374151]">
+              Anggaran nilai semasa:{' '}
+              <span className="font-bold text-[#111827]">
+                RM{(vehicleData.valuation as {sumInsured:number}).sumInsured?.toLocaleString()}
+              </span>
             </p>
           </div>
         )}
@@ -340,6 +265,7 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
         )}
 
       </div>
+      )} {/* end Perbandingan Harga conditional */}
 
       {/* Section 4: Soalan untuk Penjual */}
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -458,6 +384,9 @@ export function BuyerReportContent({ check: _check, results, plate: _plate, aski
 
       {/* Insurance referral */}
       <InsuranceCTA />
+
+      {/* Workshop inspection */}
+      <InspectionCTA plate={plate} />
 
     </div>
   )

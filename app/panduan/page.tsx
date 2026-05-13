@@ -108,7 +108,7 @@ export default function PanduanPage() {
               Dah baca panduan, tapi ada kereta tertentu?
             </p>
             <p className="font-body text-[13px] text-white/70 mb-4">
-              Masukkan nombor plat untuk semakan khusus + laporan pembeli RM29.
+              Masukkan nombor plat untuk semakan khusus + laporan pembeli RM12.
             </p>
             <Link
               href="/"

@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter }    from 'next/navigation'
 import { Progress }     from '@/components/ui/progress'
 import { Button }       from '@/components/ui/button'
-import { ResultCard }   from './ResultCard'
 import { SamanGuide }  from './SamanGuide'
 import { ReportCTA }   from './ReportCTA'
 import { createClient } from '@/lib/supabase/client'
@@ -22,7 +21,7 @@ interface Props {
   plate?:     string
 }
 
-export function ResultsStream({ checkId, claimToken }: Props) {
+export function ResultsStream({ checkId, claimToken, plate }: Props) {
   const router = useRouter()
   const [check,      setCheck]      = useState<Check | null>(null)
   const [results,    setResults]    = useState<CheckResult[]>([])
@@ -75,18 +74,22 @@ export function ResultsStream({ checkId, claimToken }: Props) {
     }
   }, [check, authedUser, poll])
 
-  const CAR_SOURCES    = ['pdrm', 'jpj', 'aes', 'local_councils']
-  const carResults     = results.filter(r => CAR_SOURCES.includes(r.source))
-  const completedCount = Math.min(carResults.filter(r => r.status !== 'pending').length, TOTAL_SOURCES)
-  const isComplete     = check?.status === 'complete'
-  const showSaveCta    = isComplete && check?.user_id == null && authedUser === null
-  const showDocsCta    = isComplete && authedUser != null
+  const completedCount = Math.min(
+    results.filter(r => r.status !== 'pending').length,
+    TOTAL_SOURCES
+  )
+  const isComplete  = check?.status === 'complete'
+  const showSaveCta = isComplete && check?.user_id == null && authedUser === null
+  const showDocsCta = isComplete && authedUser != null
+
+  // results kept for completedCount but not rendered as cards
+  void results
 
   if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
   return (
     <div className="space-y-3">
-      {/* Progress */}
+      {/* Progress bar */}
       <div className="space-y-1.5">
         <div className="flex justify-between text-xs">
           <span className="font-heading font-bold text-[#064E4A]">
@@ -100,22 +103,15 @@ export function ResultsStream({ checkId, claimToken }: Props) {
         />
       </div>
 
-      {/* Source result cards — only car-relevant sources */}
-      <div className="space-y-2">
-        {carResults.map((result) => (
-          <ResultCard key={result.source} result={result} />
-        ))}
-      </div>
-
-      {/* After check completes: guide + report CTA */}
+      {/* After check: compact saman message + personalised report CTA */}
       {isComplete && (
         <>
           <SamanGuide />
-          <ReportCTA checkId={checkId} claimToken={claimToken} />
+          <ReportCTA checkId={checkId} claimToken={claimToken} plate={plate} />
         </>
       )}
 
-      {/* Secondary: save / track documents */}
+      {/* Secondary CTAs */}
       {showSaveCta && (
         <div className="border-[1.5px] border-dashed border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
           <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">

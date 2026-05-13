@@ -81,7 +81,7 @@ export function DualCheckForm() {
         </button>
 
         <p className="font-body text-[11px] text-[#9CA3AF] text-center">
-          Percuma · Panduan saman rasmi + laporan lengkap RM29
+          Percuma · Laporan penuh RM12 · Tanpa daftar akaun
         </p>
       </form>
     </div>

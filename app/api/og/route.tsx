@@ -37,7 +37,7 @@ export async function GET() {
 
         {/* Feature badges */}
         <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' as const, justifyContent: 'center' }}>
-          {['Panduan Saman PDRM/JPJ', 'Laporan Pembeli RM29', 'Sejarah Kemalangan'].map(s => (
+          {['Panduan Saman PDRM/JPJ', 'Laporan Pembeli RM12', 'Sejarah Kemalangan'].map(s => (
             <div key={s} style={{
               background: 'rgba(255,255,255,0.12)',
               borderRadius: '100px', padding: '7px 18px',
