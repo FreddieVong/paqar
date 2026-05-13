@@ -2,7 +2,7 @@ interface Props {
   plate?: string
 }
 
-const WORKSHOP_WHATSAPP = '60XXXXXXXXX' // TODO: replace with real number
+const WORKSHOP_WHATSAPP = '60126201163'
 
 export function InspectionCTA({ plate }: Props) {
   const message = encodeURIComponent(
