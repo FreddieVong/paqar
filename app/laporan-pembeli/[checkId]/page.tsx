@@ -1,4 +1,5 @@
 import { notFound }             from 'next/navigation'
+export const dynamic = 'force-dynamic'
 import { Nav }                  from '@/components/layout/Nav'
 import { Shell }                from '@/components/layout/Shell'
 import { getCheck }             from '@/lib/db/checks'
