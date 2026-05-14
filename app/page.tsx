@@ -71,7 +71,7 @@ export default async function HomePage() {
                   Laporan RM12
                 </p>
                 <ul className="space-y-1.5">
-                  {['Data kenderaan rasmi JPJ', 'Status insurans semasa', 'Soalan & skrip rundingan'].map(t => (
+                  {['Harga baru & harga pasaran', 'Data kenderaan rasmi JPJ', 'Soalan & skrip rundingan'].map(t => (
                     <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
                       <span className="text-[#B45309] flex-shrink-0">✓</span>{t}
                     </li>

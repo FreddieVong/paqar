@@ -23,11 +23,10 @@ export function ReportCTA({ checkId, claimToken, plate }: Props) {
 
       <ul className="space-y-1.5 mb-5">
         {[
+          'Harga baru & harga pasaran — semak sama ada harga wajar',
           'Data kenderaan rasmi dari JPJ',
-          'Status insurans semasa',
           'Soalan tepat untuk tanya penjual',
           'Skrip rundingan harga siap guna',
-          'Checklist sebelum bayar deposit',
         ].map((item, i) => (
           <li key={i} className="flex items-start gap-2 font-body text-[13px] text-white/90">
             <span className="text-[#FACC15] flex-shrink-0 mt-0.5">✓</span>
