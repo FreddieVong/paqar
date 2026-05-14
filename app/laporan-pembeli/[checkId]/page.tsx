@@ -29,24 +29,13 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
   if (!row) {
     try {
       const supabase = createClient()
-      const { data: { user }, error: authErr } = await supabase.auth.getUser()
-      console.log('[laporan-pembeli] fallback', {
-        checkId: params.checkId,
-        hasToken: !!claimToken,
-        userId: user?.id ?? null,
-        authErr: authErr?.message ?? null,
-      })
+      const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const candidate = await getCheck(params.checkId)
-        console.log('[laporan-pembeli] candidate', {
-          found: !!candidate,
-          candidateUserId: candidate?.check.user_id ?? null,
-          match: candidate?.check.user_id === user.id,
-        })
         if (candidate?.check.user_id === user.id) row = candidate
       }
-    } catch (e) {
-      console.error('[laporan-pembeli] fallback error', e)
+    } catch {
+      // non-fatal
     }
   }
 
