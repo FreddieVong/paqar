@@ -148,17 +148,6 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </p>
             )}
 
-            {claimedMileageKm != null && (
-              <div className="mt-3 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2">
-                <p className="font-body text-[12px] text-[#6B7280]">
-                  Jarak tempuh didakwa:{' '}
-                  <span className="font-heading font-bold text-[#111827]">{claimedMileageKm.toLocaleString()} km</span>
-                  {claimedMileageKm > 150_000 && (
-                    <span className="text-[#B45309]"> — tinggi, semak rekod servis</span>
-                  )}
-                </p>
-              </div>
-            )}
           </div>
         )
       })()}
