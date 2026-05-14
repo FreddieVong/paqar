@@ -3,7 +3,6 @@
 import { useState }     from 'react'
 import { Button }       from '@/components/ui/button'
 import { Input }        from '@/components/ui/input'
-import { Label }        from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { claimCheck }   from '@/app/auth/_actions'
 
@@ -15,7 +14,7 @@ interface Props {
   onBack:      () => void
 }
 
-export function MagicLinkForm({ claimToken, redirectTo, onBack }: Props) {
+export function MagicLinkForm({ claimToken, redirectTo, onBack: _onBack }: Props) {
   const [state,   setState]   = useState<EmailState>('email')
   const [email,   setEmail]   = useState('')
   const [otp,     setOtp]     = useState('')

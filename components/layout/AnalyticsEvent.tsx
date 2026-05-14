@@ -9,6 +9,7 @@ interface Props {
 }
 
 export function AnalyticsEvent({ event, properties }: Props) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { posthog.capture(event, properties) }, [])
   return null
 }
