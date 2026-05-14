@@ -1,4 +1,3 @@
-import Link from 'next/link'
 
 const WA_SHARE_TEXT = encodeURIComponent(
   'Nak beli kereta terpakai? Ada tool free check saman kat paqar.my — masukkan nombor plat, terus ada panduan semak PDRM/JPJ. Takde perlu daftar 👇\nhttps://paqar.my'
@@ -37,13 +36,12 @@ export function ReportCTA({ checkId, claimToken, plate }: Props) {
         ))}
       </ul>
 
-      <Link
+      <a
         href={`/laporan-pembeli/${checkId}?claim_token=${claimToken}`}
-        prefetch={false}
         className="block w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-yellow-300 transition-colors"
       >
         Dapatkan Laporan — RM12 →
-      </Link>
+      </a>
 
       <p className="font-body text-[11px] text-white/50 text-center mt-2">
         Bayar sekali · Akses terus
