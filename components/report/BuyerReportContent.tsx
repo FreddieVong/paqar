@@ -108,7 +108,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
     <div className="space-y-5">
 
       {/* Section 1: Perbandingan Harga — HERO (price is buyer's #1 question) */}
-      {(vehicleData?.valuation || askingPriceRm != null) && (() => {
+      {(vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {
         const val        = vehicleData?.valuation
         const wmNewPrice = val?.wmNewPrice ?? null
         const valVariant = val?.family && val?.variant
@@ -117,6 +117,24 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         const pct = wmNewPrice && askingPriceRm != null
           ? Math.round((1 - askingPriceRm / wmNewPrice) * 100)
           : null
+
+        // Market-relative verdict (primary when available)
+        const mPrices   = marketPrices?.listings.map(l => l.price) ?? []
+        const marketMin = mPrices.length ? Math.min(...mPrices) : null
+        const marketMax = mPrices.length ? Math.max(...mPrices) : null
+        const hasMarketVerdict = askingPriceRm != null && marketMin != null && marketMax != null
+
+        let marketVerdict: { text: string; color: string } | null = null
+        if (hasMarketVerdict) {
+          if (askingPriceRm! < marketMin!) {
+            marketVerdict = { text: 'Di bawah harga pasaran — harga yang baik', color: 'text-[#15803D]' }
+          } else if (askingPriceRm! <= marketMax!) {
+            marketVerdict = { text: 'Dalam julat harga pasaran — boleh cuba tawar', color: 'text-[#15803D]' }
+          } else {
+            marketVerdict = { text: 'Di atas harga pasaran — ada ruang untuk tawar lebih', color: 'text-[#B45309]' }
+          }
+        }
+
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
@@ -140,7 +158,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </div>
             )}
 
-            {/* Asking price + comparison */}
+            {/* Asking price */}
             {askingPriceRm != null && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5">
@@ -149,14 +167,19 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                     RM{askingPriceRm.toLocaleString()}
                   </p>
                 </div>
-                {pct != null && (
+
+                {/* Verdict: market-relative if available, else % below new price */}
+                {marketVerdict ? (
+                  <p className={`font-body text-[12px] px-1 ${marketVerdict.color}`}>
+                    {marketVerdict.text}
+                  </p>
+                ) : pct != null ? (
                   <p className={`font-body text-[12px] px-1 ${pct >= 0 ? 'text-[#15803D]' : 'text-[#B45309]'}`}>
                     {pct >= 0
                       ? `${pct}% di bawah harga baru — wajar untuk kenderaan ini`
                       : `${Math.abs(pct)}% melebihi harga baru — semak perbandingan sebelum setuju`}
                   </p>
-                )}
-                {pct == null && (
+                ) : (
                   <p className="font-body text-[11px] text-[#9CA3AF] px-1">
                     Semak harga pasaran di Mudah atau Carlist untuk perbandingan.
                   </p>
@@ -164,7 +187,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </div>
             )}
 
-            {/* Valuation only, no asking price */}
+            {/* No asking price entered */}
             {askingPriceRm == null && wmNewPrice != null && (
               <p className="font-body text-[11px] text-[#9CA3AF] mt-1">
                 Masukkan harga yang penjual minta untuk perbandingan lebih tepat.
