@@ -1,5 +1,4 @@
 import { redirect }                  from 'next/navigation'
-import Link                          from 'next/link'
 import { Nav }                       from '@/components/layout/Nav'
 import { Shell }                     from '@/components/layout/Shell'
 import { ExpiryCard }                from '@/components/dashboard/ExpiryCard'
@@ -137,12 +136,12 @@ export default async function DashboardPage() {
                         {report.paid_at ? formatDate(report.paid_at) : '—'}
                       </p>
                     </div>
-                    <Link
+                    <a
                       href={`/laporan-pembeli/${report.check_id}`}
                       className="flex-shrink-0 font-heading font-bold text-[12px] text-[#064E4A] border border-[#064E4A]/30 rounded-lg px-3 py-1.5 hover:bg-[#064E4A]/5 transition-colors"
                     >
                       Lihat →
-                    </Link>
+                    </a>
                   </div>
                 ))}
               </div>

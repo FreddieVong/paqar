@@ -5,7 +5,6 @@ import { getCheck }                                  from '@/lib/db/checks'
 import { markReportPaid, getBuyerReportByBillId }    from '@/lib/db/buyer-reports'
 import { decrypt }                                   from '@/lib/crypto'
 import { sendReceiptEmail }                          from '@/lib/email/receipt'
-import Link                                          from 'next/link'
 import { AnalyticsEvent }                            from '@/components/layout/AnalyticsEvent'
 import { WhatsAppShareButton }                       from '@/components/report/WhatsAppShareButton'
 
@@ -69,12 +68,12 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
             </p>
           </div>
 
-          <Link
+          <a
             href={`/laporan-pembeli/${params.checkId}?claim_token=${claimToken}`}
             className="block w-full bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 hover:bg-[#053D3A] transition-colors"
           >
             Lihat Laporan Saya →
-          </Link>
+          </a>
 
           {plate && (
             <WhatsAppShareButton
