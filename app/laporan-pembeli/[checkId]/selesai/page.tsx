@@ -1,18 +1,28 @@
-import { redirect }  from 'next/navigation'
-import { Nav }        from '@/components/layout/Nav'
-import { Shell }      from '@/components/layout/Shell'
-import { getCheck }   from '@/lib/db/checks'
-import { decrypt }    from '@/lib/crypto'
-import Link           from 'next/link'
+import { redirect }      from 'next/navigation'
+import { Nav }            from '@/components/layout/Nav'
+import { Shell }          from '@/components/layout/Shell'
+import { getCheck }       from '@/lib/db/checks'
+import { markReportPaid } from '@/lib/db/buyer-reports'
+import { decrypt }        from '@/lib/crypto'
+import Link               from 'next/link'
 
 interface Props {
   params:       { checkId: string }
-  searchParams: { claim_token?: string }
+  searchParams: Record<string, string | undefined>
 }
 
 export default async function LaporanSelesaiPage({ params, searchParams }: Props) {
-  const claimToken = searchParams.claim_token
+  const claimToken   = searchParams['claim_token']
+  const billId       = searchParams['billplz[id]']
+  const billplzPaid  = searchParams['billplz[paid]']
+
   if (!claimToken) redirect('/')
+
+  // Billplz confirms payment in the redirect URL — mark report paid immediately
+  // (don't wait for webhook which may be delayed)
+  if (billId && billplzPaid === 'true') {
+    await markReportPaid(billId).catch(() => {})
+  }
 
   const row   = await getCheck(params.checkId, claimToken)
   const plate = row ? decrypt(row.check.plate_encrypted as string).toUpperCase() : null
