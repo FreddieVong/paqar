@@ -53,14 +53,14 @@ export function MagicLinkForm({ claimToken, redirectTo, onBack: _onBack }: Props
     return (
       <form onSubmit={verifyOtp} className="space-y-4">
         <p className="font-body text-[13px] text-[#6B7280]">
-          Kod 6 digit dihantar ke <strong className="text-[#111827]">{email}</strong>
+          Kod 8 digit dihantar ke <strong className="text-[#111827]">{email}</strong>
         </p>
         <div>
           <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
             Kod Pengesahan
           </label>
           <Input id="email-otp" value={otp} onChange={(e) => setOtp(e.target.value)}
-            placeholder="123456" inputMode="numeric" maxLength={6}
+            placeholder="12345678" inputMode="numeric" maxLength={8}
             className="mt-1.5 tracking-[.3em] text-lg font-bold" required />
         </div>
         {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
