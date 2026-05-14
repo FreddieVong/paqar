@@ -58,7 +58,7 @@ app.post('/check/local_councils', async (req, res) => {
   res.json(result)
 })
 
-// ── Market prices ─────────────────────────────────────────────────────────────
+// ── Market prices (Mudah listing scraper) ────────────────────────────────────
 app.post('/check/mudah-market', async (req, res) => {
   const { make, model, year } = req.body as { make?: string; model?: string; year?: string }
   if (!make || !model) { res.status(400).json({ error: 'make and model required' }); return }
