@@ -9,40 +9,17 @@ export interface VehicleValuation {
   year:        number
 }
 
-export async function getValuationByNvic(
-  nvic: string,
-  fallback?: { make: string; year: string }
-): Promise<VehicleValuation | null> {
-  if (!nvic && !fallback) return null
+export async function getValuationByNvic(nvic: string): Promise<VehicleValuation | null> {
+  if (!nvic) return null
   const supabase = createServiceClient()
 
-  // Try exact NVIC match first
-  if (nvic) {
-    const { data } = await supabase
-      .from('vehicle_valuations')
-      .select('wm_new_pr, sum_insured, make, family, variant, year')
-      .eq('nvic', nvic.toUpperCase())
-      .single()
+  const { data } = await supabase
+    .from('vehicle_valuations')
+    .select('wm_new_pr, sum_insured, make, family, variant, year')
+    .eq('nvic', nvic.toUpperCase())
+    .single()
 
-    if (data) return map(data)
-  }
-
-  // Fallback: match by make + year when NVIC not in CSV
-  if (fallback?.make && fallback?.year) {
-    const { data } = await supabase
-      .from('vehicle_valuations')
-      .select('wm_new_pr, sum_insured, make, family, variant, year')
-      .ilike('make', fallback.make)
-      .eq('year', fallback.year)
-      .not('wm_new_pr', 'is', null)
-      .order('wm_new_pr', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (data) return map(data)
-  }
-
-  return null
+  return data ? map(data) : null
 }
 
 function map(data: Record<string, unknown>): VehicleValuation {

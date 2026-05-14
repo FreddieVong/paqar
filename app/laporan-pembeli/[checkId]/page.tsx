@@ -54,10 +54,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
     if (!vehicleData) {
       const apiResult = await lookupVehicle(plate)
       if (apiResult) {
-        const valuation = await getValuationByNvic(
-          apiResult.nvic,
-          { make: apiResult.make, year: apiResult.registrationYear }
-        ).catch(() => null)
+        const valuation = await getValuationByNvic(apiResult.nvic).catch(() => null)
         vehicleData = { ...apiResult, valuation: valuation ?? null }
         setVehicleApiData(report.id, vehicleData).catch(() => {}) // non-blocking
       }
