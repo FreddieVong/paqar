@@ -30,8 +30,11 @@ export async function getValuationByNvic(
 
   // 2. Make + year + model name — same model family (e.g. Q5, 730, COOPER)
   if (fallback.model) {
-    // Use first word/token of model as the keyword: "730i" → "730", "Q5 TFSI" → "Q5"
-    const keyword = fallback.model.split(/[\s-]/)[0]?.replace(/[iIdD]$/, '') ?? fallback.model
+    // Extract numeric prefix first ("730Li" → "730", "320i" → "320"),
+    // else use first word ("Q5 TFSI" → "Q5", "COOPER" → "COOPER", "X1" → "X1")
+    const keyword = fallback.model.match(/^\d+/)?.[0]
+      ?? fallback.model.split(/[\s-]/)[0]
+      ?? fallback.model
     if (keyword.length >= 2) {
       const { data } = await supabase
         .from('vehicle_valuations')
