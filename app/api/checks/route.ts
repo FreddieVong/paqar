@@ -14,6 +14,7 @@ import {
   getCachedCheck,
   getCheckByIdempotencyKey,
 } from '@/lib/db/checks'
+import { checkHasPaidReport } from '@/lib/db/buyer-reports'
 
 const requestSchema = z.object({
   plate:           plateSchema,
@@ -48,11 +49,11 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Cache check
+  // Cache check — skip if already paid (prevent others accessing paid report for free)
   const plateHash = hash(plate)
   const icHash    = hash(ic)
   const cached    = await getCachedCheck(plateHash, icHash)
-  if (cached) {
+  if (cached && !(await checkHasPaidReport(cached.id))) {
     return NextResponse.json({ checkId: cached.id, claimToken: cached.claim_token })
   }
 

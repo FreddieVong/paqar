@@ -99,6 +99,18 @@ export async function setVehicleApiData(reportId: string, data: unknown): Promis
   if (error) throw error
 }
 
+export async function checkHasPaidReport(checkId: string): Promise<boolean> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('buyer_reports')
+    .select('id')
+    .eq('check_id', checkId)
+    .eq('status', 'paid')
+    .limit(1)
+    .maybeSingle()
+  return !!data
+}
+
 export async function getBuyerReportByBillId(billId: string): Promise<BuyerReport | null> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
