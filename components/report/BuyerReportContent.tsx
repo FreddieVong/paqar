@@ -7,8 +7,6 @@ const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
 
 
-const MARKET_LOW  = 35_000
-const MARKET_HIGH = 55_000
 
 function getSamanTotal(results: CheckResult[]): number {
   return results.reduce((total, r) => {
@@ -98,65 +96,72 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
     <div className="space-y-5">
 
       {/* Section 1: Perbandingan Harga — HERO (price is buyer's #1 question) */}
-      {(vehicleData?.valuation || askingPriceRm != null) && (
-      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
-          Perbandingan Harga
-        </p>
+      {(vehicleData?.valuation || askingPriceRm != null) && (() => {
+        const wmNewPrice = (vehicleData?.valuation as {wmNewPrice:number} | null | undefined)?.wmNewPrice ?? null
+        const pct = wmNewPrice && askingPriceRm != null
+          ? Math.round((1 - askingPriceRm / wmNewPrice) * 100)
+          : null
+        return (
+          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+            <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
+              Perbandingan Harga
+            </p>
 
-        {vehicleData?.valuation && (
-          <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3 space-y-1">
-            <p className="font-body text-[11px] text-[#9CA3AF] uppercase tracking-[.05em]">
-              Nilai anggaran berdasarkan data insurans
-            </p>
-            <p className="font-body text-[12px] text-[#374151]">
-              Harga baru asal:{' '}
-              <span className="font-bold text-[#111827]">
-                RM{(vehicleData.valuation as {wmNewPrice:number}).wmNewPrice?.toLocaleString()}
-              </span>
-            </p>
-            <p className="font-body text-[12px] text-[#374151]">
-              Anggaran nilai semasa:{' '}
-              <span className="font-bold text-[#111827]">
-                RM{(vehicleData.valuation as {sumInsured:number}).sumInsured?.toLocaleString()}
-              </span>
-            </p>
-          </div>
-        )}
+            {/* Original new price from valuation CSV */}
+            {wmNewPrice != null && (
+              <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
+                <p className="font-body text-[12px] text-[#6B7280]">Harga baru asal kenderaan ini</p>
+                <p className="font-heading font-bold text-[14px] text-[#111827]">
+                  RM{wmNewPrice.toLocaleString()}
+                </p>
+              </div>
+            )}
 
-        {askingPriceRm != null && (
-          <div className={`rounded-lg px-3 py-2.5 border ${
-            askingPriceRm > MARKET_HIGH ? 'bg-[#FEF2F2] border-[#FECACA]' :
-            askingPriceRm < MARKET_LOW  ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
-                                          'bg-[#FFFBEB] border-[#FDE68A]'
-          }`}>
-            <p className={`font-heading font-bold text-[13px] ${
-              askingPriceRm > MARKET_HIGH ? 'text-[#B91C1C]' :
-              askingPriceRm < MARKET_LOW  ? 'text-[#15803D]' :
-                                            'text-[#B45309]'
-            }`}>
-              {askingPriceRm > MARKET_HIGH
-                ? `Harga diminta RM${askingPriceRm.toLocaleString()} melebihi anggaran pasaran — semak perbandingan sebelum setuju harga`
-                : askingPriceRm < MARKET_LOW
-                ? `Harga diminta RM${askingPriceRm.toLocaleString()} di bawah anggaran pasaran — boleh pertimbangkan`
-                : `Harga diminta RM${askingPriceRm.toLocaleString()} — dalam lingkungan anggaran pasaran`}
-            </p>
-          </div>
-        )}
+            {/* Asking price + comparison */}
+            {askingPriceRm != null && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5">
+                  <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
+                  <p className="font-heading font-bold text-[14px] text-[#111827]">
+                    RM{askingPriceRm.toLocaleString()}
+                  </p>
+                </div>
+                {pct != null && (
+                  <p className={`font-body text-[12px] px-1 ${pct >= 0 ? 'text-[#15803D]' : 'text-[#B45309]'}`}>
+                    {pct >= 0
+                      ? `${pct}% di bawah harga baru — wajar untuk kenderaan ini`
+                      : `${Math.abs(pct)}% melebihi harga baru — semak perbandingan sebelum setuju`}
+                  </p>
+                )}
+                {pct == null && (
+                  <p className="font-body text-[11px] text-[#9CA3AF] px-1">
+                    Semak harga pasaran di Mudah atau Carlist untuk perbandingan.
+                  </p>
+                )}
+              </div>
+            )}
 
-        {claimedMileageKm != null && (
-          <div className="mt-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2">
-            <p className="font-body text-[12px] text-[#6B7280]">
-              Jarak tempuh didakwa:{' '}
-              <span className="font-heading font-bold text-[#111827]">{claimedMileageKm.toLocaleString()} km</span>
-              {claimedMileageKm > 150_000 && (
-                <span className="text-[#B45309]"> — tinggi, semak rekod servis dengan penjual</span>
-              )}
-            </p>
+            {/* Valuation only, no asking price */}
+            {askingPriceRm == null && wmNewPrice != null && (
+              <p className="font-body text-[11px] text-[#9CA3AF] mt-1">
+                Masukkan harga yang penjual minta untuk perbandingan lebih tepat.
+              </p>
+            )}
+
+            {claimedMileageKm != null && (
+              <div className="mt-3 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2">
+                <p className="font-body text-[12px] text-[#6B7280]">
+                  Jarak tempuh didakwa:{' '}
+                  <span className="font-heading font-bold text-[#111827]">{claimedMileageKm.toLocaleString()} km</span>
+                  {claimedMileageKm > 150_000 && (
+                    <span className="text-[#B45309]"> — tinggi, semak rekod servis</span>
+                  )}
+                </p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-      )}
+        )
+      })()}
 
       {/* Section 2: Data Kenderaan Rasmi (if available) */}
       {vehicleData?.make && (
