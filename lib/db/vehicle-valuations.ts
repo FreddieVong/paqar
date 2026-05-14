@@ -11,7 +11,7 @@ export interface VehicleValuation {
 
 export async function getValuationByNvic(
   nvic: string,
-  fallback?: { make: string; year: string; cc?: string }
+  fallback?: { make: string; year: string; model?: string; cc?: string }
 ): Promise<VehicleValuation | null> {
   if (!nvic && !fallback) return null
   const supabase = createServiceClient()
@@ -26,8 +26,29 @@ export async function getValuationByNvic(
     if (data) return map(data)
   }
 
-  // 2. Make + year + CC range (±300cc) — avoids picking wrong variant size
-  if (fallback?.make && fallback?.year && fallback?.cc) {
+  if (!fallback?.make || !fallback?.year) return null
+
+  // 2. Make + year + model name — same model family (e.g. Q5, 730, COOPER)
+  if (fallback.model) {
+    // Use first word/token of model as the keyword: "730i" → "730", "Q5 TFSI" → "Q5"
+    const keyword = fallback.model.split(/[\s-]/)[0]?.replace(/[iIdD]$/, '') ?? fallback.model
+    if (keyword.length >= 2) {
+      const { data } = await supabase
+        .from('vehicle_valuations')
+        .select('wm_new_pr, sum_insured, make, family, variant, year')
+        .ilike('make', fallback.make)
+        .eq('year', fallback.year)
+        .ilike('family', `%${keyword}%`)
+        .not('wm_new_pr', 'is', null)
+        .order('wm_new_pr', { ascending: true })
+        .limit(1)
+        .single()
+      if (data) return map(data)
+    }
+  }
+
+  // 3. Make + year + CC range ±300cc — last resort, different model may match
+  if (fallback.cc) {
     const targetCc = parseFloat(fallback.cc)
     if (!isNaN(targetCc) && targetCc > 0) {
       const { data } = await supabase
