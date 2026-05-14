@@ -60,8 +60,14 @@ export async function scrapeMudahMarket(
         } catch { /* non-fatal */ }
       })
 
-      // networkidle waits until JS has finished making API calls
-      await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 25_000 })
+      // 'load' fires once all resources are loaded; then wait for listings to render
+      await page.goto(searchUrl, { waitUntil: 'load', timeout: 25_000 })
+
+      // Wait for listing cards or a fixed timeout, whichever comes first
+      await Promise.race([
+        page.waitForSelector('li, article, [class*="listing"], [class*="card"]', { timeout: 8_000 }).catch(() => {}),
+        new Promise(r => setTimeout(r, 8_000)),
+      ])
 
       // Log what page we actually got — helps diagnose blocks/captchas
       const pageTitle = await page.title()
