@@ -9,9 +9,12 @@ import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
-import { lookupVehicle }        from '@/lib/vehicleapi'
-import { getValuationByNvic }   from '@/lib/db/vehicle-valuations'
-import { AnalyticsEvent }       from '@/components/layout/AnalyticsEvent'
+import { lookupVehicle }              from '@/lib/vehicleapi'
+import { getValuationByNvic }         from '@/lib/db/vehicle-valuations'
+import { getCachedMarketPrices,
+         fetchAndCacheMarketPrices }  from '@/lib/db/market-prices'
+import type { CachedMarketPrices }    from '@/lib/db/market-prices'
+import { AnalyticsEvent }             from '@/components/layout/AnalyticsEvent'
 
 interface Props {
   params:       { checkId: string }
@@ -63,6 +66,18 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       }
     }
 
+    // Market prices — serve from cache, refresh in background if stale
+    let marketPrices: CachedMarketPrices | null = null
+    if (vehicleData?.make && vehicleData?.model && vehicleData?.registrationYear) {
+      const mk = vehicleData.make as string
+      const mo = vehicleData.model as string
+      const yr = vehicleData.registrationYear as string
+      marketPrices = await getCachedMarketPrices(mk, mo, yr).catch(() => null)
+      if (!marketPrices) {
+        fetchAndCacheMarketPrices(mk, mo, yr).catch(() => {}) // non-blocking
+      }
+    }
+
     return (
       <>
         <Nav />
@@ -85,6 +100,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               askingPriceRm={report.asking_price_rm ?? null}
               claimedMileageKm={report.claimed_mileage_km ?? null}
               vehicleData={vehicleData}
+              marketPrices={marketPrices}
             />
           </div>
         </Shell>

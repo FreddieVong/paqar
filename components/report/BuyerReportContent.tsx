@@ -1,5 +1,6 @@
 import type { Check, CheckResult } from '@/types/domain'
 import type { SourceData, SamanRecord } from '@/types/api'
+import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import { InsuranceCTA }  from './InsuranceCTA'
 import { InspectionCTA } from './InspectionCTA'
 
@@ -86,9 +87,10 @@ interface Props {
   askingPriceRm?:    number | null
   claimedMileageKm?: number | null
   vehicleData?:      Record<string, unknown> | null
+  marketPrices?:     CachedMarketPrices | null
 }
 
-export function BuyerReportContent({ check: _check, results, plate, askingPriceRm, claimedMileageKm, vehicleData: rawVehicleData }: Props) {
+export function BuyerReportContent({ check: _check, results, plate, askingPriceRm, claimedMileageKm, vehicleData: rawVehicleData, marketPrices }: Props) {
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const vehicleResults      = results.filter(r => VEHICLE_SOURCES.includes(r.source as VehicleSource))
   const samanTotal          = getSamanTotal(vehicleResults)
@@ -169,7 +171,42 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </p>
             )}
 
-            {/* Market search links */}
+            {/* Live market listings from Mudah (cached) */}
+            {marketPrices && marketPrices.listings.length > 0 && (() => {
+              const prices  = marketPrices.listings.map(l => l.price)
+              const minP    = Math.min(...prices)
+              const maxP    = Math.max(...prices)
+              const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
+              return (
+                <div className="mt-3 pt-3 border-t border-[#F3F4F6] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-heading font-bold text-[12px] text-[#111827]">Harga pasaran semasa (Mudah)</p>
+                    <p className="font-body text-[10px] text-[#9CA3AF]">
+                      {daysAgo === 0 ? 'Hari ini' : `${daysAgo} hari lalu`}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {marketPrices.listings.map((l, i) => (
+                      <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+                        className="inline-block bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#15803D] hover:bg-[#DCFCE7] transition-colors">
+                        RM{l.price.toLocaleString()}
+                      </a>
+                    ))}
+                  </div>
+                  {minP !== maxP && (
+                    <p className="font-body text-[11px] text-[#6B7280]">
+                      Julat: RM{minP.toLocaleString()} – RM{maxP.toLocaleString()} ({prices.length} kereta serupa)
+                    </p>
+                  )}
+                  <a href={marketPrices.searchUrl} target="_blank" rel="noopener noreferrer"
+                    className="font-body text-[11px] text-[#064E4A] hover:underline">
+                    Lihat semua listing di Mudah →
+                  </a>
+                </div>
+              )
+            })()}
+
+            {/* Market search links — shown when no cached listings yet */}
             {vehicleData?.make && (() => {
               const mk = vehicleData.make ?? ''
               const modelKeyword = vehicleData.model
@@ -179,9 +216,12 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               const searchTerm  = [mk, modelKeyword, yr].filter(Boolean).join(' ')
               const mudahUrl    = `https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(searchTerm)}`
               const carlistUrl  = `https://www.carlist.my/used-cars-for-sale/${mk.toLowerCase().replace(/\s+/g, '-')}/${modelKeyword.toLowerCase().replace(/\s+/g, '-')}${yr ? `/year-${yr}` : ''}/malaysia`
+              const hasLive     = (marketPrices?.listings.length ?? 0) > 0
               return (
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F3F4F6]">
-                  <p className="font-body text-[12px] text-[#6B7280]">Tengok harga jualan serupa di pasaran</p>
+                <div className={`flex items-center justify-between ${hasLive ? 'mt-1' : 'mt-3 pt-3 border-t border-[#F3F4F6]'}`}>
+                  <p className="font-body text-[12px] text-[#6B7280]">
+                    {hasLive ? 'Semak lebih lanjut:' : 'Tengok harga jualan serupa di pasaran'}
+                  </p>
                   <div className="flex items-center gap-3">
                     <a href={mudahUrl} target="_blank" rel="noopener noreferrer"
                       className="font-heading font-bold text-[12px] text-[#064E4A]">
