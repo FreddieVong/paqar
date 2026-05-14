@@ -10,8 +10,48 @@ export const metadata: Metadata = {
 }
 
 export default function CaraBelihKeretaTerpakaiPage() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+          { '@type': 'ListItem', position: 2, name: 'Panduan', item: 'https://paqar.my/panduan' },
+          { '@type': 'ListItem', position: 3, name: 'Cara Beli Kereta Terpakai', item: 'https://paqar.my/cara-beli-kereta-terpakai' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Berapa langkah untuk beli kereta terpakai dengan selamat di Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Ada 6 langkah utama: (1) semak saman, (2) semak geran dan hak milik, (3) semak pinjaman bank, (4) inspection fizikal di bengkel, (5) semak insurans dan roadtax, (6) tukar milik di JPJ.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Boleh bayar deposit sebelum semak saman kereta?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Tidak disyorkan. Semak saman dahulu — kalau ada saman, penjual perlu selesaikan sebelum tukar milik, atau anda boleh tolak jumlahnya dari harga. Bayar deposit dulu memberikan kuasa tawar menawar kepada penjual.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Berapa lama proses tukar milik kereta di Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Biasanya 1-3 hari bekerja di pejabat JPJ jika semua dokumen lengkap dan tiada isu saman atau pinjaman aktif.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Apa dokumen diperlukan untuk beli kereta terpakai Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Geran asal kenderaan, IC penjual dan pembeli, surat perjanjian jual beli, surat penyelesaian pinjaman (jika ada), dan resit bayaran.' },
+          },
+        ],
+      },
+    ],
+  }
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">

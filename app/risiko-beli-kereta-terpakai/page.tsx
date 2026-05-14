@@ -61,8 +61,47 @@ const RISKS = [
 ]
 
 export default function RisikoBelihKeretaTerpakaiPage() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+          { '@type': 'ListItem', position: 2, name: 'Panduan', item: 'https://paqar.my/panduan' },
+          { '@type': 'ListItem', position: 3, name: 'Risiko Beli Kereta Terpakai', item: 'https://paqar.my/risiko-beli-kereta-terpakai' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Apa risiko utama beli kereta terpakai di Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: '7 risiko utama: saman tersembunyi, odometer diputar (clocking), kereta banjir, kemalangan teruk dan tampalan, pinjaman bank aktif, geran atas nama orang lain, dan harga yang tidak adil.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Bagaimana nak tahu kereta pernah banjir?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Cium bau kereta — ada bau busuk atau lembap menandakan banjir. Semak bawah carpet, dalam boot, dan bahagian bawah dashboard untuk tanda karat atau kelembapan. Bawa ke bengkel untuk semak lebih teliti.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Bagaimana elak beli kereta odometer diputar?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Bandingkan bacaan odometer dengan rekod servis — stamp tidak konsisten adalah tanda amaran. Bawa ke bengkel untuk pemeriksaan mekanikal menyeluruh sebelum bayar deposit.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Boleh beli kereta kalau penjual masih ada pinjaman aktif?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Boleh, tetapi pinjaman perlu diselesaikan dahulu sebelum tukar milik. Minta surat penyelesaian pinjaman atau surat kelulusan bank. Jangan bayar deposit sebelum mendapat dokumen ini.' },
+          },
+        ],
+      },
+    ],
+  }
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-5">

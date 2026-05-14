@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { initiateBuyerReport }     from '@/app/laporan-pembeli/[checkId]/_actions'
+import { analytics }               from '@/lib/analytics'
 
 interface Props {
   checkId:    string
@@ -17,6 +18,8 @@ export function PaymentForm({ checkId, claimToken }: Props) {
   const [isPending, startTransition] = useTransition()
   const emailRef = useRef<HTMLInputElement>(null)
 
+  useEffect(() => { analytics.paymentFormViewed() }, [])
+
   function handleSkip() {
     setPrice(''); setMileage(''); setListing('')
     emailRef.current?.focus()
@@ -25,6 +28,7 @@ export function PaymentForm({ checkId, claimToken }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    analytics.paymentInitiated()
     startTransition(async () => {
       const result = await initiateBuyerReport({
         checkId,

@@ -10,8 +10,48 @@ export const metadata: Metadata = {
 }
 
 export default function CaraSemakRoadtaxPage() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+          { '@type': 'ListItem', position: 2, name: 'Panduan', item: 'https://paqar.my/panduan' },
+          { '@type': 'ListItem', position: 3, name: 'Cara Semak Roadtax Kereta', item: 'https://paqar.my/cara-semak-roadtax-kereta' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Di mana boleh semak roadtax kereta Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Boleh semak melalui portal MyVehicle.info (laman rasmi JPJ) dengan memasukkan nombor plat kenderaan. Semakan asas adalah percuma dan tidak memerlukan log masuk.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Apa berlaku kalau roadtax kereta tamat?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Kereta tidak boleh dipandu secara sah di jalan raya. Boleh kena kompaun oleh JPJ atau PDRM. Perlu perbaharui roadtax sebelum boleh menunggang atau memindahkan hak milik.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Boleh pindah baki roadtax dari pemilik lama kepada pembeli baru?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Tidak, roadtax tidak boleh dipindah milik. Ia terikat kepada pemilik berdaftar. Selepas tukar milik, pembeli baru perlu perbaharui roadtax atas namanya sendiri.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Berapa kos roadtax kereta Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Kos bergantung kepada kapasiti enjin (cc) dan jenis kenderaan. Kereta bawah 1000cc bayar lebih murah berbanding kereta besar. Boleh semak kadar tepat di portal JPJ atau ejen roadtax.' },
+          },
+        ],
+      },
+    ],
+  }
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">

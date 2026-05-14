@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter }    from 'next/navigation'
 import { Progress }     from '@/components/ui/progress'
 import { Button }       from '@/components/ui/button'
@@ -23,10 +23,13 @@ interface Props {
 
 export function ResultsStream({ checkId, claimToken, plate }: Props) {
   const router = useRouter()
-  const [check,      setCheck]      = useState<Check | null>(null)
-  const [results,    setResults]    = useState<CheckResult[]>([])
-  const [error,      setError]      = useState<string | null>(null)
-  const [authedUser, setAuthedUser] = useState<string | null | undefined>(undefined)
+  const [check,        setCheck]        = useState<Check | null>(null)
+  const [results,      setResults]      = useState<CheckResult[]>([])
+  const [error,        setError]        = useState<string | null>(null)
+  const [authedUser,   setAuthedUser]   = useState<string | null | undefined>(undefined)
+  const [captureEmail, setCaptureEmail] = useState('')
+  const [captureState, setCaptureState] = useState<'idle' | 'sending' | 'done'>('idle')
+  const captureRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -78,6 +81,20 @@ export function ResultsStream({ checkId, claimToken, plate }: Props) {
   // results kept for completedCount but not rendered as cards
   void results
 
+  async function handleEmailCapture(e: React.FormEvent) {
+    e.preventDefault()
+    if (!captureEmail.includes('@')) return
+    setCaptureState('sending')
+    try {
+      await fetch('/api/capture-email', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ checkId, claimToken, email: captureEmail }),
+      })
+    } catch { /* non-fatal */ }
+    setCaptureState('done')
+  }
+
   if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
   return (
@@ -102,6 +119,50 @@ export function ResultsStream({ checkId, claimToken, plate }: Props) {
           <SamanGuide />
           <ReportCTA checkId={checkId} claimToken={claimToken} plate={plate} />
         </>
+      )}
+
+      {/* Email capture for non-authed users */}
+      {isComplete && authedUser === null && (
+        <div className="border-[1.5px] border-dashed border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
+          {captureState === 'done' ? (
+            <>
+              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Terima kasih!</p>
+              <p className="font-body text-[12px] text-[#6B7280]">
+                Kami akan hantarkan link laporan ini ke e-mel anda jika anda belum buka laporan dalam 24 jam.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">
+                Simpan laporan ini
+              </p>
+              <p className="font-body text-[12px] text-[#6B7280] mb-3">
+                Masukkan e-mel untuk kami hantarkan link laporan ini — boleh buka semula bila-bila masa.
+              </p>
+              <form onSubmit={handleEmailCapture} className="flex gap-2">
+                <input
+                  ref={captureRef}
+                  type="email"
+                  value={captureEmail}
+                  onChange={e => setCaptureEmail(e.target.value)}
+                  placeholder="anda@email.com"
+                  required
+                  className="flex-1 bg-white border border-[#D1D5DB] rounded-lg px-3 py-2
+                             font-body text-[13px] text-[#111827] placeholder:text-[#D1D5DB]
+                             focus:outline-none focus:border-[#064E4A]"
+                />
+                <button
+                  type="submit"
+                  disabled={captureState === 'sending'}
+                  className="bg-[#064E4A] text-white font-heading font-bold text-[13px]
+                             px-4 py-2 rounded-lg disabled:opacity-60 whitespace-nowrap"
+                >
+                  {captureState === 'sending' ? '…' : 'Simpan'}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
       )}
 
       {/* Secondary CTAs */}

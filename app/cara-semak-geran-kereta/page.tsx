@@ -9,8 +9,48 @@ export const metadata: Metadata = {
 }
 
 export default function CaraSemakGeranKeretaPage() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+          { '@type': 'ListItem', position: 2, name: 'Panduan', item: 'https://paqar.my/panduan' },
+          { '@type': 'ListItem', position: 3, name: 'Cara Semak Geran Kereta', item: 'https://paqar.my/cara-semak-geran-kereta' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Apa itu geran kereta Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Geran atau VOC (Vehicle Ownership Certificate) adalah dokumen rasmi JPJ yang membuktikan siapa pemilik sah sesebuah kenderaan. Ia mengandungi nama pemilik, nombor IC, nombor plat, nombor enjin, nombor casis, dan catatan cagaran bank.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Boleh beli kereta kalau nama geran bukan nama penjual?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Sangat berisiko. Proses tukar milik memerlukan kehadiran atau kebenaran pemilik sah. Minta penjelasan dan dokumen sokongan yang kukuh. Jika tidak memuaskan, jangan teruskan pembelian.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Bagaimana nak tahu geran kereta adalah palsu?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Semak embossed stamp JPJ yang perlu terasa timbul, nombor siri berhologram, dan pastikan maklumat dalam geran konsisten dengan nombor enjin dan casis pada kenderaan sebenar.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Di mana boleh semak kesahihan geran kereta?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Boleh semak di kaunter JPJ terdekat atau melalui portal rasmi JPJ dengan membawa nombor enjin dan nombor casis (VIN) kenderaan.' },
+          },
+        ],
+      },
+    ],
+  }
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">

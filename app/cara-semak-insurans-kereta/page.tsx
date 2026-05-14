@@ -10,8 +10,48 @@ export const metadata: Metadata = {
 }
 
 export default function CaraSemakInsuransPage() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+          { '@type': 'ListItem', position: 2, name: 'Panduan', item: 'https://paqar.my/panduan' },
+          { '@type': 'ListItem', position: 3, name: 'Cara Semak Insurans Kereta', item: 'https://paqar.my/cara-semak-insurans-kereta' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Di mana boleh semak status insurans kereta Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Boleh semak melalui portal Carinsurance.com.my atau hubungi syarikat insurans terus dengan nombor plat. Untuk kereta yang anda pertimbangkan beli, minta penjual tunjukkan salinan polisi insurans.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Apa berlaku kalau insurans kereta tamat?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Kereta tidak dilindungi sekiranya berlaku kemalangan. Roadtax juga tidak boleh diperbaharui tanpa insurans aktif. Pembeli baru perlu beli polisi insurans baru sebelum boleh pandu kereta tersebut.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Boleh pindah NCD dari pemilik lama kepada pembeli kereta terpakai?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Tidak, NCD (No-Claim Discount) adalah milik pemegang polisi dan tidak boleh dipindah. Pembeli baru bermula dengan NCD 0% dan boleh kumpul setiap tahun tidak membuat tuntutan.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Berapa kos insurans kereta terpakai Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Bergantung kepada nilai kereta, model, kapasiti enjin, dan rekod pemandu. Boleh bandingkan harga dari semua syarikat insurans di laman seperti Bjak.my untuk dapatkan harga terbaik.' },
+          },
+        ],
+      },
+    ],
+  }
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">

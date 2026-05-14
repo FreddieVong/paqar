@@ -77,8 +77,43 @@ const CHECKLIST = [
 ]
 
 export default function ChecklistBeliKeretaTerpakaiPage() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+          { '@type': 'ListItem', position: 2, name: 'Panduan', item: 'https://paqar.my/panduan' },
+          { '@type': 'ListItem', position: 3, name: 'Checklist Beli Kereta Terpakai', item: 'https://paqar.my/checklist-beli-kereta-terpakai' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Apa yang perlu disemak sebelum bayar deposit kereta terpakai?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Semak saman PDRM dan JPJ, pastikan nama geran sama dengan IC penjual, tanya status pinjaman bank, buat inspection fizikal di bengkel, dan semak roadtax serta insurans masih aktif.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Berapa lama proses semak sebelum beli kereta terpakai?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Semakan asas (saman, geran, roadtax, insurans) boleh siap dalam 1-2 jam. Inspection fizikal di bengkel memerlukan temujanji dan biasanya mengambil masa 1-2 jam tambahan.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Berapa deposit yang patut dibayar untuk kereta terpakai?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Tiada jumlah deposit yang ditetapkan oleh undang-undang. Biasanya antara RM500 hingga RM2,000. Pastikan deposit disertai surat perjanjian jual beli yang jelas tentang syarat pemulangan jika urusan gagal.' },
+          },
+        ],
+      },
+    ],
+  }
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-5">

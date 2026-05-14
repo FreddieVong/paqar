@@ -1,10 +1,12 @@
-import { redirect }      from 'next/navigation'
-import { Nav }            from '@/components/layout/Nav'
-import { Shell }          from '@/components/layout/Shell'
-import { getCheck }       from '@/lib/db/checks'
-import { markReportPaid } from '@/lib/db/buyer-reports'
-import { decrypt }        from '@/lib/crypto'
-import Link               from 'next/link'
+import { redirect }             from 'next/navigation'
+import { Nav }                  from '@/components/layout/Nav'
+import { Shell }                from '@/components/layout/Shell'
+import { getCheck }             from '@/lib/db/checks'
+import { markReportPaid }       from '@/lib/db/buyer-reports'
+import { decrypt }              from '@/lib/crypto'
+import Link                     from 'next/link'
+import { AnalyticsEvent }       from '@/components/layout/AnalyticsEvent'
+import { WhatsAppShareButton }  from '@/components/report/WhatsAppShareButton'
 
 interface Props {
   params:       { checkId: string }
@@ -32,6 +34,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
       <Nav />
       <Shell>
         <div className="pt-10 pb-10 max-w-sm mx-auto space-y-5 text-center">
+          {billplzPaid === 'true' && <AnalyticsEvent event="payment_completed" />}
           <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[16px] p-6">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
               Laporan Pembeli
@@ -57,14 +60,9 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
           </Link>
 
           {plate && (
-            <a
+            <WhatsAppShareButton
               href={`https://wa.me/?text=${encodeURIComponent(`Laporan Paqar untuk ${plate} sedia!\n\nLihat laporan di sini:\nhttps://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}\n\nJuga boleh tempah inspection sebelum bayar deposit.`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full border-[1.5px] border-[#25D366] text-[#25D366] font-heading font-bold text-[14px] rounded-[14px] py-3.5 hover:bg-[#25D366]/5 transition-colors"
-            >
-              Kongsi Laporan via WhatsApp →
-            </a>
+            />
           )}
 
           <p className="font-body text-[11px] text-[#9CA3AF]">

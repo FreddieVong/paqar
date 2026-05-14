@@ -1,3 +1,7 @@
+'use client'
+
+import { analytics } from '@/lib/analytics'
+
 export function InsuranceCTA() {
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -14,6 +18,7 @@ export function InsuranceCTA() {
         href="https://bjak.my/?p=FREDDIE-0FC9AL"
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => analytics.ctaClicked({ cta: 'bjak' })}
         className="block w-full bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-[#053D3A] transition-colors"
       >
         Bandingkan Insurans di Bjak →

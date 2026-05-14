@@ -1,3 +1,7 @@
+'use client'
+
+import { analytics } from '@/lib/analytics'
+
 interface Props {
   plate?: string
 }
@@ -25,6 +29,7 @@ export function InspectionCTA({ plate }: Props) {
         href={waUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => analytics.ctaClicked({ cta: 'workshop' })}
         className="block w-full bg-[#25D366] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#1ebe5c] transition-colors"
       >
         Tempah via WhatsApp →

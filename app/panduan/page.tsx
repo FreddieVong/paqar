@@ -61,8 +61,42 @@ const GUIDES = [
 ]
 
 export default function PanduanPage() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+          { '@type': 'ListItem', position: 2, name: 'Panduan', item: 'https://paqar.my/panduan' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Apa panduan paling penting untuk pembeli kereta terpakai Malaysia?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Panduan semak saman adalah yang paling kritikal — saman tersembunyi boleh membebankan pembeli selepas tukar milik. Ikuti dengan semak geran, pinjaman aktif, dan inspection fizikal.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Di mana boleh semak saman kereta secara percuma?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Saman PDRM boleh disemak di mybayar.rmp.gov.my dan saman JPJ di public.jpj.gov.my. Kedua-dua portal memerlukan log masuk menggunakan IC pemilik kenderaan.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Berapa banyak panduan percuma yang ada di Paqar?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Paqar menyediakan 7 panduan percuma untuk pembeli kereta terpakai — cara semak saman, cara beli kereta terpakai, checklist deposit, risiko tersembunyi, cara semak geran, roadtax, dan insurans.' },
+          },
+        ],
+      },
+    ],
+  }
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-5">

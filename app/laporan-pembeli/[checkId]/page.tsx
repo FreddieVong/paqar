@@ -10,6 +10,7 @@ import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
 import { lookupVehicle }        from '@/lib/vehicleapi'
 import { getValuationByNvic }   from '@/lib/db/vehicle-valuations'
+import { AnalyticsEvent }       from '@/components/layout/AnalyticsEvent'
 
 interface Props {
   params:       { checkId: string }
@@ -66,6 +67,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
         <Nav />
         <Shell>
           <div className="pt-5 pb-6 space-y-5">
+            <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: true }} />
             <div>
               <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#DC2626] mb-1">
                 Laporan Pembeli
@@ -98,6 +100,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       <Nav />
       <Shell>
         <div className="pt-5 pb-6 space-y-5">
+          <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: false }} />
           <div>
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#DC2626] mb-1">
               Laporan Pembeli

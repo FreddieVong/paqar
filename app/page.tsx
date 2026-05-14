@@ -1,8 +1,14 @@
-import Link from 'next/link'
+import Link           from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { getCheckCount } from '@/lib/db/checks'
 
-export default function HomePage() {
+export default async function HomePage() {
+  const checkCount = await getCheckCount().catch(() => 0)
+  const countDisplay = checkCount > 100
+    ? `${(Math.floor(checkCount / 10) * 10).toLocaleString()}+`
+    : null
+
   return (
     <>
       <Nav />
@@ -13,11 +19,20 @@ export default function HomePage() {
 
           {/* Copy */}
           <div>
-            <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.5 mb-5">
-              <span className="w-2 h-2 bg-[#16A34A] rounded-full" />
-              <span className="font-heading font-bold text-[12px] text-[#15803D]">
-                Percuma · Tanpa daftar akaun
-              </span>
+            <div className="flex flex-wrap items-center gap-2 mb-5">
+              <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.5">
+                <span className="w-2 h-2 bg-[#16A34A] rounded-full" />
+                <span className="font-heading font-bold text-[12px] text-[#15803D]">
+                  Percuma · Tanpa daftar akaun
+                </span>
+              </div>
+              {countDisplay && (
+                <div className="inline-flex items-center gap-1.5 bg-[#F8FAF7] border border-[#E5E7EB] rounded-full px-3 py-1.5">
+                  <span className="font-heading font-bold text-[12px] text-[#374151]">
+                    {countDisplay} kereta dah disemak
+                  </span>
+                </div>
+              )}
             </div>
 
             <h1 className="font-heading font-extrabold text-[32px] md:text-[40px] leading-[1.08] tracking-[-0.03em] text-[#111827] mb-3">

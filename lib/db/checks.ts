@@ -164,3 +164,12 @@ export async function getCheckByIdempotencyKey(
   if (error && error.code !== 'PGRST116') throw error
   return data ?? null
 }
+
+export async function getCheckCount(): Promise<number> {
+  const supabase = createServiceClient()
+  const { count } = await supabase
+    .from('checks')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'complete')
+  return count ?? 0
+}

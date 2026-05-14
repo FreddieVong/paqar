@@ -10,8 +10,48 @@ export const metadata: Metadata = {
 }
 
 export default function PanduanSemakSamanPage() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+          { '@type': 'ListItem', position: 2, name: 'Panduan', item: 'https://paqar.my/panduan' },
+          { '@type': 'ListItem', position: 3, name: 'Cara Semak Saman Kereta', item: 'https://paqar.my/panduan-semak-saman' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Boleh semak saman kereta orang lain?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Tidak, portal PDRM (MyBayar) dan JPJ memerlukan log masuk menggunakan IC pemilik kenderaan. Pembeli perlu minta penjual semak dan tunjukkan bukti screenshot.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Di mana boleh semak saman PDRM secara online?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Saman PDRM boleh disemak di mybayar.rmp.gov.my. Perlu daftar akaun menggunakan nombor IC dan log masuk sebelum boleh semak.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Di mana boleh semak saman JPJ?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Saman JPJ boleh disemak di public.jpj.gov.my menggunakan akaun MyJPJ. Log masuk diperlukan untuk lihat saman bagi kenderaan anda.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Apa berlaku kalau ada saman sebelum tukar milik kereta?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Saman yang tidak diselesaikan boleh menyukarkan atau menghalang proses tukar milik. Minta penjual selesaikan semua saman dahulu, atau tolak jumlah saman dari harga jual.' },
+          },
+        ],
+      },
+    ],
+  }
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">

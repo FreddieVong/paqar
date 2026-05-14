@@ -32,4 +32,19 @@ export const analytics = {
 
   checkClaimed:  (props: { method: 'phone' | 'email' }) =>
     posthog.capture('check_claimed', props),
+
+  reportPageViewed: (props: { is_paid: boolean }) =>
+    posthog.capture('report_page_viewed', props),
+
+  paymentFormViewed: () =>
+    posthog.capture('payment_form_viewed'),
+
+  paymentInitiated: () =>
+    posthog.capture('payment_initiated'),
+
+  paymentCompleted: () =>
+    posthog.capture('payment_completed'),
+
+  ctaClicked: (props: { cta: 'workshop' | 'bjak' | 'whatsapp_share' }) =>
+    posthog.capture('cta_clicked', props),
 }
