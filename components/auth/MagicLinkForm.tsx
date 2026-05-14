@@ -53,23 +53,25 @@ export function MagicLinkForm({ claimToken, redirectTo, onBack }: Props) {
   if (state === 'otp') {
     return (
       <form onSubmit={verifyOtp} className="space-y-4">
-        <p className="text-sm text-slate-500">
-          Enter the 6-digit code sent to <strong>{email}</strong>
+        <p className="font-body text-[13px] text-[#6B7280]">
+          Kod 6 digit dihantar ke <strong className="text-[#111827]">{email}</strong>
         </p>
         <div>
-          <Label htmlFor="email-otp" className="text-xs font-semibold uppercase tracking-widest">Code</Label>
+          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+            Kod Pengesahan
+          </label>
           <Input id="email-otp" value={otp} onChange={(e) => setOtp(e.target.value)}
-            placeholder="12345678" inputMode="numeric"
+            placeholder="123456" inputMode="numeric" maxLength={6}
             className="mt-1.5 tracking-[.3em] text-lg font-bold" required />
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
         <Button type="submit" disabled={loading}
-          className="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3">
-          {loading ? 'Verifying…' : 'Verify →'}
+          className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold py-3">
+          {loading ? 'Mengesahkan…' : 'Sahkan →'}
         </Button>
         <button type="button" onClick={() => setState('email')}
-          className="w-full text-sm text-slate-400 hover:text-teal-700 text-center">
-          ← Change email
+          className="w-full font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] text-center transition-colors">
+          ← Tukar e-mel
         </button>
       </form>
     )
@@ -78,20 +80,18 @@ export function MagicLinkForm({ claimToken, redirectTo, onBack }: Props) {
   return (
     <form onSubmit={sendOtp} className="space-y-4">
       <div>
-        <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-widest">Email</Label>
+        <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+          Alamat E-mel
+        </label>
         <Input id="email" type="email" value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com" className="mt-1.5 text-base" required />
+          placeholder="anda@email.com" className="mt-1.5 text-base" required />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
       <Button type="submit" disabled={loading}
-        className="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3">
-        {loading ? 'Sending…' : 'Send code →'}
+        className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold py-3">
+        {loading ? 'Menghantar…' : 'Hantar Kod →'}
       </Button>
-      <button type="button" onClick={onBack}
-        className="w-full text-sm text-slate-400 hover:text-teal-700 text-center">
-        ← Back to phone sign-in
-      </button>
     </form>
   )
 }
