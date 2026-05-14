@@ -78,7 +78,7 @@ export async function scrapeMudahMarket(
       const modelKw = cleanKeyword(model).toUpperCase()
       const makeKw  = make.toUpperCase()
       const extracted = await page.evaluate(
-        (mkw: string, mdkw: string) => {
+        ([mkw, mdkw]: [string, string]) => {
           const results: { price: number; title: string; url: string }[] = []
           document.querySelectorAll('a[href]').forEach((el) => {
             const text  = el.textContent?.replace(/\s+/g, ' ').trim() ?? ''
@@ -95,7 +95,7 @@ export async function scrapeMudahMarket(
           })
           return results.slice(0, 10)
         },
-        makeKw, modelKw
+        [makeKw, modelKw] as [string, string]
       )
 
       for (const item of extracted) {
