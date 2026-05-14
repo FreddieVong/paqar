@@ -9,17 +9,43 @@ export interface VehicleValuation {
   year:        number
 }
 
-export async function getValuationByNvic(nvic: string): Promise<VehicleValuation | null> {
-  if (!nvic) return null
+export async function getValuationByNvic(
+  nvic: string,
+  fallback?: { make: string; year: string; cc?: string }
+): Promise<VehicleValuation | null> {
+  if (!nvic && !fallback) return null
   const supabase = createServiceClient()
 
-  const { data } = await supabase
-    .from('vehicle_valuations')
-    .select('wm_new_pr, sum_insured, make, family, variant, year')
-    .eq('nvic', nvic.toUpperCase())
-    .single()
+  // 1. Exact NVIC match (most accurate)
+  if (nvic) {
+    const { data } = await supabase
+      .from('vehicle_valuations')
+      .select('wm_new_pr, sum_insured, make, family, variant, year')
+      .eq('nvic', nvic.toUpperCase())
+      .single()
+    if (data) return map(data)
+  }
 
-  return data ? map(data) : null
+  // 2. Make + year + CC range (±300cc) — avoids picking wrong variant size
+  if (fallback?.make && fallback?.year && fallback?.cc) {
+    const targetCc = parseFloat(fallback.cc)
+    if (!isNaN(targetCc) && targetCc > 0) {
+      const { data } = await supabase
+        .from('vehicle_valuations')
+        .select('wm_new_pr, sum_insured, make, family, variant, year')
+        .ilike('make', fallback.make)
+        .eq('year', fallback.year)
+        .gte('cc', targetCc - 300)
+        .lte('cc', targetCc + 300)
+        .not('wm_new_pr', 'is', null)
+        .order('wm_new_pr', { ascending: true })
+        .limit(1)
+        .single()
+      if (data) return map(data)
+    }
+  }
+
+  return null
 }
 
 function map(data: Record<string, unknown>): VehicleValuation {
