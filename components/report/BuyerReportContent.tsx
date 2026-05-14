@@ -73,7 +73,9 @@ interface VehicleData {
   } | null
   valuation?: {
     wmNewPrice: number
-    sumInsured: number
+    sumInsured: number | null
+    family?:    string
+    variant?:   string
   } | null
 }
 
@@ -105,7 +107,11 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
 
       {/* Section 1: Perbandingan Harga — HERO (price is buyer's #1 question) */}
       {(vehicleData?.valuation || askingPriceRm != null) && (() => {
-        const wmNewPrice = (vehicleData?.valuation as {wmNewPrice:number} | null | undefined)?.wmNewPrice ?? null
+        const val        = vehicleData?.valuation
+        const wmNewPrice = val?.wmNewPrice ?? null
+        const valVariant = val?.family && val?.variant
+          ? `${val.family} ${val.variant}`.trim()
+          : (val?.family ?? null)
         const pct = wmNewPrice && askingPriceRm != null
           ? Math.round((1 - askingPriceRm / wmNewPrice) * 100)
           : null
@@ -117,11 +123,18 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
 
             {/* Original new price from valuation CSV */}
             {wmNewPrice != null && (
-              <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
-                <p className="font-body text-[12px] text-[#6B7280]">Harga baru asal kenderaan ini</p>
-                <p className="font-heading font-bold text-[14px] text-[#111827]">
-                  RM{wmNewPrice.toLocaleString()}
-                </p>
+              <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
+                <div className="flex items-center justify-between">
+                  <p className="font-body text-[12px] text-[#6B7280]">Harga baru asal kenderaan ini</p>
+                  <p className="font-heading font-bold text-[14px] text-[#111827]">
+                    RM{wmNewPrice.toLocaleString()}
+                  </p>
+                </div>
+                {valVariant && (
+                  <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5">
+                    Berdasarkan: {valVariant}
+                  </p>
+                )}
               </div>
             )}
 
