@@ -1,12 +1,13 @@
-import { redirect }             from 'next/navigation'
-import { Nav }                  from '@/components/layout/Nav'
-import { Shell }                from '@/components/layout/Shell'
-import { getCheck }             from '@/lib/db/checks'
-import { markReportPaid }       from '@/lib/db/buyer-reports'
-import { decrypt }              from '@/lib/crypto'
-import Link                     from 'next/link'
-import { AnalyticsEvent }       from '@/components/layout/AnalyticsEvent'
-import { WhatsAppShareButton }  from '@/components/report/WhatsAppShareButton'
+import { redirect }                                  from 'next/navigation'
+import { Nav }                                       from '@/components/layout/Nav'
+import { Shell }                                     from '@/components/layout/Shell'
+import { getCheck }                                  from '@/lib/db/checks'
+import { markReportPaid, getBuyerReportByBillId }    from '@/lib/db/buyer-reports'
+import { decrypt }                                   from '@/lib/crypto'
+import { sendReceiptEmail }                          from '@/lib/email/receipt'
+import Link                                          from 'next/link'
+import { AnalyticsEvent }                            from '@/components/layout/AnalyticsEvent'
+import { WhatsAppShareButton }                       from '@/components/report/WhatsAppShareButton'
 
 interface Props {
   params:       { checkId: string }
@@ -20,10 +21,26 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
 
   if (!claimToken) redirect('/')
 
-  // Billplz confirms payment in the redirect URL — mark report paid immediately
-  // (don't wait for webhook which may be delayed)
+  // Mark report paid. Returns true if this page won the pending→paid race.
+  // If so, send receipt here — webhook may arrive after and find status already 'paid'.
   if (billId && billplzPaid === 'true') {
-    await markReportPaid(billId).catch(() => {})
+    const wasJustPaid = await markReportPaid(billId).catch(() => false)
+    if (wasJustPaid) {
+      getBuyerReportByBillId(billId).then(report => {
+        if (!report) return
+        const reportUrl = claimToken
+          ? `https://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}`
+          : `https://paqar.my/laporan-pembeli/${params.checkId}`
+        sendReceiptEmail({
+          product:     'buyer_report',
+          toEmail:     report.buyer_email,
+          amountCents: report.amount_cents,
+          paidAt:      new Date().toISOString(),
+          plate:       null,
+          reportUrl,
+        }).catch(() => {})
+      }).catch(() => {})
+    }
   }
 
   const row   = await getCheck(params.checkId, claimToken)

@@ -27,11 +27,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const buyerReport = await getBuyerReportByBillId(billId)
+    if (!buyerReport) return NextResponse.json({ ok: true })
 
-    if (buyerReport && buyerReport.status === 'pending') {
-      await markReportPaid(billId)
-
-      // Build report access URL and decrypt plate for the receipt email
+    const wasJustPaid = await markReportPaid(billId)
+    if (wasJustPaid) {
       let reportUrl: string | undefined
       let plate: string | null = null
       try {
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest) {
             ? `https://paqar.my/laporan-pembeli/${buyerReport.check_id}?claim_token=${token}`
             : `https://paqar.my/laporan-pembeli/${buyerReport.check_id}`
         }
-      } catch { /* non-fatal — email still sends without link */ }
+      } catch { /* non-fatal */ }
 
       sendReceiptEmail({
         product:     'buyer_report',

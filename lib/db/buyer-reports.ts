@@ -16,7 +16,7 @@ export async function createBuyerReport(params: {
       check_id:            params.checkId,
       buyer_email:         params.buyerEmail,
       billplz_bill_id:     params.billplzBillId,
-      amount_cents:        1900,
+      amount_cents:        1200,
       asking_price_rm:     params.askingPriceRm ?? null,
       claimed_mileage_km:  params.claimedMileageKm ?? null,
       listing_url:         params.listingUrl ?? null,
@@ -40,9 +40,11 @@ export async function getBuyerReport(checkId: string): Promise<BuyerReport | nul
   return data as BuyerReport | null
 }
 
-export async function markReportPaid(billplzBillId: string): Promise<void> {
+// Returns true if this call was the one that transitioned pending→paid.
+// Using .eq('status','pending') makes the update atomic — only one caller wins.
+export async function markReportPaid(billplzBillId: string): Promise<boolean> {
   const supabase = createServiceClient()
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('buyer_reports')
     .update({
       status:     'paid',
@@ -50,7 +52,10 @@ export async function markReportPaid(billplzBillId: string): Promise<void> {
       updated_at: new Date().toISOString(),
     })
     .eq('billplz_bill_id', billplzBillId)
+    .eq('status', 'pending')
+    .select('id')
   if (error) throw error
+  return (data?.length ?? 0) > 0
 }
 
 export async function getUserBuyerReports(userId: string): Promise<Array<{
