@@ -178,7 +178,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               const yr          = vehicleData.registrationYear ?? ''
               const searchTerm  = [mk, modelKeyword, yr].filter(Boolean).join(' ')
               const mudahUrl    = `https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(searchTerm)}`
-              const carlistUrl  = `https://www.carlist.my/cars-for-sale/index.htm?q=${encodeURIComponent([mk, modelKeyword].filter(Boolean).join(' '))}&year_from=${yr}&year_to=${yr}`
+              const carlistUrl  = `https://www.carlist.my/used-cars-for-sale/${mk.toLowerCase().replace(/\s+/g, '-')}/${modelKeyword.toLowerCase().replace(/\s+/g, '-')}${yr ? `/year-${yr}` : ''}/malaysia`
               return (
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F3F4F6]">
                   <p className="font-body text-[12px] text-[#6B7280]">Tengok harga jualan serupa di pasaran</p>
