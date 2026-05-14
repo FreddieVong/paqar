@@ -169,20 +169,32 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </p>
             )}
 
-            {/* Mudah market search link */}
-            {vehicleData?.make && (
-              <a
-                href={`https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(
-                  [vehicleData.make, vehicleData.model, vehicleData.registrationYear].filter(Boolean).join(' ')
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between mt-3 pt-3 border-t border-[#F3F4F6]"
-              >
-                <p className="font-body text-[12px] text-[#6B7280]">Tengok harga jualan serupa di pasaran</p>
-                <p className="font-heading font-bold text-[12px] text-[#064E4A]">Cari di Mudah →</p>
-              </a>
-            )}
+            {/* Market search links */}
+            {vehicleData?.make && (() => {
+              const mk = vehicleData.make ?? ''
+              const modelKeyword = vehicleData.model
+                ? (vehicleData.model.match(/^\d+/)?.[0] ?? vehicleData.model.split(/[\s-]/)[0] ?? vehicleData.model)
+                : ''
+              const yr          = vehicleData.registrationYear ?? ''
+              const searchTerm  = [mk, modelKeyword, yr].filter(Boolean).join(' ')
+              const mudahUrl    = `https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(searchTerm)}`
+              const carlistUrl  = `https://www.carlist.my/cars-for-sale/index.htm?q=${encodeURIComponent([mk, modelKeyword].filter(Boolean).join(' '))}&year_from=${yr}&year_to=${yr}`
+              return (
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F3F4F6]">
+                  <p className="font-body text-[12px] text-[#6B7280]">Tengok harga jualan serupa di pasaran</p>
+                  <div className="flex items-center gap-3">
+                    <a href={mudahUrl} target="_blank" rel="noopener noreferrer"
+                      className="font-heading font-bold text-[12px] text-[#064E4A]">
+                      Mudah →
+                    </a>
+                    <a href={carlistUrl} target="_blank" rel="noopener noreferrer"
+                      className="font-heading font-bold text-[12px] text-[#064E4A]">
+                      Carlist →
+                    </a>
+                  </div>
+                </div>
+              )
+            })()}
 
           </div>
         )
