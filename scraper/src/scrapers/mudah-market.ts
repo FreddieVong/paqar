@@ -15,8 +15,10 @@ export interface MudahMarketResult {
 }
 
 function cleanKeyword(model: string): string {
-  // "Q5 TFSI STANDARD" → "Q5", "730Li" → "730"
-  return model.match(/^\d+/)?.[0] ?? model.split(/[\s-]/)[0] ?? model
+  // "730Li" → "730", "Q5 TFSI" → "Q5", "7 Series" → "7 Series" (kept whole when numeric prefix is short)
+  const numPrefix = model.match(/^\d+/)?.[0]
+  if (numPrefix && numPrefix.length >= 3) return numPrefix  // "730", "320" etc. — specific enough
+  return model.split(/[\s-]/)[0] ?? model                  // first word: "Q5", "COOPER", "7" (will be length-filtered)
 }
 
 export async function scrapeMudahMarket(
@@ -79,38 +81,49 @@ export async function scrapeMudahMarket(
         return
       }
 
-      // Fallback: parse DOM for any links that look like car listings
-      const extracted = await page.evaluate(() => {
-        const results: { price: number; title: string; url: string }[] = []
-        const seen = new Set<string>()
+      const makeKw  = make.toUpperCase()
+      const modelKw = cleanKeyword(model).toUpperCase()
 
-        document.querySelectorAll('a[href]').forEach((el) => {
-          const href = (el as HTMLAnchorElement).href
-          if (!href || href === window.location.href) return
-          // Skip nav/footer/non-listing links
-          if (/\?(q=|cat=|type=)/.test(href) && !href.match(/adid|\/m\//)) return
+      // Fallback: parse DOM — walk up from each link to find card context with price
+      const extracted = await page.evaluate(
+        ([mkw, mdkw]: [string, string]) => {
+          const results: { price: number; title: string; url: string }[] = []
+          const seen = new Set<string>()
 
-          // Walk up to find a card with an RM price
-          let context = ''
-          let node: HTMLElement | null = el as HTMLElement
-          for (let i = 0; i < 6 && node; i++) {
-            const t = node.textContent?.replace(/\s+/g, ' ').trim() ?? ''
-            if (/RM\s*[\d,]+/.test(t) && t.length < 500) { context = t; break }
-            node = node.parentElement
-          }
-          if (!context) return
+          document.querySelectorAll('a[href]').forEach((el) => {
+            const href = (el as HTMLAnchorElement).href
+            if (!href || href === window.location.href) return
+            // Skip nav/footer/non-listing links
+            if (/\?(q=|cat=|type=)/.test(href) && !href.match(/adid|\/m\//)) return
 
-          const priceMatch = context.match(/RM\s*([\d,]+)/)
-          if (!priceMatch) return
-          const price = parseInt((priceMatch[1] ?? '').replace(/,/g, ''), 10)
-          if (!price || price < 5_000 || price > 2_000_000) return
-          if (seen.has(href)) return
+            // Walk up to find a card with an RM price
+            let context = ''
+            let node: HTMLElement | null = el as HTMLElement
+            for (let i = 0; i < 6 && node; i++) {
+              const t = node.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+              if (/RM\s*[\d,]+/.test(t) && t.length < 500) { context = t; break }
+              node = node.parentElement
+            }
+            if (!context) return
 
-          seen.add(href)
-          results.push({ price, title: context.slice(0, 120), url: href })
-        })
-        return results.slice(0, 10)
-      })
+            const priceMatch = context.match(/RM\s*([\d,]+)/)
+            if (!priceMatch) return
+            const price = parseInt((priceMatch[1] ?? '').replace(/,/g, ''), 10)
+            if (!price || price < 5_000 || price > 2_000_000) return
+
+            // Context must mention make; and model if keyword is long enough to be specific
+            const upper = context.toUpperCase()
+            if (!upper.includes(mkw)) return
+            if (mdkw.length >= 2 && !upper.includes(mdkw)) return
+
+            if (seen.has(href)) return
+            seen.add(href)
+            results.push({ price, title: context.slice(0, 120), url: href })
+          })
+          return results.slice(0, 10)
+        },
+        [makeKw, modelKw] as [string, string]
+      )
 
       // Also log raw HTML snippet for debugging if nothing found
       if (extracted.length === 0) {
