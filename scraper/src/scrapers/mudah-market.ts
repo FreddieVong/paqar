@@ -60,34 +60,36 @@ export async function scrapeMudahMarket(
         } catch { /* non-fatal */ }
       })
 
-      await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 20_000 })
+      // networkidle waits until JS has finished making API calls
+      await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 25_000 })
 
-      // Wait briefly for API responses to arrive
-      await page.waitForTimeout(3_000)
+      // Log what page we actually got — helps diagnose blocks/captchas
+      const pageTitle = await page.title()
+      const pageUrl   = page.url()
+      console.log('[mudah-market] page:', pageTitle, pageUrl)
 
       if (captured.length > 0) {
         listings.push(...captured.slice(0, 5))
         return
       }
 
-      // Fallback: parse DOM — find real listing URLs then read price from card context
+      // Fallback: parse DOM for any links that look like car listings
       const extracted = await page.evaluate(() => {
         const results: { price: number; title: string; url: string }[] = []
         const seen = new Set<string>()
 
         document.querySelectorAll('a[href]').forEach((el) => {
           const href = (el as HTMLAnchorElement).href
-          if (!href.includes('mudah.my')) return
-          // Real listing URLs contain a long numeric ID
-          if (!/\/\d{7,}|\/m\/\d+/.test(href)) return
-          if (seen.has(href)) return
+          if (!href || href === window.location.href) return
+          // Skip nav/footer/non-listing links
+          if (/\?(q=|cat=|type=)/.test(href) && !href.match(/adid|\/m\//)) return
 
-          // Walk up to find the listing card that contains the price
+          // Walk up to find a card with an RM price
           let context = ''
           let node: HTMLElement | null = el as HTMLElement
-          for (let i = 0; i < 5 && node; i++) {
+          for (let i = 0; i < 6 && node; i++) {
             const t = node.textContent?.replace(/\s+/g, ' ').trim() ?? ''
-            if (/RM\s*[\d,]+/.test(t)) { context = t; break }
+            if (/RM\s*[\d,]+/.test(t) && t.length < 500) { context = t; break }
             node = node.parentElement
           }
           if (!context) return
@@ -96,12 +98,19 @@ export async function scrapeMudahMarket(
           if (!priceMatch) return
           const price = parseInt((priceMatch[1] ?? '').replace(/,/g, ''), 10)
           if (!price || price < 5_000 || price > 2_000_000) return
+          if (seen.has(href)) return
 
           seen.add(href)
           results.push({ price, title: context.slice(0, 120), url: href })
         })
         return results.slice(0, 10)
       })
+
+      // Also log raw HTML snippet for debugging if nothing found
+      if (extracted.length === 0) {
+        const snippet = await page.evaluate(() => document.body?.innerHTML?.slice(0, 500) ?? '')
+        console.log('[mudah-market] dom snippet:', snippet)
+      }
 
       for (const item of extracted) {
         listings.push({
