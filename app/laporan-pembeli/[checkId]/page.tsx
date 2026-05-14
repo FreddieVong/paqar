@@ -69,9 +69,19 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
     // Market prices — serve from cache, refresh in background if stale
     let marketPrices: CachedMarketPrices | null = null
     if (vehicleData?.make && vehicleData?.model && vehicleData?.registrationYear) {
-      const mk = vehicleData.make as string
-      const mo = vehicleData.model as string
-      const yr = vehicleData.registrationYear as string
+      const mk      = vehicleData.make as string
+      const rawModel = vehicleData.model as string
+      const yr      = vehicleData.registrationYear as string
+      const desc    = (vehicleData.description as string) ?? ''
+
+      // If VehicleAPI model is a vague single code (e.g. "7" for BMW 7-series),
+      // extract the specific model number from description ("BMW 730 LI" → "730")
+      const numPrefix = rawModel.match(/^\d+/)?.[0]
+      const descNum   = desc.match(/\b(\d{3,})\b/)?.[1]
+      const mo = (numPrefix && numPrefix.length >= 3)
+        ? numPrefix                         // "730i" → "730" ✓
+        : (descNum ?? rawModel.split(/[\s-]/)[0] ?? rawModel)  // "7" → "730" from desc
+
       marketPrices = await getCachedMarketPrices(mk, mo, yr).catch(() => null)
       if (!marketPrices) {
         fetchAndCacheMarketPrices(mk, mo, yr).catch(() => {}) // non-blocking
