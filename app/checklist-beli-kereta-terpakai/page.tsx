@@ -7,6 +7,9 @@ import { DualCheckForm } from '@/components/check/DualCheckForm'
 export const metadata: Metadata = {
   title: 'Checklist Beli Kereta Terpakai Malaysia 2025 | Paqar',
   description: 'Checklist lengkap sebelum beli kereta terpakai — semak saman, geran, pinjaman, kondisi, harga, dan deposit. Jangan terlepas satu pun.',
+  openGraph: {
+    images: [{ url: '/api/og?title=Checklist%20Sebelum%20Bayar%20Deposit&subtitle=Senarai%20semak%20lengkap%20pembeli', width: 1200, height: 630 }],
+  },
 }
 
 const CHECKLIST = [

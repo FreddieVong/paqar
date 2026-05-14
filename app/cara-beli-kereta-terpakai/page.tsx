@@ -7,6 +7,9 @@ import { DualCheckForm } from '@/components/check/DualCheckForm'
 export const metadata: Metadata = {
   title: 'Cara Beli Kereta Terpakai Malaysia 2025 — Panduan Lengkap | Paqar',
   description: 'Panduan lengkap cara beli kereta terpakai Malaysia. Dari semak saman, geran, pinjaman, hingga bayar deposit dengan selamat. Elak tertipu.',
+  openGraph: {
+    images: [{ url: '/api/og?title=Cara%20Beli%20Kereta%20Terpakai&subtitle=6%20langkah%20beli%20dengan%20selamat', width: 1200, height: 630 }],
+  },
 }
 
 export default function CaraBelihKeretaTerpakaiPage() {

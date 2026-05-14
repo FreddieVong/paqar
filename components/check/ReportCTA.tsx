@@ -1,5 +1,9 @@
 import Link from 'next/link'
 
+const WA_SHARE_TEXT = encodeURIComponent(
+  'Nak beli kereta terpakai? Ada tool free check saman kat paqar.my — masukkan nombor plat, terus ada panduan semak PDRM/JPJ. Takde perlu daftar 👇\nhttps://paqar.my'
+)
+
 interface Props {
   checkId:    string
   claimToken: string
@@ -43,6 +47,17 @@ export function ReportCTA({ checkId, claimToken, plate }: Props) {
       <p className="font-body text-[11px] text-white/50 text-center mt-2">
         Bayar sekali · Akses terus
       </p>
+
+      <div className="mt-3 pt-3 border-t border-white/10">
+        <a
+          href={`https://wa.me/?text=${WA_SHARE_TEXT}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full text-white/60 font-body text-[12px] py-1.5 hover:text-white/90 transition-colors"
+        >
+          <span>Kongsi tool percuma ini via WhatsApp →</span>
+        </a>
+      </div>
     </div>
   )
 }

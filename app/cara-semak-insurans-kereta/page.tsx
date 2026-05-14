@@ -7,6 +7,9 @@ import { DualCheckForm } from '@/components/check/DualCheckForm'
 export const metadata: Metadata = {
   title: 'Cara Semak Insurans Kereta Malaysia 2025 | Paqar',
   description: 'Cara semak status insurans kereta Malaysia — sama ada masih aktif, tamat, atau perlu diperbaharui. Penting sebelum beli atau pandu kereta terpakai.',
+  openGraph: {
+    images: [{ url: '/api/og?title=Cara%20Semak%20Insurans%20Kereta&subtitle=Semak%20status%20insurans%20kenderaan', width: 1200, height: 630 }],
+  },
 }
 
 export default function CaraSemakInsuransPage() {

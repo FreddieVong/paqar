@@ -16,5 +16,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/cara-semak-insurans-kereta`,         lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/privasi`,                            lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${base}/terma`,                              lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
+    // City pages
+    ...['kuala-lumpur','selangor','johor','penang','perak','melaka','negeri-sembilan','kedah'].map(city => ({
+      url: `${base}/semak-saman-kereta/${city}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8,
+    })),
   ]
 }

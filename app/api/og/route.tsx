@@ -1,8 +1,13 @@
 import { ImageResponse } from 'next/og'
+import { NextRequest }   from 'next/server'
 
 export const runtime = 'edge'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const title    = searchParams.get('title')    ?? 'Semak Sebelum Bayar Deposit'
+  const subtitle = searchParams.get('subtitle') ?? 'Panduan saman rasmi · Laporan pembeli · Anggaran harga'
+
   return new ImageResponse(
     (
       <div style={{
@@ -21,35 +26,19 @@ export async function GET() {
         </div>
 
         {/* Headline */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <span style={{ color: 'white', fontSize: '58px', fontWeight: 900, lineHeight: 1.1, textAlign: 'center' as const }}>
-            Semak Sebelum
-          </span>
-          <span style={{ color: '#FACC15', fontSize: '58px', fontWeight: 900, lineHeight: 1.1, textAlign: 'center' as const }}>
-            Bayar Deposit
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', maxWidth: '900px' }}>
+          <span style={{ color: 'white', fontSize: '56px', fontWeight: 900, lineHeight: 1.1, textAlign: 'center' }}>
+            {title}
           </span>
         </div>
 
         {/* Sub */}
-        <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '22px', marginTop: '4px', textAlign: 'center' as const }}>
-          Panduan saman rasmi · Laporan pembeli · Anggaran harga
+        <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '22px', marginTop: '8px', textAlign: 'center' }}>
+          {subtitle}
         </span>
 
-        {/* Feature badges */}
-        <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' as const, justifyContent: 'center' }}>
-          {['Panduan Saman PDRM/JPJ', 'Laporan Pembeli RM12', 'Sejarah Kemalangan'].map(s => (
-            <div key={s} style={{
-              background: 'rgba(255,255,255,0.12)',
-              borderRadius: '100px', padding: '7px 18px',
-              color: 'rgba(255,255,255,0.8)', fontSize: '13px', fontWeight: 600,
-            }}>
-              {s}
-            </div>
-          ))}
-        </div>
-
         {/* URL */}
-        <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '13px', marginTop: '20px', letterSpacing: '0.04em' }}>
+        <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '13px', marginTop: '24px', letterSpacing: '0.04em' }}>
           paqar.my
         </span>
       </div>
