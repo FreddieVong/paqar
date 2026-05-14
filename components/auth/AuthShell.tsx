@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function AuthShell({ claimToken, redirectTo }: Props) {
-  const [mode, setMode] = useState<'phone' | 'email'>('phone')
+  const [mode, setMode] = useState<'phone' | 'email'>('email')
 
   return (
     <div className="space-y-6">
