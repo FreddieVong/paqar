@@ -38,7 +38,7 @@ const RISKS = [
     severity: 'Sederhana',
     severityColor: 'bg-[#FFFBEB] text-[#B45309]',
     desc: 'Kereta yang pernah terlibat kemalangan serius mungkin ada kerosakan struktur tersembunyi walaupun kelihatan baik selepas dibaiki. Panel yang ditampal boleh berkarat lebih cepat.',
-    protect: 'Semak cat — warna tak sekata atau kulit orange peel lebih tebal tanda tampalan. Gunakan magnet — tidak melekat tanda ada filler. Bawa ke bengkel untuk alignment check.',
+    protect: 'Semak cat — warna tak sekata atau lapisan cat tebal tidak sekata tanda tampalan. Gunakan magnet — tidak melekat tanda ada filler. Bawa ke bengkel untuk semak keselarasan badan kereta.',
   },
   {
     title: 'Pinjaman bank aktif',

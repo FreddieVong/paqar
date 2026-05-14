@@ -8,6 +8,14 @@ type VehicleSource = typeof VEHICLE_SOURCES[number]
 
 
 
+function translateCoverType(ct: string): string {
+  const lower = ct?.toLowerCase() ?? ''
+  if (lower.includes('comprehensive')) return 'Komprehensif'
+  if (lower.includes('third party'))   return 'Pihak Ketiga'
+  if (lower.includes('fire'))          return 'Kebakaran & Kecurian'
+  return ct
+}
+
 function getSamanTotal(results: CheckResult[]): number {
   return results.reduce((total, r) => {
     if (r.status !== 'hit') return total
@@ -41,7 +49,7 @@ function getVerdict(vehicleResults: CheckResult[]): 'low' | 'caution' | 'high' |
 }
 
 const SELLER_QUESTIONS = [
-  'Boleh tunjukkan geran asal / VOC kenderaan ini?',
+  'Boleh tunjukkan geran asal kenderaan ini?',
   'Ada pinjaman bank yang masih aktif? Boleh tunjukkan surat penyelesaian?',
   'Kenapa kereta ini dijual?',
   'Ada rekod servis atau resit bengkel?',
@@ -148,6 +156,21 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </p>
             )}
 
+            {/* Mudah market search link */}
+            {vehicleData?.make && (
+              <a
+                href={`https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(
+                  [vehicleData.make, vehicleData.model, vehicleData.registrationYear].filter(Boolean).join(' ')
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between mt-3 pt-3 border-t border-[#F3F4F6]"
+              >
+                <p className="font-body text-[12px] text-[#6B7280]">Tengok harga jualan serupa di pasaran</p>
+                <p className="font-heading font-bold text-[12px] text-[#064E4A]">Cari di Mudah →</p>
+              </a>
+            )}
+
           </div>
         )
       })()}
@@ -169,7 +192,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               { label: 'Tahun Daftar', value: vehicleData.registrationYear },
               { label: 'Enjin',        value: vehicleData.engineCc ? `${vehicleData.engineCc}cc` : null },
               { label: 'Jenis Badan',  value: vehicleData.body },
-              { label: 'VIN',          value: vehicleData.vin ? `${vehicleData.vin.slice(0, -4)}****` : null },
+              { label: 'Nombor Rangka', value: vehicleData.vin ? `${vehicleData.vin.slice(0, -4)}****` : null },
             ].filter(r => r.value).map(row => (
               <div key={row.label} className="bg-[#F9FAFB] rounded-lg px-3 py-2">
                 <p className="font-body text-[10px] text-[#9CA3AF] uppercase tracking-[.05em]">{row.label}</p>
@@ -197,7 +220,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </span>
             </div>
             <p className="font-body text-[13px] text-[#374151]">{ins.insurer}</p>
-            <p className="font-body text-[12px] text-[#6B7280]">{ins.coverType}</p>
+            <p className="font-body text-[12px] text-[#6B7280]">{translateCoverType(ins.coverType)}</p>
           </div>
         </div>
       )}
@@ -292,7 +315,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                 {(hasPdrmJpjUnverified ? 1 : 0) + SELLER_QUESTIONS.length + (samanCount > 0 ? 1 : 0) + 1}.
               </span>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Mileage nampak tinggi untuk tahun kereta ini. Boleh tunjukkan rekod servis atau buku servis?
+                Jarak tempuh nampak tinggi untuk tahun kereta ini. Boleh tunjukkan rekod servis atau buku servis?
               </p>
             </div>
           )}
@@ -332,13 +355,13 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         ) : verdict === 'incomplete' ? (
           <>
             <p className="font-body text-[13px] text-white/80 leading-relaxed mb-4">
-              Tiada isu yang kami jumpa setakat ini. Selesaikan langkah di bawah sebelum commit.
+              Tiada isu yang kami jumpa setakat ini. Selesaikan langkah di bawah sebelum setuju.
             </p>
             <div className="space-y-2.5">
               {[
                 'Tanya penjual semak saman di MyBayar PDRM dan Portal JPJ — minta bukti screenshot.',
                 'Bawa ke bengkel untuk pemeriksaan fizikal sebelum bayar deposit.',
-                'Semak geran, insurans, dan roadtax sebelum tanda tangan.',
+                'Semak geran, insurans, dan cukai jalan sebelum tanda tangan.',
                 'Pastikan tiada pinjaman aktif sebelum tukar milik.',
               ].map((step, i) => (
                 <div key={i} className="flex gap-3 items-start">
@@ -356,7 +379,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
             <div className="space-y-2.5">
               {[
                 'Bawa ke bengkel untuk pemeriksaan sebelum bayar deposit.',
-                'Semak geran, insurans, dan roadtax sebelum tanda tangan.',
+                'Semak geran, insurans, dan cukai jalan sebelum tanda tangan.',
                 'Pastikan tiada pinjaman aktif sebelum tukar milik.',
               ].map((step, i) => (
                 <div key={i} className="flex gap-3 items-start">

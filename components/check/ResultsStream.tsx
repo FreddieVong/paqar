@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter }    from 'next/navigation'
 import { Progress }     from '@/components/ui/progress'
 import { Button }       from '@/components/ui/button'
-import { SamanGuide }  from './SamanGuide'
-import { ReportCTA }   from './ReportCTA'
-import { createClient } from '@/lib/supabase/client'
+import { SamanGuide }    from './SamanGuide'
+import { ReportCTA }     from './ReportCTA'
+import { InspectionCTA } from '@/components/report/InspectionCTA'
+import { createClient }  from '@/lib/supabase/client'
 
 import type { Check, CheckResult } from '@/types/domain'
 import type { PollCheckResponse } from '@/types/api'
@@ -118,6 +119,7 @@ export function ResultsStream({ checkId, claimToken, plate }: Props) {
         <>
           <SamanGuide />
           <ReportCTA checkId={checkId} claimToken={claimToken} plate={plate} />
+          <InspectionCTA plate={plate} />
         </>
       )}
 
