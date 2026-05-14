@@ -77,7 +77,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       // If VehicleAPI model is a vague single code (e.g. "7" for BMW 7-series),
       // extract the specific model number from description ("BMW 730 LI" → "730")
       const numPrefix = rawModel.match(/^\d+/)?.[0]
-      const descNum   = desc.match(/\b(\d{3,})\b/)?.[1]
+      const descNum   = desc.match(/(\d{3,})/)?.[1]   // "730LI" → "730", "520i" → "520"
       const mo = (numPrefix && numPrefix.length >= 3)
         ? numPrefix                         // "730i" → "730" ✓
         : (descNum ?? rawModel.split(/[\s-]/)[0] ?? rawModel)  // "7" → "730" from desc
