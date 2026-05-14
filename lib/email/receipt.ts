@@ -13,6 +13,7 @@ type ReceiptParams = {
   amountCents: number
   paidAt:      string
   plate:       string | null
+  reportUrl?:  string
 }
 
 export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
@@ -25,7 +26,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
   const amountRm   = (params.amountCents / 100).toFixed(2)
   const dateStr    = formatDate(params.paidAt)
   const plateLabel = params.plate ? ` (${params.plate})` : ''
-  const subject    = `Resit — Paqar Laporan Pembeli${plateLabel}`
+  const subject    = `Resit & Link Laporan — Paqar${plateLabel}`
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
@@ -43,11 +44,21 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
         <p style="color:#111827;font-size:14px;font-weight:600;margin:0;">${dateStr}</p>
       </div>
 
+      ${params.reportUrl ? `
+      <a href="${params.reportUrl}"
+         style="display:block;background:#064E4A;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin:20px 0;">
+        Buka Laporan Saya →
+      </a>
+      <p style="color:#9CA3AF;font-size:11px;text-align:center;margin:-12px 0 20px;">
+        Simpan emel ini — link laporan anda ada di sini
+      </p>
+      ` : `
       <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin:20px 0;">
         <p style="color:#374151;font-size:13px;margin:0;line-height:1.6;">
-          Akses laporan anda melalui link yang diberikan selepas pembayaran, atau log masuk ke akaun Paqar anda.
+          Log masuk ke akaun Paqar anda untuk akses laporan.
         </p>
       </div>
+      `}
 
       <p style="color:#9CA3AF;font-size:11px;margin-top:24px;line-height:1.7;">
         Paqar &middot; Perkhidmatan pihak ketiga &middot; Bukan platform rasmi kerajaan<br/>

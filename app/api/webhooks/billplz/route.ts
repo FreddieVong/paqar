@@ -2,6 +2,8 @@ import { NextRequest, NextResponse }              from 'next/server'
 import { verifyWebhookSignature }                 from '@/lib/billplz'
 import { markReportPaid, getBuyerReportByBillId } from '@/lib/db/buyer-reports'
 import { sendReceiptEmail }                       from '@/lib/email/receipt'
+import { getCheck }                              from '@/lib/db/checks'
+import { decrypt }                               from '@/lib/crypto'
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
@@ -28,12 +30,28 @@ export async function POST(request: NextRequest) {
 
     if (buyerReport && buyerReport.status === 'pending') {
       await markReportPaid(billId)
+
+      // Build report access URL and decrypt plate for the receipt email
+      let reportUrl: string | undefined
+      let plate: string | null = null
+      try {
+        const checkRow = await getCheck(buyerReport.check_id)
+        if (checkRow) {
+          plate = decrypt(checkRow.check.plate_encrypted as string).toUpperCase()
+          const token = checkRow.check.claim_token
+          reportUrl = token
+            ? `https://paqar.my/laporan-pembeli/${buyerReport.check_id}?claim_token=${token}`
+            : `https://paqar.my/laporan-pembeli/${buyerReport.check_id}`
+        }
+      } catch { /* non-fatal — email still sends without link */ }
+
       sendReceiptEmail({
         product:     'buyer_report',
         toEmail:     buyerReport.buyer_email,
         amountCents: buyerReport.amount_cents,
         paidAt,
-        plate:       null,
+        plate,
+        reportUrl,
       }).catch(err => console.error('[receipt-email:buyer_report]', err))
     }
 
