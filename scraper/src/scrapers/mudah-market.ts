@@ -43,16 +43,12 @@ export async function scrapeMudahMarket(
             (json?.data as Record<string,unknown>)?.listings as unknown[] ??
             json?.listings as unknown[] ??
             json?.results as unknown[] ?? []
-          const mkw = make.toUpperCase()
-          const mdkw = cleanKeyword(model).toUpperCase()
           for (const item of items.slice(0, 20)) {
             const i     = item as Record<string, unknown>
             const price = Number(i?.price ?? i?.asking_price ?? 0)
-            if (!price || price < 5_000) continue
-            const title = String(i?.name ?? i?.title ?? '')
-            const upper = title.toUpperCase()
-            // Only keep listings that mention make or model
-            if (!upper.includes(mkw) && !upper.includes(mdkw)) continue
+            if (!price || price < 5_000 || price > 2_000_000) continue
+            // Try all common field names for listing title
+            const title = String(i?.subject ?? i?.name ?? i?.title ?? i?.headline ?? '')
             captured.push({
               price,
               title:   title.slice(0, 100),
@@ -74,29 +70,38 @@ export async function scrapeMudahMarket(
         return
       }
 
-      // Fallback: parse DOM — only keep listings that mention the make/model
-      const modelKw = cleanKeyword(model).toUpperCase()
-      const makeKw  = make.toUpperCase()
-      const extracted = await page.evaluate(
-        ([mkw, mdkw]: [string, string]) => {
-          const results: { price: number; title: string; url: string }[] = []
-          document.querySelectorAll('a[href]').forEach((el) => {
-            const text  = el.textContent?.replace(/\s+/g, ' ').trim() ?? ''
-            const upper = text.toUpperCase()
-            // Must mention make OR model — filters out ads and unrelated listings
-            if (!upper.includes(mkw) && !upper.includes(mdkw)) return
-            const priceMatch = text.match(/RM\s*([\d,]+)/)
-            if (!priceMatch) return
-            const price = parseInt((priceMatch[1] ?? '').replace(/,/g, ''), 10)
-            if (!price || price < 5_000 || price > 2_000_000) return
-            const href = (el as HTMLAnchorElement).href
-            if (!href.includes('mudah.my')) return
-            results.push({ price, title: text.slice(0, 100), url: href })
-          })
-          return results.slice(0, 10)
-        },
-        [makeKw, modelKw] as [string, string]
-      )
+      // Fallback: parse DOM — find real listing URLs then read price from card context
+      const extracted = await page.evaluate(() => {
+        const results: { price: number; title: string; url: string }[] = []
+        const seen = new Set<string>()
+
+        document.querySelectorAll('a[href]').forEach((el) => {
+          const href = (el as HTMLAnchorElement).href
+          if (!href.includes('mudah.my')) return
+          // Real listing URLs contain a long numeric ID
+          if (!/\/\d{7,}|\/m\/\d+/.test(href)) return
+          if (seen.has(href)) return
+
+          // Walk up to find the listing card that contains the price
+          let context = ''
+          let node: HTMLElement | null = el as HTMLElement
+          for (let i = 0; i < 5 && node; i++) {
+            const t = node.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+            if (/RM\s*[\d,]+/.test(t)) { context = t; break }
+            node = node.parentElement
+          }
+          if (!context) return
+
+          const priceMatch = context.match(/RM\s*([\d,]+)/)
+          if (!priceMatch) return
+          const price = parseInt((priceMatch[1] ?? '').replace(/,/g, ''), 10)
+          if (!price || price < 5_000 || price > 2_000_000) return
+
+          seen.add(href)
+          results.push({ price, title: context.slice(0, 120), url: href })
+        })
+        return results.slice(0, 10)
+      })
 
       for (const item of extracted) {
         listings.push({
