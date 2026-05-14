@@ -74,13 +74,19 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       const yr      = vehicleData.registrationYear as string
       const desc    = (vehicleData.description as string) ?? ''
 
-      // If VehicleAPI model is a vague single code (e.g. "7" for BMW 7-series),
-      // extract the specific model number from description ("BMW 730 LI" → "730")
-      const numPrefix = rawModel.match(/^\d+/)?.[0]
-      const descNum   = desc.match(/(\d{3,})/)?.[1]   // "730LI" → "730", "520i" → "520"
+      // Build specific model keyword for Mudah search
+      // BMW JPJ format: "7 30Li (CBU)" — single series digit + 2-digit variant
+      // Combine: model "7" + adjacent "30" in description → "730"
+      const numPrefix   = rawModel.match(/^\d+/)?.[0]
+      const adjTwoDigit = rawModel.length === 1
+        ? desc.match(new RegExp(`\\b${rawModel}\\s+(\\d{2})`))?.[1]  // "7 30" → "30"
+        : null
+      const descNum = adjTwoDigit
+        ? rawModel + adjTwoDigit                 // "7"+"30" = "730"
+        : desc.match(/(\d{3,})/)?.[1]            // fallback: any 3+ digit sequence
       const mo = (numPrefix && numPrefix.length >= 3)
-        ? numPrefix                         // "730i" → "730" ✓
-        : (descNum ?? rawModel.split(/[\s-]/)[0] ?? rawModel)  // "7" → "730" from desc
+        ? numPrefix                              // "730i" → "730"
+        : (descNum ?? rawModel.split(/[\s-]/)[0] ?? rawModel)
 
       marketPrices = await getCachedMarketPrices(mk, mo, yr).catch(() => null)
       if (!marketPrices) {
