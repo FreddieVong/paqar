@@ -39,6 +39,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://paqar.my',
   },
+  verification: {
+    google: 'Wr8qqynVahWvYrI7-01zcZTq9Lgsznw0ZpG8G6WLp00',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
