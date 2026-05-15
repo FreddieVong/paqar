@@ -7,7 +7,7 @@ import { InspectionCTA } from './InspectionCTA'
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
 
-const fmt = (n: number) => n.toLocaleString('en-MY')
+const fmt = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
 
 
