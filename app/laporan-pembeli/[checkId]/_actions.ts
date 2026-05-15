@@ -7,13 +7,11 @@ import { env }               from '@/lib/env'
 import { createClient }      from '@/lib/supabase/server'
 
 export async function initiateBuyerReport(params: {
-  checkId:          string
-  claimToken:       string
-  buyerEmail:       string
-  baseUrl:          string
-  askingPriceRm?:   number
-  claimedMileageKm?: number
-  listingUrl?:      string
+  checkId:        string
+  claimToken:     string
+  buyerEmail:     string
+  baseUrl:        string
+  askingPriceRm?: number
 }): Promise<{ error: string | null; billUrl?: string }> {
   if (!params.buyerEmail.includes('@')) {
     return { error: 'Alamat e-mel tidak sah' }
@@ -44,12 +42,10 @@ export async function initiateBuyerReport(params: {
     })
 
     await createBuyerReport({
-      checkId:          params.checkId,
-      buyerEmail:       params.buyerEmail,
-      billplzBillId:    bill.id,
-      askingPriceRm:    params.askingPriceRm,
-      claimedMileageKm: params.claimedMileageKm,
-      listingUrl:       params.listingUrl,
+      checkId:       params.checkId,
+      buyerEmail:    params.buyerEmail,
+      billplzBillId: bill.id,
+      askingPriceRm: params.askingPriceRm,
     })
 
     return { error: null, billUrl: bill.url }

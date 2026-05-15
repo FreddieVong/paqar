@@ -34,9 +34,14 @@ export function InspectionCTA({ plate }: Props) {
       >
         Tempah via WhatsApp →
       </a>
-      <p className="font-body text-[11px] text-[#9CA3AF] text-center mt-2">
-        8 lokasi di Klang Valley
-      </p>
+      <div className="mt-2 text-center">
+        <p className="font-body text-[11px] text-[#9CA3AF]">
+          Chan Sow Lin · PJ · Puchong · Glenmarie · Kota Kemuning · Kajang
+        </p>
+        <p className="font-body text-[10px] text-[#D1D5DB] mt-0.5">
+          Johor Bahru — akan datang
+        </p>
+      </div>
     </div>
   )
 }
