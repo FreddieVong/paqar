@@ -7,6 +7,8 @@ import { InspectionCTA } from './InspectionCTA'
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
 
+const fmt = (n: number) => n.toLocaleString('en-MY')
+
 
 
 function translateCoverType(ct: string): string {
@@ -147,7 +149,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[12px] text-[#6B7280]">Harga baru asal kenderaan ini</p>
                   <p className="font-heading font-bold text-[14px] text-[#111827]">
-                    RM{wmNewPrice.toLocaleString()}
+                    RM{fmt(wmNewPrice)}
                   </p>
                 </div>
                 {valVariant && (
@@ -164,7 +166,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                 <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5">
                   <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
                   <p className="font-heading font-bold text-[14px] text-[#111827]">
-                    RM{askingPriceRm.toLocaleString()}
+                    RM{fmt(askingPriceRm)}
                   </p>
                 </div>
 
@@ -203,7 +205,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               return (
                 <div className="mt-3 pt-3 border-t border-[#F3F4F6] space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="font-heading font-bold text-[12px] text-[#111827]">Harga pasaran semasa (Mudah)</p>
+                    <p className="font-heading font-bold text-[12px] text-[#111827]">Harga pasaran semasa</p>
                     <p className="font-body text-[10px] text-[#9CA3AF]">
                       {daysAgo === 0 ? 'Hari ini' : `${daysAgo} hari lalu`}
                     </p>
@@ -212,13 +214,13 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                     {marketPrices.listings.map((l, i) => (
                       <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
                         className="inline-block bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#15803D] hover:bg-[#DCFCE7] transition-colors">
-                        RM{l.price.toLocaleString()}
+                        RM{fmt(l.price)}
                       </a>
                     ))}
                   </div>
                   {minP !== maxP && (
                     <p className="font-body text-[11px] text-[#6B7280]">
-                      Julat: RM{minP.toLocaleString()} – RM{maxP.toLocaleString()} ({prices.length} kereta serupa)
+                      Julat: RM{fmt(minP)} – RM{fmt(maxP)} ({prices.length} kereta serupa)
                     </p>
                   )}
                   <a href={marketPrices.searchUrl} target="_blank" rel="noopener noreferrer"
@@ -340,14 +342,14 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
             : verdict === 'incomplete'
             ? 'Tiada isu yang kami jumpa. Saman PDRM/JPJ perlu disemak sendiri di portal rasmi — klik pautan di atas.'
             : verdict === 'caution'
-            ? `Ada ${samanCount} saman berjumlah RM${samanTotal.toLocaleString()}. Minta penjual selesaikan atau tolak dari harga.`
+            ? `Ada ${samanCount} saman berjumlah RM${fmt(samanTotal)}. Minta penjual selesaikan atau tolak dari harga.`
             : 'Ada beberapa isu serius. Jangan bayar deposit sebelum penjual beri penjelasan.'}
         </p>
         {samanTotal > 0 && (
           <p className={`font-heading font-extrabold text-[22px] mt-3 ${
             verdict === 'caution' ? 'text-[#B45309]' : 'text-[#B91C1C]'
           }`}>
-            RM{samanTotal.toLocaleString()} saman dijumpai
+            RM{fmt(samanTotal)} saman dijumpai
           </p>
         )}
         {verdict === 'incomplete' && (
@@ -393,7 +395,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                 {(hasPdrmJpjUnverified ? 1 : 0) + SELLER_QUESTIONS.length + 1}.
               </span>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Boleh selesaikan saman ini dahulu, atau tolak RM{samanTotal.toLocaleString()} dari harga jual?
+                Boleh selesaikan saman ini dahulu, atau tolak RM{fmt(samanTotal)} dari harga jual?
               </p>
             </div>
           )}
@@ -423,7 +425,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
             </p>
             <div className="bg-white/10 rounded-[10px] px-4 py-3 mb-4">
               <p className="font-body text-[13px] text-white leading-relaxed italic">
-                &ldquo;Kerana ada saman RM{samanTotal.toLocaleString()} yang masih belum dijelaskan, boleh awak selesaikan dahulu sebelum tukar milik, atau tolak RM{samanTotal.toLocaleString()} dari harga jual?&rdquo;
+                &ldquo;Kerana ada saman RM{fmt(samanTotal)} yang masih belum dijelaskan, boleh awak selesaikan dahulu sebelum tukar milik, atau tolak RM{fmt(samanTotal)} dari harga jual?&rdquo;
               </p>
             </div>
             <div className="space-y-2.5">
