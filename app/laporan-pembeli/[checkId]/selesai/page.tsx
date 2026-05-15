@@ -51,7 +51,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
       <Shell>
         <div className="pt-10 pb-10 max-w-sm mx-auto space-y-5 text-center">
           {billplzPaid === 'true' && <AnalyticsEvent event="payment_completed" />}
-          <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[16px] p-6">
+          <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[16px] p-6">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
               Laporan Pembeli
             </p>

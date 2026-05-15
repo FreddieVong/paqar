@@ -37,7 +37,7 @@ export function ReportCTA({ checkId, claimToken, plate }: Props) {
 
       <a
         href={`/laporan-pembeli/${checkId}?claim_token=${claimToken}`}
-        className="block w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-yellow-300 transition-colors"
+        className="block w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-[#FDE047] transition-colors"
       >
         Dapatkan Laporan — RM12 →
       </a>

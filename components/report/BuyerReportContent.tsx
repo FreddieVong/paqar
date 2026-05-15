@@ -129,9 +129,9 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         let marketVerdict: { text: string; color: string } | null = null
         if (hasMarketVerdict) {
           if (askingPriceRm! < marketMin!) {
-            marketVerdict = { text: 'Di bawah harga pasaran — harga yang baik', color: 'text-[#15803D]' }
+            marketVerdict = { text: 'Di bawah harga pasaran — harga yang baik', color: 'text-[#064E4A]' }
           } else if (askingPriceRm! <= marketMax!) {
-            marketVerdict = { text: 'Dalam julat harga pasaran — boleh cuba tawar', color: 'text-[#15803D]' }
+            marketVerdict = { text: 'Dalam julat harga pasaran — boleh cuba tawar', color: 'text-[#064E4A]' }
           } else {
             marketVerdict = { text: 'Di atas harga pasaran — ada ruang untuk tawar lebih', color: 'text-[#B45309]' }
           }
@@ -176,7 +176,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                     {marketVerdict.text}
                   </p>
                 ) : pct != null ? (
-                  <p className={`font-body text-[12px] px-1 ${pct >= 0 ? 'text-[#15803D]' : 'text-[#B45309]'}`}>
+                  <p className={`font-body text-[12px] px-1 ${pct >= 0 ? 'text-[#064E4A]' : 'text-[#B45309]'}`}>
                     {pct >= 0
                       ? `${pct}% di bawah harga baru — wajar untuk kenderaan ini`
                       : `${Math.abs(pct)}% melebihi harga baru — semak perbandingan sebelum setuju`}
@@ -213,7 +213,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                   <div className="flex flex-wrap gap-1.5">
                     {marketPrices.listings.map((l, i) => (
                       <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
-                        className="inline-block bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#15803D] hover:bg-[#DCFCE7] transition-colors">
+                        className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A] hover:bg-[#E0F2F1] transition-colors">
                         RM{fmt(l.price)}
                       </a>
                     ))}
@@ -304,7 +304,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className={`font-heading font-extrabold text-[15px] ${
-                ins.policyStatus?.toLowerCase().includes('active') ? 'text-[#15803D]' : 'text-[#B91C1C]'
+                ins.policyStatus?.toLowerCase().includes('active') ? 'text-[#15803D]' : 'text-[#DC2626]'
               }`}>
                 {ins.policyStatus?.toLowerCase().includes('active') ? '✓ Aktif' : '✕ Tamat Tempoh'}
               </span>
@@ -318,7 +318,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
       {/* Section 1: Overall Verdict — only shown when samans are confirmed */}
       {samanCount > 0 && <div className={`rounded-[16px] p-5 border ${
         verdict === 'low'        ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
-        verdict === 'incomplete' ? 'bg-[#EFF6FF] border-[#BFDBFE]' :
+        verdict === 'incomplete' ? 'bg-[#FFFBEB] border-[#FDE68A]' :
         verdict === 'caution'    ? 'bg-[#FFFBEB] border-[#FDE68A]' :
                                    'bg-[#FEF2F2] border-[#FECACA]'
       }`}>
@@ -327,9 +327,9 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         </p>
         <p className={`font-heading font-extrabold text-[20px] mb-1 ${
           verdict === 'low'        ? 'text-[#15803D]' :
-          verdict === 'incomplete' ? 'text-[#1D4ED8]' :
+          verdict === 'incomplete' ? 'text-[#B45309]' :
           verdict === 'caution'    ? 'text-[#B45309]' :
-                                     'text-[#B91C1C]'
+                                     'text-[#DC2626]'
         }`}>
           {verdict === 'low'        ? 'Tiada isu dijumpai' :
            verdict === 'incomplete' ? 'Ada yang perlu anda semak sendiri' :
@@ -347,7 +347,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         </p>
         {samanTotal > 0 && (
           <p className={`font-heading font-extrabold text-[22px] mt-3 ${
-            verdict === 'caution' ? 'text-[#B45309]' : 'text-[#B91C1C]'
+            verdict === 'caution' ? 'text-[#B45309]' : 'text-[#DC2626]'
           }`}>
             RM{fmt(samanTotal)} saman dijumpai
           </p>
@@ -368,7 +368,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
           {hasPdrmJpjUnverified && (
             <div className="space-y-2">
               <div className="flex gap-3">
-                <span className="font-heading font-bold text-[12px] text-[#1D4ED8] flex-shrink-0 mt-0.5">1.</span>
+                <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">1.</span>
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                   Boleh tunjuk bukti semakan saman PDRM/JPJ untuk kereta ini sebelum saya bayar deposit?
                 </p>
