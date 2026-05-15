@@ -14,17 +14,41 @@ export function InspectionCTA({ plate }: Props) {
   )
   const waUrl = `https://wa.me/${WORKSHOP_WHATSAPP}?text=${message}`
 
+  const CHECKS = [
+    'Kemalangan & karat',
+    'Enjin & gasket',
+    'Brek & ABS',
+    'Kotak gear',
+    'Ampaian',
+    'Pendingin hawa',
+  ]
+
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-      <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280] mb-2">
-        Pemeriksaan Fizikal
-      </p>
-      <p className="font-heading font-bold text-[16px] text-[#111827] mb-1">
+      <div className="flex items-center justify-between mb-1">
+        <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280]">
+          Pemeriksaan Fizikal
+        </p>
+        <p className="font-heading font-bold text-[11px] text-[#064E4A]">dari RM336</p>
+      </div>
+      <p className="font-heading font-bold text-[16px] text-[#111827] mb-3">
         Nak kepastian sebelum bayar deposit?
       </p>
-      <p className="font-body text-[13px] text-[#6B7280] mb-4 leading-relaxed">
-        Rakan Paqar tawarkan pemeriksaan pre-purchase menyeluruh — dari RM336. Semak kondisi enjin, badan, elektrikal, dan lebih.
-      </p>
+
+      {/* Inspection chips */}
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {CHECKS.map(item => (
+          <span
+            key={item}
+            className="inline-block bg-[#F3F4F6] text-[#374151] font-body text-[11px] rounded-full px-2.5 py-1"
+          >
+            {item}
+          </span>
+        ))}
+        <span className="inline-block bg-[#F3F4F6] text-[#9CA3AF] font-body text-[11px] rounded-full px-2.5 py-1">
+          + 8 lagi
+        </span>
+      </div>
       <a
         href={waUrl}
         target="_blank"
