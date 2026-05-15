@@ -1,4 +1,5 @@
 import { redirect }                                  from 'next/navigation'
+import Image                                         from 'next/image'
 import { Nav }                                       from '@/components/layout/Nav'
 import { Shell }                                     from '@/components/layout/Shell'
 import { getCheck }                                  from '@/lib/db/checks'
@@ -52,6 +53,13 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
         <div className="pt-10 pb-10 max-w-sm mx-auto space-y-5 text-center">
           {billplzPaid === 'true' && <AnalyticsEvent event="payment_completed" />}
           <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[16px] p-6">
+            <Image
+              src="/paqar-logo.png"
+              alt="Paqar"
+              width={80}
+              height={46}
+              className="mx-auto mb-3 object-contain"
+            />
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
               Laporan Pembeli
             </p>

@@ -489,6 +489,11 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
       {/* Insurance — post-decision */}
       <InsuranceCTA />
 
+      {/* Brand footnote — visible in screenshots and shares */}
+      <p className="font-body text-[11px] text-[#D1D5DB] text-center pt-2">
+        Disediakan oleh Paqar · paqar.my
+      </p>
+
     </div>
   )
 }
