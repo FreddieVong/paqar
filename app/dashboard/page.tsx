@@ -53,6 +53,15 @@ export default async function DashboardPage() {
     plate: plateEncrypted ? decrypt(plateEncrypted).toUpperCase() : '—',
   }))
 
+  // Deduplicate by plate — keep only the most recent paid report per plate
+  // (reports are already sorted newest-first from getUserBuyerReports)
+  const seen = new Set<string>()
+  const dedupedReports = buyerReports.filter(({ plate }) => {
+    if (seen.has(plate)) return false
+    seen.add(plate)
+    return true
+  })
+
   return (
     <>
       <Nav />
@@ -120,13 +129,13 @@ export default async function DashboardPage() {
           </div>
 
           {/* Past Buyer Reports */}
-          {buyerReports.length > 0 && (
+          {dedupedReports.length > 0 && (
             <>
               <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280]">
                 Laporan Pembeli
               </p>
               <div className="space-y-2">
-                {buyerReports.map(({ report, plate }) => (
+                {dedupedReports.map(({ report, plate }) => (
                   <div key={report.id} className="bg-white border border-[#E5E7EB] rounded-[14px] px-4 py-3 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-heading font-extrabold text-[16px] text-[#111827] tracking-[.06em]">
