@@ -273,25 +273,18 @@ export function OverpricedCheckerForm() {
         {/* Malaysian plate input */}
         <form onSubmit={handlePlateSubmit} className="space-y-2">
           <div className="bg-[#1a1a1a] rounded-[7px] p-[5px]">
-            <div className="bg-[#1a1a1a] rounded-[3px] flex items-stretch overflow-hidden min-h-[48px]">
-              <div className="w-7 bg-[#4CAF50] flex flex-col items-center justify-between py-1 flex-shrink-0">
-                <span className="text-[12px] leading-none">🇲🇾</span>
-                <span className="font-heading font-black text-[7px] text-white tracking-[.04em]">MAL</span>
-              </div>
-              <div className="flex-1 min-w-0 flex items-center justify-center px-2 relative">
-                <input
-                  type="text"
-                  value={plate}
-                  onChange={e => setPlate(e.target.value.toUpperCase())}
-                  placeholder="WWW 1234"
-                  maxLength={10}
-                  required
-                  aria-label="Nombor plat kenderaan"
-                  className="w-full bg-transparent border-none outline-none text-center font-black text-[18px] sm:text-[22px] tracking-[.1em] sm:tracking-[.16em] text-white uppercase placeholder:text-white/30 placeholder:font-normal placeholder:tracking-[.08em] placeholder:text-[14px] sm:placeholder:text-[16px]"
-                  style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
-                />
-                <span className="absolute bottom-1 right-2 text-[6px] text-white/40 italic pointer-events-none">FRONT</span>
-              </div>
+            <div className="bg-[#1a1a1a] rounded-[3px] flex items-center justify-center min-h-[60px] px-3">
+              <input
+                type="text"
+                value={plate}
+                onChange={e => setPlate(e.target.value.toUpperCase())}
+                placeholder="WWW 1234"
+                maxLength={10}
+                required
+                aria-label="Nombor plat kenderaan"
+                className="w-full bg-transparent border-none outline-none text-center font-black text-[22px] sm:text-[28px] tracking-[.15em] sm:tracking-[.2em] text-white uppercase placeholder:text-white/30 placeholder:font-normal"
+                style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
+              />
             </div>
             <p className="text-center text-[7px] font-black text-white tracking-[.18em] uppercase py-0.5">
               Malaysia
