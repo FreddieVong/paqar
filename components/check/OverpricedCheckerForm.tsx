@@ -275,9 +275,9 @@ export function OverpricedCheckerForm() {
           </button>
         </form>
 
-        {!noData && (
-          <p className="font-body text-[9px] text-[#9CA3AF] text-center mt-2">{cfg!.ctaSub}</p>
-        )}
+        <p className="font-body text-[9px] text-[#9CA3AF] text-center mt-2">
+          {noData ? 'Data JPJ · Soalan penjual · Checklist deposit' : cfg!.ctaSub}
+        </p>
       </div>
     </div>
   )
