@@ -2,16 +2,9 @@
 
 import { useState }    from 'react'
 import { useRouter }   from 'next/navigation'
-import type { CreateCheckResponse } from '@/types/api'
+import type { CreateCheckResponse, Verdict, PriceCheckResult } from '@/types/api'
 
-type Verdict   = 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
 type FormState = 'idle' | 'loading' | 'result' | 'error'
-
-interface PriceCheckResult {
-  hasData:       boolean
-  verdict?:      Verdict
-  listingCount?: number
-}
 
 const BRANDS = [
   'Perodua', 'Proton', 'Toyota', 'Honda', 'Mazda',
@@ -126,8 +119,9 @@ export function OverpricedCheckerForm() {
         return
       }
       const { checkId, claimToken } = await res.json() as CreateCheckResponse
-      const priceParam = askingPrice ? `&asking_price=${askingPrice}` : ''
-      router.push(`/check/${checkId}?claim_token=${claimToken}${priceParam}`)
+      const params = new URLSearchParams({ claim_token: claimToken })
+      if (askingPrice) params.set('asking_price', askingPrice)
+      router.push(`/check/${checkId}?${params.toString()}`)
     } catch {
       setPlateError('Ralat rangkaian — sila cuba semula')
     } finally {
@@ -207,8 +201,9 @@ export function OverpricedCheckerForm() {
   }
 
   // ── Result ─────────────────────────────────────────────────────────────
-  const cfg    = result?.verdict ? VERDICT_CONFIG[result.verdict] : null
-  const noData = !result?.hasData || !cfg
+  const hasDataResult  = result && result.hasData ? result : null
+  const cfg            = hasDataResult ? VERDICT_CONFIG[hasDataResult.verdict] : null
+  const noData         = !hasDataResult || !cfg
 
   return (
     <div className="space-y-3">
@@ -230,7 +225,7 @@ export function OverpricedCheckerForm() {
               {cfg!.copy(brand, model, year)}
             </p>
             <p className="font-body text-[11px] text-[#9CA3AF] mb-4">
-              Berdasarkan {result!.listingCount} kereta serupa.
+              Berdasarkan {hasDataResult!.listingCount} kereta serupa.
             </p>
           </>
         )}

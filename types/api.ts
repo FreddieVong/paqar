@@ -41,3 +41,9 @@ export interface PollCheckResponse {
   check: Check
   results: CheckResult[]
 }
+
+export type Verdict = 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
+
+export type PriceCheckResult =
+  | { hasData: false }
+  | { hasData: true; verdict: Verdict; listingCount: number }

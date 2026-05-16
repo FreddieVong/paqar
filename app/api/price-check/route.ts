@@ -2,6 +2,7 @@ import { NextRequest, NextResponse }                          from 'next/server'
 import { waitUntil }                                          from '@vercel/functions'
 import { z }                                                  from 'zod'
 import { getCachedMarketPrices, fetchAndCacheMarketPrices }   from '@/lib/db/market-prices'
+import type { Verdict }                                       from '@/types/api'
 
 const schema = z.object({
   brand:       z.string().min(1).max(50),
@@ -9,8 +10,6 @@ const schema = z.object({
   year:        z.string().regex(/^\d{4}$/),
   askingPrice: z.number().int().min(1000).max(2_000_000),
 })
-
-type Verdict = 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
 
 function computeVerdict(askingPrice: number, prices: number[]): Verdict {
   if (prices.length === 0) return 'fair_price'
