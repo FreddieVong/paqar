@@ -18,7 +18,7 @@ export function CopyButton({ text }: Props) {
       onClick={handleCopy}
       className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[13px] rounded-[10px] py-2.5 transition-colors"
     >
-      {copied ? 'Disalin ✓' : 'Salin untuk WhatsApp'}
+      {copied ? 'Disalin ✓' : 'Salin Skrip'}
     </button>
   )
 }

@@ -8,7 +8,8 @@ import { CopyButton }    from './CopyButton'
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
 
-const fmt = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+const roundDown5k = (n: number) => Math.floor(n / 5000) * 5000
 
 function translateCoverType(ct: string): string {
   const lower = ct?.toLowerCase() ?? ''
@@ -86,6 +87,10 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
     : askingPriceRm! <= marketMax! * 1.08 ? 'slightly_high' as const
     : 'overpriced' as const
 
+  // Rounded offer range for negotiation (only used when slightly_high or overpriced)
+  const offerHigh = marketMax != null ? roundDown5k(marketMax) : 0
+  const offerLow  = offerHigh - (priceVerdict === 'overpriced' ? 10_000 : 5_000)
+
   return (
     <div className="space-y-5">
 
@@ -101,8 +106,8 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         const cadangan = priceVerdict ? ({
           good_deal:     'Semak rekod JPJ dulu — kereta murah ada sebab.',
           fair_price:    'Semak rekod JPJ dan bawa ke bengkel sebelum deposit.',
-          slightly_high: `Cuba offer RM${fmt(marketMax!)}. Gunakan skrip tawar.`,
-          overpriced:    `Tawar bawah RM${fmt(marketMax!)} atau cari unit lain.`,
+          slightly_high: `Tawar sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)} dulu. Gunakan skrip di bawah.`,
+          overpriced:    `Tawar sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)} atau cari unit lain.`,
         } as const)[priceVerdict] : 'Minta penjual jelaskan saman dahulu.'
 
         return (
@@ -141,9 +146,9 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                   <p className="font-heading font-bold text-[14px] text-[#DC2626]">RM{fmt(samanTotal)}</p>
                 </div>
               )}
-              <div className="flex items-start justify-between pt-2 border-t border-black/10">
-                <p className="font-body text-[12px] text-[#6B7280] flex-shrink-0 mr-3">Cadangan</p>
-                <p className="font-heading font-bold text-[13px] text-[#111827] text-right">{cadangan}</p>
+              <div className="pt-2 border-t border-black/10">
+                <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Cadangan</p>
+                <p className="font-heading font-bold text-[13px] text-[#111827]">{cadangan}</p>
               </div>
             </div>
           </div>
@@ -286,8 +291,8 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         const year    = String(vehicleData.registrationYear ?? '')
         const carName = [make, model, year].filter(Boolean).join(' ')
         const scripts = {
-          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah buat semakan harga pasaran — unit serupa dijual dalam julat RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nBoleh kita buat harga RM${fmt(marketMax!)} atau kurang? Saya serius nak beli kalau harga okay.`,
-          slightly_high: `Salam, saya berminat dengan ${carName} tuan/puan.\n\nSaya dah semak harga pasaran — boleh kita bincang harga sikit?\n\nSaya target dalam RM${fmt(marketMax!)}. Boleh consider?`,
+          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak beberapa harga pasaran — kereta serupa sekarang sekitar RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm!)} agak tinggi berbanding pasaran. Saya serius nak beli, tapi kalau ada flexibility dalam harga, boleh kita mulakan dengan sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
+          slightly_high: `Salam, saya berminat dengan ${carName} tuan/puan.\n\nSaya dah semak beberapa harga pasaran — kereta serupa banyak sekitar RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm!)} nampak sedikit tinggi dari pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
           fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak okay. Apa harga terbaik yang boleh tuan/puan offer?`,
           good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak menarik. Bila boleh saya datang tengok kereta?`,
         }
@@ -316,9 +321,9 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
           {[
             'Ada accident besar sebelum ini?',
             'Ada flood damage?',
-            'Ada pinjaman bank yang masih aktif?',
+            'Kereta masih ada loan bank?',
             'Geran atas nama siapa?',
-            'Boleh buat inspection sebelum deposit?',
+            'Boleh buat inspection sebelum bayar deposit?',
           ].map((q, i) => (
             <div key={i} className="flex gap-3">
               <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">{i + 1}.</span>
