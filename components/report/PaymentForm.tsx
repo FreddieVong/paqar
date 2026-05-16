@@ -40,7 +40,7 @@ export function PaymentForm({ checkId, claimToken }: Props) {
         Laporan Pembeli Lengkap — RM12
       </p>
       <p className="font-body text-[12px] text-[#6B7280] mb-4">
-        Semak harga pasaran · Ringkasan saman · Soalan untuk penjual · Tips rundingan
+        Semak harga pasaran · Data kenderaan JPJ · Soalan untuk penjual · Skrip rundingan
       </p>
       <form onSubmit={handleSubmit} className="space-y-3.5">
 
@@ -91,7 +91,7 @@ export function PaymentForm({ checkId, claimToken }: Props) {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full bg-[#DC2626] hover:bg-[#B91C1C] text-white font-heading font-extrabold text-[16px]
+          className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[16px]
                      rounded-[14px] py-4 flex items-center justify-center gap-2
                      disabled:opacity-60 transition-colors"
         >

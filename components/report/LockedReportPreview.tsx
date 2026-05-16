@@ -6,7 +6,7 @@ const LOCKED_SECTIONS = [
   },
   {
     title: 'Soalan untuk Penjual',
-    desc:  '6 soalan tepat sebelum bayar deposit',
+    desc:  'Soalan tepat sebelum bayar deposit',
     badge: null,
   },
   {
@@ -18,11 +18,6 @@ const LOCKED_SECTIONS = [
     title: 'Checklist Deposit',
     desc:  'Semak 5 perkara ini sebelum transfer wang',
     badge: null,
-  },
-  {
-    title: 'Sejarah Kenderaan',
-    desc:  'Rekod kemalangan & tuntutan insurans',
-    badge: 'Akan Datang',
   },
 ]
 

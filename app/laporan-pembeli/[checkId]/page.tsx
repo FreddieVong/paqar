@@ -101,7 +101,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
           <div className="pt-5 pb-6 space-y-5">
             <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: true }} />
             <div>
-              <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#DC2626] mb-1">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A] mb-1">
                 Laporan Pembeli
               </p>
               <h1 className="font-heading font-extrabold text-[24px] tracking-tight text-[#111827]">
@@ -135,7 +135,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
         <div className="pt-5 pb-6 space-y-5">
           <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: false }} />
           <div>
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#DC2626] mb-1">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A] mb-1">
               Laporan Pembeli
             </p>
             <h1 className="font-heading font-extrabold text-[24px] tracking-tight text-[#111827]">
