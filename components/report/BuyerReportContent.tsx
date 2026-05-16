@@ -10,8 +10,6 @@ type VehicleSource = typeof VEHICLE_SOURCES[number]
 
 const fmt = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
-
-
 function translateCoverType(ct: string): string {
   const lower = ct?.toLowerCase() ?? ''
   if (lower.includes('comprehensive')) return 'Komprehensif'
@@ -37,38 +35,6 @@ function getSamanCount(results: CheckResult[]): number {
     return count + data.samans.length
   }, 0)
 }
-
-
-function getVerdict(vehicleResults: CheckResult[]): 'low' | 'caution' | 'high' | 'incomplete' {
-  const hits = vehicleResults.filter(r => r.status === 'hit')
-  const unverifiedCritical = vehicleResults.filter(r =>
-    ['pdrm', 'jpj', 'aes'].includes(r.source) && r.status === 'requires_user_action'
-  )
-  if (hits.length > 0) {
-    const total = getSamanTotal(hits)
-    return hits.length >= 2 || total >= 500 ? 'high' : 'caution'
-  }
-  if (unverifiedCritical.length > 0) return 'incomplete'
-  return 'low'
-}
-
-const SELLER_QUESTIONS: { q: string; script?: string }[] = [
-  {
-    q: 'Boleh tunjukkan geran asal kenderaan ini?',
-    script: 'Hi, boleh tunjukkan geran asal kenderaan ini? Nak pastikan nama pemilik betul sebelum bayar deposit.',
-  },
-  {
-    q: 'Ada pinjaman bank yang masih aktif? Boleh tunjukkan surat penyelesaian?',
-    script: 'Hi, ada loan bank yang masih aktif untuk kereta ini? Kalau ada, boleh tunjukkan surat settlement?',
-  },
-  { q: 'Kenapa kereta ini dijual?' },
-  { q: 'Ada rekod servis atau resit bengkel?' },
-  {
-    q: 'Pernah terlibat dalam kemalangan atau ada tuntutan insurans?',
-    script: 'Hi, kereta ini pernah terlibat dalam accident atau ada tuntutan insurans? Tolong confirmkan.',
-  },
-  { q: 'Boleh bawa ke bengkel untuk pemeriksaan sebelum saya buat keputusan?' },
-]
 
 interface VehicleData {
   description?:      string
@@ -102,21 +68,14 @@ interface Props {
   marketPrices?:     CachedMarketPrices | null
 }
 
-export function BuyerReportContent({ check: _check, results, plate, askingPriceRm, claimedMileageKm, vehicleData: rawVehicleData, marketPrices }: Props) {
-  const vehicleData = rawVehicleData as VehicleData | null | undefined
-  const vehicleResults      = results.filter(r => VEHICLE_SOURCES.includes(r.source as VehicleSource))
-  const samanTotal          = getSamanTotal(vehicleResults)
-  const samanCount          = getSamanCount(vehicleResults)
-  const verdict             = getVerdict(vehicleResults)
+export function BuyerReportContent({ check: _check, results, plate, askingPriceRm, claimedMileageKm: _claimedMileageKm, vehicleData: rawVehicleData, marketPrices }: Props) {
+  const vehicleData    = rawVehicleData as VehicleData | null | undefined
+  const vehicleResults = results.filter(r => VEHICLE_SOURCES.includes(r.source as VehicleSource))
+  const samanTotal     = getSamanTotal(vehicleResults)
+  const samanCount     = getSamanCount(vehicleResults)
+  const ins            = vehicleData?.insurance
 
-
-  const hasPdrmJpjUnverified = vehicleResults.some(r =>
-    ['pdrm', 'jpj'].includes(r.source) && r.status === 'requires_user_action'
-  )
-
-  const ins = vehicleData?.insurance
-
-  // Market price calculations — used by price section, summary box, and nego script
+  // Market price calculations
   const mPrices      = marketPrices?.listings.map(l => l.price) ?? []
   const marketMin    = mPrices.length ? Math.min(...mPrices) : null
   const marketMax    = mPrices.length ? Math.max(...mPrices) : null
@@ -130,7 +89,68 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
   return (
     <div className="space-y-5">
 
-      {/* Section 1: Perbandingan Harga — HERO (price is buyer's #1 question) */}
+      {/* 1. Keputusan Paqar — top decision card */}
+      {(priceVerdict != null || samanCount > 0) && (() => {
+        const kepConfig = priceVerdict ? ({
+          good_deal:     { headline: 'Harga Bagus',          sub: 'Tapi semak condition dan dokumen sebelum deposit.', headlineColor: 'text-[#0891B2]', bg: 'bg-[#F0FAFA]', border: 'border-[#99D4D1]' },
+          fair_price:    { headline: 'Harga Wajar',          sub: 'Teruskan, tapi semak condition dan dokumen dulu.',  headlineColor: 'text-[#064E4A]', bg: 'bg-[#F0FDF4]', border: 'border-[#BBF7D0]' },
+          slightly_high: { headline: 'Sedikit Tinggi',       sub: 'Ada ruang untuk tawar sebelum setuju.',            headlineColor: 'text-[#B45309]', bg: 'bg-[#FFFBEB]', border: 'border-[#FDE68A]' },
+          overpriced:    { headline: 'Harga Terlalu Tinggi', sub: 'Jangan bayar deposit dulu.',                       headlineColor: 'text-[#DC2626]', bg: 'bg-[#FEF2F2]', border: 'border-[#FECACA]' },
+        } as const)[priceVerdict] : { headline: 'Semak Sebelum Deposit', sub: 'Ada saman yang perlu dijelaskan.', headlineColor: 'text-[#DC2626]' as const, bg: 'bg-[#FEF2F2]' as const, border: 'border-[#FECACA]' as const }
+
+        const cadangan = priceVerdict ? ({
+          good_deal:     'Semak rekod JPJ dulu — kereta murah ada sebab.',
+          fair_price:    'Semak rekod JPJ dan bawa ke bengkel sebelum deposit.',
+          slightly_high: `Cuba offer RM${fmt(marketMax!)}. Gunakan skrip tawar.`,
+          overpriced:    `Tawar bawah RM${fmt(marketMax!)} atau cari unit lain.`,
+        } as const)[priceVerdict] : 'Minta penjual jelaskan saman dahulu.'
+
+        return (
+          <div className={`${kepConfig.bg} border ${kepConfig.border} rounded-[14px] p-5`}>
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
+              Keputusan Paqar
+            </p>
+            <p className={`font-heading font-extrabold text-[22px] leading-tight mb-1 ${kepConfig.headlineColor}`}>
+              {kepConfig.headline}
+            </p>
+            <p className="font-heading font-bold text-[15px] text-[#111827] mb-4">
+              {kepConfig.sub}
+            </p>
+            <div className="space-y-2.5">
+              {askingPriceRm != null && (
+                <div className="flex items-center justify-between">
+                  <p className="font-body text-[12px] text-[#6B7280]">Seller minta</p>
+                  <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(askingPriceRm)}</p>
+                </div>
+              )}
+              {hasMarketData && (
+                <div className="flex items-center justify-between">
+                  <p className="font-body text-[12px] text-[#6B7280]">Market semasa</p>
+                  <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(marketMin!)} – RM{fmt(marketMax!)}</p>
+                </div>
+              )}
+              {hasMarketData && (priceVerdict === 'overpriced' || priceVerdict === 'slightly_high') && (
+                <div className="flex items-center justify-between">
+                  <p className="font-body text-[12px] text-[#6B7280]">Anggaran lebih tinggi</p>
+                  <p className="font-heading font-bold text-[14px] text-[#DC2626]">RM{fmt(askingPriceRm! - marketMax!)}+</p>
+                </div>
+              )}
+              {samanCount > 0 && (
+                <div className="flex items-center justify-between">
+                  <p className="font-body text-[12px] text-[#6B7280]">Saman dijumpai</p>
+                  <p className="font-heading font-bold text-[14px] text-[#DC2626]">RM{fmt(samanTotal)}</p>
+                </div>
+              )}
+              <div className="flex items-start justify-between pt-2 border-t border-black/10">
+                <p className="font-body text-[12px] text-[#6B7280] flex-shrink-0 mr-3">Cadangan</p>
+                <p className="font-heading font-bold text-[13px] text-[#111827] text-right">{cadangan}</p>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* 2. Perbandingan Harga */}
       {(vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {
         const val           = vehicleData?.valuation
         const wmNewPrice    = val?.wmNewPrice ?? null
@@ -145,17 +165,10 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
           : null
 
         const verdictDisplay = priceVerdict ? ({
-          good_deal:     { text: 'Harga Bagus — boleh terus buat keputusan',           color: 'text-[#064E4A]', sub: null },
-          fair_price:    { text: 'Harga Wajar — boleh cuba tawar sedikit',             color: 'text-[#064E4A]', sub: null },
-          slightly_high: { text: 'Sedikit Tinggi — ada ruang untuk tawar',             color: 'text-[#B45309]', sub: null },
-          overpriced:    { text: 'Harga Terlalu Tinggi — jangan bayar deposit dulu',   color: 'text-[#DC2626]', sub: 'Harga seller lebih tinggi daripada kereta serupa. Gunakan skrip tawar sebelum jumpa seller.' },
-        } as const)[priceVerdict] : null
-
-        const summaryBox = hasMarketData && priceVerdict ? ({
-          good_deal:     { bg: 'bg-[#F0FAFA]', border: 'border-l-[#0891B2]', line2: 'Harga di bawah julat pasaran — nampak berbaloi.',   action: 'Tapi semak rekod JPJ dulu — kereta murah ada sebab.' },
-          fair_price:    { bg: 'bg-[#F0FDF4]', border: 'border-l-[#064E4A]', line2: 'Harga dalam julat pasaran — wajar.',                action: 'Semak rekod JPJ dan bawa ke bengkel sebelum deposit.' },
-          slightly_high: { bg: 'bg-[#FFFBEB]', border: 'border-l-[#B45309]', line2: 'Harga sedikit di atas julat pasaran.',             action: `Ada ruang untuk tawar — cuba offer RM${fmt(marketMax!)}.` },
-          overpriced:    { bg: 'bg-[#FEF2F2]', border: 'border-l-[#DC2626]', line2: `Harga lebih tinggi RM${fmt(askingPriceRm! - marketMax!)} dari julat pasaran.`, action: `Jangan bayar deposit dulu — tawar bawah RM${fmt(marketMax!)} atau cari unit lain.` },
+          good_deal:     { text: 'Harga Bagus — tapi semak condition dulu',          color: 'text-[#0891B2]', sub: 'Jangan bayar deposit sebelum semak dokumen, JPJ, dan condition kereta.' },
+          fair_price:    { text: 'Harga Wajar — boleh teruskan, tapi semak dulu',    color: 'text-[#064E4A]', sub: 'Harga nampak dalam julat pasaran. Pastikan rekod dan condition kereta jelas.' },
+          slightly_high: { text: 'Sedikit Tinggi — masih boleh tawar',               color: 'text-[#B45309]', sub: 'Harga sedikit atas pasaran. Gunakan skrip tawar untuk minta harga lebih baik.' },
+          overpriced:    { text: 'Harga Terlalu Tinggi — jangan bayar deposit dulu', color: 'text-[#DC2626]', sub: 'Harga seller lebih tinggi daripada kereta serupa. Gunakan skrip tawar sebelum jumpa seller.' },
         } as const)[priceVerdict] : null
 
         return (
@@ -164,18 +177,6 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               Perbandingan Harga
             </p>
 
-            {/* Summary box */}
-            {summaryBox && (
-              <div className={`border-l-4 ${summaryBox.border} ${summaryBox.bg} rounded-r-lg px-4 py-3 mb-4`}>
-                <p className="font-body text-[13px] text-[#374151] mb-1">
-                  Seller minta RM{fmt(askingPriceRm!)}. Harga pasaran semasa RM{fmt(marketMin!)}–RM{fmt(marketMax!)}.
-                </p>
-                <p className="font-body text-[12px] text-[#374151] mb-1">{summaryBox.line2}</p>
-                <p className="font-heading font-bold text-[13px] text-[#111827]">{summaryBox.action}</p>
-              </div>
-            )}
-
-            {/* Asking price row */}
             {askingPriceRm != null && (
               <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
                 <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
@@ -183,14 +184,15 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </div>
             )}
 
-            {/* Market listings */}
             {marketPrices && marketPrices.listings.length > 0 && (() => {
               const prices  = marketPrices.listings.map(l => l.price)
+              const minP    = Math.min(...prices)
+              const maxP    = Math.max(...prices)
               const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
               return (
                 <div className="mb-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="font-heading font-bold text-[12px] text-[#111827]">Harga pasaran semasa</p>
+                    <p className="font-heading font-bold text-[12px] text-[#111827]">Bukti Harga Pasaran</p>
                     <p className="font-body text-[10px] text-[#9CA3AF]">
                       {daysAgo === 0 ? 'Hari ini' : `${daysAgo} hari lalu`}
                     </p>
@@ -207,6 +209,11 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                   <p className="font-body text-[11px] text-[#6B7280]">
                     Berdasarkan {prices.length} kereta serupa yang dijumpai.
                   </p>
+                  {minP !== maxP && (
+                    <p className="font-body text-[11px] text-[#6B7280]">
+                      Julat: RM{fmt(minP)} – RM{fmt(maxP)}
+                    </p>
+                  )}
                   <a href={marketPrices.searchUrl} target="_blank" rel="noopener noreferrer"
                     className="font-body text-[11px] text-[#064E4A] hover:underline block">
                     Lihat semua listing di Mudah →
@@ -215,11 +222,10 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               )
             })()}
 
-            {/* Verdict — after both prices for context */}
             {verdictDisplay ? (
               <div className="mb-3 space-y-1">
                 <p className={`font-heading font-bold text-[13px] ${verdictDisplay.color}`}>{verdictDisplay.text}</p>
-                {verdictDisplay.sub && <p className="font-body text-[11px] text-[#6B7280]">{verdictDisplay.sub}</p>}
+                <p className="font-body text-[11px] text-[#6B7280]">{verdictDisplay.sub}</p>
               </div>
             ) : pct != null ? (
               <p className={`font-body text-[12px] mb-3 ${pct >= 0 ? 'text-[#064E4A]' : 'text-[#B45309]'}`}>
@@ -229,7 +235,6 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </p>
             ) : null}
 
-            {/* New car price — moved to bottom as reference anchor */}
             {wmNewPrice != null && (
               <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5">
                 <div className="flex items-center justify-between">
@@ -242,14 +247,12 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </div>
             )}
 
-            {/* No asking price entered */}
             {askingPriceRm == null && wmNewPrice != null && (
               <p className="font-body text-[11px] text-[#9CA3AF] mt-1">
                 Masukkan harga yang penjual minta untuk perbandingan lebih tepat.
               </p>
             )}
 
-            {/* Market search links — shown when no cached listings */}
             {vehicleData?.make && (() => {
               const mk           = vehicleData.make ?? ''
               const modelKeyword = vehicleData.model
@@ -276,12 +279,12 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         )
       })()}
 
-      {/* Negotiation script — shown when market data and vehicle info available */}
+      {/* 3. Skrip Tawar Seller */}
       {hasMarketData && priceVerdict && vehicleData?.make && (() => {
-        const make     = String(vehicleData.make ?? '')
-        const model    = String(vehicleData.model ?? '')
-        const year     = String(vehicleData.registrationYear ?? '')
-        const carName  = [make, model, year].filter(Boolean).join(' ')
+        const make    = String(vehicleData.make ?? '')
+        const model   = String(vehicleData.model ?? '')
+        const year    = String(vehicleData.registrationYear ?? '')
+        const carName = [make, model, year].filter(Boolean).join(' ')
         const scripts = {
           overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah buat semakan harga pasaran — unit serupa dijual dalam julat RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nBoleh kita buat harga RM${fmt(marketMax!)} atau kurang? Saya serius nak beli kalau harga okay.`,
           slightly_high: `Salam, saya berminat dengan ${carName} tuan/puan.\n\nSaya dah semak harga pasaran — boleh kita bincang harga sikit?\n\nSaya target dalam RM${fmt(marketMax!)}. Boleh consider?`,
@@ -292,7 +295,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
-              Skrip Tawar Harga
+              Skrip Tawar Seller
             </p>
             <div className="bg-[#F9FAFB] rounded-lg p-4 mb-3">
               <p className="font-body text-[13px] text-[#374151] leading-relaxed whitespace-pre-line">
@@ -304,7 +307,28 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         )
       })()}
 
-      {/* Section 2: Data Kenderaan Rasmi (if available) */}
+      {/* 4. Soalan Wajib Tanya Seller */}
+      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-4">
+          Soalan Wajib Tanya Seller
+        </p>
+        <div className="space-y-3">
+          {[
+            'Ada accident besar sebelum ini?',
+            'Ada flood damage?',
+            'Ada pinjaman bank yang masih aktif?',
+            'Geran atas nama siapa?',
+            'Boleh buat inspection sebelum deposit?',
+          ].map((q, i) => (
+            <div key={i} className="flex gap-3">
+              <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">{i + 1}.</span>
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed">{q}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 5. Data Kenderaan Rasmi (JPJ) */}
       {vehicleData?.make && (
         <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
           <div className="flex items-center justify-between mb-3">
@@ -318,9 +342,9 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
           </p>
           <div className="grid grid-cols-2 gap-2">
             {[
-              { label: 'Tahun Daftar', value: vehicleData.registrationYear },
-              { label: 'Enjin',        value: vehicleData.engineCc ? `${vehicleData.engineCc}cc` : null },
-              { label: 'Jenis Badan',  value: vehicleData.body },
+              { label: 'Tahun Daftar',  value: vehicleData.registrationYear },
+              { label: 'Enjin',         value: vehicleData.engineCc ? `${vehicleData.engineCc}cc` : null },
+              { label: 'Jenis Badan',   value: vehicleData.body },
               { label: 'Nombor Rangka', value: vehicleData.vin ? `${vehicleData.vin.slice(0, -4)}****` : null },
             ].filter(r => r.value).map(row => (
               <div key={row.label} className="bg-[#F9FAFB] rounded-lg px-3 py-2">
@@ -332,7 +356,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         </div>
       )}
 
-      {/* Section 0b: Status Insurans (if available) */}
+      {/* 6. Status Insurans */}
       {ins && (
         <div className={`border rounded-[14px] p-5 ${
           ins.policyStatus?.toLowerCase().includes('active') ? 'bg-[#F0FDF4] border-[#BBF7D0]' : 'bg-[#FEF2F2] border-[#FECACA]'
@@ -341,200 +365,21 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
             Status Insurans
           </p>
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className={`font-heading font-extrabold text-[15px] ${
-                ins.policyStatus?.toLowerCase().includes('active') ? 'text-[#15803D]' : 'text-[#DC2626]'
-              }`}>
-                {ins.policyStatus?.toLowerCase().includes('active') ? '✓ Aktif' : '✕ Tamat Tempoh'}
-              </span>
-            </div>
+            <span className={`font-heading font-extrabold text-[15px] ${
+              ins.policyStatus?.toLowerCase().includes('active') ? 'text-[#15803D]' : 'text-[#DC2626]'
+            }`}>
+              {ins.policyStatus?.toLowerCase().includes('active') ? '✓ Aktif' : '✕ Tamat Tempoh'}
+            </span>
             <p className="font-body text-[13px] text-[#374151]">{ins.insurer}</p>
             <p className="font-body text-[12px] text-[#6B7280]">{translateCoverType(ins.coverType)}</p>
           </div>
         </div>
       )}
 
-      {/* Section 1: Overall Verdict — only shown when samans are confirmed */}
-      {samanCount > 0 && <div className={`rounded-[16px] p-5 border ${
-        verdict === 'low'        ? 'bg-[#F0FDF4] border-[#BBF7D0]' :
-        verdict === 'incomplete' ? 'bg-[#FFFBEB] border-[#FDE68A]' :
-        verdict === 'caution'    ? 'bg-[#FFFBEB] border-[#FDE68A]' :
-                                   'bg-[#FEF2F2] border-[#FECACA]'
-      }`}>
-        <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
-          Apa yang kami jumpa
-        </p>
-        <p className={`font-heading font-extrabold text-[20px] mb-1 ${
-          verdict === 'low'        ? 'text-[#15803D]' :
-          verdict === 'incomplete' ? 'text-[#B45309]' :
-          verdict === 'caution'    ? 'text-[#B45309]' :
-                                     'text-[#DC2626]'
-        }`}>
-          {verdict === 'low'        ? 'Tiada isu dijumpai' :
-           verdict === 'incomplete' ? 'Ada yang perlu anda semak sendiri' :
-           verdict === 'caution'    ? 'Ada saman — tanya penjual dulu' :
-                                      'Berhati-hati — ada isu serius'}
-        </p>
-        <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-          {verdict === 'low'
-            ? 'Tiada saman atau isu yang kami temui. Gunakan maklumat di bawah untuk buat keputusan.'
-            : verdict === 'incomplete'
-            ? 'Tiada isu yang kami jumpa. Saman PDRM/JPJ perlu disemak sendiri di portal rasmi — klik pautan di atas.'
-            : verdict === 'caution'
-            ? `Ada ${samanCount} saman berjumlah RM${fmt(samanTotal)}. Minta penjual selesaikan atau tolak dari harga.`
-            : 'Ada beberapa isu serius. Jangan bayar deposit sebelum penjual beri penjelasan.'}
-        </p>
-        {samanTotal > 0 && (
-          <p className={`font-heading font-extrabold text-[22px] mt-3 ${
-            verdict === 'caution' ? 'text-[#B45309]' : 'text-[#DC2626]'
-          }`}>
-            RM{fmt(samanTotal)} saman dijumpai
-          </p>
-        )}
-        {verdict === 'incomplete' && (
-          <p className="font-body text-[11px] text-[#6B7280] mt-2 leading-relaxed">
-            Gunakan maklumat di bawah untuk bantu keputusan anda sebelum bayar deposit.
-          </p>
-        )}
-      </div>}
-
-      {/* Section 4: Soalan untuk Penjual */}
-      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-4">
-          Soalan untuk Penjual
-        </p>
-        <div className="space-y-3">
-          {hasPdrmJpjUnverified && (
-            <div className="space-y-2">
-              <div className="flex gap-3">
-                <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">1.</span>
-                <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                  Boleh tunjuk bukti semakan saman PDRM/JPJ untuk kereta ini sebelum saya bayar deposit?
-                </p>
-              </div>
-              <div className="ml-6 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2.5">
-                <p className="font-body text-[10px] text-[#9CA3AF] uppercase tracking-[.05em] mb-1">Mesej untuk penjual — salin dan hantar</p>
-                <p className="font-body text-[12px] text-[#374151] italic leading-relaxed">
-                  &ldquo;Hi, sebelum saya bayar deposit, boleh tunjuk bukti semakan saman PDRM/JPJ untuk kereta ini?&rdquo;
-                </p>
-              </div>
-            </div>
-          )}
-          {SELLER_QUESTIONS.map((item, i) => (
-            <div key={i} className="space-y-2">
-              <div className="flex gap-3">
-                <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">
-                  {hasPdrmJpjUnverified ? i + 2 : i + 1}.
-                </span>
-                <p className="font-body text-[13px] text-[#374151] leading-relaxed">{item.q}</p>
-              </div>
-              {item.script && (
-                <div className="ml-6 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2.5">
-                  <p className="font-body text-[10px] text-[#9CA3AF] uppercase tracking-[.05em] mb-1">Mesej untuk penjual — salin dan hantar</p>
-                  <p className="font-body text-[12px] text-[#374151] italic leading-relaxed">
-                    &ldquo;{item.script}&rdquo;
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
-          {samanCount > 0 && (
-            <div className="flex gap-3">
-              <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">
-                {(hasPdrmJpjUnverified ? 1 : 0) + SELLER_QUESTIONS.length + 1}.
-              </span>
-              <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Boleh selesaikan saman ini dahulu, atau tolak RM{fmt(samanTotal)} dari harga jual?
-              </p>
-            </div>
-          )}
-          {(claimedMileageKm ?? 0) > 150_000 && (
-            <div className="flex gap-3">
-              <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">
-                {(hasPdrmJpjUnverified ? 1 : 0) + SELLER_QUESTIONS.length + (samanCount > 0 ? 1 : 0) + 1}.
-              </span>
-              <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Jarak tempuh nampak tinggi untuk tahun kereta ini. Boleh tunjukkan rekod servis atau buku servis?
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Section 5: Action Block */}
-      <div className="bg-[#064E4A] rounded-[14px] p-5">
-        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-white/60 mb-3">
-          {samanCount > 0 ? 'Cadangan & Langkah Seterusnya' : 'Langkah Seterusnya'}
-        </p>
-
-        {samanCount > 0 ? (
-          <>
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.06em] text-white/50 mb-2">
-              Skrip rundingan
-            </p>
-            <div className="bg-white/10 rounded-[10px] px-4 py-3 mb-4">
-              <p className="font-body text-[13px] text-white leading-relaxed italic">
-                &ldquo;Kerana ada saman RM{fmt(samanTotal)} yang masih belum dijelaskan, boleh awak selesaikan dahulu sebelum tukar milik, atau tolak RM{fmt(samanTotal)} dari harga jual?&rdquo;
-              </p>
-            </div>
-            <div className="space-y-2.5">
-              {[
-                'Minta penjual jelaskan saman tersebut.',
-                'Minta bukti pembayaran jika penjual kata sudah selesai.',
-                'Jangan bayar deposit sebelum mendapat penjelasan.',
-                'Jika penjual enggan, anggap sebagai tanda amaran.',
-              ].map((step, i) => (
-                <div key={i} className="flex gap-3 items-start">
-                  <span className="font-heading font-bold text-[12px] text-white/50 flex-shrink-0 mt-0.5">{i + 1}.</span>
-                  <p className="font-body text-[13px] text-white/90 leading-relaxed">{step}</p>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : verdict === 'incomplete' ? (
-          <>
-            <p className="font-body text-[13px] text-white/80 leading-relaxed mb-4">
-              Tiada isu yang kami jumpa setakat ini. Selesaikan langkah di bawah sebelum setuju.
-            </p>
-            <div className="space-y-2.5">
-              {[
-                'Tanya penjual semak saman di MyBayar PDRM dan Portal JPJ — minta bukti screenshot.',
-                'Bawa ke bengkel untuk pemeriksaan fizikal sebelum bayar deposit.',
-                'Semak geran, insurans, dan cukai jalan sebelum tanda tangan.',
-                'Pastikan tiada pinjaman aktif sebelum tukar milik.',
-              ].map((step, i) => (
-                <div key={i} className="flex gap-3 items-start">
-                  <span className="font-heading font-bold text-[12px] text-white/50 flex-shrink-0 mt-0.5">{i + 1}.</span>
-                  <p className="font-body text-[13px] text-white/90 leading-relaxed">{step}</p>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="font-body text-[13px] text-white/80 leading-relaxed mb-4">
-              Tiada saman yang kami jumpa. Gunakan kondisi fizikal dan harga pasaran untuk rundingan.
-            </p>
-            <div className="space-y-2.5">
-              {[
-                'Bawa ke bengkel untuk pemeriksaan sebelum bayar deposit.',
-                'Semak geran, insurans, dan cukai jalan sebelum tanda tangan.',
-                'Pastikan tiada pinjaman aktif sebelum tukar milik.',
-              ].map((step, i) => (
-                <div key={i} className="flex gap-3 items-start">
-                  <span className="font-heading font-bold text-[12px] text-white/50 flex-shrink-0 mt-0.5">{i + 1}.</span>
-                  <p className="font-body text-[13px] text-white/90 leading-relaxed">{step}</p>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
+      {/* 7. CTAs */}
       <InspectionCTA plate={plate} />
       <InsuranceCTA />
 
-      {/* Brand footnote — visible in screenshots and shares */}
       <p className="font-body text-[11px] text-[#D1D5DB] text-center pt-2">
         Disediakan oleh Paqar · paqar.my
       </p>
