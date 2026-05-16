@@ -1,12 +1,9 @@
 
 interface Props {
-  checkId:      string
-  claimToken:   string
-  plate?:       string
-  askingPrice?: string
+  plate?: string
 }
 
-export function ReportCTA({ checkId, claimToken, plate, askingPrice }: Props) {
+export function ReportCTA({ plate }: Props) {
   return (
     <div className="bg-[#064E4A] rounded-[16px] p-5">
       <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-white/60 mb-2">
@@ -14,13 +11,13 @@ export function ReportCTA({ checkId, claimToken, plate, askingPrice }: Props) {
       </p>
       <p className="font-heading font-extrabold text-[20px] text-white mb-3">
         {plate
-          ? `Untuk kereta ${plate}, kami boleh tunjukkan:`
-          : 'Untuk kenderaan ini, kami boleh tunjukkan:'}
+          ? `Untuk kereta ${plate}, kami akan tunjukkan:`
+          : 'Untuk kenderaan ini, kami akan tunjukkan:'}
       </p>
 
-      <ul className="space-y-1.5 mb-5">
+      <ul className="space-y-1.5">
         {[
-          'Sama ada harga penjual berpatutan atau terlalu tinggi',
+          'Harga pasaran sebenar dalam RM',
           'Berapa nilai sebenar kereta ini sekarang',
           'Soalan yang perlu tanya penjual sebelum commit',
           'Cara minta diskaun dengan yakin',
@@ -31,17 +28,6 @@ export function ReportCTA({ checkId, claimToken, plate, askingPrice }: Props) {
           </li>
         ))}
       </ul>
-
-      <a
-        href={`/laporan-pembeli/${checkId}?claim_token=${claimToken}${askingPrice ? `&asking_price=${askingPrice}` : ''}`}
-        className="block w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-[#FDE047] transition-colors"
-      >
-        Dapatkan Laporan — RM12 →
-      </a>
-
-      <p className="font-body text-[11px] text-white/50 text-center mt-2">
-        Bayar sekali · Akses terus
-      </p>
     </div>
   )
 }

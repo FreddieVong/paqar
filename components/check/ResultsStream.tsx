@@ -7,6 +7,7 @@ import { Button }       from '@/components/ui/button'
 import { SamanGuide }    from './SamanGuide'
 import { ReportCTA }     from './ReportCTA'
 import { InspectionCTA } from '@/components/report/InspectionCTA'
+import { PaymentForm }   from '@/components/report/PaymentForm'
 import { createClient }  from '@/lib/supabase/client'
 
 import type { Check, CheckResult } from '@/types/domain'
@@ -118,7 +119,12 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
       {isComplete && (
         <>
           <SamanGuide />
-          <ReportCTA checkId={checkId} claimToken={claimToken} plate={plate} askingPrice={askingPrice} />
+          <ReportCTA plate={plate} />
+          <PaymentForm
+            checkId={checkId}
+            claimToken={claimToken}
+            defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
+          />
           <InspectionCTA plate={plate} />
         </>
       )}
