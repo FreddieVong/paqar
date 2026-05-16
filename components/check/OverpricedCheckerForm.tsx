@@ -50,7 +50,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     badgeCls:   'bg-[#0891B2] text-white',
     cardBg:     'bg-[#F0FAFA]',
     cardBorder: 'border-[#99D4D1]',
-    copy:       () => 'Harga di bawah julat pasaran — nampak berbaloi. Semak data JPJ dan rekod penjual dulu sebelum bayar deposit.',
+    copy:       () => 'Harga di bawah julat pasaran — nampak berbaloi. Tapi kenapa murah? Semak rekod JPJ sebelum bayar deposit.',
     ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
 }
