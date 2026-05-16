@@ -1,6 +1,6 @@
 'use client'
 
-import { useState }    from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter }   from 'next/navigation'
 import type { CreateCheckResponse, Verdict, PriceCheckResult } from '@/types/api'
 
@@ -76,6 +76,29 @@ export function OverpricedCheckerForm() {
   const [plate,       setPlate]       = useState('')
   const [plateBusy,   setPlateBusy]   = useState(false)
   const [plateError,  setPlateError]  = useState<string | null>(null)
+  const [retried,     setRetried]     = useState(false)
+
+  // Auto-retry once after 25s on no-data — background scraper takes 15-30s to populate cache
+  useEffect(() => {
+    if (formState !== 'result') return
+    if (!result || result.hasData) return
+    if (retried) return
+    const timer = setTimeout(async () => {
+      setRetried(true)
+      setFormState('loading')
+      try {
+        const res = await fetch('/api/price-check', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ brand, model: model.trim(), year, askingPrice: parseInt(askingPrice, 10) }),
+        })
+        const data = await res.json() as PriceCheckResult
+        setResult(data)
+      } catch { /* non-fatal — show no-data */ }
+      setFormState('result')
+    }, 25_000)
+    return () => clearTimeout(timer)
+  }, [formState, result, retried, brand, model, year, askingPrice])
 
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault()
@@ -135,6 +158,7 @@ export function OverpricedCheckerForm() {
     setPlate('')
     setPlateError(null)
     setCheckError(null)
+    setRetried(false)
   }
 
   // ── Form (idle / error) ────────────────────────────────────────────────
@@ -215,9 +239,13 @@ export function OverpricedCheckerForm() {
       <div className={`border rounded-[14px] p-5 ${noData ? 'bg-[#F9FAFB] border-[#E5E7EB]' : `${cfg!.cardBg} ${cfg!.cardBorder}`}`}>
         {noData ? (
           <>
-            <p className="font-heading font-bold text-[14px] text-[#374151] mb-1">Data pasaran belum tersedia</p>
+            <p className="font-heading font-bold text-[14px] text-[#374151] mb-1">
+              {retried ? 'Data pasaran belum tersedia' : 'Sedang mengumpul data…'}
+            </p>
             <p className="font-body text-[13px] text-[#6B7280] mb-4 leading-relaxed">
-              Kami belum ada data untuk model ini. Laporan penuh ada harga pasaran terkini terus dari Mudah.
+              {retried
+                ? 'Kami belum ada data untuk model ini. Laporan penuh ada harga pasaran terkini terus dari Mudah.'
+                : `Kami sedang kumpul harga pasaran untuk ${brand} ${model} ${year}. Cuba semula dalam beberapa saat — atau teruskan dengan laporan penuh.`}
             </p>
           </>
         ) : (
