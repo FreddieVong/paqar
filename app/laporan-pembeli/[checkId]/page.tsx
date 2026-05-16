@@ -107,7 +107,6 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               <h1 className="font-heading font-extrabold text-[24px] tracking-tight text-[#111827]">
                 {plate}
               </h1>
-              <p className="font-body text-[13px] text-[#6B7280] mt-1">Laporan penuh — dibayar</p>
             </div>
             <BuyerReportContent
               check={row.check}
