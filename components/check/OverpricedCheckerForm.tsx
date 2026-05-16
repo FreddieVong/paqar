@@ -295,7 +295,7 @@ function CollapsedSummary({
     return isNaN(n) ? v : n.toLocaleString()
   }
   return (
-    <div className="flex items-center justify-between bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-3">
+    <div className="flex items-center justify-between py-1">
       <div>
         <p className="font-heading font-bold text-[13px] text-[#374151]">{brand} {model}</p>
         <p className="font-body text-[11px] text-[#6B7280]">{year} · RM {fmt(askingPrice)}</p>
