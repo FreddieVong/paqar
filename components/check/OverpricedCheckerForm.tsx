@@ -212,6 +212,30 @@ export function OverpricedCheckerForm() {
             Percuma · Laporan penuh RM12 · Tanpa daftar akaun
           </p>
         </form>
+
+        {/* Feature comparison — hidden once user gets their verdict */}
+        <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-[#F3F4F6]">
+          <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-4">
+            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#15803D] mb-2">Percuma</p>
+            <ul className="space-y-1.5">
+              {['Verdict harga pasaran', 'Tahu sama ada perlu tawar lebih', 'Tanpa daftar akaun'].map(t => (
+                <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
+                  <span className="text-[#15803D] flex-shrink-0">✓</span>{t}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="bg-[#FEF9C3] border border-[#FDE68A] rounded-[14px] p-4">
+            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#B45309] mb-2">Laporan RM12</p>
+            <ul className="space-y-1.5">
+              {['Harga baru & harga pasaran sebenar', 'Data kenderaan rasmi JPJ', 'Skrip rundingan siap guna'].map(t => (
+                <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
+                  <span className="text-[#B45309] flex-shrink-0">✓</span>{t}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     )
   }

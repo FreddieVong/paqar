@@ -47,36 +47,7 @@ export default async function HomePage() {
           </div>
 
           {/* Checking card */}
-          <div className="space-y-3">
-            <OverpricedCheckerForm />
-            {/* Free vs RM12 split */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-4">
-                <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#15803D] mb-2">
-                  Percuma
-                </p>
-                <ul className="space-y-1.5">
-                  {['Verdict harga pasaran', 'Tahu sama ada perlu tawar lebih', 'Tanpa daftar akaun'].map(t => (
-                    <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
-                      <span className="text-[#15803D] flex-shrink-0">✓</span>{t}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bg-[#FEF9C3] border border-[#FDE68A] rounded-[14px] p-4">
-                <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#B45309] mb-2">
-                  Laporan RM12
-                </p>
-                <ul className="space-y-1.5">
-                  {['Harga baru & harga pasaran', 'Data kenderaan rasmi JPJ', 'Soalan & skrip rundingan'].map(t => (
-                    <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
-                      <span className="text-[#B45309] flex-shrink-0">✓</span>{t}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
+          <OverpricedCheckerForm />
         </div>
       </section>
 
