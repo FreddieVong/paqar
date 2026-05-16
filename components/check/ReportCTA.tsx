@@ -15,9 +15,9 @@ export function ReportCTA({ plate }: Props) {
 
       <ul className="space-y-1.5">
         {[
-          'Harga pasaran sebenar dalam RM',
-          'Berapa nilai sebenar kereta ini sekarang',
-          'Soalan yang perlu tanya penjual sebelum commit',
+          'Harga baru',
+          'Harga pasaran sebenar',
+          'Data JPJ',
           'Cara minta diskaun dengan yakin',
         ].map((item, i) => (
           <li key={i} className="flex items-start gap-2 font-body text-[13px] text-white/90">

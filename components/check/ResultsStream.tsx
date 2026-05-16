@@ -2,19 +2,17 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter }    from 'next/navigation'
-import { Progress }     from '@/components/ui/progress'
 import { Button }       from '@/components/ui/button'
 import { ReportCTA }     from './ReportCTA'
 import { InspectionCTA } from '@/components/report/InspectionCTA'
 import { PaymentForm }   from '@/components/report/PaymentForm'
 import { createClient }  from '@/lib/supabase/client'
 
-import type { Check, CheckResult } from '@/types/domain'
+import type { Check } from '@/types/domain'
 import type { PollCheckResponse } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
 const POLL_TIMEOUT_MS  = 90_000
-const TOTAL_SOURCES    = 4
 
 interface Props {
   checkId:      string
@@ -26,7 +24,6 @@ interface Props {
 export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props) {
   const router = useRouter()
   const [check,        setCheck]        = useState<Check | null>(null)
-  const [results,      setResults]      = useState<CheckResult[]>([])
   const [error,        setError]        = useState<string | null>(null)
   const [authedUser,   setAuthedUser]   = useState<string | null | undefined>(undefined)
   const [captureEmail, setCaptureEmail] = useState('')
@@ -48,7 +45,6 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
       if (!res.ok) { setError('Tidak dapat memuatkan keputusan'); return }
       const data = await res.json() as PollCheckResponse
       setCheck(data.check)
-      setResults(data.results)
     } catch {
       setError('Ralat rangkaian — cuba semula…')
     }
@@ -68,19 +64,7 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
     return () => { clearInterval(interval); clearTimeout(timeout) }
   }, [poll, check?.status])
 
-  // Auto-claim removed: it was invalidating claim_token before the user
-  // could complete the purchase flow, causing 404s on laporan-pembeli.
-  // Dashboard access works via buyer_reports (email + check_id join).
-
-  const completedCount = Math.min(
-    results.filter(r => r.status !== 'pending').length,
-    TOTAL_SOURCES
-  )
   const isComplete  = check?.status === 'complete'
-  const showDocsCta = isComplete && authedUser != null
-
-  // results kept for completedCount but not rendered as cards
-  void results
 
   async function handleEmailCapture(e: React.FormEvent) {
     e.preventDefault()
@@ -98,37 +82,27 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
 
   if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
+  if (!isComplete) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-8">
+        <div className="w-7 h-7 rounded-full border-[3px] border-[#E5E7EB] border-t-[#064E4A] animate-spin" />
+        <p className="font-heading font-bold text-[14px] text-[#6B7280]">Menyemak kereta anda…</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-3">
-      {/* Progress bar */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-xs">
-          <span className="font-heading font-bold text-[#064E4A]">
-            {isComplete ? 'Semakan selesai' : 'Menyemak kereta anda…'}
-          </span>
-          <span className="font-body text-[#6B7280]">{completedCount} daripada {TOTAL_SOURCES}</span>
-        </div>
-        <Progress
-          value={(completedCount / TOTAL_SOURCES) * 100}
-          className="h-1 bg-[#E5E7EB] [&>div]:bg-[#064E4A]"
-        />
-      </div>
-
-      {/* After check: compact saman message + personalised report CTA */}
-      {isComplete && (
-        <>
-          <ReportCTA plate={plate} />
-          <PaymentForm
-            checkId={checkId}
-            claimToken={claimToken}
-            defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
-          />
-          <InspectionCTA plate={plate} />
-        </>
-      )}
+      <ReportCTA plate={plate} />
+      <PaymentForm
+        checkId={checkId}
+        claimToken={claimToken}
+        defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
+      />
+      <InspectionCTA plate={plate} />
 
       {/* Email capture for non-authed users */}
-      {isComplete && authedUser === null && (
+      {authedUser === null && (
         <div className="border border-[#E5E7EB] rounded-xl p-4 bg-white">
           {captureState === 'done' ? (
             <>
@@ -171,8 +145,7 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
         </div>
       )}
 
-
-      {showDocsCta && (
+      {authedUser != null && (
         <div className="border-[1.5px] border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
           <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">
             Pantau dokumen kenderaan anda
