@@ -3,6 +3,7 @@ import type { SourceData, SamanRecord } from '@/types/api'
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import { InspectionCTA } from './InspectionCTA'
 import { InsuranceCTA }  from './InsuranceCTA'
+import { CopyButton }    from './CopyButton'
 
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
@@ -115,13 +116,24 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
 
   const ins = vehicleData?.insurance
 
+  // Market price calculations — used by price section, summary box, and nego script
+  const mPrices      = marketPrices?.listings.map(l => l.price) ?? []
+  const marketMin    = mPrices.length ? Math.min(...mPrices) : null
+  const marketMax    = mPrices.length ? Math.max(...mPrices) : null
+  const hasMarketData = askingPriceRm != null && marketMin != null && marketMax != null
+  const priceVerdict = !hasMarketData ? null
+    : askingPriceRm! < marketMin! ? 'good_deal'    as const
+    : askingPriceRm! <= marketMax! ? 'fair_price'  as const
+    : askingPriceRm! <= marketMax! * 1.08 ? 'slightly_high' as const
+    : 'overpriced' as const
+
   return (
     <div className="space-y-5">
 
       {/* Section 1: Perbandingan Harga — HERO (price is buyer's #1 question) */}
       {(vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {
-        const val        = vehicleData?.valuation
-        const wmNewPrice = val?.wmNewPrice ?? null
+        const val           = vehicleData?.valuation
+        const wmNewPrice    = val?.wmNewPrice ?? null
         const valVariantRaw = val?.family && val?.variant
           ? `${val.family} ${val.variant}`.trim()
           : (val?.family ?? null)
@@ -132,24 +144,19 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
           ? Math.round((1 - askingPriceRm / wmNewPrice) * 100)
           : null
 
-        // Market-relative verdict (primary when available)
-        const mPrices   = marketPrices?.listings.map(l => l.price) ?? []
-        const marketMin = mPrices.length ? Math.min(...mPrices) : null
-        const marketMax = mPrices.length ? Math.max(...mPrices) : null
-        const hasMarketVerdict = askingPriceRm != null && marketMin != null && marketMax != null
+        const verdictDisplay = priceVerdict ? ({
+          good_deal:     { text: 'Harga Bagus — boleh terus buat keputusan',           color: 'text-[#064E4A]', sub: null },
+          fair_price:    { text: 'Harga Wajar — boleh cuba tawar sedikit',             color: 'text-[#064E4A]', sub: null },
+          slightly_high: { text: 'Sedikit Tinggi — ada ruang untuk tawar',             color: 'text-[#B45309]', sub: null },
+          overpriced:    { text: 'Harga Terlalu Tinggi — jangan bayar deposit dulu',   color: 'text-[#DC2626]', sub: 'Harga seller lebih tinggi daripada kereta serupa. Gunakan skrip tawar sebelum jumpa seller.' },
+        } as const)[priceVerdict] : null
 
-        let marketVerdict: { text: string; color: string } | null = null
-        if (hasMarketVerdict) {
-          if (askingPriceRm! < marketMin!) {
-            marketVerdict = { text: 'Harga Bagus — boleh terus buat keputusan', color: 'text-[#064E4A]' }
-          } else if (askingPriceRm! <= marketMax!) {
-            marketVerdict = { text: 'Harga Wajar — boleh cuba tawar sedikit', color: 'text-[#064E4A]' }
-          } else if (askingPriceRm! <= marketMax! * 1.08) {
-            marketVerdict = { text: 'Sedikit Tinggi — ada ruang untuk tawar lebih', color: 'text-[#B45309]' }
-          } else {
-            marketVerdict = { text: 'Harga Terlalu Tinggi — tawar agresif atau cari kereta lain', color: 'text-[#DC2626]' }
-          }
-        }
+        const summaryBox = hasMarketData && priceVerdict ? ({
+          good_deal:     { bg: 'bg-[#F0FAFA]', border: 'border-l-[#0891B2]', line2: 'Harga di bawah julat pasaran — nampak berbaloi.',   action: 'Tapi semak rekod JPJ dulu — kereta murah ada sebab.' },
+          fair_price:    { bg: 'bg-[#F0FDF4]', border: 'border-l-[#064E4A]', line2: 'Harga dalam julat pasaran — wajar.',                action: 'Semak rekod JPJ dan bawa ke bengkel sebelum deposit.' },
+          slightly_high: { bg: 'bg-[#FFFBEB]', border: 'border-l-[#B45309]', line2: 'Harga sedikit di atas julat pasaran.',             action: `Ada ruang untuk tawar — cuba offer RM${fmt(marketMax!)}.` },
+          overpriced:    { bg: 'bg-[#FEF2F2]', border: 'border-l-[#DC2626]', line2: `Harga lebih tinggi RM${fmt(askingPriceRm! - marketMax!)} dari julat pasaran.`, action: `Jangan bayar deposit dulu — tawar bawah RM${fmt(marketMax!)} atau cari unit lain.` },
+        } as const)[priceVerdict] : null
 
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -157,48 +164,80 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               Perbandingan Harga
             </p>
 
-            {/* Original new price from valuation CSV */}
-            {wmNewPrice != null && (
-              <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
-                <div className="flex items-center justify-between">
-                  <p className="font-body text-[12px] text-[#6B7280]">Harga baru asal kenderaan ini</p>
-                  <p className="font-heading font-bold text-[14px] text-[#111827]">
-                    RM{fmt(wmNewPrice)}
-                  </p>
-                </div>
-                {valVariant && (
-                  <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5">
-                    Berdasarkan: {valVariant}
-                  </p>
-                )}
+            {/* Summary box */}
+            {summaryBox && (
+              <div className={`border-l-4 ${summaryBox.border} ${summaryBox.bg} rounded-r-lg px-4 py-3 mb-4`}>
+                <p className="font-body text-[13px] text-[#374151] mb-1">
+                  Seller minta RM{fmt(askingPriceRm!)}. Harga pasaran semasa RM{fmt(marketMin!)}–RM{fmt(marketMax!)}.
+                </p>
+                <p className="font-body text-[12px] text-[#374151] mb-1">{summaryBox.line2}</p>
+                <p className="font-heading font-bold text-[13px] text-[#111827]">{summaryBox.action}</p>
               </div>
             )}
 
-            {/* Asking price */}
+            {/* Asking price row */}
             {askingPriceRm != null && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5">
-                  <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
-                  <p className="font-heading font-bold text-[14px] text-[#111827]">
-                    RM{fmt(askingPriceRm)}
-                  </p>
-                </div>
+              <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
+                <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
+                <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(askingPriceRm)}</p>
+              </div>
+            )}
 
-                {/* Verdict: market-relative if available, else % below new price */}
-                {marketVerdict ? (
-                  <p className={`font-body text-[12px] px-1 ${marketVerdict.color}`}>
-                    {marketVerdict.text}
+            {/* Market listings */}
+            {marketPrices && marketPrices.listings.length > 0 && (() => {
+              const prices  = marketPrices.listings.map(l => l.price)
+              const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
+              return (
+                <div className="mb-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-heading font-bold text-[12px] text-[#111827]">Harga pasaran semasa</p>
+                    <p className="font-body text-[10px] text-[#9CA3AF]">
+                      {daysAgo === 0 ? 'Hari ini' : `${daysAgo} hari lalu`}
+                    </p>
+                  </div>
+                  <p className="font-body text-[11px] text-[#6B7280]">Harga listing dijumpai:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {marketPrices.listings.map((l, i) => (
+                      <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+                        className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A] hover:bg-[#E0F2F1] transition-colors">
+                        RM{fmt(l.price)}
+                      </a>
+                    ))}
+                  </div>
+                  <p className="font-body text-[11px] text-[#6B7280]">
+                    Berdasarkan {prices.length} kereta serupa yang dijumpai.
                   </p>
-                ) : pct != null ? (
-                  <p className={`font-body text-[12px] px-1 ${pct >= 0 ? 'text-[#064E4A]' : 'text-[#B45309]'}`}>
-                    {pct >= 0
-                      ? `${pct}% di bawah harga baru — wajar untuk kenderaan ini`
-                      : `${Math.abs(pct)}% melebihi harga baru — semak perbandingan sebelum setuju`}
-                  </p>
-                ) : (
-                  <p className="font-body text-[11px] text-[#9CA3AF] px-1">
-                    Semak harga pasaran di Mudah atau Carlist untuk perbandingan.
-                  </p>
+                  <a href={marketPrices.searchUrl} target="_blank" rel="noopener noreferrer"
+                    className="font-body text-[11px] text-[#064E4A] hover:underline block">
+                    Lihat semua listing di Mudah →
+                  </a>
+                </div>
+              )
+            })()}
+
+            {/* Verdict — after both prices for context */}
+            {verdictDisplay ? (
+              <div className="mb-3 space-y-1">
+                <p className={`font-heading font-bold text-[13px] ${verdictDisplay.color}`}>{verdictDisplay.text}</p>
+                {verdictDisplay.sub && <p className="font-body text-[11px] text-[#6B7280]">{verdictDisplay.sub}</p>}
+              </div>
+            ) : pct != null ? (
+              <p className={`font-body text-[12px] mb-3 ${pct >= 0 ? 'text-[#064E4A]' : 'text-[#B45309]'}`}>
+                {pct >= 0
+                  ? `${pct}% di bawah harga baru — wajar untuk kenderaan ini`
+                  : `${Math.abs(pct)}% melebihi harga baru — semak perbandingan sebelum setuju`}
+              </p>
+            ) : null}
+
+            {/* New car price — moved to bottom as reference anchor */}
+            {wmNewPrice != null && (
+              <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="font-body text-[12px] text-[#6B7280]">Harga baru asal kenderaan ini</p>
+                  <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(wmNewPrice)}</p>
+                </div>
+                {valVariant && (
+                  <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5">Berdasarkan: {valVariant}</p>
                 )}
               </div>
             )}
@@ -210,73 +249,57 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </p>
             )}
 
-            {/* Live market listings from Mudah (cached) */}
-            {marketPrices && marketPrices.listings.length > 0 && (() => {
-              const prices  = marketPrices.listings.map(l => l.price)
-              const minP    = Math.min(...prices)
-              const maxP    = Math.max(...prices)
-              const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
-              return (
-                <div className="mt-3 pt-3 border-t border-[#F3F4F6] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="font-heading font-bold text-[12px] text-[#111827]">Harga pasaran semasa</p>
-                    <p className="font-body text-[10px] text-[#9CA3AF]">
-                      {daysAgo === 0 ? 'Hari ini' : `${daysAgo} hari lalu`}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {marketPrices.listings.map((l, i) => (
-                      <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
-                        className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A] hover:bg-[#E0F2F1] transition-colors">
-                        RM{fmt(l.price)}
-                      </a>
-                    ))}
-                  </div>
-                  {minP !== maxP && (
-                    <p className="font-body text-[11px] text-[#6B7280]">
-                      Julat: RM{fmt(minP)} – RM{fmt(maxP)} ({prices.length} kereta serupa)
-                    </p>
-                  )}
-                  <a href={marketPrices.searchUrl} target="_blank" rel="noopener noreferrer"
-                    className="font-body text-[11px] text-[#064E4A] hover:underline">
-                    Lihat semua listing di Mudah →
-                  </a>
-                </div>
-              )
-            })()}
-
-            {/* Market search links — shown when no cached listings yet */}
+            {/* Market search links — shown when no cached listings */}
             {vehicleData?.make && (() => {
-              const mk = vehicleData.make ?? ''
+              const mk           = vehicleData.make ?? ''
               const modelKeyword = vehicleData.model
                 ? (vehicleData.model.match(/^\d+/)?.[0] ?? vehicleData.model.split(/[\s-]/)[0] ?? vehicleData.model)
                 : ''
-              const yr          = vehicleData.registrationYear ?? ''
-              const searchTerm  = [mk, modelKeyword, yr].filter(Boolean).join(' ')
-              const mudahUrl    = `https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(searchTerm)}`
-              const carlistUrl  = `https://www.carlist.my/used-cars-for-sale/${mk.toLowerCase().replace(/\s+/g, '-')}/${modelKeyword.toLowerCase().replace(/\s+/g, '-')}${yr ? `/year-${yr}` : ''}/malaysia`
-              const hasLive     = (marketPrices?.listings.length ?? 0) > 0
-              return (
-                <div className={`flex items-center justify-between ${hasLive ? 'mt-1' : 'mt-3 pt-3 border-t border-[#F3F4F6]'}`}>
-                  <p className="font-body text-[12px] text-[#6B7280]">
-                    {hasLive ? 'Semak lebih lanjut:' : 'Tengok harga jualan serupa di pasaran'}
-                  </p>
+              const yr       = vehicleData.registrationYear ?? ''
+              const searchTm = [mk, modelKeyword, yr].filter(Boolean).join(' ')
+              const mudahUrl = `https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(searchTm)}`
+              const carlistUrl = `https://www.carlist.my/used-cars-for-sale/${mk.toLowerCase().replace(/\s+/g, '-')}/${modelKeyword.toLowerCase().replace(/\s+/g, '-')}${yr ? `/year-${yr}` : ''}/malaysia`
+              const hasLive  = (marketPrices?.listings.length ?? 0) > 0
+              return !hasLive ? (
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F3F4F6]">
+                  <p className="font-body text-[12px] text-[#6B7280]">Tengok harga jualan serupa di pasaran</p>
                   <div className="flex items-center gap-3">
-                    {!hasLive && (
-                      <a href={mudahUrl} target="_blank" rel="noopener noreferrer"
-                        className="font-heading font-bold text-[12px] text-[#064E4A]">
-                        Mudah →
-                      </a>
-                    )}
+                    <a href={mudahUrl} target="_blank" rel="noopener noreferrer"
+                      className="font-heading font-bold text-[12px] text-[#064E4A]">Mudah →</a>
                     <a href={carlistUrl} target="_blank" rel="noopener noreferrer"
-                      className="font-heading font-bold text-[12px] text-[#064E4A]">
-                      Carlist →
-                    </a>
+                      className="font-heading font-bold text-[12px] text-[#064E4A]">Carlist →</a>
                   </div>
                 </div>
-              )
+              ) : null
             })()}
+          </div>
+        )
+      })()}
 
+      {/* Negotiation script — shown when market data and vehicle info available */}
+      {hasMarketData && priceVerdict && vehicleData?.make && (() => {
+        const make     = String(vehicleData.make ?? '')
+        const model    = String(vehicleData.model ?? '')
+        const year     = String(vehicleData.registrationYear ?? '')
+        const carName  = [make, model, year].filter(Boolean).join(' ')
+        const scripts = {
+          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah buat semakan harga pasaran — unit serupa dijual dalam julat RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nBoleh kita buat harga RM${fmt(marketMax!)} atau kurang? Saya serius nak beli kalau harga okay.`,
+          slightly_high: `Salam, saya berminat dengan ${carName} tuan/puan.\n\nSaya dah semak harga pasaran — boleh kita bincang harga sikit?\n\nSaya target dalam RM${fmt(marketMax!)}. Boleh consider?`,
+          fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak okay. Apa harga terbaik yang boleh tuan/puan offer?`,
+          good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak menarik. Bila boleh saya datang tengok kereta?`,
+        }
+        const script = scripts[priceVerdict]
+        return (
+          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+            <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
+              Skrip Tawar Harga
+            </p>
+            <div className="bg-[#F9FAFB] rounded-lg p-4 mb-3">
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed whitespace-pre-line">
+                {script}
+              </p>
+            </div>
+            <CopyButton text={script} />
           </div>
         )
       })()}
