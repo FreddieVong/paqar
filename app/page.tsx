@@ -40,14 +40,39 @@ export default async function HomePage() {
               <span className="text-[#064E4A]">Kereta Terpakai</span>
             </h1>
 
-            <p className="font-body text-[15px] md:text-[16px] text-[#6B7280] leading-relaxed mb-8 md:mb-0">
+            <p className="font-body text-[15px] md:text-[16px] text-[#6B7280] leading-relaxed mb-4 md:mb-0">
               Tahu sama ada harga penjual mahal, wajar, atau berbaloi sebelum bayar deposit.
             </p>
 
           </div>
 
           {/* Checking card */}
-          <OverpricedCheckerForm />
+          <div className="space-y-4">
+            <OverpricedCheckerForm />
+            {/* Compact free vs paid comparison — light, subordinate */}
+            <div className="grid grid-cols-2 gap-4 px-1">
+              <div>
+                <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#15803D] mb-1.5">Percuma</p>
+                <ul className="space-y-1">
+                  {['Verdict harga', 'Berdasarkan kereta serupa', 'Tanpa daftar akaun'].map(t => (
+                    <li key={t} className="flex items-start gap-1.5 font-body text-[11px] text-[#6B7280]">
+                      <span className="text-[#15803D] flex-shrink-0">✓</span>{t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#B45309] mb-1.5">Laporan RM12</p>
+                <ul className="space-y-1">
+                  {['Harga pasaran sebenar', 'Listing kereta serupa', 'Data JPJ rasmi', 'Skrip tawar harga'].map(t => (
+                    <li key={t} className="flex items-start gap-1.5 font-body text-[11px] text-[#6B7280]">
+                      <span className="text-[#B45309] flex-shrink-0">✓</span>{t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
