@@ -49,7 +49,7 @@ POST handler. Input: `{ brand, model, year, askingPrice }`.
 
 1. Call `getCachedMarketPrices(brand, model, year)` — already normalises to lowercase
 2. **Cache miss:** fire `fetchAndCacheMarketPrices` non-blocking → return `{ hasData: false }`
-3. **Cache hit:** compute verdict from prices array → return `{ hasData: true, verdict, listingCount }`
+3. **Cache hit:** if `listings.length < 3`, treat as no-data → return `{ hasData: false }`. Otherwise compute verdict → return `{ hasData: true, verdict, listingCount }`
 
 Response **never includes** marketMin, marketMax, or individual listing prices.
 
@@ -105,6 +105,9 @@ Clicking "Ubah →" restores the full form pre-filled with the current values an
 No-data card (neutral `#F9FAFB / #E5E7EB`):  
 "Data pasaran belum tersedia" — "Kami belum ada data untuk model ini. Laporan penuh ada harga pasaran terkini terus dari Mudah."
 
+**Listing count shown on all verdict cards** (trust signal):  
+`"Berdasarkan {listingCount} kereta serupa di pasaran"` — small grey text below verdict copy.
+
 CTA subtext varies by verdict:
 - overpriced / slightly_high: "Harga sebenar · Skrip rundingan · Data JPJ"
 - fair_price / good_deal / no_data: "Data JPJ · Soalan penjual · Checklist deposit"
@@ -124,9 +127,12 @@ Appears below verdict copy in all states (including no-data). Styled to match re
 
 The inner white area is a focusable `<input>` field. `toUpperCase()` on change. `maxLength=10`.
 
-On submit: reuses existing `POST /api/checks` logic from `DualCheckForm` → redirects to `/check/[id]?claim_token=...`
+**Below the plate input**, one line of explainer copy (small, grey):  
+`"Nombor plat diperlukan untuk semak data JPJ dan saman rasmi"`
 
-**Note (v1 simplification):** The asking price entered in the free checker is NOT pre-filled into the PaymentForm. The user enters it again in the paid flow. Acceptable for MVP — they're motivated enough after seeing the verdict. Pre-fill can be added in v2 via URL param.
+On submit: reuses existing `POST /api/checks` logic → redirects to `/check/[id]?claim_token=...&asking_price={askingPrice}`
+
+The `/check/[id]` page passes `asking_price` from the URL to `<PaymentForm>` as a default, pre-filling the optional price field. User can still change it.
 
 ### Modified: `app/page.tsx`
 - Replace `<DualCheckForm />` with `<OverpricedCheckerForm />`
@@ -184,10 +190,12 @@ On submit: reuses existing `POST /api/checks` logic from `DualCheckForm` → red
 
 ## Verification
 
-1. Enter Toyota Vios 2020 RM59,000 → if cached, verdict shows with correct badge and no RM numbers visible
-2. Enter an obscure model → no-data card shows, scraper fires in background (check Railway logs)
-3. Inspect `/api/price-check` response: confirm `marketMin`/`marketMax`/`listings` absent
-4. Enter plate in verdict card → redirects to `/check/[id]` → ReportCTA → PaymentForm works
-5. "Ubah →" resets form to editable state
-6. All 4 verdict badge colours render correctly on mobile
-7. Plate input: typing auto-uppercases, "FRONT" label visible, MAL + flag on green strip
+1. Enter Toyota Vios 2020 RM59,000 → verdict shows correct badge, listing count visible ("Berdasarkan X kereta serupa"), no RM numbers
+2. Enter model with <3 listings → no-data card (same as cache miss)
+3. Enter obscure model → no-data card, scraper fires in background (check Railway logs)
+4. Inspect `/api/price-check` response: confirm `marketMin`/`marketMax`/`listings` absent
+5. Enter plate → redirect includes `asking_price` param → PaymentForm price field pre-filled
+6. "Ubah →" restores form pre-filled with previous values
+7. Plate explainer copy visible: "Nombor plat diperlukan untuk semak data JPJ dan saman rasmi"
+8. All 4 verdict colours render correctly on mobile
+9. Plate input: auto-uppercase, "FRONT" italic, MAL + flag on green strip
