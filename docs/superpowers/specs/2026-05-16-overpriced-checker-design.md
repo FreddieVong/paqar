@@ -106,7 +106,9 @@ No-data card (neutral `#F9FAFB / #E5E7EB`):
 "Data pasaran belum tersedia" — "Kami belum ada data untuk model ini. Laporan penuh ada harga pasaran terkini terus dari Mudah."
 
 **Listing count shown on all verdict cards** (trust signal):  
-`"Berdasarkan {listingCount} kereta serupa di pasaran"` — small grey text below verdict copy.
+`"Berdasarkan {listingCount} kereta serupa."` — small grey text below verdict copy.
+
+**CTA button (all verdict states):** `"Unlock Laporan Penuh — RM12"` (amber `#FACC15`, dark text `#111827`)
 
 CTA subtext varies by verdict:
 - overpriced / slightly_high: "Harga sebenar · Skrip rundingan · Data JPJ"
@@ -127,8 +129,8 @@ Appears below verdict copy in all states (including no-data). Styled to match re
 
 The inner white area is a focusable `<input>` field. `toUpperCase()` on change. `maxLength=10`.
 
-**Below the plate input**, one line of explainer copy (small, grey):  
-`"Nombor plat diperlukan untuk semak data JPJ dan saman rasmi"`
+**Below the plate input**, one line combining label + purpose:  
+`"Masukkan nombor plat untuk unlock data JPJ, soalan penjual dan skrip tawar."`
 
 On submit: reuses existing `POST /api/checks` logic → redirects to `/check/[id]?claim_token=...&asking_price={askingPrice}`
 
