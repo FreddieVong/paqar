@@ -1,6 +1,6 @@
 import Link           from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
-import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
 import { getCheckCount } from '@/lib/db/checks'
 
 export default async function HomePage() {
@@ -36,22 +36,19 @@ export default async function HomePage() {
             </div>
 
             <h1 className="font-heading font-extrabold text-[32px] md:text-[40px] leading-[1.08] tracking-[-0.03em] text-[#111827] mb-3">
-              Semak Sebelum<br />
-              <span className="text-[#064E4A]">Bayar Deposit</span>
+              Semak Harga<br />
+              <span className="text-[#064E4A]">Kereta Terpakai</span>
             </h1>
 
             <p className="font-body text-[15px] md:text-[16px] text-[#6B7280] leading-relaxed mb-8 md:mb-0">
-              Masukkan nombor plat kereta yang nak dibeli. Paqar bantu anda semak sebelum bayar deposit.
+              Masukkan maklumat kereta yang nak dibeli. Tahu sama ada harga penjual berpatutan sebelum bayar deposit.
             </p>
 
-            <p className="hidden md:block font-body text-[13px] text-[#6B7280] mt-6">
-              Panduan saman percuma · Laporan penuh RM12 · Tanpa daftar akaun
-            </p>
           </div>
 
           {/* Checking card */}
           <div className="space-y-3">
-            <DualCheckForm />
+            <OverpricedCheckerForm />
             {/* Free vs RM12 split */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-4">
@@ -59,7 +56,7 @@ export default async function HomePage() {
                   Percuma
                 </p>
                 <ul className="space-y-1.5">
-                  {['Panduan semak saman PDRM/JPJ', 'Cara minta penjual tunjuk bukti', 'Soalan yang perlu tanya penjual'].map(t => (
+                  {['Verdict harga pasaran', 'Tahu sama ada perlu tawar lebih', 'Tanpa daftar akaun'].map(t => (
                     <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
                       <span className="text-[#15803D] flex-shrink-0">✓</span>{t}
                     </li>
@@ -129,18 +126,18 @@ export default async function HomePage() {
             {[
               {
                 n: '1',
-                title: 'Masukkan nombor plat',
-                desc:  'Tiada IC diperlukan. Masukkan plat kereta yang anda nak beli.',
+                title: 'Masukkan maklumat kereta',
+                desc:  'Jenama, model, tahun, dan harga yang penjual minta.',
               },
               {
                 n: '2',
-                title: 'Semak data kenderaan',
-                desc:  'Kami tunjukkan data rasmi JPJ, panduan saman PDRM, dan apa yang perlu buat.',
+                title: 'Dapat verdict harga',
+                desc:  'Kami semak harga pasaran dan tunjukkan sama ada berpatutan.',
               },
               {
                 n: '3',
-                title: 'Buat keputusan dengan yakin',
-                desc:  'Dapatkan laporan lengkap — harga pasaran, soalan untuk penjual, skrip rundingan.',
+                title: 'Unlock laporan penuh',
+                desc:  'Masukkan nombor plat untuk data JPJ, skrip rundingan, dan soalan penjual.',
               },
             ].map((step, i) => (
               <div key={step.n} className="flex gap-4 pb-6 relative">
