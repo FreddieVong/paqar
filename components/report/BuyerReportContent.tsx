@@ -140,11 +140,13 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         let marketVerdict: { text: string; color: string } | null = null
         if (hasMarketVerdict) {
           if (askingPriceRm! < marketMin!) {
-            marketVerdict = { text: 'Di bawah harga pasaran — harga yang baik', color: 'text-[#064E4A]' }
+            marketVerdict = { text: 'Harga Bagus — boleh terus buat keputusan', color: 'text-[#064E4A]' }
           } else if (askingPriceRm! <= marketMax!) {
-            marketVerdict = { text: 'Dalam julat harga pasaran — boleh cuba tawar', color: 'text-[#064E4A]' }
+            marketVerdict = { text: 'Harga Wajar — boleh cuba tawar sedikit', color: 'text-[#064E4A]' }
+          } else if (askingPriceRm! <= marketMax! * 1.08) {
+            marketVerdict = { text: 'Sedikit Tinggi — ada ruang untuk tawar lebih', color: 'text-[#B45309]' }
           } else {
-            marketVerdict = { text: 'Di atas harga pasaran — ada ruang untuk tawar lebih', color: 'text-[#B45309]' }
+            marketVerdict = { text: 'Harga Terlalu Tinggi — tawar agresif atau cari kereta lain', color: 'text-[#DC2626]' }
           }
         }
 
