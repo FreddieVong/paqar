@@ -146,7 +146,7 @@ export default async function HomePage() {
           </div>
           <a
             href="/#semak"
-            className="block w-full md:w-auto bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 text-center hover:bg-[#FDE047] transition-colors whitespace-nowrap"
+            className="block w-full md:w-auto bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 text-center hover:bg-[#FDE047] transition-colors"
           >
             Semak Kereta Yang Nak Dibeli →
           </a>

@@ -27,7 +27,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#FEF2F2]',
     cardBorder: 'border-[#FECACA]',
     copy:       (b, m, y) => `Harga penjual nampak jauh lebih tinggi dari pasaran untuk ${b} ${m} ${y}. Laporan penuh tunjukkan berapa beza dan cara tawar dengan yakin.`,
-    ctaSub:     'Harga sebenar · Skrip rundingan · Data JPJ',
+    ctaSub:     'Harga baru · Harga pasaran sebenar · Rekod JPJ',
   },
   slightly_high: {
     badge:      'Sedikit Tinggi',
@@ -35,7 +35,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#FFFBEB]',
     cardBorder: 'border-[#FDE68A]',
     copy:       (b, m, y) => `Harga sedikit di atas julat pasaran untuk ${b} ${m} ${y}. Ada ruang untuk tawar turun — skrip rundingan ada dalam laporan penuh.`,
-    ctaSub:     'Harga sebenar · Skrip rundingan · Data JPJ',
+    ctaSub:     'Harga baru · Harga pasaran sebenar · Rekod JPJ',
   },
   fair_price: {
     badge:      'Harga Wajar',
@@ -43,7 +43,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#F0FDF4]',
     cardBorder: 'border-[#BBF7D0]',
     copy:       () => 'Harga dalam julat pasaran. Sebelum setuju, semak data JPJ dan tanya soalan yang betul kepada penjual.',
-    ctaSub:     'Data JPJ · Soalan penjual · Checklist deposit',
+    ctaSub:     'Harga baru · Harga pasaran sebenar · Rekod JPJ',
   },
   good_deal: {
     badge:      'Harga Bagus',
@@ -51,7 +51,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#F0FAFA]',
     cardBorder: 'border-[#99D4D1]',
     copy:       () => 'Harga di bawah julat pasaran — nampak berbaloi. Semak data JPJ dan rekod penjual dulu sebelum bayar deposit.',
-    ctaSub:     'Data JPJ · Soalan penjual · Checklist deposit',
+    ctaSub:     'Harga baru · Harga pasaran sebenar · Rekod JPJ',
   },
 }
 
@@ -273,24 +273,24 @@ export function OverpricedCheckerForm() {
         {/* Malaysian plate input */}
         <form onSubmit={handlePlateSubmit} className="space-y-2">
           <div className="bg-[#1a1a1a] rounded-[7px] p-[5px]">
-            <div className="bg-white rounded-[3px] flex items-stretch overflow-hidden min-h-[48px]">
+            <div className="bg-[#1a1a1a] rounded-[3px] flex items-stretch overflow-hidden min-h-[48px]">
               <div className="w-7 bg-[#4CAF50] flex flex-col items-center justify-between py-1 flex-shrink-0">
                 <span className="text-[12px] leading-none">🇲🇾</span>
-                <span className="font-heading font-black text-[7px] text-[#1a1a1a] tracking-[.04em]">MAL</span>
+                <span className="font-heading font-black text-[7px] text-white tracking-[.04em]">MAL</span>
               </div>
               <div className="flex-1 min-w-0 flex items-center justify-center px-2 relative">
                 <input
                   type="text"
                   value={plate}
                   onChange={e => setPlate(e.target.value.toUpperCase())}
-                  placeholder="VS 2277"
+                  placeholder="WWW 1234"
                   maxLength={10}
                   required
                   aria-label="Nombor plat kenderaan"
-                  className="w-full bg-transparent border-none outline-none text-center font-black text-[18px] sm:text-[22px] tracking-[.1em] sm:tracking-[.16em] text-[#1a1a1a] uppercase placeholder:text-[#D1D5DB] placeholder:font-normal placeholder:tracking-[.08em] placeholder:text-[14px] sm:placeholder:text-[16px]"
+                  className="w-full bg-transparent border-none outline-none text-center font-black text-[18px] sm:text-[22px] tracking-[.1em] sm:tracking-[.16em] text-white uppercase placeholder:text-white/30 placeholder:font-normal placeholder:tracking-[.08em] placeholder:text-[14px] sm:placeholder:text-[16px]"
                   style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
                 />
-                <span className="absolute bottom-1 right-2 text-[6px] text-[#9CA3AF] italic pointer-events-none">FRONT</span>
+                <span className="absolute bottom-1 right-2 text-[6px] text-white/40 italic pointer-events-none">FRONT</span>
               </div>
             </div>
             <p className="text-center text-[7px] font-black text-white tracking-[.18em] uppercase py-0.5">
@@ -312,7 +312,7 @@ export function OverpricedCheckerForm() {
         </form>
 
         <p className="font-body text-[9px] text-[#9CA3AF] text-center mt-2">
-          {noData ? 'Data JPJ · Soalan penjual · Checklist deposit' : cfg!.ctaSub}
+          {'Harga baru · Harga pasaran sebenar · Rekod JPJ'}
         </p>
       </div>
     </div>
