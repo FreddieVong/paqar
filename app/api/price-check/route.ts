@@ -13,6 +13,7 @@ const schema = z.object({
 type Verdict = 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
 
 function computeVerdict(askingPrice: number, prices: number[]): Verdict {
+  if (prices.length === 0) return 'fair_price'
   const lo = Math.min(...prices)
   const hi = Math.max(...prices)
   if (askingPrice < lo)         return 'good_deal'
@@ -29,11 +30,15 @@ export async function POST(request: NextRequest) {
 
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Invalid input', details: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    )
   }
 
   const { brand, model, year, askingPrice } = parsed.data
 
+  // DB layer uses 'make' — same value, different naming convention
   const cached = await getCachedMarketPrices(brand, model, year).catch(() => null)
 
   if (!cached || cached.listings.length < 3) {
