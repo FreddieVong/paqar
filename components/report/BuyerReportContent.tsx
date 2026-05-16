@@ -2,6 +2,7 @@ import type { Check, CheckResult } from '@/types/domain'
 import type { SourceData, SamanRecord } from '@/types/api'
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import { InspectionCTA } from './InspectionCTA'
+import { InsuranceCTA }  from './InsuranceCTA'
 
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
 type VehicleSource = typeof VEHICLE_SOURCES[number]
@@ -508,6 +509,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
       </div>
 
       <InspectionCTA plate={plate} />
+      <InsuranceCTA />
 
       {/* Brand footnote — visible in screenshots and shares */}
       <p className="font-body text-[11px] text-[#D1D5DB] text-center pt-2">

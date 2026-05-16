@@ -15,7 +15,7 @@ export default async function HomePage() {
 
       {/* ── HERO ── */}
       <section id="semak" className="bg-white px-5 pt-10 pb-12 md:pt-16 md:pb-20 overflow-x-hidden">
-        <div className="max-w-5xl mx-auto md:grid md:grid-cols-2 md:gap-14 md:items-center">
+        <div className="max-w-5xl mx-auto md:grid md:grid-cols-2 md:gap-14 md:items-start">
 
           {/* Copy */}
           <div>
