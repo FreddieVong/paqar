@@ -27,7 +27,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#FEF2F2]',
     cardBorder: 'border-[#FECACA]',
     copy:       (b, m, y) => `Harga penjual nampak jauh lebih tinggi dari pasaran untuk ${b} ${m} ${y}. Laporan penuh tunjukkan berapa beza dan cara tawar dengan yakin.`,
-    ctaSub:     'Harga baru · Harga pasaran sebenar · Rekod JPJ',
+    ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
   slightly_high: {
     badge:      'Sedikit Tinggi',
@@ -35,7 +35,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#FFFBEB]',
     cardBorder: 'border-[#FDE68A]',
     copy:       (b, m, y) => `Harga sedikit di atas julat pasaran untuk ${b} ${m} ${y}. Ada ruang untuk tawar turun — skrip rundingan ada dalam laporan penuh.`,
-    ctaSub:     'Harga baru · Harga pasaran sebenar · Rekod JPJ',
+    ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
   fair_price: {
     badge:      'Harga Wajar',
@@ -43,7 +43,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#F0FDF4]',
     cardBorder: 'border-[#BBF7D0]',
     copy:       () => 'Harga dalam julat pasaran. Sebelum setuju, semak data JPJ dan tanya soalan yang betul kepada penjual.',
-    ctaSub:     'Harga baru · Harga pasaran sebenar · Rekod JPJ',
+    ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
   good_deal: {
     badge:      'Harga Bagus',
@@ -51,7 +51,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#F0FAFA]',
     cardBorder: 'border-[#99D4D1]',
     copy:       () => 'Harga di bawah julat pasaran — nampak berbaloi. Semak data JPJ dan rekod penjual dulu sebelum bayar deposit.',
-    ctaSub:     'Harga baru · Harga pasaran sebenar · Rekod JPJ',
+    ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
 }
 
@@ -312,7 +312,7 @@ export function OverpricedCheckerForm() {
         </form>
 
         <p className="font-body text-[9px] text-[#9CA3AF] text-center mt-2">
-          {'Harga baru · Harga pasaran sebenar · Rekod JPJ'}
+          {'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan'}
         </p>
       </div>
     </div>
