@@ -10,9 +10,7 @@ export function ReportCTA({ plate }: Props) {
         Laporan Pembeli
       </p>
       <p className="font-heading font-extrabold text-[20px] text-white mb-3">
-        {plate
-          ? `Untuk kereta ${plate}, kami akan tunjukkan:`
-          : 'Untuk kenderaan ini, kami akan tunjukkan:'}
+        {plate ? `Untuk kereta ${plate}:` : 'Untuk kenderaan ini:'}
       </p>
 
       <ul className="space-y-1.5">

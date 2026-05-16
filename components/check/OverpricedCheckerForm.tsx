@@ -291,7 +291,7 @@ export function OverpricedCheckerForm() {
             </p>
           </div>
           <p className="font-body text-[9px] text-[#9CA3AF] text-center leading-relaxed">
-            Masukkan nombor plat untuk unlock harga pasaran sebenar, data JPJ dan skrip rundingan.
+            Diperlukan untuk semak rekod JPJ kereta ini.
           </p>
           {plateError && (
             <p className="font-body text-[12px] text-[#DC2626] text-center">{plateError}</p>

@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter }    from 'next/navigation'
 import { Progress }     from '@/components/ui/progress'
 import { Button }       from '@/components/ui/button'
-import { SamanGuide }    from './SamanGuide'
 import { ReportCTA }     from './ReportCTA'
 import { InspectionCTA } from '@/components/report/InspectionCTA'
 import { PaymentForm }   from '@/components/report/PaymentForm'
@@ -118,7 +117,6 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
       {/* After check: compact saman message + personalised report CTA */}
       {isComplete && (
         <>
-          <SamanGuide />
           <ReportCTA plate={plate} />
           <PaymentForm
             checkId={checkId}

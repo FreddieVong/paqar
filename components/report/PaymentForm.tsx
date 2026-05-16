@@ -41,7 +41,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
         Laporan Pembeli Lengkap — RM12
       </p>
       <p className="font-body text-[12px] text-[#6B7280] mb-4">
-        Semak harga pasaran · Data kenderaan JPJ · Soalan untuk penjual · Skrip rundingan
+        Bayar sekali · Akses terus
       </p>
       <form onSubmit={handleSubmit} className="space-y-3.5">
 
