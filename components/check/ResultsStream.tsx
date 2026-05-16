@@ -76,7 +76,6 @@ export function ResultsStream({ checkId, claimToken, plate }: Props) {
     TOTAL_SOURCES
   )
   const isComplete  = check?.status === 'complete'
-  const showSaveCta = isComplete && check?.user_id == null && authedUser === null
   const showDocsCta = isComplete && authedUser != null
 
   // results kept for completedCount but not rendered as cards
@@ -125,7 +124,7 @@ export function ResultsStream({ checkId, claimToken, plate }: Props) {
 
       {/* Email capture for non-authed users */}
       {isComplete && authedUser === null && (
-        <div className="border-[1.5px] border-dashed border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
+        <div className="border border-[#E5E7EB] rounded-xl p-4 bg-white">
           {captureState === 'done' ? (
             <>
               <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Terima kasih!</p>
@@ -167,26 +166,6 @@ export function ResultsStream({ checkId, claimToken, plate }: Props) {
         </div>
       )}
 
-      {/* Secondary CTAs */}
-      {showSaveCta && (
-        <div className="border-[1.5px] border-dashed border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
-          <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">
-            Simpan semakan ini
-          </p>
-          <p className="font-body text-[12px] text-[#6B7280] mb-3">
-            Buat akaun percuma untuk akses semula semakan ini pada bila-bila masa.
-          </p>
-          <Button
-            onClick={() => {
-              const next = `/check/${checkId}?claim_token=${claimToken}`
-              router.push(`/auth?claim_token=${claimToken}&next=${encodeURIComponent(next)}`)
-            }}
-            className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[14px]"
-          >
-            Simpan &amp; buat akaun
-          </Button>
-        </div>
-      )}
 
       {showDocsCta && (
         <div className="border-[1.5px] border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">

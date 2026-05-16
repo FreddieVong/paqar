@@ -5,7 +5,7 @@ import { getCheckCount } from '@/lib/db/checks'
 
 export default async function HomePage() {
   const checkCount = await getCheckCount().catch(() => 0)
-  const countDisplay = checkCount > 100
+  const countDisplay = checkCount > 20
     ? `${(Math.floor(checkCount / 10) * 10).toLocaleString()}+`
     : null
 
@@ -41,7 +41,7 @@ export default async function HomePage() {
             </h1>
 
             <p className="font-body text-[15px] md:text-[16px] text-[#6B7280] leading-relaxed mb-8 md:mb-0">
-              Masukkan nombor plat kereta yang anda nak beli. Paqar bantu anda faham harga, risiko, soalan untuk penjual, dan langkah sebelum bayar deposit.
+              Masukkan nombor plat kereta yang nak dibeli. Paqar bantu anda semak sebelum bayar deposit.
             </p>
 
             <p className="hidden md:block font-body text-[13px] text-[#6B7280] mt-6">
@@ -59,7 +59,7 @@ export default async function HomePage() {
                   Percuma
                 </p>
                 <ul className="space-y-1.5">
-                  {['Panduan semak saman PDRM/JPJ', 'Cara minta penjual tunjuk bukti', 'Persediaan asas pembeli'].map(t => (
+                  {['Panduan semak saman PDRM/JPJ', 'Cara minta penjual tunjuk bukti', 'Soalan yang perlu tanya penjual'].map(t => (
                     <li key={t} className="flex gap-2 font-body text-[12px] text-[#374151]">
                       <span className="text-[#15803D] flex-shrink-0">✓</span>{t}
                     </li>
@@ -99,7 +99,6 @@ export default async function HomePage() {
             {[
               { title: 'Panduan Semak Saman', desc: 'Cara semak PDRM & JPJ secara rasmi, step by step', badge: 'Percuma',     badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
               { title: 'Laporan Pembeli',    desc: 'Harga pasaran, soalan penjual, skrip rundingan',    badge: 'RM12',        badgeStyle: 'bg-[#FEF9C3] text-[#B45309]' },
-              { title: 'Sejarah Kemalangan', desc: 'Rekod kemalangan & tuntutan insurans',              badge: 'Akan Datang', badgeStyle: 'bg-[#F3F4F6] text-[#6B7280]' },
             ].map((item) => (
               <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-4 md:p-5">
                 <p className="font-heading font-bold text-[15px] text-[#111827] mb-0.5">{item.title}</p>
@@ -135,8 +134,8 @@ export default async function HomePage() {
               },
               {
                 n: '2',
-                title: 'Dapatkan panduan saman',
-                desc:  'Kami tunjukkan cara semak saman PDRM & JPJ secara rasmi, plus apa yang perlu buat.',
+                title: 'Semak data kenderaan',
+                desc:  'Kami tunjukkan data rasmi JPJ, panduan saman PDRM, dan apa yang perlu buat.',
               },
               {
                 n: '3',
@@ -161,31 +160,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── KENAPA PAQAR ── */}
-      <section className="bg-[#F8FAF7] px-5 py-12 md:py-16">
-        <div className="max-w-5xl mx-auto">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
-            Kenapa Paqar
-          </p>
-          <h2 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827] mb-8">
-            Dibina untuk pengguna Malaysia
-          </h2>
-
-          <div className="flex flex-col md:grid md:grid-cols-3 gap-3">
-            {[
-              { title: 'Mudah',   desc: 'Masukkan plat, ikut panduan, buat keputusan. Tiada jargon teknikal.' },
-              { title: 'Jujur',   desc: 'Kami cakap terus apa yang boleh dan tidak boleh disemak secara automatik.' },
-              { title: 'Selamat', desc: 'Data anda disulitkan dengan AES-256. Kami tidak simpan tanpa izin.' },
-            ].map((item) => (
-              <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[16px] p-5">
-                <p className="font-heading font-bold text-[16px] text-[#111827] mb-1">{item.title}</p>
-                <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── BELI KERETA TERPAKAI? ── */}
       <section className="bg-[#111827] px-5 py-10">
         <div className="max-w-5xl mx-auto md:flex md:items-center md:justify-between md:gap-8">
@@ -202,7 +176,7 @@ export default async function HomePage() {
           </div>
           <a
             href="/#semak"
-            className="block w-full md:w-auto bg-[#DC2626] text-white font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 text-center hover:bg-[#B91C1C] transition-colors whitespace-nowrap"
+            className="block w-full md:w-auto bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 text-center hover:bg-[#FDE047] transition-colors whitespace-nowrap"
           >
             Semak Kereta Yang Nak Dibeli →
           </a>

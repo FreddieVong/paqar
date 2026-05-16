@@ -1,7 +1,6 @@
 import type { Check, CheckResult } from '@/types/domain'
 import type { SourceData, SamanRecord } from '@/types/api'
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
-import { InsuranceCTA }  from './InsuranceCTA'
 import { InspectionCTA } from './InspectionCTA'
 
 const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
@@ -51,13 +50,22 @@ function getVerdict(vehicleResults: CheckResult[]): 'low' | 'caution' | 'high' |
   return 'low'
 }
 
-const SELLER_QUESTIONS = [
-  'Boleh tunjukkan geran asal kenderaan ini?',
-  'Ada pinjaman bank yang masih aktif? Boleh tunjukkan surat penyelesaian?',
-  'Kenapa kereta ini dijual?',
-  'Ada rekod servis atau resit bengkel?',
-  'Pernah terlibat dalam kemalangan atau ada tuntutan insurans?',
-  'Boleh bawa ke bengkel untuk pemeriksaan sebelum saya buat keputusan?',
+const SELLER_QUESTIONS: { q: string; script?: string }[] = [
+  {
+    q: 'Boleh tunjukkan geran asal kenderaan ini?',
+    script: 'Hi, boleh tunjukkan geran asal kenderaan ini? Nak pastikan nama pemilik betul sebelum bayar deposit.',
+  },
+  {
+    q: 'Ada pinjaman bank yang masih aktif? Boleh tunjukkan surat penyelesaian?',
+    script: 'Hi, ada loan bank yang masih aktif untuk kereta ini? Kalau ada, boleh tunjukkan surat settlement?',
+  },
+  { q: 'Kenapa kereta ini dijual?' },
+  { q: 'Ada rekod servis atau resit bengkel?' },
+  {
+    q: 'Pernah terlibat dalam kemalangan atau ada tuntutan insurans?',
+    script: 'Hi, kereta ini pernah terlibat dalam accident atau ada tuntutan insurans? Tolong confirmkan.',
+  },
+  { q: 'Boleh bawa ke bengkel untuk pemeriksaan sebelum saya buat keputusan?' },
 ]
 
 interface VehicleData {
@@ -113,9 +121,12 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
       {(vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {
         const val        = vehicleData?.valuation
         const wmNewPrice = val?.wmNewPrice ?? null
-        const valVariant = val?.family && val?.variant
+        const valVariantRaw = val?.family && val?.variant
           ? `${val.family} ${val.variant}`.trim()
           : (val?.family ?? null)
+        const valVariant = valVariantRaw
+          ? valVariantRaw.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+          : null
         const pct = wmNewPrice && askingPriceRm != null
           ? Math.round((1 - askingPriceRm / wmNewPrice) * 100)
           : null
@@ -248,10 +259,12 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                     {hasLive ? 'Semak lebih lanjut:' : 'Tengok harga jualan serupa di pasaran'}
                   </p>
                   <div className="flex items-center gap-3">
-                    <a href={mudahUrl} target="_blank" rel="noopener noreferrer"
-                      className="font-heading font-bold text-[12px] text-[#064E4A]">
-                      Mudah →
-                    </a>
+                    {!hasLive && (
+                      <a href={mudahUrl} target="_blank" rel="noopener noreferrer"
+                        className="font-heading font-bold text-[12px] text-[#064E4A]">
+                        Mudah →
+                      </a>
+                    )}
                     <a href={carlistUrl} target="_blank" rel="noopener noreferrer"
                       className="font-heading font-bold text-[12px] text-[#064E4A]">
                       Carlist →
@@ -381,12 +394,22 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               </div>
             </div>
           )}
-          {SELLER_QUESTIONS.map((q, i) => (
-            <div key={i} className="flex gap-3">
-              <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">
-                {hasPdrmJpjUnverified ? i + 2 : i + 1}.
-              </span>
-              <p className="font-body text-[13px] text-[#374151] leading-relaxed">{q}</p>
+          {SELLER_QUESTIONS.map((item, i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex gap-3">
+                <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">
+                  {hasPdrmJpjUnverified ? i + 2 : i + 1}.
+                </span>
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">{item.q}</p>
+              </div>
+              {item.script && (
+                <div className="ml-6 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2.5">
+                  <p className="font-body text-[10px] text-[#9CA3AF] uppercase tracking-[.05em] mb-1">Mesej untuk penjual — salin dan hantar</p>
+                  <p className="font-body text-[12px] text-[#374151] italic leading-relaxed">
+                    &ldquo;{item.script}&rdquo;
+                  </p>
+                </div>
+              )}
             </div>
           ))}
           {samanCount > 0 && (
@@ -482,12 +505,7 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         )}
       </div>
 
-      {/* Insurance referral */}
-      {/* Workshop inspection — pre-decision (before insurance) */}
       <InspectionCTA plate={plate} />
-
-      {/* Insurance — post-decision */}
-      <InsuranceCTA />
 
       {/* Brand footnote — visible in screenshots and shares */}
       <p className="font-body text-[11px] text-[#D1D5DB] text-center pt-2">

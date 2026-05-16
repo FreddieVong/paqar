@@ -8,6 +8,7 @@ import { decrypt }                                   from '@/lib/crypto'
 import { sendReceiptEmail }                          from '@/lib/email/receipt'
 import { AnalyticsEvent }                            from '@/components/layout/AnalyticsEvent'
 import { WhatsAppShareButton }                       from '@/components/report/WhatsAppShareButton'
+import { InsuranceCTA }                              from '@/components/report/InsuranceCTA'
 
 interface Props {
   params:       { checkId: string }
@@ -88,6 +89,8 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
               href={`https://wa.me/?text=${encodeURIComponent(`Laporan Paqar untuk ${plate} sedia!\n\nLihat laporan di sini:\nhttps://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}\n\nJuga boleh tempah inspection sebelum bayar deposit.`)}`}
             />
           )}
+
+          <InsuranceCTA />
 
           <p className="font-body text-[11px] text-[#9CA3AF]">
             Resit akan dihantar ke e-mel anda.
