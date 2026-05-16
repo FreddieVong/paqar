@@ -47,31 +47,8 @@ export default async function HomePage() {
           </div>
 
           {/* Checking card */}
-          <div className="space-y-4">
+          <div>
             <OverpricedCheckerForm />
-            {/* Compact free vs paid comparison — light, subordinate */}
-            <div className="grid grid-cols-2 gap-4 px-1">
-              <div>
-                <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#15803D] mb-1.5">Percuma</p>
-                <ul className="space-y-1">
-                  {['Verdict harga', 'Berdasarkan kereta serupa', 'Tanpa daftar akaun'].map(t => (
-                    <li key={t} className="flex items-start gap-1.5 font-body text-[11px] text-[#6B7280]">
-                      <span className="text-[#15803D] flex-shrink-0">✓</span>{t}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#B45309] mb-1.5">Laporan RM12</p>
-                <ul className="space-y-1">
-                  {['Harga pasaran sebenar', 'Listing kereta serupa', 'Data JPJ rasmi', 'Skrip tawar harga'].map(t => (
-                    <li key={t} className="flex items-start gap-1.5 font-body text-[11px] text-[#6B7280]">
-                      <span className="text-[#B45309] flex-shrink-0">✓</span>{t}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
           </div>
         </div>
       </section>

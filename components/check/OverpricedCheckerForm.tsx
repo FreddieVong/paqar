@@ -222,7 +222,10 @@ export function OverpricedCheckerForm() {
       <div className="space-y-3">
         <CollapsedSummary brand={brand} model={model} year={year} askingPrice={askingPrice} onReset={resetForm} />
         <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-8 text-center">
-          <p className="font-heading font-bold text-[14px] text-[#6B7280]">🔍 Semak harga pasaran…</p>
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-7 h-7 rounded-full border-[3px] border-[#E5E7EB] border-t-[#064E4A] animate-spin" />
+            <p className="font-heading font-bold text-[14px] text-[#6B7280]">Semak harga pasaran…</p>
+          </div>
         </div>
       </div>
     )
@@ -236,12 +239,17 @@ export function OverpricedCheckerForm() {
   return (
     <div className="space-y-3">
       <CollapsedSummary brand={brand} model={model} year={year} askingPrice={askingPrice} onReset={resetForm} />
-      <div className={`border rounded-[14px] p-5 ${noData ? 'bg-[#F9FAFB] border-[#E5E7EB]' : `${cfg!.cardBg} ${cfg!.cardBorder}`}`}>
+      <div className={`border rounded-[14px] p-5 overflow-hidden ${noData ? 'bg-[#F9FAFB] border-[#E5E7EB]' : `${cfg!.cardBg} ${cfg!.cardBorder}`}`}>
         {noData ? (
           <>
-            <p className="font-heading font-bold text-[14px] text-[#374151] mb-1">
-              {retried ? 'Data pasaran belum tersedia' : 'Sedang mengumpul data…'}
-            </p>
+            {retried ? (
+              <p className="font-heading font-bold text-[14px] text-[#374151] mb-1">Data pasaran belum tersedia</p>
+            ) : (
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-4 h-4 rounded-full border-2 border-[#D1D5DB] border-t-[#6B7280] animate-spin flex-shrink-0" />
+                <p className="font-heading font-bold text-[14px] text-[#374151]">Sedang mengumpul data…</p>
+              </div>
+            )}
             <p className="font-body text-[13px] text-[#6B7280] mb-4 leading-relaxed">
               {retried
                 ? 'Kami belum ada data untuk model ini. Laporan penuh ada harga pasaran terkini terus dari Mudah.'
@@ -270,7 +278,7 @@ export function OverpricedCheckerForm() {
                 <span className="text-[12px] leading-none">🇲🇾</span>
                 <span className="font-heading font-black text-[7px] text-[#1a1a1a] tracking-[.04em]">MAL</span>
               </div>
-              <div className="flex-1 flex items-center justify-center px-2 relative">
+              <div className="flex-1 min-w-0 flex items-center justify-center px-2 relative">
                 <input
                   type="text"
                   value={plate}
@@ -279,7 +287,7 @@ export function OverpricedCheckerForm() {
                   maxLength={10}
                   required
                   aria-label="Nombor plat kenderaan"
-                  className="w-full bg-transparent border-none outline-none text-center font-black text-[22px] tracking-[.16em] text-[#1a1a1a] uppercase placeholder:text-[#D1D5DB] placeholder:font-normal placeholder:tracking-[.1em] placeholder:text-[16px]"
+                  className="w-full bg-transparent border-none outline-none text-center font-black text-[18px] sm:text-[22px] tracking-[.1em] sm:tracking-[.16em] text-[#1a1a1a] uppercase placeholder:text-[#D1D5DB] placeholder:font-normal placeholder:tracking-[.08em] placeholder:text-[14px] sm:placeholder:text-[16px]"
                   style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
                 />
                 <span className="absolute bottom-1 right-2 text-[6px] text-[#9CA3AF] italic pointer-events-none">FRONT</span>
@@ -324,8 +332,8 @@ function CollapsedSummary({
   }
   return (
     <div className="flex items-center justify-between py-1">
-      <div>
-        <p className="font-heading font-bold text-[13px] text-[#374151]">{brand} {model}</p>
+      <div className="min-w-0">
+        <p className="font-heading font-bold text-[13px] text-[#374151] truncate">{brand} {model}</p>
         <p className="font-body text-[11px] text-[#6B7280]">{year} · RM {fmt(askingPrice)}</p>
       </div>
       <button
