@@ -65,7 +65,7 @@ export default async function HomePage() {
             </h2>
           </div>
 
-          <div className="flex flex-col md:grid md:grid-cols-3 gap-3">
+          <div className="flex flex-col md:grid md:grid-cols-2 gap-3">
             {[
               { title: 'Panduan Semak Saman', desc: 'Cara semak PDRM & JPJ secara rasmi, step by step', badge: 'Percuma',     badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
               { title: 'Laporan Pembeli',    desc: 'Harga pasaran, soalan penjual, skrip rundingan',    badge: 'RM12',        badgeStyle: 'bg-[#FEF9C3] text-[#B45309]' },
@@ -110,7 +110,7 @@ export default async function HomePage() {
               {
                 n: '3',
                 title: 'Unlock laporan penuh',
-                desc:  'Masukkan nombor plat untuk data JPJ, skrip rundingan, dan soalan penjual.',
+                desc:  'Masukkan nombor plat untuk data JPJ, harga sebenar dan skrip rundingan.',
               },
             ].map((step, i) => (
               <div key={step.n} className="flex gap-4 pb-6 relative">
