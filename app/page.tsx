@@ -29,7 +29,7 @@ export default async function HomePage() {
               {countDisplay && (
                 <div className="inline-flex items-center gap-1.5 bg-[#F8FAF7] border border-[#E5E7EB] rounded-full px-3 py-1.5">
                   <span className="font-heading font-bold text-[12px] text-[#374151]">
-                    {countDisplay} kereta dah disemak
+                    {countDisplay} semakan harga dibuat
                   </span>
                 </div>
               )}
@@ -41,7 +41,7 @@ export default async function HomePage() {
             </h1>
 
             <p className="font-body text-[15px] md:text-[16px] text-[#6B7280] leading-relaxed mb-8 md:mb-0">
-              Masukkan maklumat kereta yang nak dibeli. Tahu sama ada harga penjual berpatutan sebelum bayar deposit.
+              Tahu sama ada harga penjual mahal, wajar, atau berbaloi sebelum bayar deposit.
             </p>
 
           </div>
