@@ -1,7 +1,7 @@
 const LOCKED_SECTIONS = [
   {
     title: 'Perbandingan Harga',
-    desc:  'Adakah harga yang diminta berpatutan?',
+    desc:  'Harga baru asal + harga pasaran semasa',
     badge: null,
   },
   {
