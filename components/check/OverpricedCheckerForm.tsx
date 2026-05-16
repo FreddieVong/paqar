@@ -143,8 +143,9 @@ export function OverpricedCheckerForm() {
       <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.07)]">
         <form onSubmit={handleCheck} className="space-y-3">
           <div>
-            <label className={LABEL_CLS}>Jenama</label>
+            <label htmlFor="oc-brand" className={LABEL_CLS}>Jenama</label>
             <select
+              id="oc-brand"
               value={brand} onChange={e => setBrand(e.target.value)} required
               className={INPUT_CLS}
             >
@@ -153,22 +154,25 @@ export function OverpricedCheckerForm() {
             </select>
           </div>
           <div>
-            <label className={LABEL_CLS}>Model</label>
+            <label htmlFor="oc-model" className={LABEL_CLS}>Model</label>
             <input
+              id="oc-model"
               type="text" value={model} onChange={e => setModel(e.target.value)}
               placeholder="cth: Vios, Axia, X5" required className={INPUT_CLS}
             />
           </div>
           <div>
-            <label className={LABEL_CLS}>Tahun</label>
+            <label htmlFor="oc-year" className={LABEL_CLS}>Tahun</label>
             <input
+              id="oc-year"
               type="number" value={year} onChange={e => setYear(e.target.value)}
               placeholder="cth: 2020" min={2000} max={2026} required className={INPUT_CLS}
             />
           </div>
           <div>
-            <label className={LABEL_CLS}>Harga Diminta (RM)</label>
+            <label htmlFor="oc-price" className={LABEL_CLS}>Harga Diminta (RM)</label>
             <input
+              id="oc-price"
               type="number" value={askingPrice} onChange={e => setAskingPrice(e.target.value)}
               placeholder="cth: 59000" min={1000} max={2000000} required className={INPUT_CLS}
             />
@@ -246,6 +250,7 @@ export function OverpricedCheckerForm() {
                   placeholder="VS 2277"
                   maxLength={10}
                   required
+                  aria-label="Nombor plat kenderaan"
                   className="w-full bg-transparent border-none outline-none text-center font-black text-[22px] tracking-[.16em] text-[#1a1a1a] uppercase placeholder:text-[#D1D5DB] placeholder:font-normal placeholder:tracking-[.1em] placeholder:text-[16px]"
                   style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
                 />

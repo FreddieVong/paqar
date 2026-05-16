@@ -1,11 +1,12 @@
 
 interface Props {
-  checkId:    string
-  claimToken: string
-  plate?:     string
+  checkId:      string
+  claimToken:   string
+  plate?:       string
+  askingPrice?: string
 }
 
-export function ReportCTA({ checkId, claimToken, plate }: Props) {
+export function ReportCTA({ checkId, claimToken, plate, askingPrice }: Props) {
   return (
     <div className="bg-[#064E4A] rounded-[16px] p-5">
       <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-white/60 mb-2">
@@ -32,7 +33,7 @@ export function ReportCTA({ checkId, claimToken, plate }: Props) {
       </ul>
 
       <a
-        href={`/laporan-pembeli/${checkId}?claim_token=${claimToken}`}
+        href={`/laporan-pembeli/${checkId}?claim_token=${claimToken}${askingPrice ? `&asking_price=${askingPrice}` : ''}`}
         className="block w-full bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-[#FDE047] transition-colors"
       >
         Dapatkan Laporan — RM12 →

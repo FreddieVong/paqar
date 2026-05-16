@@ -17,12 +17,13 @@ const POLL_TIMEOUT_MS  = 90_000
 const TOTAL_SOURCES    = 4
 
 interface Props {
-  checkId:    string
-  claimToken: string
-  plate?:     string
+  checkId:      string
+  claimToken:   string
+  plate?:       string
+  askingPrice?: string
 }
 
-export function ResultsStream({ checkId, claimToken, plate }: Props) {
+export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props) {
   const router = useRouter()
   const [check,        setCheck]        = useState<Check | null>(null)
   const [results,      setResults]      = useState<CheckResult[]>([])
@@ -117,7 +118,7 @@ export function ResultsStream({ checkId, claimToken, plate }: Props) {
       {isComplete && (
         <>
           <SamanGuide />
-          <ReportCTA checkId={checkId} claimToken={claimToken} plate={plate} />
+          <ReportCTA checkId={checkId} claimToken={claimToken} plate={plate} askingPrice={askingPrice} />
           <InspectionCTA plate={plate} />
         </>
       )}

@@ -56,7 +56,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
             onChange={(e) => setPrice(e.target.value)}
             placeholder="contoh: 45000"
             min="1000"
-            max="500000"
+            max="2000000"
             className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
                        font-heading font-semibold text-[15px] text-[#111827]
                        placeholder:text-[#D1D5DB] placeholder:font-normal

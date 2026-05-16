@@ -7,7 +7,7 @@ import { decrypt }       from '@/lib/crypto'
 
 interface Props {
   params:       { id: string }
-  searchParams: { claim_token?: string }
+  searchParams: { claim_token?: string; asking_price?: string }
 }
 
 export default async function CheckPage({ params, searchParams }: Props) {
@@ -29,7 +29,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
       <Nav />
       <Shell>
         <div className="pt-4">
-          <ResultsStream checkId={params.id} claimToken={claimToken} plate={plate} />
+          <ResultsStream checkId={params.id} claimToken={claimToken} plate={plate} askingPrice={searchParams.asking_price} />
         </div>
       </Shell>
     </>

@@ -7,7 +7,10 @@ import type { Verdict }                                       from '@/types/api'
 const schema = z.object({
   brand:       z.string().min(1).max(50),
   model:       z.string().min(1).max(50),
-  year:        z.string().regex(/^\d{4}$/),
+  year:        z.string().regex(/^\d{4}$/).refine(
+    y => { const n = parseInt(y, 10); return n >= 1990 && n <= new Date().getFullYear() + 1 },
+    { message: 'Year out of range' }
+  ),
   askingPrice: z.number().int().min(1000).max(2_000_000),
 })
 
