@@ -219,7 +219,7 @@ export function OverpricedCheckerForm() {
   // ── Loading ────────────────────────────────────────────────────────────
   if (formState === 'loading') {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 w-full overflow-x-hidden">
         <CollapsedSummary brand={brand} model={model} year={year} askingPrice={askingPrice} onReset={resetForm} />
         <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-8 text-center">
           <div className="flex flex-col items-center gap-3">
@@ -237,7 +237,7 @@ export function OverpricedCheckerForm() {
   const noData         = !hasDataResult || !cfg
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 w-full overflow-x-hidden">
       <CollapsedSummary brand={brand} model={model} year={year} askingPrice={askingPrice} onReset={resetForm} />
       <div className={`border rounded-[14px] p-5 overflow-hidden ${noData ? 'bg-[#F9FAFB] border-[#E5E7EB]' : `${cfg!.cardBg} ${cfg!.cardBorder}`}`}>
         {noData ? (
