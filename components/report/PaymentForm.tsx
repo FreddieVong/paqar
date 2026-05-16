@@ -5,13 +5,14 @@ import { initiateBuyerReport }     from '@/app/laporan-pembeli/[checkId]/_action
 import { analytics }               from '@/lib/analytics'
 
 interface Props {
-  checkId:    string
-  claimToken: string
+  checkId:             string
+  claimToken:          string
+  defaultAskingPrice?: number
 }
 
-export function PaymentForm({ checkId, claimToken }: Props) {
+export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) {
   const [email,    setEmail]    = useState('')
-  const [price,    setPrice]    = useState('')
+  const [price,    setPrice]    = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
   const [error,    setError]    = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 

@@ -18,7 +18,7 @@ import { AnalyticsEvent }             from '@/components/layout/AnalyticsEvent'
 
 interface Props {
   params:       { checkId: string }
-  searchParams: { claim_token?: string }
+  searchParams: { claim_token?: string; asking_price?: string }
 }
 
 export default async function BuyerReportPage({ params, searchParams }: Props) {
@@ -145,7 +145,11 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
 
           <LockedReportPreview />
 
-          <PaymentForm checkId={params.checkId} claimToken={claimToken} />
+          <PaymentForm
+            checkId={params.checkId}
+            claimToken={claimToken}
+            defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
+          />
         </div>
       </Shell>
     </>
