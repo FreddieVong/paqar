@@ -24,22 +24,24 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
 
   // Mark report paid. Returns true if this page won the pending→paid race.
   // If so, send receipt here — webhook may arrive after and find status already 'paid'.
+  let buyerEmail: string | undefined
   if (billId && billplzPaid === 'true') {
-    const wasJustPaid = await markReportPaid(billId).catch(() => false)
-    if (wasJustPaid) {
-      getBuyerReportByBillId(billId).then(report => {
-        if (!report) return
-        const reportUrl = claimToken
-          ? `https://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}`
-          : `https://paqar.my/laporan-pembeli/${params.checkId}`
-        sendReceiptEmail({
-          product:     'buyer_report',
-          toEmail:     report.buyer_email,
-          amountCents: report.amount_cents,
-          paidAt:      new Date().toISOString(),
-          plate:       null,
-          reportUrl,
-        }).catch(() => {})
+    const [wasJustPaid, report] = await Promise.all([
+      markReportPaid(billId).catch(() => false),
+      getBuyerReportByBillId(billId).catch(() => null),
+    ])
+    buyerEmail = report?.buyer_email ?? undefined
+    if (wasJustPaid && report) {
+      const reportUrl = claimToken
+        ? `https://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}`
+        : `https://paqar.my/laporan-pembeli/${params.checkId}`
+      sendReceiptEmail({
+        product:     'buyer_report',
+        toEmail:     report.buyer_email,
+        amountCents: report.amount_cents,
+        paidAt:      new Date().toISOString(),
+        plate:       null,
+        reportUrl,
       }).catch(() => {})
     }
   }
@@ -53,7 +55,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
       <Shell>
         <div className="pt-10 pb-10 max-w-sm mx-auto space-y-5 text-center">
           {billplzPaid === 'true' && <AnalyticsEvent event="payment_completed" />}
-          {billplzPaid === 'true' && <GoogleAdsConversion />}
+          {billplzPaid === 'true' && <GoogleAdsConversion email={buyerEmail} />}
           <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[16px] p-6">
             <Image
               src="/paqar-logo.png"
