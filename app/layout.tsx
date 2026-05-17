@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, DM_Sans } from 'next/font/google'
 import './globals.css'
 import { AnalyticsProvider } from '@/components/layout/AnalyticsProvider'
+import { GoogleTagScript } from '@/components/layout/GoogleTagScript'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ms" className={`${plusJakartaSans.variable} ${dmSans.variable}`}>
       <body className="bg-[#F8FAF7] font-body antialiased">
+        <GoogleTagScript />
         <AnalyticsProvider>{children}</AnalyticsProvider>
       </body>
     </html>

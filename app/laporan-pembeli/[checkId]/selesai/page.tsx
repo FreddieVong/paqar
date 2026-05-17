@@ -7,6 +7,7 @@ import { markReportPaid, getBuyerReportByBillId }    from '@/lib/db/buyer-report
 import { decrypt }                                   from '@/lib/crypto'
 import { sendReceiptEmail }                          from '@/lib/email/receipt'
 import { AnalyticsEvent }                            from '@/components/layout/AnalyticsEvent'
+import { GoogleAdsConversion }                       from '@/components/layout/GoogleAdsConversion'
 import { WhatsAppShareButton }                       from '@/components/report/WhatsAppShareButton'
 
 interface Props {
@@ -52,6 +53,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
       <Shell>
         <div className="pt-10 pb-10 max-w-sm mx-auto space-y-5 text-center">
           {billplzPaid === 'true' && <AnalyticsEvent event="payment_completed" />}
+          {billplzPaid === 'true' && <GoogleAdsConversion />}
           <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[16px] p-6">
             <Image
               src="/paqar-logo.png"
