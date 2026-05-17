@@ -5,8 +5,8 @@ import { useEffect } from 'react'
 declare global {
   interface Window {
     __gtagLoaded?: boolean
-    dataLayer: unknown[]
-    gtag: (...args: unknown[]) => void
+    dataLayer: IArguments[]
+    gtag?: (...args: unknown[]) => void
   }
 }
 
@@ -16,9 +16,15 @@ export function GoogleTagScript() {
     window.__gtagLoaded = true
 
     window.dataLayer = window.dataLayer || []
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer.push(args)
+
+    // Must use `arguments` object, not rest params.
+    // gtag.js identifies queued commands by the callee property on IArguments.
+    // Arrays lack callee and are silently ignored when gtag.js processes the dataLayer.
+    window.gtag = function (..._a: unknown[]) {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer.push(arguments)
     }
+
     window.gtag('js', new Date())
     window.gtag('config', 'AW-18167043406')
 

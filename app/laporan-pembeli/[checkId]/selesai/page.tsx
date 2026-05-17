@@ -17,8 +17,8 @@ interface Props {
 
 export default async function LaporanSelesaiPage({ params, searchParams }: Props) {
   const claimToken   = searchParams['claim_token']
-  const billId       = searchParams['billplz[id]']
-  const billplzPaid  = searchParams['billplz[paid]']
+  const billId       = searchParams['billplz[id]']      ?? searchParams['billplz%5Bid%5D']
+  const billplzPaid  = searchParams['billplz[paid]']    ?? searchParams['billplz%5Bpaid%5D']
 
   if (!claimToken) redirect('/')
 
