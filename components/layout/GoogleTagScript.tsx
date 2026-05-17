@@ -2,18 +2,25 @@
 
 import { useEffect } from 'react'
 
+declare global {
+  interface Window {
+    __gtagLoaded?: boolean
+    dataLayer: unknown[]
+    gtag: (...args: unknown[]) => void
+  }
+}
+
 export function GoogleTagScript() {
   useEffect(() => {
-    if ((window as any).__gtagLoaded) return
-    ;(window as any).__gtagLoaded = true
+    if (window.__gtagLoaded) return
+    window.__gtagLoaded = true
 
-    ;(window as any).dataLayer = (window as any).dataLayer || []
-    ;(window as any).gtag = function gtag() {
-      // eslint-disable-next-line prefer-rest-params
-      ;(window as any).dataLayer.push(arguments)
+    window.dataLayer = window.dataLayer || []
+    window.gtag = function gtag(...args: unknown[]) {
+      window.dataLayer.push(args)
     }
-    ;(window as any).gtag('js', new Date())
-    ;(window as any).gtag('config', 'AW-18167043406')
+    window.gtag('js', new Date())
+    window.gtag('config', 'AW-18167043406')
 
     const script = document.createElement('script')
     script.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18167043406'
