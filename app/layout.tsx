@@ -19,12 +19,12 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Paqar — Semak Sebelum Bayar Deposit',
-  description: 'Paqar bantu anda faham risiko kereta sebelum beli — panduan semak saman rasmi, anggaran harga, soalan penjual, dan skrip rundingan.',
+  title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
+  description: 'Tahu sama ada harga penjual berpatutan sebelum bayar deposit. Semak harga pasaran kereta terpakai, data JPJ, dan skrip rundingan — percuma dan RM12.',
   metadataBase: new URL('https://paqar.my'),
   openGraph: {
-    title: 'Paqar — Semak Sebelum Bayar Deposit',
-    description: 'Paqar bantu anda faham risiko kereta sebelum beli — panduan semak saman rasmi, anggaran harga, soalan penjual, dan skrip rundingan.',
+    title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
+    description: 'Tahu sama ada harga penjual berpatutan sebelum bayar deposit. Semak harga pasaran kereta terpakai, data JPJ, dan skrip rundingan — percuma dan RM12.',
     url: 'https://paqar.my',
     siteName: 'Paqar',
     locale: 'ms_MY',
@@ -33,8 +33,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Paqar — Semak Sebelum Bayar Deposit',
-    description: 'Panduan semak saman rasmi + laporan pembeli kereta terpakai. Semak sebelum bayar deposit.',
+    title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
+    description: 'Masukkan kereta yang nak dibeli — dapat verdict harga pasaran dalam masa saat. Data JPJ dan skrip tawar dalam laporan penuh RM12.',
     images: ['/api/og'],
   },
   alternates: {

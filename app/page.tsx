@@ -67,8 +67,8 @@ export default async function HomePage() {
 
           <div className="flex flex-col md:grid md:grid-cols-2 gap-3">
             {[
-              { title: 'Panduan Semak Saman', desc: 'Cara semak PDRM & JPJ secara rasmi, step by step', badge: 'Percuma',     badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
-              { title: 'Laporan Pembeli',    desc: 'Harga pasaran, soalan penjual, skrip rundingan',    badge: 'RM12',        badgeStyle: 'bg-[#FEF9C3] text-[#B45309]' },
+              { title: 'Semak Harga Pasaran', desc: 'Verdict harga — mahal, wajar, atau berbaloi untuk kereta tu', badge: 'Percuma', badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
+              { title: 'Laporan Pembeli',   desc: 'Harga sebenar, data JPJ, soalan penjual, skrip rundingan',  badge: 'RM12',     badgeStyle: 'bg-[#FEF9C3] text-[#B45309]' },
             ].map((item) => (
               <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-4 md:p-5">
                 <p className="font-heading font-bold text-[15px] text-[#111827] mb-0.5">{item.title}</p>
@@ -141,7 +141,7 @@ export default async function HomePage() {
               Nak beli kereta terpakai? Semak dahulu.
             </h2>
             <p className="font-body text-[14px] text-white/70 leading-relaxed">
-              Penjual tidak selalu dedahkan semua risiko. Laporan Pembeli Paqar bantu anda semak saman, nilai harga pasaran, dan sedia soalan sebelum bayar deposit.
+              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda tahu sama ada harga berpatutan, semak data JPJ, dan sedia skrip tawar sebelum bayar deposit.
             </p>
           </div>
           <a
@@ -166,11 +166,11 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { href: '/panduan-semak-saman',         title: 'Cara semak saman kereta',          desc: 'PDRM & JPJ step by step' },
-              { href: '/cara-beli-kereta-terpakai',   title: 'Cara beli kereta terpakai',        desc: '6 langkah dari semak hingga deposit' },
-              { href: '/checklist-beli-kereta-terpakai', title: 'Checklist sebelum bayar deposit', desc: 'Tandakan semua ini dulu' },
-              { href: '/risiko-beli-kereta-terpakai', title: 'Risiko beli kereta terpakai',      desc: '7 risiko dan cara elaknya' },
-              { href: '/cara-semak-geran-kereta',     title: 'Cara semak geran kereta',          desc: 'Apa perlu disemak dalam VOC' },
+              { href: '/cara-beli-kereta-terpakai',      title: 'Cara beli kereta terpakai',        desc: '6 langkah dari semak hingga deposit' },
+              { href: '/checklist-beli-kereta-terpakai', title: 'Checklist sebelum bayar deposit',  desc: 'Tandakan semua ini dulu' },
+              { href: '/risiko-beli-kereta-terpakai',    title: 'Risiko beli kereta terpakai',      desc: '7 risiko dan cara elaknya' },
+              { href: '/panduan-semak-saman',            title: 'Cara semak saman kereta',          desc: 'PDRM & JPJ step by step' },
+              { href: '/cara-semak-geran-kereta',        title: 'Cara semak geran kereta',          desc: 'Apa perlu disemak dalam VOC' },
             ].map((guide) => (
               <Link
                 key={guide.href}
@@ -208,7 +208,7 @@ export default async function HomePage() {
               },
               {
                 q: 'Adakah semakan ini percuma?',
-                a: 'Ya, panduan semak saman adalah percuma. Laporan pembeli lengkap (harga pasaran, soalan penjual, skrip rundingan) tersedia pada RM12.',
+                a: 'Ya, semakan harga pasaran adalah percuma — masukkan kereta dan dapat verdict terus. Laporan pembeli lengkap (harga sebenar, data JPJ, skrip rundingan) tersedia pada RM12.',
               },
               {
                 q: 'Berapa lama keputusan mengambil masa?',
@@ -240,11 +240,11 @@ export default async function HomePage() {
             Semak sebelum<br />bayar deposit
           </h2>
           <p className="font-body text-[14px] text-white/70 mb-7">
-            Tiada pendaftaran.
+            Verdict harga percuma.
             <span className="inline-block w-1.5 h-1.5 bg-[#FACC15] rounded-full mx-2 align-middle" />
-            Tiada bayaran.
+            Laporan penuh RM12.
             <span className="inline-block w-1.5 h-1.5 bg-[#FACC15] rounded-full mx-2 align-middle" />
-            Panduan saman + laporan pembeli.
+            Tanpa daftar akaun.
           </p>
           <Link
             href="/"
