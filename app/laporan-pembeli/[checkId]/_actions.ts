@@ -1,10 +1,16 @@
 'use server'
 
-import { createBill }        from '@/lib/billplz'
-import { createBuyerReport } from '@/lib/db/buyer-reports'
-import { getCheck }          from '@/lib/db/checks'
-import { env }               from '@/lib/env'
-import { createClient }      from '@/lib/supabase/server'
+import { createBill }             from '@/lib/billplz'
+import { createBuyerReport,
+         setVehicleApiData }      from '@/lib/db/buyer-reports'
+import { getCheck }               from '@/lib/db/checks'
+import { fetchAndCacheMarketPrices } from '@/lib/db/market-prices'
+import { getValuationByNvic }     from '@/lib/db/vehicle-valuations'
+import { env }                    from '@/lib/env'
+import { decrypt }                from '@/lib/crypto'
+import { buildMarketModelKeyword } from '@/lib/market-keyword'
+import { lookupVehicle }          from '@/lib/vehicleapi'
+import { createClient }           from '@/lib/supabase/server'
 
 export async function initiateBuyerReport(params: {
   checkId:        string
@@ -41,16 +47,42 @@ export async function initiateBuyerReport(params: {
       collectionId: env.BILLPLZ_COLLECTION_ID_BUYER ?? env.BILLPLZ_COLLECTION_ID,
     })
 
-    await createBuyerReport({
+    const report = await createBuyerReport({
       checkId:       params.checkId,
       buyerEmail:    params.buyerEmail,
       billplzBillId: bill.id,
       askingPriceRm: params.askingPriceRm,
     })
 
+    // Pre-warm vehicle data and market prices during the Billplz payment window (~30-60s).
+    // By the time the user lands on the report page, the data is already cached.
+    const plate = decrypt(row.check.plate_encrypted as string).toUpperCase()
+    void prewarmReportData(plate, report.id)
+
     return { error: null, billUrl: bill.url }
   } catch (err) {
     console.error('[initiateBuyerReport]', err)
     return { error: 'Ralat membuat pembayaran — sila cuba semula' }
+  }
+}
+
+async function prewarmReportData(plate: string, reportId: string): Promise<void> {
+  try {
+    const apiResult = await lookupVehicle(plate)
+    if (!apiResult) return
+
+    const valuation = await getValuationByNvic(apiResult.nvic, {
+      make:  apiResult.make,
+      year:  apiResult.registrationYear,
+      model: apiResult.model,
+    }).catch(() => null)
+
+    const vehicleData = { ...apiResult, valuation: valuation ?? null }
+    await setVehicleApiData(reportId, vehicleData)
+
+    const mo = buildMarketModelKeyword(apiResult.model, apiResult.description ?? '')
+    fetchAndCacheMarketPrices(apiResult.make, mo, apiResult.registrationYear).catch(() => {})
+  } catch {
+    // non-fatal — report loads lazily on first view if this fails
   }
 }
