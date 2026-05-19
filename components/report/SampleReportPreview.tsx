@@ -1,11 +1,5 @@
 const MARKET_PRICES = ['RM38,000', 'RM41,500', 'RM43,000', 'RM46,200']
-const LOCKED_SECTIONS = ['Skrip Rundingan', 'Soalan untuk Penjual', 'Checklist Deposit']
-const VEHICLE_FIELDS = [
-  { label: 'Jenama', value: 'Perodua' },
-  { label: 'Model',  value: 'Myvi' },
-  { label: 'Tahun',  value: '2019' },
-  { label: 'Enjin',  value: '1,000cc' },
-]
+const LOCKED_SECTIONS = ['Maklumat Kenderaan', 'Skrip Rundingan', 'Soalan untuk Penjual', 'Checklist Deposit']
 
 export function SampleReportPreview() {
   return (
@@ -78,22 +72,7 @@ export function SampleReportPreview() {
         </p>
       </div>
 
-      {/* 3. Vehicle details */}
-      <div className="px-5 py-4 border-b border-[#F3F4F6]">
-        <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
-          Maklumat Kenderaan
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {VEHICLE_FIELDS.map(item => (
-            <div key={item.label} className="bg-[#F9FAFB] rounded-[10px] px-3 py-2.5">
-              <p className="font-body text-[10px] text-[#9CA3AF] mb-0.5">{item.label}</p>
-              <p className="font-heading font-bold text-[13px] text-[#111827]">{item.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 4. Locked sections */}
+      {/* 3. Locked sections */}
       {LOCKED_SECTIONS.map(title => (
         <div key={title} className="flex items-center gap-3 px-5 py-3.5 border-b border-[#F3F4F6] last:border-0 bg-[#F9FAFB]">
           <span className="text-[14px] flex-shrink-0">🔒</span>
