@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter }    from 'next/navigation'
 import { Button }       from '@/components/ui/button'
-import { ReportCTA }     from './ReportCTA'
-import { InspectionCTA } from '@/components/report/InspectionCTA'
-import { PaymentForm }   from '@/components/report/PaymentForm'
+import { ReportCTA }           from './ReportCTA'
+import { InspectionCTA }       from '@/components/report/InspectionCTA'
+import { PaymentForm }         from '@/components/report/PaymentForm'
+import { SampleReportPreview } from '@/components/report/SampleReportPreview'
 import { createClient }  from '@/lib/supabase/client'
 
 import type { Check } from '@/types/domain'
@@ -94,6 +95,10 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
   return (
     <div className="space-y-3">
       <ReportCTA plate={plate} />
+      <div>
+        <p className="font-heading font-bold text-[12px] text-[#6B7280] mb-2">Contoh laporan:</p>
+        <SampleReportPreview />
+      </div>
       <PaymentForm
         checkId={checkId}
         claimToken={claimToken}
