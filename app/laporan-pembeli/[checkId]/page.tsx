@@ -8,6 +8,7 @@ import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { SampleReportPreview }  from '@/components/report/SampleReportPreview'
+import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
 import { lookupVehicle }              from '@/lib/vehicleapi'
@@ -139,35 +140,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
 
           {isPlateFlow ? (
             <>
-              {/* Warm handoff — explain value before asking for payment */}
-              <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[16px] p-5">
-                <p className="font-heading font-bold text-[15px] text-[#111827] mb-2">
-                  Apa yang anda akan dapat
-                </p>
-                <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-4">
-                  Dengan nombor plat, Paqar boleh kenalpasti kenderaan dan jana laporan pembeli — termasuk maklumat kereta, perbandingan harga, dan panduan rundingan.
-                </p>
-                <div className="space-y-2 mb-4">
-                  {[
-                    'Maklumat kenderaan dari nombor plat (jenama, model, tahun, enjin)',
-                    'Perbandingan harga pasaran — tahu sama ada mahal atau berpatutan',
-                    'Soalan untuk tanya penjual sebelum bayar deposit',
-                    'Skrip rundingan untuk minta diskaun dengan yakin',
-                    'Checklist deposit',
-                  ].map((item) => (
-                    <div key={item} className="flex items-start gap-2">
-                      <span className="text-[#16A34A] text-[14px] flex-shrink-0 mt-0.5">✓</span>
-                      <p className="font-body text-[13px] text-[#374151]">{item}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="pt-3 border-t border-[#BBF7D0]">
-                  <p className="font-heading font-bold text-[13px] text-[#064E4A]">
-                    RM12 sekali bayar · Tiada langganan · Tiada caj tersembunyi · Hasil segera
-                  </p>
-                </div>
-              </div>
-
+              <BuyerReportPitch plate={plate} />
               <div>
                 <p className="font-heading font-bold text-[12px] text-[#6B7280] mb-2">
                   Contoh laporan:
