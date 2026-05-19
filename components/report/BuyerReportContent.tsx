@@ -93,9 +93,26 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
   const effectiveVerdict = priceVerdict ?? depreciationVerdict
   const verdictSource    = priceVerdict ? 'market' : depreciationVerdict ? 'depreciation' : null
+  const vehicleNotFound  = !vehicleData?.make
 
   return (
     <div className="space-y-5">
+
+      {/* Vehicle not found — shown when RegCheck returns null for this plate */}
+      {vehicleNotFound && (
+        <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
+          <p className="font-heading font-bold text-[14px] text-[#B45309] mb-2">
+            Maklumat kenderaan tidak dijumpai
+          </p>
+          <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+            Kami tidak dapat mengesahkan maklumat kenderaan untuk plat <strong>{plate}</strong>.
+            Ini mungkin kerana plat tidak wujud, baru didaftarkan, atau belum dalam sistem kami.
+          </p>
+          <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
+            Soalan penjual di bawah masih berguna — gunakan ia untuk tanya penjual anda.
+          </p>
+        </div>
+      )}
 
       {/* 1. Keputusan Paqar — top decision card */}
       {effectiveVerdict != null && (() => {
@@ -162,7 +179,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       })()}
 
       {/* 2. Perbandingan Harga */}
-      {(vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {
+      {!vehicleNotFound && (vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {
         const val           = vehicleData?.valuation
         const wmNewPrice    = val?.wmNewPrice ?? null
         const valVariantRaw = val?.family && val?.variant
