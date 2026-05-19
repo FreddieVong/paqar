@@ -78,6 +78,13 @@ export function OverpricedCheckerForm() {
   const [plateError,  setPlateError]  = useState<string | null>(null)
   const [retried,     setRetried]     = useState(false)
 
+  // Scroll to top when result arrives so verdict is visible from the start
+  useEffect(() => {
+    if (formState === 'result') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [formState])
+
   // Auto-retry once after 25s on no-data — background scraper takes 15-30s to populate cache
   useEffect(() => {
     if (formState !== 'result') return
