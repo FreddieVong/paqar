@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
 
-const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
+const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
   font-heading font-semibold text-[14px] text-[#111827]
   placeholder:text-[#D1D5DB] placeholder:font-normal
   focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
@@ -47,7 +47,7 @@ export function PlateCheckerForm() {
   }
 
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.07)]">
+    <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className={LABEL_CLS}>Nombor Plat</label>
@@ -96,9 +96,9 @@ export function PlateCheckerForm() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full bg-[#FACC15] hover:bg-[#FDE047] text-[#111827] font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60"
+          className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60"
         >
-          {busy ? 'Memproses…' : 'Semak Nombor Plat — RM12'}
+          {busy ? 'Memproses…' : 'Semak Nombor Plat — RM12 →'}
         </button>
         <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
           Sekali bayar · Tiada langganan · Tiada caj tersembunyi

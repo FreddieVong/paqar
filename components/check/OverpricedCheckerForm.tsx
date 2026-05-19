@@ -55,7 +55,7 @@ const VERDICT_CONFIG: Record<Verdict, {
   },
 }
 
-const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
+const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
   font-heading font-semibold text-[14px] text-[#111827]
   placeholder:text-[#D1D5DB] placeholder:font-normal
   focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
@@ -164,7 +164,7 @@ export function OverpricedCheckerForm() {
   // ── Form (idle / error) ────────────────────────────────────────────────
   if (formState === 'idle' || formState === 'error') {
     return (
-      <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.07)]">
+      <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
         <form onSubmit={handleCheck} className="space-y-3">
           <div>
             <label htmlFor="oc-brand" className={LABEL_CLS}>Jenama</label>
@@ -298,9 +298,9 @@ export function OverpricedCheckerForm() {
           )}
           <button
             type="submit" disabled={plateBusy}
-            className="w-full bg-[#FACC15] hover:bg-[#FDE047] text-[#111827] font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center transition-colors disabled:opacity-60"
+            className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center transition-colors disabled:opacity-60"
           >
-            {plateBusy ? 'Memproses…' : 'Unlock Laporan Penuh — RM12'}
+            {plateBusy ? 'Memproses…' : 'Unlock Laporan Penuh — RM12 →'}
           </button>
         </form>
 

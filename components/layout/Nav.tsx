@@ -19,24 +19,24 @@ export async function Nav() {
             priority
           />
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Link
             href="/panduan"
-            className="font-heading font-semibold text-[13px] text-[#6B7280] hover:text-[#064E4A] transition-colors px-2 py-1.5"
+            className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
           >
             Panduan
           </Link>
           {user ? (
             <Link
               href="/dashboard"
-              className="font-heading font-semibold text-[13px] text-[#064E4A] border border-[#E5E7EB] rounded-lg px-3.5 py-1.5 hover:border-[#064E4A] transition-colors"
+              className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
             >
               Dashboard
             </Link>
           ) : (
             <Link
               href="/auth"
-              className="font-heading font-semibold text-[13px] text-[#064E4A] border border-[#E5E7EB] rounded-lg px-3.5 py-1.5 hover:border-[#064E4A] transition-colors"
+              className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
             >
               Log Masuk
             </Link>

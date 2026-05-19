@@ -1,7 +1,6 @@
 import Link           from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
-import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
-import { PlateCheckerForm }      from '@/components/check/PlateCheckerForm'
+import { HomeCheckerTabs } from '@/components/check/HomeCheckerTabs'
 import { getCheckCount } from '@/lib/db/checks'
 
 export default async function HomePage() {
@@ -15,59 +14,26 @@ export default async function HomePage() {
       <Nav />
 
       {/* ── HERO ── */}
-      <section id="semak" className="bg-white px-5 pt-10 pb-12 md:pt-16 md:pb-20 overflow-x-hidden">
-        <div className="max-w-5xl mx-auto">
+      <section id="semak" className="bg-white px-5 pt-10 pb-12 md:pt-14 md:pb-16 overflow-x-hidden">
+        <div className="max-w-xl mx-auto">
 
-          {/* Headline */}
-          <div className="mb-8 md:mb-10">
-            <div className="flex flex-wrap items-center gap-2 mb-5">
-              <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.5">
-                <span className="w-2 h-2 bg-[#16A34A] rounded-full" />
-                <span className="font-heading font-bold text-[12px] text-[#15803D]">
-                  Percuma · Tanpa daftar akaun
-                </span>
-              </div>
-              {countDisplay && (
-                <div className="inline-flex items-center gap-1.5 bg-[#F8FAF7] border border-[#E5E7EB] rounded-full px-3 py-1.5">
-                  <span className="font-heading font-bold text-[12px] text-[#374151]">
-                    {countDisplay} semakan dibuat
-                  </span>
-                </div>
-              )}
+          {/* Single trust badge */}
+          <div className="mb-5">
+            <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.5">
+              <span className="w-2 h-2 bg-[#16A34A] rounded-full" />
+              <span className="font-heading font-bold text-[12px] text-[#15803D]">
+                Percuma · Tanpa daftar akaun
+              </span>
             </div>
-
-            <h1 className="font-heading font-extrabold text-[32px] md:text-[40px] leading-[1.08] tracking-[-0.03em] text-[#111827]">
-              Semak sebelum beli<br />
-              <span className="text-[#064E4A]">kereta terpakai.</span>
-            </h1>
           </div>
 
-          {/* Two entry points */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          <h1 className="font-heading font-extrabold text-[30px] md:text-[36px] leading-[1.1] tracking-[-0.03em] text-[#111827] mb-7">
+            Semak sebelum beli<br />
+            <span className="text-[#064E4A]">kereta terpakai.</span>
+          </h1>
 
-            {/* Card 1 — Primary: free price check */}
-            <div>
-              <div className="mb-3">
-                <p className="font-heading font-extrabold text-[15px] text-[#111827]">
-                  Saya tahu model kereta
-                </p>
-                <p className="font-body text-[13px] text-[#6B7280]">Semak harga — percuma</p>
-              </div>
-              <OverpricedCheckerForm />
-            </div>
+          <HomeCheckerTabs countDisplay={countDisplay} />
 
-            {/* Card 2 — Secondary: plate report */}
-            <div>
-              <div className="mb-3">
-                <p className="font-heading font-extrabold text-[15px] text-[#111827]">
-                  Saya <span className="italic">hanya</span> ada nombor plat
-                </p>
-                <p className="font-body text-[13px] text-[#6B7280]">RM12 · Laporan kenderaan + semak harga</p>
-              </div>
-              <PlateCheckerForm />
-            </div>
-
-          </div>
         </div>
       </section>
 
