@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { waitUntil } from '@vercel/functions'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { plateSchema } from '@/lib/validation/plate'
-import { icSchema }    from '@/lib/validation/ic'
 import { encrypt, hash } from '@/lib/crypto'
-import { getAdapters, withTimeout } from '@/lib/data-sources'
 import {
   createCheck,
-  setCheckRunning,
   setCheckComplete,
-  updateCheckResult,
   getCachedCheck,
   getCheckByIdempotencyKey,
 } from '@/lib/db/checks'
@@ -18,9 +13,7 @@ import { checkHasPaidReport } from '@/lib/db/buyer-reports'
 
 const requestSchema = z.object({
   plate:           plateSchema,
-  ic:              z.union([icSchema, z.literal('')]).optional().default(''),
   idempotencyKey:  z.string().uuid().optional(),
-  mode:            z.enum(['owner', 'buyer']).optional().default('owner'),
 })
 
 export async function POST(request: NextRequest) {
@@ -39,7 +32,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { plate, ic, idempotencyKey } = parsed.data
+  const { plate, idempotencyKey } = parsed.data
 
   // Idempotency check
   if (idempotencyKey) {
@@ -51,13 +44,12 @@ export async function POST(request: NextRequest) {
 
   // Cache check — skip if already paid (prevent others accessing paid report for free)
   const plateHash = hash(plate)
-  const icHash    = hash(ic)
-  const cached    = await getCachedCheck(plateHash, icHash)
+  const cached    = await getCachedCheck(plateHash)
   if (cached && !(await checkHasPaidReport(cached.id))) {
     return NextResponse.json({ checkId: cached.id, claimToken: cached.claim_token })
   }
 
-  // Create check
+  // Create check and mark complete immediately (no saman adapters to run)
   const checkId    = 'ch_' + nanoid(10)
   const claimToken = crypto.randomUUID()
   const expiresAt  = new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -67,35 +59,15 @@ export async function POST(request: NextRequest) {
       id:             checkId,
       plateEncrypted: encrypt(plate),
       plateHash,
-      icEncrypted:    encrypt(ic),
-      icHash,
       claimToken,
       idempotencyKey,
       expiresAt,
     })
+    await setCheckComplete(checkId)
   } catch (err) {
     console.error('[checks] createCheck failed', err)
     return NextResponse.json({ error: 'Failed to create check' }, { status: 500 })
   }
-
-  // Background processing — waitUntil ensures Vercel keeps the function alive
-  waitUntil(
-    (async () => {
-      try {
-        await setCheckRunning(checkId)
-        const adapters = getAdapters().map((a) => withTimeout(a, 40_000))
-        await Promise.all(
-          adapters.map(async (adapter) => {
-            const result = await adapter.check(plate, ic)
-            await updateCheckResult(checkId, result)
-          })
-        )
-        await setCheckComplete(checkId)
-      } catch (err) {
-        console.error('[checks] processing error', checkId, err)
-      }
-    })()
-  )
 
   return NextResponse.json({ checkId, claimToken }, { status: 201 })
 }

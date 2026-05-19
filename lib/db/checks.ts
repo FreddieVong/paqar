@@ -1,50 +1,25 @@
 import { createServiceClient } from '@/lib/supabase/server'
-import type { Check, CheckResult } from '@/types/domain'
-import type { SourceResult } from '@/lib/data-sources/types'
-
-const SOURCE_LABELS: Record<string, string | undefined> = {
-  pdrm:          'PDRM Saman',
-  jpj:           'JPJ Saman',
-  aes:           'AES Saman',
-  local_councils:'Local Councils',
-}
-
-const SOURCE_ORDER = ['pdrm', 'jpj', 'aes', 'local_councils']
+import type { Check } from '@/types/domain'
 
 export async function createCheck(params: {
   id: string
   plateEncrypted: string
   plateHash: string
-  icEncrypted: string
-  icHash: string
   claimToken: string
   idempotencyKey: string | undefined
   expiresAt: Date
 }): Promise<void> {
   const supabase = createServiceClient()
-
-  const { error: insertCheckError } = await supabase.from('checks').insert({
+  const { error } = await supabase.from('checks').insert({
     id:               params.id,
     plate_encrypted:  params.plateEncrypted,
     plate_hash:       params.plateHash,
-    ic_encrypted:     params.icEncrypted,
-    ic_hash:          params.icHash,
     claim_token:      params.claimToken,
     idempotency_key:  params.idempotencyKey ?? null,
     expires_at:       params.expiresAt.toISOString(),
     status:           'pending',
   })
-  if (insertCheckError) throw insertCheckError
-
-  const resultRows = SOURCE_ORDER.map((source) => ({
-    check_id: params.id,
-    source,
-    status:   'pending',
-    label:    SOURCE_LABELS[source] ?? source,
-  }))
-
-  const { error: insertResultsError } = await supabase.from('check_results').insert(resultRows)
-  if (insertResultsError) throw insertResultsError
+  if (error) throw error
 }
 
 export async function setCheckRunning(id: string): Promise<void> {
@@ -66,55 +41,24 @@ export async function setCheckComplete(id: string): Promise<void> {
   if (error) throw error
 }
 
-export async function updateCheckResult(
-  checkId: string,
-  result: SourceResult
-): Promise<void> {
-  const supabase = createServiceClient()
-  const { error } = await supabase
-    .from('check_results')
-    .update({
-      status:        result.status,
-      data:          result.data ?? null,
-      error_message: result.errorMessage,
-      checked_at:    result.checkedAt.toISOString(),
-      attempt_count: 1,
-    })
-    .eq('check_id', checkId)
-    .eq('source', result.source)
-  if (error) throw error
-}
-
 export async function getCheck(
   id: string,
   claimToken?: string
-): Promise<{ check: Check; results: CheckResult[] } | null> {
+): Promise<{ check: Check } | null> {
   const supabase = createServiceClient()
 
-  const { data: check, error: checkError } = await supabase
+  const { data: check, error } = await supabase
     .from('checks')
     .select('*')
     .eq('id', id)
     .is('deleted_at', null)
     .single()
 
-  if (checkError && checkError.code !== 'PGRST116') throw checkError
+  if (error && error.code !== 'PGRST116') throw error
   if (!check) return null
-
   if (claimToken && check.claim_token !== claimToken) return null
 
-  const { data: results, error: resultsError } = await supabase
-    .from('check_results')
-    .select('*')
-    .eq('check_id', id)
-    .order('created_at', { ascending: true })
-
-  if (resultsError) throw resultsError
-
-  return {
-    check: check as Check,
-    results: (results ?? []) as CheckResult[],
-  }
+  return { check: check as Check }
 }
 
 export async function claimCheck(
@@ -131,15 +75,13 @@ export async function claimCheck(
 }
 
 export async function getCachedCheck(
-  plateHash: string,
-  icHash: string
+  plateHash: string
 ): Promise<{ id: string; claim_token: string | null } | null> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('checks')
     .select('id, claim_token')
     .eq('plate_hash', plateHash)
-    .eq('ic_hash', icHash)
     .eq('status', 'complete')
     .gt('expires_at', new Date().toISOString())
     .not('claim_token', 'is', null)

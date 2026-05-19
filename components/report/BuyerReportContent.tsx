@@ -1,12 +1,7 @@
-import type { Check, CheckResult } from '@/types/domain'
-import type { SourceData, SamanRecord } from '@/types/api'
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import { InspectionCTA } from './InspectionCTA'
 import { InsuranceCTA }  from './InsuranceCTA'
 import { CopyButton }    from './CopyButton'
-
-const VEHICLE_SOURCES = ['pdrm', 'jpj', 'aes', 'local_councils'] as const
-type VehicleSource = typeof VEHICLE_SOURCES[number]
 
 const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const floorClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.floor(n / u) * u }
@@ -18,24 +13,6 @@ function translateCoverType(ct: string): string {
   if (lower.includes('third party'))   return 'Pihak Ketiga'
   if (lower.includes('fire'))          return 'Kebakaran & Kecurian'
   return ct
-}
-
-function getSamanTotal(results: CheckResult[]): number {
-  return results.reduce((total, r) => {
-    if (r.status !== 'hit') return total
-    const data = r.data as SourceData | null
-    if (!data || !('samans' in data)) return total
-    return total + data.samans.reduce((s: number, x: SamanRecord) => s + x.amount, 0)
-  }, 0)
-}
-
-function getSamanCount(results: CheckResult[]): number {
-  return results.reduce((count, r) => {
-    if (r.status !== 'hit') return count
-    const data = r.data as SourceData | null
-    if (!data || !('samans' in data)) return count
-    return count + data.samans.length
-  }, 0)
 }
 
 interface VehicleData {
@@ -61,28 +38,22 @@ interface VehicleData {
 }
 
 interface Props {
-  check:             Check
-  results:           CheckResult[]
   plate:             string
   askingPriceRm?:    number | null
-  claimedMileageKm?: number | null
   vehicleData?:      Record<string, unknown> | null
   marketPrices?:     CachedMarketPrices | null
 }
 
-export function BuyerReportContent({ check: _check, results, plate, askingPriceRm, claimedMileageKm: _claimedMileageKm, vehicleData: rawVehicleData, marketPrices }: Props) {
-  const vehicleData    = rawVehicleData as VehicleData | null | undefined
-  const vehicleResults = results.filter(r => VEHICLE_SOURCES.includes(r.source as VehicleSource))
-  const samanTotal     = getSamanTotal(vehicleResults)
-  const samanCount     = getSamanCount(vehicleResults)
-  const ins            = vehicleData?.insurance
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices }: Props) {
+  const vehicleData = rawVehicleData as VehicleData | null | undefined
+  const ins         = vehicleData?.insurance
 
   // Market price calculations
-  const mPrices      = marketPrices?.listings.map(l => l.price) ?? []
-  const marketMin    = mPrices.length ? Math.min(...mPrices) : null
-  const marketMax    = mPrices.length ? Math.max(...mPrices) : null
+  const mPrices       = marketPrices?.listings.map(l => l.price) ?? []
+  const marketMin     = mPrices.length ? Math.min(...mPrices) : null
+  const marketMax     = mPrices.length ? Math.max(...mPrices) : null
   const hasMarketData = askingPriceRm != null && marketMin != null && marketMax != null
-  const priceVerdict = !hasMarketData ? null
+  const priceVerdict  = !hasMarketData ? null
     : askingPriceRm! < marketMin! ? 'good_deal'    as const
     : askingPriceRm! <= marketMax! ? 'fair_price'  as const
     : askingPriceRm! <= marketMax! * 1.08 ? 'slightly_high' as const
@@ -94,24 +65,57 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
     ? roundClean(offerHigh * 0.93)
     : roundClean(offerHigh * 0.95)
 
+  // Depreciation-based verdict — fallback when no Mudah listings available.
+  // Rates are tiered by brand segment; floored at 20% of new price.
+  const wmNewPrice       = vehicleData?.valuation?.wmNewPrice ?? null
+  const regYear          = vehicleData?.registrationYear ? parseInt(vehicleData.registrationYear) : null
+  const hasDepreciation  = !hasMarketData && askingPriceRm != null && wmNewPrice != null && regYear != null
+
+  const depreciationRate = (() => {
+    const make = (vehicleData?.make ?? '').toLowerCase()
+    if (['perodua', 'proton'].includes(make))                                           return 0.90
+    if (['toyota', 'honda', 'mazda', 'nissan', 'mitsubishi', 'suzuki', 'subaru', 'kia', 'hyundai'].includes(make)) return 0.87
+    if (['bmw', 'mercedes-benz', 'audi', 'volvo', 'lexus', 'porsche', 'jaguar', 'land rover'].includes(make))      return 0.78
+    return 0.84
+  })()
+
+  const depreciationExpected = (hasDepreciation && regYear != null && wmNewPrice != null)
+    ? wmNewPrice * Math.max(0.20, Math.pow(depreciationRate, new Date().getFullYear() - regYear))
+    : null
+
+  const depreciationVerdict = (() => {
+    if (!hasDepreciation || depreciationExpected == null) return null
+    if (askingPriceRm! < depreciationExpected * 0.90)  return 'good_deal'    as const
+    if (askingPriceRm! <= depreciationExpected * 1.05)  return 'fair_price'  as const
+    if (askingPriceRm! <= depreciationExpected * 1.15)  return 'slightly_high' as const
+    return 'overpriced' as const
+  })()
+
+  const effectiveVerdict = priceVerdict ?? depreciationVerdict
+  const verdictSource    = priceVerdict ? 'market' : depreciationVerdict ? 'depreciation' : null
+
   return (
     <div className="space-y-5">
 
       {/* 1. Keputusan Paqar — top decision card */}
-      {(priceVerdict != null || samanCount > 0) && (() => {
-        const kepConfig = priceVerdict ? ({
+      {effectiveVerdict != null && (() => {
+        const kepConfig = ({
           good_deal:     { headline: 'Harga Bagus',          sub: 'Tapi semak condition dan dokumen sebelum deposit.', headlineColor: 'text-[#0891B2]', bg: 'bg-[#F0FAFA]', border: 'border-[#99D4D1]' },
           fair_price:    { headline: 'Harga Wajar',          sub: 'Teruskan, tapi semak condition dan dokumen dulu.',  headlineColor: 'text-[#064E4A]', bg: 'bg-[#F0FDF4]', border: 'border-[#BBF7D0]' },
           slightly_high: { headline: 'Sedikit Tinggi',       sub: 'Ada ruang untuk tawar sebelum setuju.',            headlineColor: 'text-[#B45309]', bg: 'bg-[#FFFBEB]', border: 'border-[#FDE68A]' },
           overpriced:    { headline: 'Harga Terlalu Tinggi', sub: 'Jangan bayar deposit dulu.',                       headlineColor: 'text-[#DC2626]', bg: 'bg-[#FEF2F2]', border: 'border-[#FECACA]' },
-        } as const)[priceVerdict] : { headline: 'Semak Sebelum Deposit', sub: 'Ada saman yang perlu dijelaskan.', headlineColor: 'text-[#DC2626]' as const, bg: 'bg-[#FEF2F2]' as const, border: 'border-[#FECACA]' as const }
+        } as const)[effectiveVerdict]
 
-        const cadangan = priceVerdict ? ({
+        const cadangan = ({
           good_deal:     'Harga nampak bagus. Fokus semak condition, dokumen dan inspection sebelum bayar deposit.',
           fair_price:    'Harga nampak wajar. Jika condition biasa, masih boleh minta sedikit kurang.',
-          slightly_high: `Target RM${fmt(offerLow)}–RM${fmt(offerHigh)}. Gunakan skrip di bawah.`,
-          overpriced:    `Target RM${fmt(offerLow)}–RM${fmt(offerHigh)}. Kalau seller tak boleh turun, cari unit lain.`,
-        } as const)[priceVerdict] : 'Minta penjual jelaskan saman dahulu.'
+          slightly_high: hasMarketData
+            ? `Target RM${fmt(offerLow)}–RM${fmt(offerHigh)}. Gunakan skrip di bawah.`
+            : 'Harga sedikit tinggi berbanding anggaran. Minta harga lebih baik sebelum setuju.',
+          overpriced: hasMarketData
+            ? `Target RM${fmt(offerLow)}–RM${fmt(offerHigh)}. Kalau seller tak boleh turun, cari unit lain.`
+            : 'Harga jauh lebih tinggi daripada anggaran. Tawar dengan yakin atau cari unit lain.',
+        } as const)[effectiveVerdict]
 
         return (
           <div className={`${kepConfig.bg} border ${kepConfig.border} rounded-[14px] p-5`}>
@@ -137,22 +141,21 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
                   <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(marketMin!)} – RM{fmt(marketMax!)}</p>
                 </div>
               )}
-              {hasMarketData && (priceVerdict === 'overpriced' || priceVerdict === 'slightly_high') && (
+              {hasMarketData && (effectiveVerdict === 'overpriced' || effectiveVerdict === 'slightly_high') && (
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[12px] text-[#6B7280]">Anggaran lebih tinggi</p>
                   <p className="font-heading font-bold text-[14px] text-[#DC2626]">RM{fmt(askingPriceRm! - marketMax!)}+</p>
-                </div>
-              )}
-              {samanCount > 0 && (
-                <div className="flex items-center justify-between">
-                  <p className="font-body text-[12px] text-[#6B7280]">Saman dijumpai</p>
-                  <p className="font-heading font-bold text-[14px] text-[#DC2626]">RM{fmt(samanTotal)}</p>
                 </div>
               )}
               <div className="pt-2 border-t border-black/10">
                 <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Cadangan</p>
                 <p className="font-heading font-bold text-[13px] text-[#111827]">{cadangan}</p>
               </div>
+              {verdictSource === 'depreciation' && (
+                <p className="font-body text-[10px] text-[#9CA3AF]">
+                  Anggaran berdasarkan harga baru & umur kenderaan. Tiada data pasaran semasa untuk model ini.
+                </p>
+              )}
             </div>
           </div>
         )
@@ -168,16 +171,17 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
         const valVariant = valVariantRaw
           ? valVariantRaw.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
           : null
-        const pct = wmNewPrice && askingPriceRm != null
-          ? Math.round((1 - askingPriceRm / wmNewPrice) * 100)
-          : null
-
-        const verdictDisplay = priceVerdict ? ({
+        const verdictDisplay = effectiveVerdict ? (verdictSource === 'market' ? ({
           good_deal:     { text: 'Harga Bagus — tapi semak condition dulu',          color: 'text-[#0891B2]', sub: 'Jangan bayar deposit sebelum semak dokumen, JPJ, dan condition kereta.' },
           fair_price:    { text: 'Harga Wajar — boleh teruskan, tapi semak dulu',    color: 'text-[#064E4A]', sub: 'Harga nampak dalam julat pasaran. Pastikan rekod dan condition kereta jelas.' },
           slightly_high: { text: 'Sedikit Tinggi — masih boleh tawar',               color: 'text-[#B45309]', sub: 'Harga sedikit atas pasaran. Gunakan skrip tawar untuk minta harga lebih baik.' },
           overpriced:    { text: 'Harga Terlalu Tinggi — jangan bayar deposit dulu', color: 'text-[#DC2626]', sub: 'Harga seller lebih tinggi daripada kereta serupa. Gunakan skrip tawar sebelum jumpa seller.' },
-        } as const)[priceVerdict] : null
+        } as const)[effectiveVerdict] : ({
+          good_deal:     { text: 'Harga Bagus — tapi semak condition dulu',          color: 'text-[#0891B2]', sub: 'Harga di bawah anggaran susut nilai. Pastikan condition dan dokumen elok sebelum deposit.' },
+          fair_price:    { text: 'Harga Wajar — berpatutan untuk umur kereta ini',   color: 'text-[#064E4A]', sub: 'Harga sepadan dengan anggaran susut nilai. Pastikan rekod dan condition kereta jelas.' },
+          slightly_high: { text: 'Sedikit Tinggi — ada ruang untuk tawar',           color: 'text-[#B45309]', sub: 'Harga sedikit melebihi anggaran susut nilai. Cuba tawar sebelum setuju.' },
+          overpriced:    { text: 'Harga Terlalu Tinggi — jangan bayar deposit dulu', color: 'text-[#DC2626]', sub: 'Harga jauh melebihi anggaran susut nilai untuk kereta umur ini.' },
+        } as const)[effectiveVerdict]) : null
 
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -230,18 +234,12 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
               )
             })()}
 
-            {verdictDisplay ? (
+            {verdictDisplay && (
               <div className="mb-3 space-y-1">
                 <p className={`font-heading font-bold text-[13px] ${verdictDisplay.color}`}>{verdictDisplay.text}</p>
                 <p className="font-body text-[11px] text-[#6B7280]">{verdictDisplay.sub}</p>
               </div>
-            ) : pct != null ? (
-              <p className={`font-body text-[12px] mb-3 ${pct >= 0 ? 'text-[#064E4A]' : 'text-[#B45309]'}`}>
-                {pct >= 0
-                  ? `${pct}% di bawah harga baru — wajar untuk kenderaan ini`
-                  : `${Math.abs(pct)}% melebihi harga baru — semak perbandingan sebelum setuju`}
-              </p>
-            ) : null}
+            )}
 
             {wmNewPrice != null && (
               <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5">
@@ -288,18 +286,26 @@ export function BuyerReportContent({ check: _check, results, plate, askingPriceR
       })()}
 
       {/* 3. Skrip Tawar Seller */}
-      {hasMarketData && priceVerdict && vehicleData?.make && (() => {
+      {effectiveVerdict && askingPriceRm != null && vehicleData?.make && (() => {
         const make    = String(vehicleData.make ?? '')
         const model   = String(vehicleData.model ?? '')
         const year    = String(vehicleData.registrationYear ?? '')
         const carName = [make, model, year].filter(Boolean).join(' ')
-        const scripts = {
-          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak beberapa harga pasaran — kereta serupa sekarang sekitar RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm!)} agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
-          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak beberapa harga pasaran — kereta serupa sekarang sekitar RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm!)} sedikit di atas pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
+
+        // Market-data scripts include live RM ranges; depreciation scripts use expected value as target
+        const depOffer = depreciationExpected != null ? fmt(roundClean(depreciationExpected * 0.95)) : null
+        const scripts: Record<typeof effectiveVerdict, string> = hasMarketData ? {
+          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak beberapa harga pasaran — kereta serupa sekarang sekitar RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm)} agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
+          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak beberapa harga pasaran — kereta serupa sekarang sekitar RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm)} sedikit di atas pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
           fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak okay. Apa harga terbaik yang boleh tuan/puan offer?`,
           good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak menarik. Bila boleh saya datang tengok kereta?`,
+        } : {
+          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nBerdasarkan harga baru dan umur kenderaan ini, harga RM${fmt(askingPriceRm)} nampak agak tinggi. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${depOffer ?? '...'}?`,
+          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nBerdasarkan harga baru dan umur kenderaan ini, harga RM${fmt(askingPriceRm)} sedikit tinggi. Boleh consider harga yang lebih berpatutan?`,
+          fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak okay untuk kereta umur ini. Apa harga terbaik yang boleh tuan/puan offer?`,
+          good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak menarik. Bila boleh saya datang tengok kereta?`,
         }
-        const script = scripts[priceVerdict]
+        const script = scripts[effectiveVerdict]
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">

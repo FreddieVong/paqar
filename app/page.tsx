@@ -1,6 +1,7 @@
 import Link           from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
+import { PlateCheckerForm }      from '@/components/check/PlateCheckerForm'
 import { getCheckCount } from '@/lib/db/checks'
 
 export default async function HomePage() {
@@ -15,10 +16,10 @@ export default async function HomePage() {
 
       {/* ── HERO ── */}
       <section id="semak" className="bg-white px-5 pt-10 pb-12 md:pt-16 md:pb-20 overflow-x-hidden">
-        <div className="max-w-5xl mx-auto md:grid md:grid-cols-2 md:gap-14 md:items-start">
+        <div className="max-w-5xl mx-auto">
 
-          {/* Copy */}
-          <div>
+          {/* Headline */}
+          <div className="mb-8 md:mb-10">
             <div className="flex flex-wrap items-center gap-2 mb-5">
               <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.5">
                 <span className="w-2 h-2 bg-[#16A34A] rounded-full" />
@@ -29,26 +30,43 @@ export default async function HomePage() {
               {countDisplay && (
                 <div className="inline-flex items-center gap-1.5 bg-[#F8FAF7] border border-[#E5E7EB] rounded-full px-3 py-1.5">
                   <span className="font-heading font-bold text-[12px] text-[#374151]">
-                    {countDisplay} semakan harga dibuat
+                    {countDisplay} semakan dibuat
                   </span>
                 </div>
               )}
             </div>
 
-            <h1 className="font-heading font-extrabold text-[32px] md:text-[40px] leading-[1.08] tracking-[-0.03em] text-[#111827] mb-3">
-              Semak Harga<br />
-              <span className="text-[#064E4A]">Kereta Terpakai</span>
+            <h1 className="font-heading font-extrabold text-[32px] md:text-[40px] leading-[1.08] tracking-[-0.03em] text-[#111827]">
+              Semak sebelum beli<br />
+              <span className="text-[#064E4A]">kereta terpakai.</span>
             </h1>
-
-            <p className="font-body text-[15px] md:text-[16px] text-[#6B7280] leading-relaxed mb-4 md:mb-0">
-              Tahu sama ada harga penjual mahal, wajar, atau berbaloi sebelum bayar deposit.
-            </p>
-
           </div>
 
-          {/* Checking card */}
-          <div>
-            <OverpricedCheckerForm />
+          {/* Two entry points */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+
+            {/* Card 1 — Primary: free price check */}
+            <div>
+              <div className="mb-3">
+                <p className="font-heading font-extrabold text-[15px] text-[#111827]">
+                  Saya tahu model kereta
+                </p>
+                <p className="font-body text-[13px] text-[#6B7280]">Semak harga — percuma</p>
+              </div>
+              <OverpricedCheckerForm />
+            </div>
+
+            {/* Card 2 — Secondary: plate report */}
+            <div>
+              <div className="mb-3">
+                <p className="font-heading font-extrabold text-[15px] text-[#111827]">
+                  Saya <span className="italic">hanya</span> ada nombor plat
+                </p>
+                <p className="font-body text-[13px] text-[#6B7280]">RM12 · Laporan kenderaan + semak harga</p>
+              </div>
+              <PlateCheckerForm />
+            </div>
+
           </div>
         </div>
       </section>
@@ -110,7 +128,7 @@ export default async function HomePage() {
               {
                 n: '3',
                 title: 'Unlock laporan penuh',
-                desc:  'Masukkan nombor plat untuk data JPJ, harga sebenar dan skrip rundingan.',
+                desc:  'Data JPJ, harga sebenar, soalan penjual dan skrip rundingan — RM12.',
               },
             ].map((step, i) => (
               <div key={step.n} className="flex gap-4 pb-6 relative">

@@ -39,11 +39,11 @@ export async function getCachedMarketPrices(
   }
 }
 
-/** Call Railway scraper, store results in cache. Fire-and-forget. */
-export async function fetchAndCacheMarketPrices(
+/** Call Railway scraper for one keyword. Returns listings found (empty if none). */
+async function scrapeMarketPrices(
   make: string, model: string, year: string
-): Promise<void> {
-  if (!env.SCRAPER_URL || !env.SCRAPER_API_KEY) return
+): Promise<{ listings: MarketListing[]; searchUrl: string }> {
+  if (!env.SCRAPER_URL || !env.SCRAPER_API_KEY) return { listings: [], searchUrl: '' }
 
   const res = await fetch(`${env.SCRAPER_URL}/check/mudah-market`, {
     method:  'POST',
@@ -52,10 +52,33 @@ export async function fetchAndCacheMarketPrices(
     signal:  AbortSignal.timeout(30_000),
   })
 
-  if (!res.ok) return
+  if (!res.ok) return { listings: [], searchUrl: '' }
   const data = await res.json() as { listings?: MarketListing[]; searchUrl?: string }
-  if (!data.listings?.length) return
-  await upsertMarketPrices(make, model, year, data.listings, data.searchUrl ?? '')
+  return { listings: data.listings ?? [], searchUrl: data.searchUrl ?? '' }
+}
+
+/**
+ * Fetch from scraper and cache results. If the primary keyword returns fewer than
+ * 3 listings, retries with the first word of the model (e.g. "GOLF GTI" → "GOLF").
+ * Always caches under the original key so future lookups are instant.
+ */
+export async function fetchAndCacheMarketPrices(
+  make: string, model: string, year: string
+): Promise<void> {
+  let { listings, searchUrl } = await scrapeMarketPrices(make, model, year)
+
+  // Retry with broader keyword if too few results
+  const fallbackModel = model.split(/[\s-]/)[0]
+  if (listings.length < 3 && fallbackModel && fallbackModel.toLowerCase() !== model.toLowerCase()) {
+    const fallback = await scrapeMarketPrices(make, fallbackModel, year)
+    if (fallback.listings.length > listings.length) {
+      listings  = fallback.listings
+      searchUrl = fallback.searchUrl
+    }
+  }
+
+  if (!listings.length) return
+  await upsertMarketPrices(make, model, year, listings, searchUrl)
 }
 
 export async function upsertMarketPrices(

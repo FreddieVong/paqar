@@ -1,5 +1,3 @@
-import type { SourceKey } from './api'
-
 export interface Check {
   id: string
   user_id: string | null
@@ -13,19 +11,6 @@ export interface Check {
   updated_at: string
   completed_at: string | null
   plate_encrypted: string | null
-}
-
-export interface CheckResult {
-  id: string
-  check_id: string
-  source: SourceKey
-  status: 'pending' | 'clear' | 'hit' | 'unavailable' | 'timeout' | 'partial' | 'error' | 'requires_user_action' | 'proof_required'
-  label: string
-  data: unknown | null
-  error_message: string | null
-  attempt_count: number
-  created_at: string
-  checked_at: string | null
 }
 
 export interface Vehicle {

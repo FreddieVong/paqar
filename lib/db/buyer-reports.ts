@@ -111,6 +111,15 @@ export async function checkHasPaidReport(checkId: string): Promise<boolean> {
   return !!data
 }
 
+export async function updateAskingPrice(reportId: string, askingPriceRm: number): Promise<void> {
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('buyer_reports')
+    .update({ asking_price_rm: askingPriceRm, updated_at: new Date().toISOString() })
+    .eq('id', reportId)
+  if (error) throw error
+}
+
 export async function getBuyerReportByBillId(billId: string): Promise<BuyerReport | null> {
   const supabase = createServiceClient()
   const { data, error } = await supabase

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   const { checkId, claimToken, email } = body
 
-  if (!checkId || !claimToken || !email || !email.includes('@')) {
+  if (!checkId || !claimToken || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 })
   }
 

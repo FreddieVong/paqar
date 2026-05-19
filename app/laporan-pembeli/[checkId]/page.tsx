@@ -7,6 +7,7 @@ import { getBuyerReport, setVehicleApiData } from '@/lib/db/buyer-reports'
 import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
+import { SampleReportPreview }  from '@/components/report/SampleReportPreview'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
 import { lookupVehicle }              from '@/lib/vehicleapi'
@@ -14,11 +15,13 @@ import { getValuationByNvic }         from '@/lib/db/vehicle-valuations'
 import { getCachedMarketPrices,
          fetchAndCacheMarketPrices }  from '@/lib/db/market-prices'
 import type { CachedMarketPrices }    from '@/lib/db/market-prices'
+import { buildMarketModelKeyword }    from '@/lib/market-keyword'
 import { AnalyticsEvent }             from '@/components/layout/AnalyticsEvent'
+import { AskingPriceForm }            from '@/components/report/AskingPriceForm'
 
 interface Props {
   params:       { checkId: string }
-  searchParams: { claim_token?: string; asking_price?: string }
+  searchParams: { claim_token?: string; asking_price?: string; source?: string }
 }
 
 export default async function BuyerReportPage({ params, searchParams }: Props) {
@@ -74,23 +77,13 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       const yr      = vehicleData.registrationYear as string
       const desc    = (vehicleData.description as string) ?? ''
 
-      // Build specific model keyword for Mudah search
-      // BMW JPJ format: "7 30Li (CBU)" — single series digit + 2-digit variant
-      // Combine: model "7" + adjacent "30" in description → "730"
-      const numPrefix   = rawModel.match(/^\d+/)?.[0]
-      const adjTwoDigit = rawModel.length === 1
-        ? desc.match(new RegExp(`\\b${rawModel}\\s+(\\d{2})`))?.[1]  // "7 30" → "30"
-        : null
-      const descNum = adjTwoDigit
-        ? rawModel + adjTwoDigit                 // "7"+"30" = "730"
-        : desc.match(/(\d{3,})/)?.[1]            // fallback: any 3+ digit sequence
-      const mo = (numPrefix && numPrefix.length >= 3)
-        ? numPrefix                              // "730i" → "730"
-        : (descNum ?? rawModel.split(/[\s-]/)[0] ?? rawModel)
+      const mo = buildMarketModelKeyword(rawModel, desc)
 
       marketPrices = await getCachedMarketPrices(mk, mo, yr).catch(() => null)
       if (!marketPrices) {
-        fetchAndCacheMarketPrices(mk, mo, yr).catch(() => {}) // non-blocking
+        const scrape = fetchAndCacheMarketPrices(mk, mo, yr).catch(() => {})
+        await Promise.race([scrape, new Promise(r => setTimeout(r, 8_000))])
+        marketPrices = await getCachedMarketPrices(mk, mo, yr).catch(() => null)
       }
     }
 
@@ -108,12 +101,12 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                 {plate}
               </h1>
             </div>
+            {report.asking_price_rm == null && vehicleData && claimToken && (
+              <AskingPriceForm checkId={params.checkId} claimToken={claimToken} />
+            )}
             <BuyerReportContent
-              check={row.check}
-              results={row.results}
               plate={plate}
               askingPriceRm={report.asking_price_rm ?? null}
-              claimedMileageKm={report.claimed_mileage_km ?? null}
               vehicleData={vehicleData}
               marketPrices={marketPrices}
             />
@@ -126,6 +119,8 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
   // ── Unpaid — locked preview + payment form ────────────────────────────────
   // Require claim_token to pay (session-only users without claim_token can't pay)
   if (!claimToken) notFound()
+
+  const isPlateFlow = searchParams.source === 'plate'
 
   return (
     <>
@@ -142,7 +137,47 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             </h1>
           </div>
 
-          <LockedReportPreview />
+          {isPlateFlow ? (
+            <>
+              {/* Warm handoff — explain value before asking for payment */}
+              <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[16px] p-5">
+                <p className="font-heading font-bold text-[15px] text-[#111827] mb-2">
+                  Apa yang anda akan dapat
+                </p>
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-4">
+                  Dengan nombor plat, Paqar boleh kenalpasti kenderaan dan jana laporan pembeli — termasuk maklumat kereta, perbandingan harga, dan panduan rundingan.
+                </p>
+                <div className="space-y-2 mb-4">
+                  {[
+                    'Maklumat kenderaan dari nombor plat (jenama, model, tahun, enjin)',
+                    'Perbandingan harga pasaran — tahu sama ada mahal atau berpatutan',
+                    'Soalan untuk tanya penjual sebelum bayar deposit',
+                    'Skrip rundingan untuk minta diskaun dengan yakin',
+                    'Checklist deposit',
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <span className="text-[#16A34A] text-[14px] flex-shrink-0 mt-0.5">✓</span>
+                      <p className="font-body text-[13px] text-[#374151]">{item}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-3 border-t border-[#BBF7D0]">
+                  <p className="font-heading font-bold text-[13px] text-[#064E4A]">
+                    RM12 sekali bayar · Tiada langganan · Tiada caj tersembunyi · Hasil segera
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="font-heading font-bold text-[12px] text-[#6B7280] mb-2">
+                  Contoh laporan:
+                </p>
+                <SampleReportPreview />
+              </div>
+            </>
+          ) : (
+            <LockedReportPreview />
+          )}
 
           <PaymentForm
             checkId={params.checkId}
