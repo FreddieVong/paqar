@@ -67,13 +67,28 @@ export async function fetchAndCacheMarketPrices(
 ): Promise<void> {
   let { listings, searchUrl } = await scrapeMarketPrices(make, model, year)
 
-  // Retry with broader keyword if too few results
+  // First fallback: simpler model keyword (e.g. "GOLF GTI" → "GOLF")
   const fallbackModel = model.split(/[\s-]/)[0]
   if (listings.length < 3 && fallbackModel && fallbackModel.toLowerCase() !== model.toLowerCase()) {
     const fallback = await scrapeMarketPrices(make, fallbackModel, year)
     if (fallback.listings.length > listings.length) {
       listings  = fallback.listings
       searchUrl = fallback.searchUrl
+    }
+  }
+
+  // Second fallback: drop year from search, filter client-side (±1 year)
+  // Catches alphanumeric model codes like C200, Q5, X5 where year-specific search finds nothing
+  if (listings.length < 3) {
+    const broad    = await scrapeMarketPrices(make, model, '')
+    const targetYr = parseInt(year, 10)
+    const filtered = broad.listings.filter(l => {
+      if (!l.year) return true
+      return Math.abs(parseInt(l.year, 10) - targetYr) <= 1
+    })
+    if (filtered.length > listings.length) {
+      listings  = filtered
+      searchUrl = broad.searchUrl
     }
   }
 

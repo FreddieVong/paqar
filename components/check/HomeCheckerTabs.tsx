@@ -46,7 +46,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
           <p className={`font-heading font-extrabold text-[13px] leading-snug mb-0.5 ${
             tab === 'plate' ? 'text-white' : 'text-[#111827]'
           }`}>
-            Saya <em>hanya</em> ada nombor plat
+            Saya ada nombor plat
           </p>
           <p className={`font-body text-[11px] ${
             tab === 'plate' ? 'text-white/70' : 'text-[#9CA3AF]'

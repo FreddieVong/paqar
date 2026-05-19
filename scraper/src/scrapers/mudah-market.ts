@@ -81,7 +81,7 @@ export async function scrapeMudahMarket(
         return
       }
 
-      const makeKw  = make.toUpperCase()
+      const makeKw  = make.split(/[\s-]/)[0].toUpperCase()
       const modelKw = cleanKeyword(model).toUpperCase()
 
       // Fallback: parse DOM — walk up from each link to find card context with price
