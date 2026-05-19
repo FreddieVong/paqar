@@ -19,6 +19,7 @@ import type { CachedMarketPrices }    from '@/lib/db/market-prices'
 import { buildMarketModelKeyword }    from '@/lib/market-keyword'
 import { AnalyticsEvent }             from '@/components/layout/AnalyticsEvent'
 import { AskingPriceForm }            from '@/components/report/AskingPriceForm'
+import { MarketPricePoller }          from '@/components/report/MarketPricePoller'
 
 interface Props {
   params:       { checkId: string }
@@ -105,6 +106,13 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             {report.asking_price_rm == null && vehicleData && claimToken && (
               <AskingPriceForm checkId={params.checkId} claimToken={claimToken} />
             )}
+            {!!vehicleData?.make && !marketPrices && (
+              <div className="flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-[12px] px-4 py-3">
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-[#BBF7D0] border-t-[#064E4A] animate-spin flex-shrink-0" />
+                <p className="font-body text-[13px] text-[#374151]">Sedang mencari harga pasaran…</p>
+              </div>
+            )}
+            <MarketPricePoller active={!!vehicleData?.make && !marketPrices} />
             <BuyerReportContent
               plate={plate}
               askingPriceRm={report.asking_price_rm ?? null}
