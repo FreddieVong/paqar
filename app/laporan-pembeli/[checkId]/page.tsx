@@ -20,6 +20,7 @@ import { buildMarketModelKeyword }    from '@/lib/market-keyword'
 import { AnalyticsEvent }             from '@/components/layout/AnalyticsEvent'
 import { AskingPriceForm }            from '@/components/report/AskingPriceForm'
 import { MarketPricePoller }          from '@/components/report/MarketPricePoller'
+import { ReportFeedback }             from '@/components/report/ReportFeedback'
 
 interface Props {
   params:       { checkId: string }
@@ -119,6 +120,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               vehicleData={vehicleData}
               marketPrices={marketPrices}
             />
+            <ReportFeedback checkId={params.checkId} plate={plate} />
           </div>
         </Shell>
       </>

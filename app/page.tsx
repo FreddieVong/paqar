@@ -27,10 +27,14 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <h1 className="font-heading font-extrabold text-[30px] md:text-[36px] leading-[1.1] tracking-[-0.03em] text-[#111827] mb-7">
-            Semak sebelum beli<br />
-            <span className="text-[#064E4A]">kereta terpakai.</span>
+          <h1 className="font-heading font-extrabold text-[30px] md:text-[36px] leading-[1.1] tracking-[-0.03em] text-[#111827] mb-3">
+            Penjual tahu harga sebenar.<br />
+            <span className="text-[#064E4A]">Sekarang anda pun tahu.</span>
           </h1>
+
+          <p className="font-body text-[14px] text-[#6B7280] mb-7 leading-relaxed">
+            Dalam 60 saat, tahu sama ada harga tu patut atau mahal. Percuma. Tanpa daftar.
+          </p>
 
           <HomeCheckerTabs countDisplay={countDisplay} />
 
@@ -50,18 +54,61 @@ export default async function HomePage() {
           </div>
 
           <div className="flex flex-col md:grid md:grid-cols-2 gap-3">
-            {[
-              { title: 'Semak Harga Pasaran', desc: 'Verdict harga — mahal, wajar, atau berbaloi untuk kereta tu', badge: 'Percuma', badgeStyle: 'bg-[#DCFCE7] text-[#15803D]' },
-              { title: 'Laporan Pembeli',   desc: 'Harga sebenar, data JPJ, soalan penjual, skrip rundingan',  badge: 'RM12',     badgeStyle: 'bg-[#FEF9C3] text-[#B45309]' },
-            ].map((item) => (
-              <div key={item.title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-4 md:p-5">
-                <p className="font-heading font-bold text-[15px] text-[#111827] mb-0.5">{item.title}</p>
-                <p className="font-body text-[13px] text-[#6B7280] mb-2">{item.desc}</p>
-                <span className={`inline-block font-heading font-bold text-[11px] px-2.5 py-1 rounded-full ${item.badgeStyle}`}>
-                  {item.badge}
-                </span>
+            {/* Free price check card */}
+            <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-4 md:p-5">
+              <p className="font-heading font-bold text-[15px] text-[#111827] mb-0.5">Semak Harga Pasaran</p>
+              <p className="font-body text-[13px] text-[#6B7280] mb-2">Verdict harga — mahal, wajar, atau berbaloi untuk kereta tu</p>
+              <span className="inline-block font-heading font-bold text-[11px] px-2.5 py-1 rounded-full bg-[#DCFCE7] text-[#15803D]">
+                Percuma
+              </span>
+            </div>
+
+            {/* RM12 report card — value-stacked */}
+            <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
+              {/* Hero block */}
+              <div className="bg-[#14453d] px-4 py-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FACC15] flex-shrink-0" />
+                  <span className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/45">
+                    Skrip Rundingan Harga Paqar
+                  </span>
+                </div>
+                <p className="font-heading font-extrabold text-[14px] leading-snug text-white mb-1.5">
+                  Masuk rundingan dengan data.<br />Bukan agak-agak.
+                </p>
+                <p className="font-body text-[11px] text-white/55 leading-relaxed">
+                  Guna skrip siap untuk tanya soalan penting, runding harga, dan elak buat keputusan ikut emosi.
+                </p>
               </div>
-            ))}
+
+              {/* Value stack */}
+              <div className="px-4 py-1 border-b border-[#F3F4F6]">
+                {[
+                  { title: 'Skrip rundingan harga',   desc: 'Bantu anda bincang harga berdasarkan data, bukan agak-agak.' },
+                  { title: 'Harga pasaran sebenar',   desc: 'Tahu sama ada harga kereta itu mahal, wajar atau berbaloi.' },
+                  { title: 'Data JPJ penuh',           desc: 'Semak maklumat penting sebelum buat keputusan.' },
+                  { title: '10 soalan untuk penjual', desc: 'Tanya soalan yang boleh dedahkan masalah tersembunyi.' },
+                ].map((item, i, arr) => (
+                  <div key={item.title} className={`flex gap-2.5 items-start py-2.5 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
+                    <span className="w-[17px] h-[17px] rounded-full bg-[#14453d] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg width="8" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </span>
+                    <div>
+                      <p className="font-heading font-bold text-[12px] text-[#111827] leading-snug">{item.title}</p>
+                      <p className="font-body text-[11px] text-[#9CA3AF] leading-snug mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Price anchor */}
+              <div className="px-4 py-2.5 bg-[#F8FAF7]">
+                <p className="font-body text-[11px] text-[#6B7280] leading-relaxed">
+                  Untuk pembelian kereta <span className="font-bold text-[#14453d]">bernilai ribuan ringgit</span>, laporan penuh hanya{' '}
+                  <span className="font-extrabold text-[13px] text-[#14453d]">RM12</span>.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -113,6 +160,77 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── KENAPA PERLU SEMAK DULU ── */}
+      <section className="bg-[#1C1917] px-5 py-12 md:py-16">
+        <div className="max-w-xl mx-auto">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-white/30 mb-4">
+            Kenapa perlu semak dulu
+          </p>
+          <h2 className="font-heading font-extrabold text-[24px] md:text-[28px] leading-tight tracking-tight text-white mb-4">
+            Penjual tahu.<br />
+            <span className="text-[#F59E0B]">Ramai pembeli tidak.</span>
+          </h2>
+          <p className="font-body text-[14px] text-white/60 leading-relaxed mb-6">
+            Harga pasaran berubah ikut model, tahun, warna, dan rekod kenderaan. Penjual yang berpengalaman tahu semua ini. Kebanyakan pembeli tidak — dan perbezaan itu yang selalu menyebabkan pembeli bayar lebih.
+          </p>
+          <div className="h-px bg-white/7 mb-6" />
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-3 items-start">
+              <span className="text-[15px] flex-shrink-0 mt-0.5">⚠️</span>
+              <p className="font-body text-[13px] text-white/65 leading-relaxed">
+                Harga yang &ldquo;nampak berpatutan&rdquo; belum tentu sepadan dengan harga pasaran sebenar untuk kereta tu.
+              </p>
+            </div>
+            <div className="flex gap-3 items-start">
+              <span className="text-[15px] flex-shrink-0 mt-0.5">✅</span>
+              <p className="font-body text-[13px] text-white/65 leading-relaxed">
+                <span className="text-white/90 font-semibold">Paqar bagi anda maklumat yang sama</span> — dalam 60 saat, percuma, sebelum anda buat sebarang keputusan.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/*
+      ── APA KATA PEMBELI PAQAR ── (uncomment when 2–3 real quotes are collected)
+
+      <section className="bg-[#F8FAF7] px-5 py-12 md:py-16">
+        <div className="max-w-xl mx-auto">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+            Apa kata pembeli Paqar
+          </p>
+          <h2 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827] mb-6">
+            Beli dengan lebih yakin.
+          </h2>
+          <div className="flex flex-col gap-3">
+            {[
+              {
+                quote: '"Semak dulu sebelum pegi tengok kereta. Penjual minta RM42k tapi verdict cakap overpriced. Lepas tunjuk data, dia turun RM3k."',
+                name: 'Hafiz, Selangor',
+                car: 'Perodua Myvi 2019',
+                outcome: 'Jimat RM3,000',
+              },
+              // Add more real quotes here. Format: quote, name+city, car, outcome (RM jimat / "beli dengan lebih yakin")
+            ].map((t) => (
+              <div key={t.name} className="bg-white border border-[#E5E7EB] rounded-[14px] p-4">
+                <p className="text-[#FACC15] text-[11px] tracking-widest mb-2">★★★★★</p>
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3 italic">{t.quote}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="font-heading font-bold text-[12px] text-[#111827]">{t.name}</p>
+                    <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5">{t.car}</p>
+                  </div>
+                  <span className="font-heading font-bold text-[10px] bg-[#DCFCE7] text-[#15803D] px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0">
+                    {t.outcome}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      */}
 
       {/* ── BELI KERETA TERPAKAI? ── */}
       <section className="bg-[#111827] px-5 py-10">
