@@ -108,6 +108,16 @@ export default async function HomePage() {
                   <span className="font-extrabold text-[13px] text-[#14453d]">RM12</span>.
                 </p>
               </div>
+
+              {/* Sample report link */}
+              <div className="px-4 py-2.5 text-right">
+                <Link
+                  href="/contoh-laporan"
+                  className="font-body text-[11px] text-[#14453d] font-semibold hover:underline underline-offset-2"
+                >
+                  Lihat contoh laporan →
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -135,13 +145,13 @@ export default async function HomePage() {
               },
               {
                 n: '2',
-                title: 'Dapat verdict harga',
+                title: 'Dapat verdict harga — percuma',
                 desc:  'Kami semak harga pasaran dan tunjukkan sama ada berpatutan.',
               },
               {
                 n: '3',
-                title: 'Unlock laporan penuh',
-                desc:  'Data JPJ, harga sebenar, soalan penjual dan skrip rundingan — RM12.',
+                title: 'Masuk rundingan bersedia',
+                desc:  'Dapat skrip rundingan, data JPJ dan harga sebenar untuk RM12 — sebelum anda buat sebarang keputusan.',
               },
             ].map((step, i) => (
               <div key={step.n} className="flex gap-4 pb-6 relative">
@@ -162,30 +172,37 @@ export default async function HomePage() {
       </section>
 
       {/* ── KENAPA PERLU SEMAK DULU ── */}
-      <section className="bg-[#1C1917] px-5 py-12 md:py-16">
+      <section className="bg-[#1C1917] px-5 py-10 md:py-12">
         <div className="max-w-xl mx-auto">
           <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-white/30 mb-4">
             Kenapa perlu semak dulu
           </p>
-          <h2 className="font-heading font-extrabold text-[24px] md:text-[28px] leading-tight tracking-tight text-white mb-4">
+          <h2 className="font-heading font-extrabold text-[24px] md:text-[28px] leading-tight tracking-tight text-white mb-3">
             Penjual tahu.<br />
             <span className="text-[#F59E0B]">Ramai pembeli tidak.</span>
           </h2>
-          <p className="font-body text-[14px] text-white/60 leading-relaxed mb-6">
-            Harga pasaran berubah ikut model, tahun, warna, dan rekod kenderaan. Penjual yang berpengalaman tahu semua ini. Kebanyakan pembeli tidak — dan perbezaan itu yang selalu menyebabkan pembeli bayar lebih.
+          <p className="font-body text-[14px] text-white/60 leading-relaxed mb-5">
+            Harga pasaran berubah ikut model, tahun, varian, warna dan rekod kereta. Penjual berpengalaman tahu semua ini. Pembeli biasa selalunya tidak. Di situlah ramai orang bayar lebih.
           </p>
-          <div className="h-px bg-white/7 mb-6" />
+          <div className="h-px bg-white/7 mb-5" />
           <div className="flex flex-col gap-4">
             <div className="flex gap-3 items-start">
-              <span className="text-[15px] flex-shrink-0 mt-0.5">⚠️</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 mt-0.5">
+                <path d="M8 2L14.5 13H1.5L8 2Z" stroke="#F59E0B" strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M8 6.5V9" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="8" cy="11" r="0.75" fill="#F59E0B"/>
+              </svg>
               <p className="font-body text-[13px] text-white/65 leading-relaxed">
-                Harga yang &ldquo;nampak berpatutan&rdquo; belum tentu sepadan dengan harga pasaran sebenar untuk kereta tu.
+                Harga yang penjual minta belum tentu mencerminkan harga pasaran sebenar.
               </p>
             </div>
             <div className="flex gap-3 items-start">
-              <span className="text-[15px] flex-shrink-0 mt-0.5">✅</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 mt-0.5">
+                <circle cx="8" cy="8" r="6.5" stroke="#4ADE80" strokeWidth="1.5"/>
+                <path d="M5.5 8L7 9.5L10.5 6" stroke="#4ADE80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               <p className="font-body text-[13px] text-white/65 leading-relaxed">
-                <span className="text-white/90 font-semibold">Paqar bagi anda maklumat yang sama</span> — dalam 60 saat, percuma, sebelum anda buat sebarang keputusan.
+                Paqar bantu anda semak harga dahulu — dalam 60 saat, percuma.
               </p>
             </div>
           </div>
@@ -268,11 +285,9 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { href: '/cara-beli-kereta-terpakai',      title: 'Cara beli kereta terpakai',        desc: '6 langkah dari semak hingga deposit' },
-              { href: '/checklist-beli-kereta-terpakai', title: 'Checklist sebelum bayar deposit',  desc: 'Tandakan semua ini dulu' },
-              { href: '/risiko-beli-kereta-terpakai',    title: 'Risiko beli kereta terpakai',      desc: '7 risiko dan cara elaknya' },
-              { href: '/panduan-semak-saman',            title: 'Cara semak saman kereta',          desc: 'PDRM & JPJ step by step' },
-              { href: '/cara-semak-geran-kereta',        title: 'Cara semak geran kereta',          desc: 'Apa perlu disemak dalam VOC' },
+              { href: '/checklist-beli-kereta-terpakai', title: 'Checklist sebelum bayar deposit', desc: 'Tandakan semua ini dulu' },
+              { href: '/cara-beli-kereta-terpakai',      title: 'Cara beli kereta terpakai',       desc: '6 langkah dari semak hingga deposit' },
+              { href: '/risiko-beli-kereta-terpakai',    title: 'Risiko beli kereta terpakai',     desc: '7 risiko dan cara elaknya' },
             ].map((guide) => (
               <Link
                 key={guide.href}
@@ -288,6 +303,14 @@ export default async function HomePage() {
                 <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
               </Link>
             ))}
+          </div>
+          <div className="mt-4 text-center md:text-left">
+            <Link
+              href="/panduan"
+              className="font-body text-[13px] text-[#064E4A] font-semibold hover:underline underline-offset-2"
+            >
+              Lihat semua panduan →
+            </Link>
           </div>
         </div>
       </section>
@@ -305,20 +328,24 @@ export default async function HomePage() {
           <div className="flex flex-col gap-2">
             {[
               {
-                q: 'Adakah Paqar platform rasmi?',
-                a: 'Paqar bukan platform rasmi kerajaan. Kami adalah perkhidmatan pihak ketiga yang menyemak maklumat daripada sumber-sumber yang boleh diakses awam.',
+                q: 'Apakah beza semakan percuma dan laporan RM12?',
+                a: 'Semakan percuma beri verdict harga berdasarkan maklumat kereta. Laporan RM12 tambah data kenderaan, harga pasaran sebenar, soalan untuk penjual dan skrip rundingan harga.',
               },
               {
-                q: 'Adakah semakan ini percuma?',
-                a: 'Ya, semakan harga pasaran adalah percuma — masukkan kereta dan dapat verdict terus. Laporan pembeli lengkap (harga sebenar, data JPJ, skrip rundingan) tersedia pada RM12.',
+                q: 'Adakah saya perlu daftar akaun?',
+                a: 'Tidak. Semakan pertama boleh dibuat tanpa daftar akaun.',
               },
               {
-                q: 'Berapa lama keputusan mengambil masa?',
-                a: 'Semakan asas selesai dalam beberapa saat. Laporan pembeli boleh diakses terus selepas bayar.',
+                q: 'Boleh guna sebelum tengok kereta?',
+                a: 'Ya. Paqar memang sesuai digunakan sebelum anda pergi tengok kereta atau sebelum bayar deposit.',
               },
               {
-                q: 'Adakah data saya selamat?',
-                a: 'Nombor plat disulitkan menggunakan AES-256-GCM. Kami tidak menyimpan dalam teks biasa dan mematuhi PDPA Malaysia.',
+                q: 'Adakah Paqar dari JPJ atau PDRM?',
+                a: 'Paqar bukan platform rasmi JPJ atau PDRM. Paqar membantu pembeli memahami maklumat kenderaan dan harga pasaran sebelum membuat keputusan.',
+              },
+              {
+                q: 'Apa berlaku kalau laporan gagal dijana?',
+                a: 'Jika laporan gagal dijana, anda akan dimaklumkan dan boleh hubungi kami di hello@paqar.my untuk bantuan.',
               },
             ].map((faq) => (
               <details key={faq.q} className="group bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
@@ -336,7 +363,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section className="bg-[#064E4A] px-5 py-14 text-center md:py-20">
+      <section className="bg-[#14453d] px-5 py-14 text-center md:py-20">
         <div className="max-w-lg mx-auto">
           <h2 className="font-heading font-extrabold text-[24px] md:text-[30px] leading-tight tracking-tight text-white mb-3">
             Semak sebelum<br />bayar deposit
