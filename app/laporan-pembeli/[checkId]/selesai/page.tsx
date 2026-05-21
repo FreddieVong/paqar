@@ -55,7 +55,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
       <Shell>
         <div className="pt-10 pb-10 max-w-sm mx-auto space-y-5 text-center">
           {billplzPaid === 'true' && <AnalyticsEvent event="payment_completed" />}
-          {billplzPaid === 'true' && <GoogleAdsConversion email={buyerEmail} />}
+          {billplzPaid === 'true' && <GoogleAdsConversion email={buyerEmail} transactionId={billId} />}
           <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[16px] p-6">
             <Image
               src="/paqar-logo.png"

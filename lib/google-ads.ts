@@ -4,12 +4,14 @@ async function hashEmail(email: string): Promise<string> {
   return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-export async function fireAdsConversion(email?: string): Promise<void> {
+export async function fireAdsConversion(email?: string, transactionId?: string): Promise<void> {
   if (typeof window === 'undefined' || !window.gtag) return
   const userData = email ? { email: await hashEmail(email) } : undefined
   window.gtag('event', 'conversion', {
-    send_to:        'AW-18167043406/ZKercJ_jyK4cEM6q3NZD',
-    transaction_id: '',
+    send_to:        'AW-18167043406/ZKerCJ_iyK4cEM6q3NZD',
+    value:          12.00,
+    currency:       'MYR',
+    transaction_id: transactionId ?? '',
     ...(userData ? { user_data: userData } : {}),
   })
 }
