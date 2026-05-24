@@ -82,11 +82,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
     : askingPriceRm! <= marketMax! * 1.08 ? 'slightly_high' as const
     : 'overpriced' as const
 
-  // Proportional rounded offer range (only used for slightly_high or overpriced)
-  const offerHigh = marketMax != null ? floorClean(marketMax) : 0
-  const offerLow  = priceVerdict === 'overpriced'
-    ? roundClean(offerHigh * 0.93)
-    : roundClean(offerHigh * 0.95)
+  // Offer target anchored to median (not max) — median is the right negotiation anchor
+  const offerAnchor = marketMedian ?? marketMax
+  const offerHigh   = offerAnchor != null ? floorClean(offerAnchor) : 0
+  const offerLow    = priceVerdict === 'overpriced'
+    ? roundClean(offerHigh * 0.90)
+    : roundClean(offerHigh * 0.93)
 
   // Depreciation-based verdict — fallback when no Mudah listings available.
   // Rates are tiered by brand segment; floored at 20% of new price.
@@ -373,11 +374,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
         // Market-data scripts include live RM ranges; depreciation scripts use expected value as target
         const depOffer = depreciationExpected != null ? fmt(roundClean(depreciationExpected * 0.95)) : null
+        const listingCount = mPrices.length
         const scripts: Record<typeof effectiveVerdict, string> = hasMarketData ? {
-          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak beberapa harga pasaran — kereta serupa sekarang sekitar RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm)} agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
-          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak beberapa harga pasaran — kereta serupa sekarang sekitar RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm)} sedikit di atas pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
-          fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak okay. Apa harga terbaik yang boleh tuan/puan offer?`,
-          good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak menarik. Bila boleh saya datang tengok kereta?`,
+          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} listing serupa di pasaran — median harga sekarang RM${fmt(marketMedian!)}, dalam julat RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm)} agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
+          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} listing serupa di pasaran — median harga sekarang RM${fmt(marketMedian!)}, dalam julat RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm)} sedikit di atas pasaran. Boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
+          fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nSaya dah semak ${listingCount} listing serupa — median pasaran sekitar RM${fmt(marketMedian!)}. Harga tuan/puan nampak okay. Apa harga terbaik yang boleh offer?`,
+          good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga ni nampak menarik berbanding pasaran. Bila boleh saya datang tengok? Saya serius nak beli.`,
         } : {
           overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nBerdasarkan harga baru dan umur kenderaan ini, harga RM${fmt(askingPriceRm)} nampak agak tinggi. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${depOffer ?? '...'}?`,
           slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nBerdasarkan harga baru dan umur kenderaan ini, harga RM${fmt(askingPriceRm)} sedikit tinggi. Boleh consider harga yang lebih berpatutan?`,
