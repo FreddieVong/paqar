@@ -24,9 +24,10 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
           Guna skrip siap untuk tanya soalan penting, runding harga, dan elak buat keputusan ikut emosi.
         </p>
         {plate && (
-          <p className="font-heading font-bold text-[10px] text-white/30 mt-3 uppercase tracking-widest">
-            Untuk {plate}
-          </p>
+          <div className="mt-3">
+            <p className="font-heading font-bold text-[9px] text-white/40 uppercase tracking-widest mb-0.5">Untuk</p>
+            <p className="font-heading font-extrabold text-[28px] text-white leading-none tracking-tight">{plate}</p>
+          </div>
         )}
       </div>
 
