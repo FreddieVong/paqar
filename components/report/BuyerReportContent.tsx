@@ -246,7 +246,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               // Trade-in estimate (only when median is valid)
               const tradeInLow  = Math.round(median * 0.80 / 1000) * 1000
               const tradeInHigh = Math.round(median * 0.85 / 1000) * 1000
-              const spread      = Math.round((median - (tradeInLow + tradeInHigh) / 2) / 500) * 500
+
 
               return (
                 <div className="mb-3 space-y-2">
