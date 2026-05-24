@@ -7,7 +7,7 @@ import { getBuyerReport, setVehicleApiData } from '@/lib/db/buyer-reports'
 import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
-import { SampleReportPreview }  from '@/components/report/SampleReportPreview'
+import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
 import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
@@ -98,9 +98,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: true }} />
             <div>
               <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A] mb-1">
-                Laporan Pembeli
+                Laporan untuk
               </p>
-              <h1 className="font-heading font-extrabold text-[24px] tracking-tight text-[#111827]">
+              <h1 className="font-heading font-extrabold text-[38px] tracking-tight text-[#111827] leading-none">
                 {plate}
               </h1>
             </div>
@@ -141,9 +141,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
           <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: false }} />
           <div>
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A] mb-1">
-              Laporan Pembeli
+              Laporan untuk
             </p>
-            <h1 className="font-heading font-extrabold text-[24px] tracking-tight text-[#111827]">
+            <h1 className="font-heading font-extrabold text-[38px] tracking-tight text-[#111827] leading-none">
               {plate}
             </h1>
           </div>
@@ -151,22 +151,23 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
           {isPlateFlow ? (
             <>
               <BuyerReportPitch plate={plate} />
-              <div>
-                <p className="font-heading font-bold text-[12px] text-[#6B7280] mb-2">
-                  Contoh laporan:
-                </p>
-                <SampleReportPreview />
-              </div>
+              <PaymentForm
+                checkId={params.checkId}
+                claimToken={claimToken}
+                defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
+              />
+              <CollapsibleSampleReport />
             </>
           ) : (
-            <LockedReportPreview />
+            <>
+              <LockedReportPreview />
+              <PaymentForm
+                checkId={params.checkId}
+                claimToken={claimToken}
+                defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
+              />
+            </>
           )}
-
-          <PaymentForm
-            checkId={params.checkId}
-            claimToken={claimToken}
-            defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
-          />
         </div>
       </Shell>
     </>
