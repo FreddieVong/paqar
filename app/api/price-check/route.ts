@@ -14,6 +14,14 @@ const schema = z.object({
   askingPrice: z.number().int().min(1000).max(2_000_000),
 })
 
+function medianOf(prices: number[]): number {
+  const sorted = [...prices].sort((a, b) => a - b)
+  const mid    = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 0
+    ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
+    : sorted[mid]!
+}
+
 function computeVerdict(askingPrice: number, prices: number[]): Verdict {
   if (prices.length === 0) return 'fair_price'
   const lo = Math.min(...prices)
@@ -48,12 +56,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hasData: false })
   }
 
-  const prices  = cached.listings.map(l => l.price)
-  const verdict = computeVerdict(askingPrice, prices)
+  const validPrices = cached.listings
+    .map(l => l.price)
+    .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
+
+  if (validPrices.length < 2) {
+    return NextResponse.json({ hasData: false })
+  }
+
+  const verdict     = computeVerdict(askingPrice, validPrices)
+  const medianPrice = medianOf(validPrices)
+  const minPrice    = Math.min(...validPrices)
+  const maxPrice    = Math.max(...validPrices)
 
   return NextResponse.json({
     hasData:      true,
     verdict,
-    listingCount: cached.listings.length,
+    listingCount: validPrices.length,
+    medianPrice,
+    minPrice,
+    maxPrice,
   })
 }

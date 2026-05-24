@@ -26,7 +26,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     badgeCls:   'bg-[#DC2626] text-white',
     cardBg:     'bg-[#FEF2F2]',
     cardBorder: 'border-[#FECACA]',
-    copy:       (b, m, y) => `Harga penjual nampak jauh lebih tinggi dari pasaran untuk ${b} ${m} ${y}. Laporan penuh tunjukkan berapa beza dan cara tawar dengan yakin.`,
+    copy:       () => '',
     ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
   slightly_high: {
@@ -34,7 +34,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     badgeCls:   'bg-[#B45309] text-white',
     cardBg:     'bg-[#FFFBEB]',
     cardBorder: 'border-[#FDE68A]',
-    copy:       (b, m, y) => `Harga sedikit di atas julat pasaran untuk ${b} ${m} ${y}. Ada ruang untuk tawar turun — skrip rundingan ada dalam laporan penuh.`,
+    copy:       () => 'Ada ruang untuk tawar turun.',
     ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
   fair_price: {
@@ -42,7 +42,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     badgeCls:   'bg-[#064E4A] text-white',
     cardBg:     'bg-[#F0FDF4]',
     cardBorder: 'border-[#BBF7D0]',
-    copy:       () => 'Harga dalam julat pasaran. Sebelum setuju, semak data JPJ dan tanya soalan yang betul kepada penjual.',
+    copy:       () => 'Sebelum setuju, semak data JPJ dan tanya soalan yang betul kepada penjual.',
     ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
   good_deal: {
@@ -50,7 +50,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     badgeCls:   'bg-[#0891B2] text-white',
     cardBg:     'bg-[#F0FAFA]',
     cardBorder: 'border-[#99D4D1]',
-    copy:       () => 'Harga di bawah julat pasaran — nampak berbaloi. Tapi kenapa murah? Semak rekod JPJ sebelum bayar deposit.',
+    copy:       () => 'Tapi kenapa murah? Semak rekod JPJ sebelum bayar deposit.',
     ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
 }
@@ -254,26 +254,78 @@ export function OverpricedCheckerForm() {
             ) : (
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-4 h-4 rounded-full border-2 border-[#D1D5DB] border-t-[#6B7280] animate-spin flex-shrink-0" />
-                <p className="font-heading font-bold text-[14px] text-[#374151]">Sedang mengumpul data…</p>
+                <p className="font-heading font-bold text-[14px] text-[#374151]">Tengah scan harga {brand} {model} {year} di pasaran…</p>
               </div>
             )}
             <p className="font-body text-[13px] text-[#6B7280] mb-4 leading-relaxed">
               {retried
                 ? 'Kami belum ada data untuk model ini. Laporan penuh ada harga pasaran terkini terus dari Mudah.'
-                : `Kami sedang kumpul harga pasaran untuk ${brand} ${model} ${year}. Cuba semula dalam beberapa saat — atau teruskan dengan laporan penuh.`}
+                : 'Ambil masa sebentar — atau teruskan dengan laporan penuh sekarang.'}
             </p>
           </>
         ) : (
           <>
-            <span className={`inline-block font-heading font-bold text-[11px] rounded-[5px] px-3 py-1 mb-3 ${cfg!.badgeCls}`}>
+            <span className={`inline-block font-heading font-bold text-[11px] rounded-[5px] px-3 py-1 mb-2 ${cfg!.badgeCls}`}>
               {cfg!.badge}
             </span>
-            <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
-              {cfg!.copy(brand, model, year)}
+
+            {/* RM gap line */}
+            {(() => {
+              const med = hasDataResult!.medianPrice
+              const ask = parseInt(askingPrice, 10)
+              if (!med || isNaN(ask)) return null
+              const diff = Math.abs(ask - med)
+              const gap  = Math.round(diff / 100) * 100
+              if (diff / med < 0.02) return (
+                <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
+                  Harga ini hampir sama dengan harga pasaran median.
+                </p>
+              )
+              return (
+                <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
+                  {ask > med
+                    ? `Harga ini lebih tinggi RM${gap.toLocaleString()} dari harga pasaran median.`
+                    : `Harga ini lebih rendah RM${gap.toLocaleString()} dari harga pasaran median.`}
+                </p>
+              )
+            })()}
+
+            {/* Short copy */}
+            {cfg!.copy(brand, model, year) && (
+              <p className="font-body text-[12px] text-[#6B7280] mb-1">
+                {cfg!.copy(brand, model, year)}
+              </p>
+            )}
+
+            {/* Price range */}
+            {hasDataResult!.minPrice !== hasDataResult!.maxPrice && (
+              <p className="font-body text-[12px] text-[#6B7280] mb-1">
+                Harga pasaran: RM{hasDataResult!.minPrice.toLocaleString()} – RM{hasDataResult!.maxPrice.toLocaleString()}
+              </p>
+            )}
+
+            {/* Source + count + confidence */}
+            <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
+              Berdasarkan {hasDataResult!.listingCount} listing serupa dari Mudah
             </p>
-            <p className="font-body text-[11px] text-[#9CA3AF] mb-4">
-              Berdasarkan {hasDataResult!.listingCount} kereta serupa.
-            </p>
+            {(() => {
+              const n = hasDataResult!.listingCount
+              const level = n >= 10 ? 'high' : n >= 5 ? 'medium' : 'limited'
+              const conf = {
+                high:    { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Data ini lebih stabil untuk dijadikan panduan harga.' },
+                medium:  { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Gunakan sebagai panduan awal, bukan harga muktamad.' },
+                limited: { label: 'Data pasaran terhad',        labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Gunakan verdict ini sebagai anggaran awal dan bandingkan dengan kondisi sebenar kereta.' },
+              }[level]
+              return (
+                <div className="mb-4">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${conf.dot}`} />
+                    <span className={`font-body text-[11px] font-semibold ${conf.labelCls}`}>{conf.label}</span>
+                  </div>
+                  <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">{conf.text}</p>
+                </div>
+              )
+            })()}
           </>
         )}
 

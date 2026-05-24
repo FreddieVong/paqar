@@ -77,7 +77,7 @@ export async function scrapeMudahMarket(
       console.log('[mudah-market] page:', pageTitle, pageUrl)
 
       if (captured.length > 0) {
-        listings.push(...captured.slice(0, 5))
+        listings.push(...captured.slice(0, 15))
         return
       }
 
@@ -151,7 +151,7 @@ export async function scrapeMudahMarket(
     if (seen.has(l.price)) return false
     seen.add(l.price)
     return true
-  }).sort((a, b) => a.price - b.price).slice(0, 5)
+  }).sort((a, b) => a.price - b.price).slice(0, 15)
 
   return { listings: deduped, searchUrl }
 }

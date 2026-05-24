@@ -1,4 +1,4 @@
-const MARKET_PRICES = ['RM38,000', 'RM41,500', 'RM43,000', 'RM46,200']
+const MARKET_PRICES = ['RM37,500', 'RM38,000', 'RM39,800', 'RM41,500', 'RM42,000', 'RM43,000', 'RM44,500', 'RM45,000', 'RM46,200', 'RM47,000']
 const LOCKED_SECTIONS = ['Maklumat Kenderaan', 'Skrip Rundingan', 'Soalan untuk Penjual', 'Checklist Deposit']
 
 export function SampleReportPreview() {
@@ -60,6 +60,13 @@ export function SampleReportPreview() {
           <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
         </div>
         <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti Harga Pasaran</p>
+
+        {/* Median row */}
+        <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2 mb-2">
+          <p className="font-body text-[12px] text-[#6B7280]">Median pasaran</p>
+          <p className="font-heading font-bold text-[13px] text-[#064E4A]">RM42,750</p>
+        </div>
+
         <div className="flex flex-wrap gap-1.5 mb-2">
           {MARKET_PRICES.map(price => (
             <span key={price} className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[11px] text-[#064E4A]">
@@ -67,9 +74,29 @@ export function SampleReportPreview() {
             </span>
           ))}
         </div>
-        <p className="font-body text-[11px] text-[#6B7280]">
-          Berdasarkan 4 kereta serupa yang dijumpai.
+
+        {/* Methodology + confidence */}
+        <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
+          Berdasarkan 10 listing serupa dari Mudah
         </p>
+        <div className="mb-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#22C55E]" />
+            <span className="font-body text-[11px] font-semibold text-[#15803D]">Keyakinan data: Tinggi</span>
+          </div>
+          <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+            Data ini lebih stabil untuk dijadikan panduan harga.
+          </p>
+        </div>
+
+        {/* Trade-in estimate */}
+        <div className="pt-3 border-t border-[#F3F4F6]">
+          <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
+          <p className="font-heading font-bold text-[13px] text-[#111827]">RM34,000 – RM36,000</p>
+          <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+            Jual sendiri berpotensi dapat sekitar RM7,500 lebih berbanding trade-in.
+          </p>
+        </div>
       </div>
 
       {/* 3. Locked sections */}

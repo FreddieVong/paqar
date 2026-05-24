@@ -7,6 +7,26 @@ const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})
 const floorClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.floor(n / u) * u }
 const roundClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.round(n / u) * u }
 
+function medianOf(prices: number[]): number {
+  const sorted = [...prices].sort((a, b) => a - b)
+  const mid    = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 0
+    ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
+    : sorted[mid]!
+}
+
+function dataConfidenceLevel(count: number): 'high' | 'medium' | 'limited' {
+  if (count >= 10) return 'high'
+  if (count >= 5)  return 'medium'
+  return 'limited'
+}
+
+const CONFIDENCE_CONFIG = {
+  high:    { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Data ini lebih stabil untuk dijadikan panduan harga.' },
+  medium:  { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Gunakan sebagai panduan awal, bukan harga muktamad.' },
+  limited: { label: 'Data pasaran terhad',        labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Listing serupa agak terhad. Gunakan sebagai anggaran awal dan bandingkan dengan kondisi sebenar kereta.' },
+} as const
+
 function translateCoverType(ct: string): string {
   const lower = ct?.toLowerCase() ?? ''
   if (lower.includes('comprehensive')) return 'Komprehensif'
@@ -49,9 +69,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const ins         = vehicleData?.insurance
 
   // Market price calculations
-  const mPrices       = marketPrices?.listings.map(l => l.price) ?? []
+  const mPrices       = (marketPrices?.listings ?? [])
+    .map(l => l.price)
+    .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
   const marketMin     = mPrices.length ? Math.min(...mPrices) : null
   const marketMax     = mPrices.length ? Math.max(...mPrices) : null
+  const marketMedian  = mPrices.length >= 2 ? medianOf(mPrices) : null
   const hasMarketData = askingPriceRm != null && marketMin != null && marketMax != null
   const priceVerdict  = !hasMarketData ? null
     : askingPriceRm! < marketMin! ? 'good_deal'    as const
@@ -213,11 +236,18 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               </div>
             )}
 
-            {marketPrices && marketPrices.listings.length > 0 && (() => {
-              const prices  = marketPrices.listings.map(l => l.price)
-              const minP    = Math.min(...prices)
-              const maxP    = Math.max(...prices)
+            {mPrices.length > 0 && marketPrices && (() => {
+              const minP    = Math.min(...mPrices)
+              const maxP    = Math.max(...mPrices)
+              const median  = marketMedian!
               const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
+              const conf    = CONFIDENCE_CONFIG[dataConfidenceLevel(mPrices.length)]
+
+              // Trade-in estimate (only when median is valid)
+              const tradeInLow  = Math.round(median * 0.80 / 1000) * 1000
+              const tradeInHigh = Math.round(median * 0.85 / 1000) * 1000
+              const spread      = Math.round((median - (tradeInLow + tradeInHigh) / 2) / 500) * 500
+
               return (
                 <div className="mb-3 space-y-2">
                   <div className="flex items-center justify-between">
@@ -226,6 +256,13 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       {daysAgo === 0 ? 'Hari ini' : `${daysAgo} hari lalu`}
                     </p>
                   </div>
+
+                  {/* Median — prominent anchor */}
+                  <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2">
+                    <p className="font-body text-[12px] text-[#6B7280]">Median pasaran</p>
+                    <p className="font-heading font-bold text-[14px] text-[#064E4A]">RM{fmt(median)}</p>
+                  </div>
+
                   <p className="font-body text-[11px] text-[#6B7280]">Harga listing dijumpai:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {marketPrices.listings.map((l, i) => (
@@ -235,18 +272,40 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       </a>
                     ))}
                   </div>
-                  <p className="font-body text-[11px] text-[#6B7280]">
-                    Berdasarkan {prices.length} kereta serupa yang dijumpai.
-                  </p>
+
                   {minP !== maxP && (
                     <p className="font-body text-[11px] text-[#6B7280]">
                       Julat: RM{fmt(minP)} – RM{fmt(maxP)}
                     </p>
                   )}
+
+                  {/* Methodology + confidence */}
+                  <p className="font-body text-[11px] text-[#9CA3AF]">
+                    Berdasarkan {mPrices.length} listing serupa dari Mudah
+                  </p>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${conf.dot}`} />
+                      <span className={`font-body text-[11px] font-semibold ${conf.labelCls}`}>{conf.label}</span>
+                    </div>
+                    <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">{conf.text}</p>
+                  </div>
+
                   <a href={marketPrices.searchUrl} target="_blank" rel="noopener noreferrer"
                     className="font-body text-[11px] text-[#064E4A] hover:underline block">
                     Lihat semua listing di Mudah →
                   </a>
+
+                  {/* Trade-in estimate */}
+                  <div className="mt-1 pt-3 border-t border-[#F3F4F6]">
+                    <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
+                    <p className="font-heading font-bold text-[14px] text-[#111827]">
+                      RM{fmt(tradeInLow)} – RM{fmt(tradeInHigh)}
+                    </p>
+                    <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+                      Jual sendiri berpotensi dapat sekitar RM{fmt(spread)} lebih berbanding trade-in, bergantung pada kondisi, mileage dan permintaan pasaran.
+                    </p>
+                  </div>
                 </div>
               )
             })()}

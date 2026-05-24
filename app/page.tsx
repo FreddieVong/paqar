@@ -57,7 +57,21 @@ export default async function HomePage() {
             {/* Free price check card */}
             <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-4 md:p-5">
               <p className="font-heading font-bold text-[15px] text-[#111827] mb-0.5">Semak Harga Pasaran</p>
-              <p className="font-body text-[13px] text-[#6B7280] mb-2">Verdict harga — mahal, wajar, atau berbaloi untuk kereta tu</p>
+              <p className="font-body text-[13px] text-[#6B7280] mb-3">Tahu sama ada harga seller mahal, wajar atau berbaloi.</p>
+              <div className="space-y-1.5 mb-3">
+                {[
+                  'Verdict harga percuma',
+                  'Median & range pasaran',
+                  'Analisis siap — bukan data mentah',
+                ].map(item => (
+                  <div key={item} className="flex items-center gap-2">
+                    <span className="w-[15px] h-[15px] rounded-full bg-[#14453d] flex items-center justify-center flex-shrink-0">
+                      <svg width="7" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </span>
+                    <p className="font-body text-[12px] text-[#374151]">{item}</p>
+                  </div>
+                ))}
+              </div>
               <span className="inline-block font-heading font-bold text-[11px] px-2.5 py-1 rounded-full bg-[#DCFCE7] text-[#15803D]">
                 Percuma
               </span>
@@ -84,10 +98,10 @@ export default async function HomePage() {
               {/* Value stack */}
               <div className="px-4 py-1 border-b border-[#F3F4F6]">
                 {[
-                  { title: 'Skrip rundingan harga',   desc: 'Bantu anda bincang harga berdasarkan data, bukan agak-agak.' },
-                  { title: 'Harga pasaran sebenar',   desc: 'Tahu sama ada harga kereta itu mahal, wajar atau berbaloi.' },
-                  { title: 'Data JPJ penuh',           desc: 'Semak maklumat penting sebelum buat keputusan.' },
-                  { title: '10 soalan untuk penjual', desc: 'Tanya soalan yang boleh dedahkan masalah tersembunyi.' },
+                  { title: 'Skrip rundingan harga',            desc: 'Bantu anda bincang berdasarkan data.' },
+                  { title: 'Harga pasaran + anggaran trade-in', desc: 'Lihat median, range dan anggaran trade-in.' },
+                  { title: 'Data JPJ penuh',                    desc: 'Semak maklumat penting sebelum buat keputusan.' },
+                  { title: '10 soalan untuk penjual',           desc: 'Tanya soalan yang boleh dedahkan risiko.' },
                 ].map((item, i, arr) => (
                   <div key={item.title} className={`flex gap-2.5 items-start py-2.5 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
                     <span className="w-[17px] h-[17px] rounded-full bg-[#14453d] flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -329,7 +343,7 @@ export default async function HomePage() {
             {[
               {
                 q: 'Apakah beza semakan percuma dan laporan RM12?',
-                a: 'Semakan percuma beri verdict harga berdasarkan maklumat kereta. Laporan RM12 tambah data kenderaan, harga pasaran sebenar, soalan untuk penjual dan skrip rundingan harga.',
+                a: 'Semakan percuma beri verdict harga dan jurang RM dari median pasaran. Laporan RM12 tambah harga pasaran penuh, anggaran trade-in, data JPJ, soalan untuk penjual dan skrip rundingan.',
               },
               {
                 q: 'Adakah saya perlu daftar akaun?',
