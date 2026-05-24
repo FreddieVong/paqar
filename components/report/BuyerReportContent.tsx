@@ -281,7 +281,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
                   {/* Methodology + confidence */}
                   <p className="font-body text-[11px] text-[#9CA3AF]">
-                    Berdasarkan {mPrices.length} listing serupa dari Mudah
+                    Berdasarkan {mPrices.length} listing serupa di pasaran
                   </p>
                   <div>
                     <div className="flex items-center gap-1.5">
@@ -303,7 +303,10 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       RM{fmt(tradeInLow)} – RM{fmt(tradeInHigh)}
                     </p>
                     <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
-                      Jual sendiri berpotensi dapat sekitar RM{fmt(spread)} lebih berbanding trade-in, bergantung pada kondisi, mileage dan permintaan pasaran.
+                      Lebih kurang harga yang dealer akan bagi untuk kereta ni. Boleh guna ni bila nak tawar harga.
+                    </p>
+                    <p className="font-body text-[10px] text-[#9CA3AF] mt-1 leading-relaxed">
+                      Anggaran sahaja. Bergantung pada kondisi, mileage dan pasaran semasa.
                     </p>
                   </div>
                 </div>

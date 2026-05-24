@@ -306,7 +306,7 @@ export function OverpricedCheckerForm() {
 
             {/* Source + count + confidence */}
             <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
-              Berdasarkan {hasDataResult!.listingCount} listing serupa dari Mudah
+              Berdasarkan {hasDataResult!.listingCount} listing serupa di pasaran
             </p>
             {(() => {
               const n = hasDataResult!.listingCount

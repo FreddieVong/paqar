@@ -77,7 +77,7 @@ export function SampleReportPreview() {
 
         {/* Methodology + confidence */}
         <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
-          Berdasarkan 10 listing serupa dari Mudah
+          Berdasarkan 10 listing serupa di pasaran
         </p>
         <div className="mb-3">
           <div className="flex items-center gap-1.5">
@@ -94,7 +94,10 @@ export function SampleReportPreview() {
           <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
           <p className="font-heading font-bold text-[13px] text-[#111827]">RM34,000 – RM36,000</p>
           <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
-            Jual sendiri berpotensi dapat sekitar RM7,500 lebih berbanding trade-in.
+            Lebih kurang harga yang dealer akan bagi untuk kereta ni. Boleh guna ni bila nak tawar harga.
+          </p>
+          <p className="font-body text-[10px] text-[#9CA3AF] mt-1 leading-relaxed">
+            Anggaran sahaja. Bergantung pada kondisi, mileage dan pasaran semasa.
           </p>
         </div>
       </div>
