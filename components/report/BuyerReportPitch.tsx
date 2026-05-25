@@ -1,8 +1,8 @@
 const STACK = [
-  { title: 'Skrip rundingan harga',   desc: 'Bantu anda bincang harga berdasarkan data, bukan agak-agak.' },
-  { title: 'Harga pasaran sebenar',   desc: 'Tahu sama ada harga kereta itu mahal, wajar atau berbaloi.' },
-  { title: 'Data JPJ penuh',           desc: 'Semak maklumat penting sebelum buat keputusan.' },
-  { title: '10 soalan untuk penjual', desc: 'Tanya soalan yang boleh dedahkan masalah tersembunyi.' },
+  { title: 'Skrip rundingan harga',        desc: 'Bantu anda bincang harga berdasarkan data.' },
+  { title: 'Harga pasaran sebenar',        desc: 'Tahu sama ada harga kereta itu mahal, wajar atau berbaloi.' },
+  { title: 'Data JPJ penuh',               desc: 'Semak nombor rangka, status dan rekod kenderaan.' },
+  { title: 'Soalan penting untuk seller', desc: 'Tanya soalan yang boleh dedahkan masalah tersembunyi.' },
 ]
 
 export function BuyerReportPitch({ plate }: { plate: string }) {

@@ -23,7 +23,7 @@ export function SampleReportPreview() {
           Keputusan Paqar
         </p>
         <p className="font-heading font-extrabold text-[20px] leading-tight text-[#DC2626] mb-0.5">
-          Harga Terlalu Tinggi
+          MAHAL
         </p>
         <p className="font-heading font-bold text-[13px] text-[#111827] mb-4">
           Jangan bayar deposit dulu.
@@ -85,7 +85,7 @@ export function SampleReportPreview() {
             <span className="font-body text-[11px] font-semibold text-[#15803D]">Keyakinan data: Tinggi</span>
           </div>
           <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">
-            Data ini lebih stabil untuk dijadikan panduan harga.
+            Cukup stabil untuk dijadikan panduan.
           </p>
         </div>
 

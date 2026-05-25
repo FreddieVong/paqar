@@ -22,7 +22,7 @@ const VERDICT_CONFIG: Record<Verdict, {
   ctaSub:       string
 }> = {
   overpriced: {
-    badge:      'Harga Terlalu Tinggi',
+    badge:      'MAHAL',
     badgeCls:   'bg-[#DC2626] text-white',
     cardBg:     'bg-[#FEF2F2]',
     cardBorder: 'border-[#FECACA]',
@@ -30,7 +30,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
   slightly_high: {
-    badge:      'Sedikit Tinggi',
+    badge:      'AGAK MAHAL',
     badgeCls:   'bg-[#B45309] text-white',
     cardBg:     'bg-[#FFFBEB]',
     cardBorder: 'border-[#FDE68A]',
@@ -38,15 +38,15 @@ const VERDICT_CONFIG: Record<Verdict, {
     ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
   fair_price: {
-    badge:      'Harga Wajar',
+    badge:      'WAJAR',
     badgeCls:   'bg-[#064E4A] text-white',
     cardBg:     'bg-[#F0FDF4]',
     cardBorder: 'border-[#BBF7D0]',
-    copy:       () => 'Sebelum setuju, semak data JPJ dan tanya soalan yang betul kepada penjual.',
+    copy:       () => 'Semak data JPJ dan soalan untuk penjual sebelum setuju.',
     ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
   },
   good_deal: {
-    badge:      'Harga Bagus',
+    badge:      'BERBALOI',
     badgeCls:   'bg-[#0891B2] text-white',
     cardBg:     'bg-[#F0FAFA]',
     cardBorder: 'border-[#99D4D1]',
@@ -216,7 +216,7 @@ export function OverpricedCheckerForm() {
             Semak Harga Percuma →
           </button>
           <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-            Percuma untuk semak harga · RM12 untuk laporan penuh dengan bukti harga &amp; skrip tawar
+            Percuma untuk semak harga · RM12 untuk laporan penuh dengan bukti harga &amp; skrip rundingan
           </p>
         </form>
       </div>
@@ -259,7 +259,7 @@ export function OverpricedCheckerForm() {
             )}
             <p className="font-body text-[13px] text-[#6B7280] mb-4 leading-relaxed">
               {retried
-                ? 'Kami belum ada data untuk model ini. Laporan penuh ada harga pasaran terkini terus dari Mudah.'
+                ? 'Kami belum ada data pasaran yang cukup untuk model ini. Anda masih boleh teruskan laporan penuh untuk semak data kenderaan dan panduan tanya seller.'
                 : 'Ambil masa sebentar — atau teruskan dengan laporan penuh sekarang.'}
             </p>
           </>
@@ -312,9 +312,9 @@ export function OverpricedCheckerForm() {
               const n = hasDataResult!.listingCount
               const level = n >= 10 ? 'high' : n >= 5 ? 'medium' : 'limited'
               const conf = {
-                high:    { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Data ini lebih stabil untuk dijadikan panduan harga.' },
-                medium:  { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Gunakan sebagai panduan awal, bukan harga muktamad.' },
-                limited: { label: 'Data pasaran terhad',        labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Gunakan verdict ini sebagai anggaran awal dan bandingkan dengan kondisi sebenar kereta.' },
+                high:    { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Cukup stabil untuk dijadikan panduan.' },
+                medium:  { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Guna sebagai panduan awal sahaja.' },
+                limited: { label: 'Data pasaran terhad',        labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Data terhad. Guna sebagai anggaran kasar sahaja.' },
               }[level]
               return (
                 <div className="mb-4">

@@ -99,9 +99,9 @@ export default async function HomePage() {
               <div className="px-4 py-1 border-b border-[#F3F4F6]">
                 {[
                   { title: 'Skrip rundingan harga',            desc: 'Bantu anda bincang berdasarkan data.' },
-                  { title: 'Harga pasaran + anggaran trade-in', desc: 'Lihat median, range dan anggaran trade-in.' },
-                  { title: 'Data JPJ penuh',                    desc: 'Semak maklumat penting sebelum buat keputusan.' },
-                  { title: '10 soalan untuk penjual',           desc: 'Tanya soalan yang boleh dedahkan risiko.' },
+                  { title: 'Harga pasaran + anggaran trade-in', desc: 'Faham harga sebenar dan ruang rundingan anda.' },
+                  { title: 'Data JPJ penuh',                    desc: 'Semak nombor rangka, status dan rekod kenderaan.' },
+                  { title: 'Soalan penting untuk seller',      desc: 'Tanya soalan yang boleh dedahkan risiko.' },
                 ].map((item, i, arr) => (
                   <div key={item.title} className={`flex gap-2.5 items-start py-2.5 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
                     <span className="w-[17px] h-[17px] rounded-full bg-[#14453d] flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -147,7 +147,7 @@ export default async function HomePage() {
             Tiga langkah. Satu minit.
           </h2>
           <p className="font-body text-[14px] text-[#6B7280] mb-8">
-            Tiada pendaftaran diperlukan untuk semakan pertama anda.
+            Tiada pendaftaran diperlukan.
           </p>
 
           <div className="flex flex-col gap-0">
@@ -210,15 +210,6 @@ export default async function HomePage() {
                 Harga yang penjual minta belum tentu mencerminkan harga pasaran sebenar.
               </p>
             </div>
-            <div className="flex gap-3 items-start">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 mt-0.5">
-                <circle cx="8" cy="8" r="6.5" stroke="#4ADE80" strokeWidth="1.5"/>
-                <path d="M5.5 8L7 9.5L10.5 6" stroke="#4ADE80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <p className="font-body text-[13px] text-white/65 leading-relaxed">
-                Paqar bantu anda semak harga dahulu — dalam 60 saat, percuma.
-              </p>
-            </div>
           </div>
         </div>
       </section>
@@ -274,7 +265,7 @@ export default async function HomePage() {
               Nak beli kereta terpakai? Semak dahulu.
             </h2>
             <p className="font-body text-[14px] text-white/70 leading-relaxed">
-              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda tahu sama ada harga berpatutan, semak data JPJ, dan sedia skrip tawar sebelum bayar deposit.
+              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda semak harga, data JPJ, dan masuk rundingan dengan yakin — sebelum bayar deposit.
             </p>
           </div>
           <a
@@ -347,19 +338,15 @@ export default async function HomePage() {
               },
               {
                 q: 'Adakah saya perlu daftar akaun?',
-                a: 'Tidak. Semakan pertama boleh dibuat tanpa daftar akaun.',
+                a: 'Tidak. Tiada akaun diperlukan.',
               },
               {
                 q: 'Boleh guna sebelum tengok kereta?',
-                a: 'Ya. Paqar memang sesuai digunakan sebelum anda pergi tengok kereta atau sebelum bayar deposit.',
+                a: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar deposit.',
               },
               {
                 q: 'Adakah Paqar dari JPJ atau PDRM?',
-                a: 'Paqar bukan platform rasmi JPJ atau PDRM. Paqar membantu pembeli memahami maklumat kenderaan dan harga pasaran sebelum membuat keputusan.',
-              },
-              {
-                q: 'Apa berlaku kalau laporan gagal dijana?',
-                a: 'Jika laporan gagal dijana, anda akan dimaklumkan dan boleh hubungi kami di hello@paqar.my untuk bantuan.',
+                a: 'Paqar adalah perkhidmatan pihak ketiga — bukan afiliasi JPJ atau PDRM.',
               },
             ].map((faq) => (
               <details key={faq.q} className="group bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">

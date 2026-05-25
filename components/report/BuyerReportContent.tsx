@@ -22,9 +22,9 @@ function dataConfidenceLevel(count: number): 'high' | 'medium' | 'limited' {
 }
 
 const CONFIDENCE_CONFIG = {
-  high:    { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Data ini lebih stabil untuk dijadikan panduan harga.' },
-  medium:  { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Gunakan sebagai panduan awal, bukan harga muktamad.' },
-  limited: { label: 'Data pasaran terhad',        labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Listing serupa agak terhad. Gunakan sebagai anggaran awal dan bandingkan dengan kondisi sebenar kereta.' },
+  high:    { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Cukup stabil untuk dijadikan panduan.' },
+  medium:  { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Guna sebagai panduan awal sahaja.' },
+  limited: { label: 'Data pasaran terhad',        labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Data terhad. Guna sebagai anggaran kasar sahaja.' },
 } as const
 
 function translateCoverType(ct: string): string {
@@ -141,10 +141,10 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       {/* 1. Keputusan Paqar — top decision card */}
       {effectiveVerdict != null && (() => {
         const kepConfig = ({
-          good_deal:     { headline: 'Harga Bagus',          sub: 'Tapi semak condition dan dokumen sebelum deposit.', headlineColor: 'text-[#0891B2]', bg: 'bg-[#F0FAFA]', border: 'border-[#99D4D1]' },
-          fair_price:    { headline: 'Harga Wajar',          sub: 'Teruskan, tapi semak condition dan dokumen dulu.',  headlineColor: 'text-[#064E4A]', bg: 'bg-[#F0FDF4]', border: 'border-[#BBF7D0]' },
-          slightly_high: { headline: 'Sedikit Tinggi',       sub: 'Ada ruang untuk tawar sebelum setuju.',            headlineColor: 'text-[#B45309]', bg: 'bg-[#FFFBEB]', border: 'border-[#FDE68A]' },
-          overpriced:    { headline: 'Harga Terlalu Tinggi', sub: 'Jangan bayar deposit dulu.',                       headlineColor: 'text-[#DC2626]', bg: 'bg-[#FEF2F2]', border: 'border-[#FECACA]' },
+          good_deal:     { headline: 'BERBALOI',    sub: 'Tapi semak condition dan dokumen sebelum deposit.', headlineColor: 'text-[#0891B2]', bg: 'bg-[#F0FAFA]', border: 'border-[#99D4D1]' },
+          fair_price:    { headline: 'WAJAR',       sub: 'Teruskan, tapi semak condition dan dokumen dulu.',  headlineColor: 'text-[#064E4A]', bg: 'bg-[#F0FDF4]', border: 'border-[#BBF7D0]' },
+          slightly_high: { headline: 'AGAK MAHAL',  sub: 'Ada ruang untuk tawar sebelum setuju.',            headlineColor: 'text-[#B45309]', bg: 'bg-[#FFFBEB]', border: 'border-[#FDE68A]' },
+          overpriced:    { headline: 'MAHAL',       sub: 'Jangan bayar deposit dulu.',                       headlineColor: 'text-[#DC2626]', bg: 'bg-[#FEF2F2]', border: 'border-[#FECACA]' },
         } as const)[effectiveVerdict]
 
         const cadangan = ({
@@ -213,15 +213,15 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           ? valVariantRaw.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
           : null
         const verdictDisplay = effectiveVerdict ? (verdictSource === 'market' ? ({
-          good_deal:     { text: 'Harga Bagus — tapi semak condition dulu',          color: 'text-[#0891B2]', sub: 'Jangan bayar deposit sebelum semak dokumen, JPJ, dan condition kereta.' },
-          fair_price:    { text: 'Harga Wajar — boleh teruskan, tapi semak dulu',    color: 'text-[#064E4A]', sub: 'Harga nampak dalam julat pasaran. Pastikan rekod dan condition kereta jelas.' },
-          slightly_high: { text: 'Sedikit Tinggi — masih boleh tawar',               color: 'text-[#B45309]', sub: 'Harga sedikit atas pasaran. Gunakan skrip tawar untuk minta harga lebih baik.' },
-          overpriced:    { text: 'Harga Terlalu Tinggi — jangan bayar deposit dulu', color: 'text-[#DC2626]', sub: 'Harga seller lebih tinggi daripada kereta serupa. Gunakan skrip tawar sebelum jumpa seller.' },
+          good_deal:     { text: 'BERBALOI — tapi semak condition dulu',   color: 'text-[#0891B2]', sub: 'Semak dokumen, JPJ dan condition kereta sebelum bayar deposit.' },
+          fair_price:    { text: 'WAJAR — boleh teruskan, tapi semak dulu', color: 'text-[#064E4A]', sub: 'Harga dalam julat pasaran. Pastikan rekod dan condition kereta jelas.' },
+          slightly_high: { text: 'AGAK MAHAL — masih boleh tawar',          color: 'text-[#B45309]', sub: 'Harga sedikit atas pasaran. Gunakan skrip rundingan untuk minta harga lebih baik.' },
+          overpriced:    { text: 'MAHAL — jangan bayar deposit dulu',       color: 'text-[#DC2626]', sub: 'Harga seller lebih tinggi daripada kereta serupa. Gunakan skrip rundingan sebelum jumpa seller.' },
         } as const)[effectiveVerdict] : ({
-          good_deal:     { text: 'Harga Bagus — tapi semak condition dulu',          color: 'text-[#0891B2]', sub: 'Harga di bawah anggaran susut nilai. Pastikan condition dan dokumen elok sebelum deposit.' },
-          fair_price:    { text: 'Harga Wajar — berpatutan untuk umur kereta ini',   color: 'text-[#064E4A]', sub: 'Harga sepadan dengan anggaran susut nilai. Pastikan rekod dan condition kereta jelas.' },
-          slightly_high: { text: 'Sedikit Tinggi — ada ruang untuk tawar',           color: 'text-[#B45309]', sub: 'Harga sedikit melebihi anggaran susut nilai. Cuba tawar sebelum setuju.' },
-          overpriced:    { text: 'Harga Terlalu Tinggi — jangan bayar deposit dulu', color: 'text-[#DC2626]', sub: 'Harga jauh melebihi anggaran susut nilai untuk kereta umur ini.' },
+          good_deal:     { text: 'BERBALOI — tapi semak condition dulu',   color: 'text-[#0891B2]', sub: 'Harga di bawah anggaran susut nilai. Pastikan condition dan dokumen elok sebelum deposit.' },
+          fair_price:    { text: 'WAJAR — berpatutan untuk umur kereta ini', color: 'text-[#064E4A]', sub: 'Harga sepadan dengan anggaran susut nilai. Pastikan rekod dan condition kereta jelas.' },
+          slightly_high: { text: 'AGAK MAHAL — ada ruang untuk tawar',      color: 'text-[#B45309]', sub: 'Harga sedikit melebihi anggaran susut nilai. Cuba tawar sebelum setuju.' },
+          overpriced:    { text: 'MAHAL — jangan bayar deposit dulu',       color: 'text-[#DC2626]', sub: 'Harga jauh melebihi anggaran susut nilai untuk kereta umur ini.' },
         } as const)[effectiveVerdict]) : null
 
         return (
@@ -365,7 +365,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         )
       })()}
 
-      {/* 3. Skrip Tawar Seller */}
+      {/* 3. Skrip Rundingan */}
       {effectiveVerdict && askingPriceRm != null && vehicleData?.make && (() => {
         const make    = String(vehicleData.make ?? '')
         const model   = String(vehicleData.model ?? '')
@@ -390,7 +390,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
-              Skrip Tawar Seller
+              Skrip Rundingan
             </p>
             <div className="bg-[#F9FAFB] rounded-lg p-4 mb-3">
               <p className="font-body text-[13px] text-[#374151] leading-relaxed whitespace-pre-line">
@@ -423,7 +423,31 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         </div>
       </div>
 
-      {/* 5. Data Kenderaan Rasmi (JPJ) */}
+      {/* 5. Checklist Deposit */}
+      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-4">
+          Checklist sebelum bayar deposit
+        </p>
+        <div className="space-y-3">
+          {[
+            'Nombor rangka sama dengan geran',
+            'Geran atas nama penjual',
+            'Semak loan / hutang bank',
+            'Semak saman tertunggak',
+            'Cukai jalan masih sah',
+            'Dapat resit deposit bertulis',
+            'Nyatakan syarat refund deposit',
+            'Confirm tarikh serah geran dan kunci',
+          ].map((item, i) => (
+            <div key={i} className="flex gap-3 items-start">
+              <span className="w-[18px] h-[18px] rounded border-2 border-[#D1D5DB] flex-shrink-0 mt-0.5" />
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed">{item}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 6. Data Kenderaan Rasmi (JPJ) */}
       {vehicleData?.make && (
         <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
           <div className="flex items-center justify-between mb-3">
