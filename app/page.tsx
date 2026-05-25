@@ -88,7 +88,7 @@ export default async function HomePage() {
                   Masuk rundingan dengan data.<br />Bukan agak-agak.
                 </p>
                 <p className="font-body text-[11px] text-white/55 leading-relaxed">
-                  Guna skrip siap untuk tanya soalan penting, runding harga, dan elak buat keputusan ikut emosi.
+                  Guna skrip siap untuk tanya soalan penting dan runding harga sebelum bayar deposit.
                 </p>
               </div>
 
@@ -96,7 +96,7 @@ export default async function HomePage() {
               <div className="px-4 py-1 border-b border-[#F3F4F6]">
                 {[
                   { title: 'Skrip rundingan harga',            desc: 'Bantu anda bincang berdasarkan data.' },
-                  { title: 'Harga pasaran + anggaran trade-in', desc: 'Faham harga sebenar dan ruang rundingan anda.' },
+                  { title: 'Harga pasaran & anggaran trade-in', desc: 'Faham harga sebenar dan ruang rundingan anda.' },
                   { title: 'Data JPJ penuh',                    desc: 'Semak nombor rangka, status dan rekod kenderaan.' },
                   { title: 'Soalan penting untuk seller',      desc: 'Tanya soalan yang boleh dedahkan risiko.' },
                 ].map((item, i, arr) => (
@@ -161,8 +161,8 @@ export default async function HomePage() {
               },
               {
                 n: '3',
-                title: 'Masuk rundingan bersedia',
-                desc:  'Dapat skrip rundingan, data JPJ dan harga sebenar untuk RM12 — sebelum anda buat sebarang keputusan.',
+                title: 'Masuk rundingan dengan data',
+                desc:  'Dapat skrip rundingan, data JPJ dan harga sebenar untuk RM12 — sebelum bayar deposit.',
               },
             ].map((step, i) => (
               <div key={step.n} className="flex gap-4 pb-6 relative">
@@ -262,7 +262,7 @@ export default async function HomePage() {
               Nak beli kereta terpakai? Semak dahulu.
             </h2>
             <p className="font-body text-[14px] text-white/70 leading-relaxed">
-              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda semak harga, data JPJ, dan masuk rundingan dengan yakin — sebelum bayar deposit.
+              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda semak harga, data JPJ, dan runding dengan yakin — sebelum bayar deposit.
             </p>
           </div>
           <a
