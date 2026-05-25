@@ -45,11 +45,8 @@ export default async function HomePage() {
       <section className="bg-[#F8FAF7] px-5 py-12 md:py-16">
         <div className="max-w-5xl mx-auto">
           <div className="mb-8 md:text-center">
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
-              Apa Yang Anda Boleh Semak
-            </p>
             <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827]">
-              Semua yang anda perlu tahu sebelum beli
+              Apa yang anda boleh semak
             </h2>
           </div>
 

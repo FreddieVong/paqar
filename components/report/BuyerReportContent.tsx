@@ -148,8 +148,8 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         } as const)[effectiveVerdict]
 
         const cadangan = ({
-          good_deal:     'Harga nampak bagus. Fokus semak condition, dokumen dan inspection sebelum bayar deposit.',
-          fair_price:    'Harga nampak wajar. Jika condition biasa, masih boleh minta sedikit kurang.',
+          good_deal:     'Harga nampak berbaloi. Fokus semak condition, dokumen dan inspection sebelum bayar deposit.',
+          fair_price:    'Harga nampak wajar. Masih boleh minta sedikit kurang sebelum setuju.',
           slightly_high: hasMarketData
             ? `Target RM${fmt(offerLow)}–RM${fmt(offerHigh)}. Gunakan skrip di bawah.`
             : 'Harga sedikit tinggi berbanding anggaran. Minta harga lebih baik sebelum setuju.',
