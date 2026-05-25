@@ -135,6 +135,9 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
             Soalan penjual di bawah masih berguna — gunakan ia untuk tanya penjual anda.
           </p>
+          <a href="" className="font-body text-[13px] text-[#B45309] font-semibold underline underline-offset-2 mt-3 inline-block">
+            Cuba muat semula →
+          </a>
         </div>
       )}
 

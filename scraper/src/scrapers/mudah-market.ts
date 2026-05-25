@@ -45,7 +45,7 @@ export async function scrapeMudahMarket(
             (json?.data as Record<string,unknown>)?.listings as unknown[] ??
             json?.listings as unknown[] ??
             json?.results as unknown[] ?? []
-          for (const item of items.slice(0, 20)) {
+          for (const item of items.slice(0, 30)) {
             const i     = item as Record<string, unknown>
             const price = Number(i?.price ?? i?.asking_price ?? 0)
             if (!price || price < 5_000 || price > 2_000_000) continue
@@ -145,11 +145,11 @@ export async function scrapeMudahMarket(
     return { listings: [], searchUrl, error: String(err) }
   }
 
-  // Deduplicate by price, keep cheapest first
-  const seen = new Set<number>()
+  // Deduplicate by URL, keep cheapest first
+  const seen = new Set<string>()
   const deduped = listings.filter(l => {
-    if (seen.has(l.price)) return false
-    seen.add(l.price)
+    if (seen.has(l.url)) return false
+    seen.add(l.url)
     return true
   }).sort((a, b) => a.price - b.price).slice(0, 15)
 
