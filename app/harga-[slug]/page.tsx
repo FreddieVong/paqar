@@ -66,7 +66,8 @@ const PILOT_SLUGS = ['myvi-2020', 'myvi-2021', 'axia-2021', 'bezza-2021', 'vios-
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function parseSlug(slug: string): { modelKey: string; year: string } | null {
+function parseSlug(slug: string | undefined): { modelKey: string; year: string } | null {
+  if (!slug) return null
   const m = slug.match(/^(.+)-(\d{4})$/)
   if (!m) return null
   return { modelKey: m[1]!, year: m[2]! }
