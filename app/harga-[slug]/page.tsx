@@ -8,6 +8,12 @@ import { DualCheckForm }  from '@/components/check/DualCheckForm'
 
 export const dynamic = 'force-dynamic'
 
+const PILOT_SLUGS = ['myvi-2020', 'myvi-2021', 'axia-2021', 'bezza-2021', 'vios-2020']
+
+export function generateStaticParams() {
+  return PILOT_SLUGS.map(slug => ({ slug }))
+}
+
 // ── Model config ───────────────────────────────────────────────────────────
 
 type ModelInfo = {
