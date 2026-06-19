@@ -90,7 +90,7 @@ function medianOf(sorted: number[]): number {
     : sorted[mid]!
 }
 
-// ── Static params + metadata ───────────────────────────────────────────────
+// ── Metadata ───────────────────────────────────────────────────────────────
 
 type Props = { params: { slug: string } }
 
@@ -123,17 +123,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function YearModelPage({ params }: Props) {
   const parsed = parseSlug(params.slug)
-  if (!parsed) { console.error('[harga-slug] parseSlug failed', params.slug); notFound() }
+  if (!parsed) notFound()
 
   const { modelKey, year } = parsed
   const info = MODEL_MAP[modelKey]
-  if (!info) { console.error('[harga-slug] MODEL_MAP miss', modelKey); notFound() }
+  if (!info) notFound()
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
-  const { data: cached, error: dbErr } = await supabase
+  const { data: cached } = await supabase
     .from('market_price_cache')
     .select('listings, fetched_at')
     .eq('make', info.make.toLowerCase())
@@ -142,14 +142,14 @@ export default async function YearModelPage({ params }: Props) {
     .gte('fetched_at', new Date(Date.now() - 7 * 86_400_000).toISOString())
     .single()
 
-  if (!cached) { console.error('[harga-slug] no cached data', { modelKey, year, dbErr }); notFound() }
+  if (!cached) notFound()
 
   const listings = cached.listings as { price: number }[]
   const validPrices = listings
     .map(l => l.price)
     .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
 
-  if (validPrices.length < 3) { console.error('[harga-slug] validPrices < 3', validPrices.length); notFound() }
+  if (validPrices.length < 3) notFound()
 
   const sorted      = [...validPrices].sort((a, b) => a - b)
   const minPrice    = sorted[0]!
