@@ -6,6 +6,7 @@ import { SampleReportPreview } from '@/components/report/SampleReportPreview'
 export const metadata = {
   title: 'Contoh Laporan Pembeli — Paqar',
   description: 'Lihat contoh laporan Paqar sebelum anda membeli kereta terpakai.',
+  robots: { index: false },
 }
 
 export default function ContohLaporanPage() {

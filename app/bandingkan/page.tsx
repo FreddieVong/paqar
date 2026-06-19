@@ -1,0 +1,62 @@
+import type { Metadata } from 'next'
+import Link              from 'next/link'
+import { Nav }           from '@/components/layout/Nav'
+import { Shell }         from '@/components/layout/Shell'
+
+export const metadata: Metadata = {
+  title: 'Bandingkan Kereta Terpakai Malaysia — Myvi vs Axia, Vios vs City | Paqar',
+  description: 'Bandingkan harga kereta terpakai Malaysia side-by-side. Myvi vs Axia, Vios vs City, Bezza vs Saga, Alza vs X50.',
+  alternates: { canonical: 'https://paqar.my/bandingkan' },
+}
+
+const COMPARISONS = [
+  { slug: 'myvi-vs-axia',   titleA: 'Perodua Myvi',  titleB: 'Perodua Axia',  desc: 'Budget hatchback — mana lebih berbaloi untuk anda?', tag: 'Paling banyak dicari' },
+  { slug: 'vios-vs-city',   titleA: 'Toyota Vios',   titleB: 'Honda City',    desc: 'Sedan Jepun paling laris — nilai jual semula vs ruang dalaman.', tag: null },
+  { slug: 'bezza-vs-saga',  titleA: 'Perodua Bezza', titleB: 'Proton Saga',   desc: 'Dua sedan nasional — mana lebih jimat dan berbaloi?', tag: null },
+  { slug: 'alza-vs-x50',    titleA: 'Perodua Alza',  titleB: 'Proton X50',   desc: 'MPV 7-tempat duduk vs SUV kompak — pilihan untuk keluarga.', tag: null },
+]
+
+export default function BandingkanHub() {
+  return (
+    <>
+      <Nav />
+      <Shell>
+        <div className="pt-6 pb-12 max-w-xl mx-auto space-y-5">
+          <div>
+            <h1 className="font-heading font-extrabold text-[26px] text-[#111827] leading-tight mb-2">
+              Bandingkan kereta terpakai
+            </h1>
+            <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
+              Perbandingan harga pasaran dan kelebihan setiap model — bantu anda pilih yang paling sesuai.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {COMPARISONS.map((c) => (
+              <Link key={c.slug} href={`/bandingkan/${c.slug}`}
+                className="block bg-white border border-[#E5E7EB] rounded-[14px] p-5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group">
+                <div className="flex items-start justify-between gap-3 mb-1">
+                  <p className="font-heading font-bold text-[15px] text-[#111827] group-hover:text-[#064E4A] transition-colors">
+                    {c.titleA} <span className="text-[#9CA3AF]">vs</span> {c.titleB}
+                  </p>
+                  {c.tag && (
+                    <span className="font-body text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 font-bold bg-[#DCFCE7] text-[#15803D]">
+                      {c.tag}
+                    </span>
+                  )}
+                </div>
+                <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">{c.desc}</p>
+                <p className="font-body text-[12px] text-[#064E4A] mt-2 group-hover:underline">Lihat perbandingan →</p>
+              </Link>
+            ))}
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <Link href="/harga-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga semua model →</Link>
+            <Link href="/panduan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Panduan beli kereta terpakai →</Link>
+          </div>
+        </div>
+      </Shell>
+    </>
+  )
+}

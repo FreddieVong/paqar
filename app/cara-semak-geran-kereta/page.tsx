@@ -6,6 +6,7 @@ import { Shell } from '@/components/layout/Shell'
 export const metadata: Metadata = {
   title: 'Cara Semak Geran Kereta Malaysia 2025 — Panduan Lengkap | Paqar',
   description: 'Cara semak geran kereta Malaysia — apa yang perlu disemak, cara baca geran, tanda-tanda geran palsu, dan cara lindungi diri semasa beli kereta terpakai.',
+  alternates: { canonical: 'https://paqar.my/cara-semak-geran-kereta' },
   openGraph: {
     images: [{ url: '/api/og?title=Cara%20Semak%20Geran%20Kereta&subtitle=Panduan%20baca%20%26%20verify%20geran%20VOC', width: 1200, height: 630 }],
   },

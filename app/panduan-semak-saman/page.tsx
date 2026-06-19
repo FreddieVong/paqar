@@ -7,6 +7,7 @@ import { DualCheckForm } from '@/components/check/DualCheckForm'
 export const metadata: Metadata = {
   title: 'Cara Semak Saman Kereta Malaysia 2025 | Panduan Lengkap — Paqar',
   description: 'Panduan lengkap cara semak saman PDRM dan JPJ secara rasmi. Step by step, percuma, tanpa daftar akaun.',
+  alternates: { canonical: 'https://paqar.my/panduan-semak-saman' },
   openGraph: {
     images: [{ url: '/api/og?title=Cara%20Semak%20Saman%20Kereta&subtitle=Panduan%20rasmi%20PDRM%20%26%20JPJ%20%E2%80%94%20percuma', width: 1200, height: 630 }],
   },

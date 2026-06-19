@@ -4,6 +4,8 @@ import { useState, useTransition, useEffect } from 'react'
 import { initiateBuyerReport }     from '@/app/laporan-pembeli/[checkId]/_actions'
 import { analytics }               from '@/lib/analytics'
 
+const JOMCHECK_ENABLED = process.env.NEXT_PUBLIC_JOMCHECK_ENABLED === 'true'
+
 interface Props {
   checkId:             string
   claimToken:          string
@@ -11,12 +13,16 @@ interface Props {
 }
 
 export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) {
-  const [email,    setEmail]    = useState('')
-  const [price,    setPrice]    = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
-  const [error,    setError]    = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [email,        setEmail]        = useState('')
+  const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
+  const [addJomCheck,  setAddJomCheck]  = useState(false)
+  const [error,        setError]        = useState<string | null>(null)
+  const [isPending,    startTransition] = useTransition()
 
   useEffect(() => { analytics.paymentFormViewed() }, [])
+
+  const title = addJomCheck ? 'Laporan Lengkap — RM100' : 'Laporan Pembeli — RM12'
+  const ctaText = addJomCheck ? 'Bayar RM100 & Buka Laporan Lengkap →' : 'Bayar RM12 & Buka Laporan →'
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -28,6 +34,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
         claimToken,
         buyerEmail:    email,
         baseUrl:       window.location.origin,
+        addJomCheck,
         askingPriceRm: price ? parseInt(price, 10) : undefined,
       })
       if (result.error) { setError(result.error); return }
@@ -38,7 +45,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-5">
       <p className="font-heading font-bold text-[14px] text-[#111827] mb-1">
-        Laporan Pembeli Lengkap — RM12
+        {title}
       </p>
       <p className="font-body text-[12px] text-[#6B7280] mb-4">
         Bayar sekali · Akses terus
@@ -87,6 +94,65 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
           />
         </div>
 
+        {/* JomCheck add-on — only shown when feature flag is enabled */}
+        {JOMCHECK_ENABLED && (
+          <button
+            type="button"
+            onClick={() => setAddJomCheck(v => !v)}
+            className={`w-full text-left rounded-[14px] border-[1.5px] p-4 transition-all ${
+              addJomCheck
+                ? 'border-[#064E4A] bg-[#F0FDFA]'
+                : 'border-[#E5E7EB] bg-white hover:border-[#064E4A]/40'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {/* Checkbox indicator */}
+              <div className={`mt-0.5 w-[18px] h-[18px] rounded-[5px] border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                addJomCheck ? 'bg-[#064E4A] border-[#064E4A]' : 'border-[#D1D5DB] bg-white'
+              }`}>
+                {addJomCheck && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <p className="font-heading font-bold text-[13px] text-[#111827]">
+                    Semakan Rekod Tuntutan Insurans
+                  </p>
+                  <p className={`font-heading font-bold text-[13px] flex-shrink-0 ${addJomCheck ? 'text-[#064E4A]' : 'text-[#6B7280]'}`}>
+                    +RM88
+                  </p>
+                </div>
+
+                <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-2">
+                  Semak rekod tuntutan kemalangan, banjir, cermin dan jumlah kerugian.
+                </p>
+
+                {/* Recommended badge */}
+                <span className={`inline-block font-heading font-bold text-[10px] px-2 py-0.5 rounded-full mb-2 ${
+                  addJomCheck ? 'bg-[#CCFBF1] text-[#047857]' : 'bg-[#F3F4F6] text-[#6B7280]'
+                }`}>
+                  Disyorkan sebelum bayar deposit
+                </span>
+
+                {/* Feature chips */}
+                <div className="flex flex-wrap gap-1.5">
+                  {['Kemalangan', 'Banjir', 'Cermin', 'Jumlah Kerugian'].map(tag => (
+                    <span key={tag} className={`font-body text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      addJomCheck ? 'bg-[#CCFBF1] text-[#047857]' : 'bg-[#F3F4F6] text-[#9CA3AF]'
+                    }`}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </button>
+        )}
+
         {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
 
         <button
@@ -96,7 +162,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
                      rounded-[14px] py-4 flex items-center justify-center gap-2
                      disabled:opacity-60 transition-colors"
         >
-          {isPending ? 'Memproses…' : 'Bayar RM12 & Buka Laporan →'}
+          {isPending ? 'Memproses…' : ctaText}
         </button>
 
         <p className="font-body text-[11px] text-[#9CA3AF] text-center">

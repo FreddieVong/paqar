@@ -6,6 +6,7 @@ import { Shell } from '@/components/layout/Shell'
 export const metadata: Metadata = {
   title: 'Panduan Beli Kereta Terpakai Malaysia | Paqar',
   description: 'Koleksi panduan lengkap untuk pembeli kereta terpakai Malaysia — semak saman, baca geran, kenal risiko, dan buat keputusan dengan yakin.',
+  alternates: { canonical: 'https://paqar.my/panduan' },
 }
 
 const GUIDES = [
@@ -135,6 +136,30 @@ export default function PanduanPage() {
                 </p>
               </Link>
             ))}
+          </div>
+
+          <div>
+            <h2 className="font-heading font-extrabold text-[16px] text-[#111827] mb-3">Harga mengikut model</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { href: '/harga-kereta-terpakai/perodua-myvi',  label: 'Perodua Myvi' },
+                { href: '/harga-kereta-terpakai/perodua-axia',  label: 'Perodua Axia' },
+                { href: '/harga-kereta-terpakai/perodua-bezza', label: 'Perodua Bezza' },
+                { href: '/harga-kereta-terpakai/perodua-alza',  label: 'Perodua Alza' },
+                { href: '/harga-kereta-terpakai/proton-saga',   label: 'Proton Saga' },
+                { href: '/harga-kereta-terpakai/proton-x50',    label: 'Proton X50' },
+                { href: '/harga-kereta-terpakai/toyota-vios',   label: 'Toyota Vios' },
+                { href: '/harga-kereta-terpakai/honda-city',    label: 'Honda City' },
+              ].map((m) => (
+                <Link key={m.href} href={m.href}
+                  className="bg-white border border-[#E5E7EB] rounded-[10px] px-3 py-2.5 font-body text-[13px] text-[#374151] hover:border-[#064E4A] hover:text-[#064E4A] transition-colors text-center">
+                  {m.label}
+                </Link>
+              ))}
+            </div>
+            <Link href="/harga-kereta-terpakai" className="block font-body text-[12px] text-[#064E4A] mt-2 underline underline-offset-2">
+              Lihat semua model →
+            </Link>
           </div>
 
           <div className="bg-[#064E4A] rounded-[16px] p-5 text-center">

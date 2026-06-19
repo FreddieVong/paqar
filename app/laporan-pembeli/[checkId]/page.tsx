@@ -4,6 +4,8 @@ import { Nav }                  from '@/components/layout/Nav'
 import { Shell }                from '@/components/layout/Shell'
 import { getCheck }             from '@/lib/db/checks'
 import { getBuyerReport, setVehicleApiData } from '@/lib/db/buyer-reports'
+import { lookupJomCheck, normalisePlate, type JomCheckResult, type JomCheckStatus } from '@/lib/jomcheck'
+import { setJomCheckStatus, setJomCheckSuccess, setJomCheckFailed } from '@/lib/jomcheck/db'
 import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
@@ -72,6 +74,35 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       }
     }
 
+    // JomCheck — lazy lookup, cached after first success, never retried after failure
+    let jomcheckData:   JomCheckResult | null = null
+    let jomcheckStatus: JomCheckStatus = (report.jomcheck_status ?? 'not_requested') as JomCheckStatus
+
+    if (
+      report.add_jomcheck &&
+      jomcheckStatus !== 'success' &&
+      jomcheckStatus !== 'failed'
+    ) {
+      const normPlate = normalisePlate(plate)
+      setJomCheckStatus(report.id, 'pending').catch(() => {})
+      try {
+        const result = await lookupJomCheck(normPlate)
+        if (result) {
+          await setJomCheckSuccess(report.id, result)
+          jomcheckData   = result
+          jomcheckStatus = 'success'
+        } else {
+          await setJomCheckFailed(report.id, 'no_result')
+          jomcheckStatus = 'failed'
+        }
+      } catch (err) {
+        await setJomCheckFailed(report.id, String(err))
+        jomcheckStatus = 'failed'
+      }
+    } else if (jomcheckStatus === 'success') {
+      jomcheckData = report.jomcheck_data as JomCheckResult | null
+    }
+
     // Market prices — serve from cache, refresh in background if stale
     let marketPrices: CachedMarketPrices | null = null
     if (vehicleData?.make && vehicleData?.model && vehicleData?.registrationYear) {
@@ -119,6 +150,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               askingPriceRm={report.asking_price_rm ?? null}
               vehicleData={vehicleData}
               marketPrices={marketPrices}
+              addJomCheck={report.add_jomcheck}
+              jomcheckData={jomcheckData}
+              jomcheckStatus={jomcheckStatus}
             />
             <ReportFeedback checkId={params.checkId} plate={plate} />
           </div>

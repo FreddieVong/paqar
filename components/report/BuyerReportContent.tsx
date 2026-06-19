@@ -1,7 +1,9 @@
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
-import { InspectionCTA } from './InspectionCTA'
-import { InsuranceCTA }  from './InsuranceCTA'
-import { CopyButton }    from './CopyButton'
+import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
+import { InspectionCTA }   from './InspectionCTA'
+import { InsuranceCTA }    from './InsuranceCTA'
+import { CopyButton }      from './CopyButton'
+import { JomCheckSection } from './JomCheckSection'
 
 const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const floorClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.floor(n / u) * u }
@@ -62,9 +64,12 @@ interface Props {
   askingPriceRm?:    number | null
   vehicleData?:      Record<string, unknown> | null
   marketPrices?:     CachedMarketPrices | null
+  addJomCheck?:      boolean
+  jomcheckData?:     JomCheckResult | null
+  jomcheckStatus?:   JomCheckStatus
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus }: Props) {
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
 
@@ -204,6 +209,20 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           </div>
         )
       })()}
+
+      {/* JomCheck — shown only if purchased; hidden for RM12 basic reports */}
+      {addJomCheck && (
+        jomcheckStatus === 'success' && jomcheckData
+          ? <JomCheckSection data={jomcheckData} />
+          : (
+            <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                Rekod tuntutan insurans belum dapat disemak buat masa ini.
+                Laporan Paqar anda masih boleh digunakan.
+              </p>
+            </div>
+          )
+      )}
 
       {/* 2. Perbandingan Harga */}
       {!vehicleNotFound && (vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {

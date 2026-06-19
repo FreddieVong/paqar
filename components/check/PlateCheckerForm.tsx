@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
+import { analytics } from '@/lib/analytics'
 
 const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
   font-heading font-semibold text-[14px] text-[#111827]
@@ -24,6 +25,7 @@ export function PlateCheckerForm() {
     if (!plate.trim()) return
     setBusy(true)
     setError(null)
+    analytics.checkStarted({ country: 'MY', is_test: false })
     try {
       const res = await fetch('/api/checks', {
         method:  'POST',

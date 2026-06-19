@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter }   from 'next/navigation'
 import type { CreateCheckResponse, Verdict, PriceCheckResult } from '@/types/api'
+import { analytics }   from '@/lib/analytics'
 
 type FormState = 'idle' | 'loading' | 'result' | 'error'
 
@@ -77,6 +78,9 @@ export function OverpricedCheckerForm() {
   const [plateBusy,   setPlateBusy]   = useState(false)
   const [plateError,  setPlateError]  = useState<string | null>(null)
   const [retried,     setRetried]     = useState(false)
+  const [leadEmail,   setLeadEmail]   = useState('')
+  const [leadSaved,   setLeadSaved]   = useState(false)
+  const [leadBusy,    setLeadBusy]    = useState(false)
 
   // Scroll to top when result arrives so verdict is visible from the start
   useEffect(() => {
@@ -111,6 +115,7 @@ export function OverpricedCheckerForm() {
     e.preventDefault()
     setCheckError(null)
     setFormState('loading')
+    analytics.checkStarted({ country: 'MY', is_test: false })
     try {
       const res = await fetch('/api/price-check', {
         method:  'POST',
@@ -126,6 +131,11 @@ export function OverpricedCheckerForm() {
       const data = await res.json() as PriceCheckResult
       setResult(data)
       setFormState('result')
+      analytics.verdictViewed(
+        data.hasData
+          ? { verdict: data.verdict, listing_count: data.listingCount, has_data: true }
+          : { verdict: 'no_data', listing_count: 0, has_data: false }
+      )
     } catch {
       setCheckError('Semakan gagal — sila cuba semula.')
       setFormState('error')
@@ -166,6 +176,32 @@ export function OverpricedCheckerForm() {
     setPlateError(null)
     setCheckError(null)
     setRetried(false)
+    setLeadEmail('')
+    setLeadSaved(false)
+  }
+
+  async function handleLeadCapture(e: React.FormEvent) {
+    e.preventDefault()
+    if (!leadEmail.trim() || leadBusy) return
+    setLeadBusy(true)
+    try {
+      const hasData = result?.hasData
+      await fetch('/api/capture-model-lead', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          email:        leadEmail.trim(),
+          brand,
+          model:        model.trim(),
+          year,
+          askingPrice:  parseInt(askingPrice, 10) || undefined,
+          verdict:      hasData ? result.verdict : 'no_data',
+          listingCount: hasData ? result.listingCount : 0,
+        }),
+      })
+      setLeadSaved(true)
+    } catch { /* non-fatal */ }
+    setLeadBusy(false)
   }
 
   // ── Form (idle / error) ────────────────────────────────────────────────
@@ -327,6 +363,28 @@ export function OverpricedCheckerForm() {
               )
             })()}
           </>
+        )}
+
+        {/* Email lead capture */}
+        {!leadSaved ? (
+          <form onSubmit={handleLeadCapture} className="flex gap-2 mb-3">
+            <input
+              type="email"
+              value={leadEmail}
+              onChange={e => setLeadEmail(e.target.value)}
+              placeholder="Simpan keputusan ini ke emel anda"
+              required
+              className="flex-1 bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 font-body text-[12px] text-[#111827] placeholder:text-[#D1D5DB] focus:outline-none focus:border-[#064E4A] transition-all min-w-0"
+            />
+            <button
+              type="submit" disabled={leadBusy}
+              className="bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#374151] font-heading font-bold text-[12px] rounded-xl px-3 py-2.5 flex-shrink-0 transition-colors disabled:opacity-60"
+            >
+              {leadBusy ? '…' : 'Simpan'}
+            </button>
+          </form>
+        ) : (
+          <p className="font-body text-[11px] text-[#15803D] mb-3 text-center">✓ Keputusan disimpan ke emel anda</p>
         )}
 
         {/* Malaysian plate input */}

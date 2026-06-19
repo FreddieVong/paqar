@@ -5,6 +5,8 @@ export async function createBuyerReport(params: {
   checkId:          string
   buyerEmail:       string
   billplzBillId:    string
+  amountCents:      number
+  addJomCheck?:     boolean
   askingPriceRm?:   number
   claimedMileageKm?: number
   listingUrl?:      string
@@ -16,7 +18,9 @@ export async function createBuyerReport(params: {
       check_id:            params.checkId,
       buyer_email:         params.buyerEmail,
       billplz_bill_id:     params.billplzBillId,
-      amount_cents:        1200,
+      amount_cents:        params.amountCents,
+      add_jomcheck:        params.addJomCheck ?? false,
+      jomcheck_status:     'not_requested',
       asking_price_rm:     params.askingPriceRm ?? null,
       claimed_mileage_km:  params.claimedMileageKm ?? null,
       listing_url:         params.listingUrl ?? null,

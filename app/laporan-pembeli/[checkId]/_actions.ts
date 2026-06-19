@@ -17,6 +17,7 @@ export async function initiateBuyerReport(params: {
   claimToken:     string
   buyerEmail:     string
   baseUrl:        string
+  addJomCheck?:   boolean
   askingPriceRm?: number
 }): Promise<{ error: string | null; billUrl?: string }> {
   if (!params.buyerEmail.includes('@')) {
@@ -37,11 +38,18 @@ export async function initiateBuyerReport(params: {
   if (row.check.status !== 'complete') return { error: 'Semakan belum selesai' }
 
   try {
+    const jomcheckEnabled  = process.env.JOMCHECK_ENABLED === 'true'
+    const effectiveAddJomCheck = jomcheckEnabled && !!params.addJomCheck
+    const amountCents      = effectiveAddJomCheck ? 10000 : 1200
+    const description      = effectiveAddJomCheck
+      ? `Laporan Lengkap Paqar - ${params.checkId}`
+      : `Laporan Pembeli Paqar - ${params.checkId}`
+
     const bill = await createBill({
       email:        params.buyerEmail,
       name:         params.buyerEmail,
-      amountCents:  1200,
-      description:  `Laporan Pembeli Paqar - ${params.checkId}`,
+      amountCents,
+      description,
       callbackUrl:  `${params.baseUrl}/api/webhooks/billplz`,
       redirectUrl:  `${params.baseUrl}/laporan-pembeli/${params.checkId}/selesai?claim_token=${params.claimToken}`,
       collectionId: env.BILLPLZ_COLLECTION_ID_BUYER ?? env.BILLPLZ_COLLECTION_ID,
@@ -51,6 +59,8 @@ export async function initiateBuyerReport(params: {
       checkId:       params.checkId,
       buyerEmail:    params.buyerEmail,
       billplzBillId: bill.id,
+      amountCents,
+      addJomCheck:   effectiveAddJomCheck,
       askingPriceRm: params.askingPriceRm,
     })
 

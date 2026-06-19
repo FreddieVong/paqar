@@ -46,6 +46,11 @@ export interface BuyerReport {
   claimed_mileage_km: number | null
   listing_url:        string | null
   vehicleapi_data:    Record<string, unknown> | null
+  add_jomcheck:        boolean
+  jomcheck_status:     'not_requested' | 'pending' | 'success' | 'failed'
+  jomcheck_data:       Record<string, unknown> | null
+  jomcheck_checked_at: string | null
+  jomcheck_error:      string | null
   paid_at:            string | null
   created_at:         string
   updated_at:         string

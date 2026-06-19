@@ -3,6 +3,54 @@ import { Nav }           from '@/components/layout/Nav'
 import { HomeCheckerTabs } from '@/components/check/HomeCheckerTabs'
 import { getCheckCount } from '@/lib/db/checks'
 
+const homeSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: 'Paqar',
+      url: 'https://paqar.my',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: 'https://paqar.my/?q={search_term_string}' },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'Organization',
+      name: 'Paqar',
+      url: 'https://paqar.my',
+      logo: 'https://paqar.my/paqar-logo.png',
+      contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'hello@paqar.my' },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'Apakah beza semakan percuma dan laporan RM12?',
+          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri verdict harga dan jurang RM dari median pasaran. Laporan RM12 tambah harga pasaran penuh, anggaran trade-in, data JPJ, soalan untuk penjual dan skrip rundingan.' },
+        },
+        {
+          '@type': 'Question',
+          name: 'Adakah saya perlu daftar akaun?',
+          acceptedAnswer: { '@type': 'Answer', text: 'Tidak. Tiada akaun diperlukan.' },
+        },
+        {
+          '@type': 'Question',
+          name: 'Boleh guna sebelum tengok kereta?',
+          acceptedAnswer: { '@type': 'Answer', text: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar deposit.' },
+        },
+        {
+          '@type': 'Question',
+          name: 'Adakah Paqar dari JPJ atau PDRM?',
+          acceptedAnswer: { '@type': 'Answer', text: 'Paqar adalah perkhidmatan pihak ketiga — bukan afiliasi JPJ atau PDRM.' },
+        },
+      ],
+    },
+  ],
+}
+
 export default async function HomePage() {
   const checkCount = await getCheckCount().catch(() => 0)
   const countDisplay = checkCount > 20
@@ -11,6 +59,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema) }} />
       <Nav />
 
       {/* ── HERO ── */}
@@ -287,9 +336,10 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { href: '/checklist-beli-kereta-terpakai', title: 'Checklist sebelum bayar deposit', desc: 'Tandakan semua ini dulu' },
-              { href: '/cara-beli-kereta-terpakai',      title: 'Cara beli kereta terpakai',       desc: '6 langkah dari semak hingga deposit' },
-              { href: '/risiko-beli-kereta-terpakai',    title: 'Risiko beli kereta terpakai',     desc: '7 risiko dan cara elaknya' },
+              { href: '/checklist-beli-kereta-terpakai', title: 'Checklist sebelum bayar deposit',       desc: 'Tandakan semua ini dulu' },
+              { href: '/cara-beli-kereta-terpakai',      title: 'Cara beli kereta terpakai',             desc: '6 langkah dari semak hingga deposit' },
+              { href: '/risiko-beli-kereta-terpakai',    title: 'Risiko beli kereta terpakai',           desc: '7 risiko dan cara elaknya' },
+              { href: '/harga-kereta-terpakai',          title: 'Harga kereta terpakai mengikut model', desc: 'Myvi, Axia, Vios, City, Saga & lebih' },
             ].map((guide) => (
               <Link
                 key={guide.href}

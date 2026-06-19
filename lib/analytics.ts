@@ -47,4 +47,13 @@ export const analytics = {
 
   ctaClicked: (props: { cta: 'workshop' | 'bjak' | 'whatsapp_share' }) =>
     posthog.capture('cta_clicked', props),
+
+  verdictViewed: (props: {
+    verdict: 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced' | 'no_data'
+    listing_count: number
+    has_data: boolean
+  }) => posthog.capture('verdict_viewed', props),
+
+  tabSelected: (props: { tab: 'model' | 'plate' }) =>
+    posthog.capture('tab_selected', props),
 }

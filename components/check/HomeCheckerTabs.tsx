@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { OverpricedCheckerForm } from './OverpricedCheckerForm'
 import { PlateCheckerForm }      from './PlateCheckerForm'
+import { analytics }             from '@/lib/analytics'
 
 type Tab = 'model' | 'plate'
 
@@ -15,7 +16,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
       <div className="grid grid-cols-2 gap-2 mb-5">
         <button
           type="button"
-          onClick={() => setTab('model')}
+          onClick={() => { setTab('model'); analytics.tabSelected({ tab: 'model' }) }}
           className={`text-left rounded-[14px] px-4 py-3.5 transition-all duration-150 ${
             tab === 'model'
               ? 'bg-[#064E4A] shadow-sm'
@@ -36,7 +37,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
 
         <button
           type="button"
-          onClick={() => setTab('plate')}
+          onClick={() => { setTab('plate'); analytics.tabSelected({ tab: 'plate' }) }}
           className={`text-left rounded-[14px] px-4 py-3.5 transition-all duration-150 ${
             tab === 'plate'
               ? 'bg-[#064E4A] shadow-sm'
