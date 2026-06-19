@@ -11,8 +11,10 @@ export const metadata: Metadata = {
 }
 
 const MODELS = [
-  { slug: 'proton-saga', model: 'Saga', range: 'RM20k – RM48k', tag: 'Sedan nasional terlaris' },
-  { slug: 'proton-x50',  model: 'X50',  range: 'RM58k – RM92k', tag: 'SUV kompak terlaris' },
+  { slug: 'proton-saga', model: 'Saga', range: 'RM20k – RM48k',  tag: 'Sedan nasional terlaris' },
+  { slug: 'proton-iriz', model: 'Iriz', range: 'RM24k – RM52k',  tag: 'Hatchback kompak' },
+  { slug: 'proton-x50',  model: 'X50',  range: 'RM58k – RM92k',  tag: 'SUV kompak terlaris' },
+  { slug: 'proton-x70',  model: 'X70',  range: 'RM65k – RM104k', tag: 'SUV C-segment' },
 ]
 
 export default function HargaProton() {

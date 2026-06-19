@@ -15,6 +15,7 @@ const MODELS = [
   { slug: 'perodua-axia',  model: 'Axia',  range: 'RM20k – RM48k', tag: 'Paling berpatutan' },
   { slug: 'perodua-bezza', model: 'Bezza', range: 'RM26k – RM55k', tag: 'Sedan keluarga' },
   { slug: 'perodua-alza',  model: 'Alza',  range: 'RM30k – RM80k', tag: 'MPV 7-tempat duduk' },
+  { slug: 'perodua-ativa', model: 'Ativa', range: 'RM53k – RM78k', tag: 'SUV crossover turbo' },
 ]
 
 export default function HargaPerodua() {

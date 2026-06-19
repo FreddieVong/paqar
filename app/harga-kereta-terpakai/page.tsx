@@ -10,14 +10,20 @@ export const metadata: Metadata = {
 }
 
 const MODELS = [
-  { slug: 'perodua-myvi',  brand: 'Perodua', model: 'Myvi',  range: 'RM33k – RM74k', tag: 'Paling popular' },
-  { slug: 'perodua-axia',  brand: 'Perodua', model: 'Axia',  range: 'RM20k – RM48k', tag: 'Paling berpatutan' },
-  { slug: 'perodua-bezza', brand: 'Perodua', model: 'Bezza', range: 'RM26k – RM55k', tag: 'Sedan ekonomi' },
-  { slug: 'proton-saga',   brand: 'Proton',  model: 'Saga',  range: 'RM20k – RM48k', tag: 'Nasional' },
-  { slug: 'toyota-vios',   brand: 'Toyota',  model: 'Vios',  range: 'RM36k – RM80k', tag: 'Paling tahan lama' },
-  { slug: 'honda-city',    brand: 'Honda',   model: 'City',  range: 'RM38k – RM92k', tag: 'Ruang luas' },
-  { slug: 'perodua-alza',  brand: 'Perodua', model: 'Alza',  range: 'RM30k – RM80k', tag: 'MPV 7-tempat' },
-  { slug: 'proton-x50',    brand: 'Proton',  model: 'X50',   range: 'RM58k – RM92k', tag: 'SUV kompak' },
+  { slug: 'perodua-myvi',   brand: 'Perodua', model: 'Myvi',   range: 'RM33k – RM74k',  tag: 'Paling popular' },
+  { slug: 'perodua-axia',   brand: 'Perodua', model: 'Axia',   range: 'RM20k – RM48k',  tag: 'Paling berpatutan' },
+  { slug: 'perodua-bezza',  brand: 'Perodua', model: 'Bezza',  range: 'RM26k – RM55k',  tag: 'Sedan ekonomi' },
+  { slug: 'perodua-alza',   brand: 'Perodua', model: 'Alza',   range: 'RM30k – RM80k',  tag: 'MPV 7-tempat' },
+  { slug: 'perodua-ativa',  brand: 'Perodua', model: 'Ativa',  range: 'RM53k – RM78k',  tag: 'SUV crossover' },
+  { slug: 'proton-saga',    brand: 'Proton',  model: 'Saga',   range: 'RM20k – RM48k',  tag: 'Nasional' },
+  { slug: 'proton-iriz',    brand: 'Proton',  model: 'Iriz',   range: 'RM24k – RM52k',  tag: 'Hatchback kompak' },
+  { slug: 'proton-x50',     brand: 'Proton',  model: 'X50',    range: 'RM58k – RM92k',  tag: 'SUV kompak' },
+  { slug: 'proton-x70',     brand: 'Proton',  model: 'X70',    range: 'RM65k – RM104k', tag: 'SUV besar' },
+  { slug: 'toyota-vios',    brand: 'Toyota',  model: 'Vios',   range: 'RM36k – RM80k',  tag: 'Paling tahan lama' },
+  { slug: 'honda-city',     brand: 'Honda',   model: 'City',   range: 'RM38k – RM92k',  tag: 'Ruang luas' },
+  { slug: 'honda-jazz',     brand: 'Honda',   model: 'Jazz',   range: 'RM38k – RM70k',  tag: 'Magic Seats' },
+  { slug: 'honda-hrv',      brand: 'Honda',   model: 'HR-V',   range: 'RM56k – RM92k',  tag: 'Crossover SUV' },
+  { slug: 'nissan-almera',  brand: 'Nissan',  model: 'Almera', range: 'RM46k – RM72k',  tag: 'Jimat petrol' },
 ]
 
 export default function HargaKeretaTerpakaiPage() {

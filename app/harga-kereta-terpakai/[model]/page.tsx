@@ -206,6 +206,139 @@ const MODELS: Record<string, ModelConfig> = {
       { q: 'X50 atau Myvi — mana lebih berbaloi?', a: 'Bergantung pada keperluan. X50 adalah SUV dengan ruang lebih, teknologi lebih canggih tapi harga dua kali ganda Myvi. Untuk bandar sahaja, Myvi lebih jimat. Untuk keluarga atau perjalanan jauh, X50 lebih sesuai.' },
     ],
   },
+  'perodua-ativa': {
+    brand: 'Perodua', model: 'Ativa',
+    description: 'Perodua Ativa adalah SUV crossover kompak pertama Perodua, dilancarkan 2021. Enjin 1.0L turbo, platform DNGA, dan ASA standard menjadikannya pilihan popular dalam segmen crossover nasional.',
+    priceRows: [
+      { year: '2021', min: 53000, max: 68000 },
+      { year: '2022', min: 58000, max: 73000 },
+      { year: '2023', min: 63000, max: 78000 },
+    ],
+    buyerTips: [
+      'Ativa guna platform DNGA yang sama dengan Myvi baru — kualiti binaan lebih tinggi dari Axia atau Bezza lama',
+      'Enjin 1.0L turbo perlukan minyak enjin 0W-20 dan selang servis 10,000km yang ketat — semak rekod',
+      'Pilih varian AV atau X untuk dapat ASA dan kamera 360° — ciri penting untuk SUV kompak',
+      'Gunakan RON 95 minimum — enjin turbo sensitif kepada kualiti petrol yang rendah',
+    ],
+    faqs: [
+      { q: 'Berapa harga Perodua Ativa terpakai 2022?', a: 'Ativa 2022 terpakai biasanya antara RM58,000 hingga RM73,000 bergantung kepada varian (X, H, atau AV) dan jarak tempuh.' },
+      { q: 'Ativa lebih bagus dari Myvi?', a: 'Ativa adalah SUV crossover yang lebih tinggi dari tanah, enjin turbo lebih bertenaga, dan ada kamera 360°. Tapi harganya RM10k–RM15k lebih mahal dari Myvi tahun yang sama. Pilih Ativa jika anda mahukan ketinggian dan kuasa lebih.' },
+      { q: 'Ativa ada masalah biasa apa?', a: 'Enjin 1.0L turbo memerlukan minyak enjin berkualiti dan servis mengikut jadual. Ativa yang tidak servis dengan betul boleh mengalami isu turbo lebih awal. Semak rekod servis dengan teliti.' },
+    ],
+  },
+  'honda-jazz': {
+    brand: 'Honda', model: 'Jazz',
+    description: 'Honda Jazz generasi 3 (2014–2020) terkenal dengan Magic Seats yang fleksibel dan ruang dalaman yang sangat luas berbanding saiznya. Enjin VTEC 1.5L yang tahan lama menjadikannya pilihan popular.',
+    priceRows: [
+      { year: '2015', min: 38000, max: 52000 },
+      { year: '2016', min: 40000, max: 55000 },
+      { year: '2017', min: 43000, max: 58000 },
+      { year: '2018', min: 46000, max: 62000 },
+      { year: '2019', min: 50000, max: 66000 },
+      { year: '2020', min: 54000, max: 70000 },
+    ],
+    buyerTips: [
+      'Semak Magic Seats — pastikan mekanisme lipatan baris kedua masih berfungsi lancar ke semua posisi',
+      'Enjin VTEC 1.5L sangat tahan lama tapi perlukan minyak enjin 0W-20 yang betul — tanya rekod servis',
+      'Jazz yang ada kemalangan sering tunjukkan cat tidak sekata di ruang enjin atau panel bawah pintu',
+      'Semak rekod servis Honda — CVT Jazz perlu penggantian minyak setiap 40,000km untuk kekal sihat',
+    ],
+    faqs: [
+      { q: 'Berapa harga Honda Jazz terpakai 2018?', a: 'Jazz 2018 terpakai biasanya antara RM46,000 hingga RM62,000 bergantung kepada varian (E, V, atau RS) dan jarak tempuh.' },
+      { q: 'Magic Seats Jazz untuk apa?', a: 'Magic Seats membolehkan kerusi baris kedua dilipat ke hadapan (Utility Mode) atau kerusi dilipat naik untuk bawa barang tinggi (Tall Mode). Sangat berguna untuk pindah barang atau basikal.' },
+      { q: 'Jazz atau Myvi — mana lebih berbaloi?', a: 'Jazz lebih mahal tapi ruang dalaman jauh lebih luas, enjin 1.5L lebih bertenaga, dan nilai jual semula stabil. Jika bajet mencukupi dan anda kerap bawa barang atau penumpang, Jazz memberikan nilai lebih.' },
+    ],
+  },
+  'proton-x70': {
+    brand: 'Proton', model: 'X70',
+    description: 'Proton X70 adalah SUV C-segment yang dilancarkan pada 2018 — lebih besar dari X50. Berdasarkan Geely Boyue dengan enjin 1.8L turbo, ia menawarkan ruang dalaman luas dan ciri keselamatan aktif.',
+    priceRows: [
+      { year: '2018', min: 65000, max: 85000 },
+      { year: '2019', min: 68000, max: 90000 },
+      { year: '2020', min: 72000, max: 94000 },
+      { year: '2021', min: 76000, max: 98000 },
+      { year: '2022', min: 80000, max: 104000 },
+    ],
+    buyerTips: [
+      'X70 ada 3 varian: Standard, Executive, dan Premium — ADAS hanya pada varian Premium',
+      'Waranti asal 5 tahun / 150,000km boleh dipindah kepada pembeli baru — semak status di Proton Edar',
+      'Semak infotainment system — model 2018-2019 ada isu software lag yang sudah diperbaiki melalui update',
+      'Komponen X70 berasaskan Geely — dapatkan bahagian dari Proton Edar bertauliah untuk mengelak masalah',
+    ],
+    faqs: [
+      { q: 'Berapa harga Proton X70 terpakai 2020?', a: 'X70 2020 terpakai biasanya antara RM72,000 hingga RM94,000 bergantung kepada varian dan jarak tempuh. Varian Premium dengan ADAS ada harga lebih tinggi.' },
+      { q: 'X70 atau X50 — mana lebih baik?', a: 'X70 lebih besar (C-segment) dengan enjin 1.8L turbo yang lebih bertenaga dan ruang dalaman lebih luas. X50 lebih kecil tapi teknologi lebih baru dan harga lebih rendah. Pilih X70 jika anda perlukan SUV yang lebih besar.' },
+      { q: 'Alat ganti X70 mudah dapat?', a: 'X70 menggunakan komponen Geely Boyue. Bahagian boleh didapatkan dari Proton Edar atau pengedar Geely bertauliah. Elak beli bahagian dari sumber tidak rasmi untuk kerja waranti.' },
+    ],
+  },
+  'proton-iriz': {
+    brand: 'Proton', model: 'Iriz',
+    description: 'Proton Iriz adalah hatchback kompak yang dilancarkan pada 2014. Dengan enjin 1.3L dan 1.6L, ia bersaing langsung dengan Perodua Myvi dalam segmen hatchback nasional dengan harga yang lebih rendah.',
+    priceRows: [
+      { year: '2015', min: 24000, max: 36000 },
+      { year: '2016', min: 26000, max: 38000 },
+      { year: '2017', min: 27000, max: 40000 },
+      { year: '2018', min: 29000, max: 42000 },
+      { year: '2019', min: 31000, max: 45000 },
+      { year: '2020', min: 33000, max: 48000 },
+      { year: '2021', min: 36000, max: 52000 },
+    ],
+    buyerTips: [
+      'Transmisi CVT Iriz sangat sensitif — semak rekod penggantian minyak CVT setiap 40,000km',
+      'Pilih enjin 1.6L untuk prestasi lebih baik di lebuh raya — 1.3L cukup untuk bandar sahaja',
+      'Cat Iriz cenderung kena chips lebih awal — semak bumper depan dan bahagian bawah pintu dengan teliti',
+      'Iriz R3 (sport edition) ada harga lebih tinggi tapi suspensi lebih keras — tidak sesuai untuk kegunaan harian biasa',
+    ],
+    faqs: [
+      { q: 'Berapa harga Proton Iriz terpakai 2019?', a: 'Iriz 2019 terpakai biasanya antara RM31,000 hingga RM45,000 bergantung kepada varian (1.3L Standard, 1.6L Executive, atau 1.6L Premium) dan jarak tempuh.' },
+      { q: 'Iriz 1.3L atau 1.6L lebih berbaloi?', a: '1.6L lebih berbaloi — lebih bertenaga di lebuh raya, gearbox lebih baik, dan varian tinggi ada ciri keselamatan tambahan. 1.3L cukup untuk guna dalam bandar sahaja.' },
+      { q: 'Iriz vs Myvi — mana lebih berbaloi dibeli terpakai?', a: 'Iriz lebih murah RM5k–RM10k dari Myvi tahun yang sama. Tapi Myvi mempunyai nilai jual semula lebih tinggi dan lebih mudah dijual semula. Pilih Iriz jika bajet terhad, Myvi jika anda nak pegang kereta lebih lama.' },
+    ],
+  },
+  'honda-hrv': {
+    brand: 'Honda', model: 'HR-V',
+    description: 'Honda HR-V generasi 1 (2015–2021) adalah crossover SUV popular yang menawarkan ketinggian SUV dengan kecekapan kereta biasa. Enjin 1.8L tahan lama dan ruang dalaman luas menjadikannya pilihan keluarga.',
+    priceRows: [
+      { year: '2015', min: 56000, max: 72000 },
+      { year: '2016', min: 60000, max: 76000 },
+      { year: '2017', min: 63000, max: 80000 },
+      { year: '2018', min: 67000, max: 84000 },
+      { year: '2019', min: 71000, max: 88000 },
+      { year: '2020', min: 75000, max: 92000 },
+    ],
+    buyerTips: [
+      'HR-V facelift 2018 ke atas ada Honda Sensing pada varian V — semak spesifikasi sebelum beli',
+      'Isu biasa: bunyi dari cermin sisi pada kelajuan lebuh raya — semak gasket dan kondisi cermin',
+      'Semak rekod servis Honda — enjin 1.8L SOHC i-VTEC sangat tahan lama dengan penyelenggaraan yang betul',
+      'Semak cat ruang enjin dan tiang A untuk kesan banjir atau kemalangan tersembunyi',
+    ],
+    faqs: [
+      { q: 'Berapa harga Honda HR-V terpakai 2018?', a: 'HR-V 2018 terpakai biasanya antara RM67,000 hingga RM84,000 bergantung kepada varian (E atau V) dan jarak tempuh. Varian V facelift dengan Honda Sensing ada harga lebih tinggi.' },
+      { q: 'HR-V facelift 2018 ada Honda Sensing ke?', a: 'Hanya varian V facelift 2018 ke atas ada Honda Sensing. Semak spesifikasi varian dengan nombor VIN atau tanya penjual secara langsung sebelum beli.' },
+      { q: 'HR-V atau X50 — mana lebih berbaloi?', a: 'X50 lebih baru, ada teknologi lebih canggih dan lebih murah untuk tahun hampir sama. HR-V pula lebih tahan lama, kos penyelenggaraan lebih rendah jangka panjang, dan nilai jual semula Honda lebih stabil.' },
+    ],
+  },
+  'nissan-almera': {
+    brand: 'Nissan', model: 'Almera',
+    description: 'Nissan Almera generasi 3 (2019 ke atas) hadir dengan enjin 1.0L turbo yang sangat jimat petrol. Sedan kompak ini popular untuk kegunaan harian dan e-hailing kerana kos operasi yang rendah.',
+    priceRows: [
+      { year: '2019', min: 46000, max: 60000 },
+      { year: '2020', min: 50000, max: 64000 },
+      { year: '2021', min: 54000, max: 68000 },
+      { year: '2022', min: 58000, max: 72000 },
+    ],
+    buyerTips: [
+      'Almera sangat popular untuk e-hailing — semak jarak tempuh dan tanda penggunaan intensif',
+      'Enjin 1.0L turbo jimat tapi perlukan minyak enjin betul dan servis mengikut jadual 10,000km',
+      'Semak suspension — Almera kerap digunakan sebagai kereta sewa dan mungkin ada kerosakan pada suspension bawah',
+      'Waranti asal 3 tahun boleh dipindah kepada pembeli baru — semak status waranti di Nissan Malaysia',
+    ],
+    faqs: [
+      { q: 'Berapa harga Nissan Almera terpakai 2021?', a: 'Almera 2021 terpakai biasanya antara RM54,000 hingga RM68,000 bergantung kepada varian (E, V, atau VLT) dan jarak tempuh.' },
+      { q: 'Almera turbo jimat petrol ke?', a: 'Ya, enjin 1.0L turbo Almera sangat jimat — boleh capai 18–20km/L dalam bandar. Ini menjadikannya salah satu sedan paling jimat petrol dalam kelasnya.' },
+      { q: 'Almera vs Vios — mana lebih berbaloi?', a: 'Vios mempunyai nilai jual semula lebih tinggi dan reputasi lebih tahan lama. Almera lebih jimat petrol dan harga beli lebih rendah. Untuk jangka panjang, Vios lebih stabil nilainya. Untuk kos rendah jangka pendek, Almera menarik.' },
+    ],
+  },
 }
 
 type Props = { params: { model: string } }

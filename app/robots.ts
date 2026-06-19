@@ -4,7 +4,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
-      allow: ['/', '/panduan', '/panduan-semak-saman', '/cara-beli-kereta-terpakai', '/checklist-beli-kereta-terpakai', '/risiko-beli-kereta-terpakai', '/cara-semak-geran-kereta', '/cara-semak-roadtax-kereta', '/cara-semak-insurans-kereta', '/harga-kereta-terpakai', '/harga-kereta-terpakai/', '/harga-perodua-terpakai', '/harga-proton-terpakai', '/harga-toyota-terpakai', '/harga-honda-terpakai', '/bandingkan', '/bandingkan/', '/privasi', '/terma'],
+      allow: ['/', '/panduan', '/panduan-semak-saman', '/cara-beli-kereta-terpakai', '/checklist-beli-kereta-terpakai', '/risiko-beli-kereta-terpakai', '/cara-semak-geran-kereta', '/cara-semak-roadtax-kereta', '/cara-semak-insurans-kereta', '/harga-kereta-terpakai', '/harga-kereta-terpakai/', '/harga-perodua-terpakai', '/harga-proton-terpakai', '/harga-toyota-terpakai', '/harga-honda-terpakai', '/harga-nissan-terpakai', '/bandingkan', '/bandingkan/', '/privasi', '/terma'],
       disallow: [
         '/check/',
         '/laporan-pembeli/',
