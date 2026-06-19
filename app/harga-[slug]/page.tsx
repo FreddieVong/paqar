@@ -61,8 +61,6 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
 }
 
-const PILOT_SLUGS = ['myvi-2020', 'myvi-2021', 'axia-2021', 'bezza-2021', 'vios-2020']
-
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function parseSlug(slug: string | undefined): { modelKey: string; year: string } | null {
