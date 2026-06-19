@@ -76,5 +76,6 @@ export async function POST(request: NextRequest) {
     medianPrice,
     minPrice,
     maxPrice,
+    fetchedAt:    cached.fetchedAt,
   })
 }

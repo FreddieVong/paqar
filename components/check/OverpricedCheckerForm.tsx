@@ -56,6 +56,29 @@ const VERDICT_CONFIG: Record<Verdict, {
   },
 }
 
+function formatFetchedAt(isoString: string): string {
+  const d = new Date(isoString)
+  if (isNaN(d.getTime())) return ''
+  const months = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis']
+  return `${months[d.getMonth()]} ${d.getFullYear()}`
+}
+
+function computeSuggestedOffer(
+  minPrice: number,
+  medianPrice: number,
+  maxPrice: number,
+  askingPrice: number,
+  listingCount: number,
+): number | null {
+  if (listingCount < 3) return null
+  if (minPrice <= 0 || medianPrice <= 0 || minPrice === maxPrice) return null
+  const raw = (minPrice + medianPrice) / 2
+  const suggested = Math.round(raw / 500) * 500
+  const floored = Math.max(suggested, minPrice)
+  if (floored >= askingPrice) return null
+  return floored
+}
+
 const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
   font-heading font-semibold text-[14px] text-[#111827]
   placeholder:text-[#D1D5DB] placeholder:font-normal
@@ -278,6 +301,11 @@ export function OverpricedCheckerForm() {
   const hasDataResult  = result && result.hasData ? result : null
   const cfg            = hasDataResult ? VERDICT_CONFIG[hasDataResult.verdict] : null
   const noData         = !hasDataResult || !cfg
+  const isNegVerdict   = hasDataResult?.verdict === 'overpriced' || hasDataResult?.verdict === 'slightly_high'
+  const askInt         = parseInt(askingPrice, 10)
+  const suggestedOffer = (isNegVerdict && hasDataResult)
+    ? computeSuggestedOffer(hasDataResult.minPrice, hasDataResult.medianPrice, hasDataResult.maxPrice, askInt, hasDataResult.listingCount)
+    : null
 
   return (
     <div className="space-y-3 w-full overflow-x-hidden">
@@ -342,7 +370,8 @@ export function OverpricedCheckerForm() {
 
             {/* Source + count + confidence */}
             <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
-              Berdasarkan {hasDataResult!.listingCount} listing serupa di pasaran
+              Berdasarkan {hasDataResult!.listingCount} listing terkini di Mudah.my
+              {hasDataResult!.fetchedAt ? ` · Dikemaskini: ${formatFetchedAt(hasDataResult!.fetchedAt)}` : ''}
             </p>
             {(() => {
               const n = hasDataResult!.listingCount
@@ -363,6 +392,16 @@ export function OverpricedCheckerForm() {
               )
             })()}
           </>
+        )}
+
+        {/* Negotiation nudge — shown only for overpriced/slightly_high with enough data */}
+        {suggestedOffer !== null && hasDataResult && (
+          <NegotiationNudge
+            askingPrice={askInt}
+            minPrice={hasDataResult.minPrice}
+            maxPrice={hasDataResult.maxPrice}
+            suggestedOffer={suggestedOffer}
+          />
         )}
 
         {/* Email lead capture */}
@@ -417,7 +456,7 @@ export function OverpricedCheckerForm() {
             type="submit" disabled={plateBusy}
             className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center transition-colors disabled:opacity-60"
           >
-            {plateBusy ? 'Memproses…' : 'Unlock Laporan Penuh — RM12 →'}
+            {plateBusy ? 'Memproses…' : suggestedOffer !== null ? 'Unlock Skrip Rundingan — RM12 →' : 'Unlock Laporan Penuh — RM12 →'}
           </button>
         </form>
 
@@ -430,6 +469,40 @@ export function OverpricedCheckerForm() {
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
+
+function NegotiationNudge({
+  askingPrice, minPrice, maxPrice, suggestedOffer,
+}: {
+  askingPrice: number
+  minPrice: number
+  maxPrice: number
+  suggestedOffer: number
+}) {
+  const savings = askingPrice - suggestedOffer
+  return (
+    <div className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 mb-3">
+      <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
+        Cadangan tawaran pertama
+      </p>
+      <p className="font-heading font-extrabold text-[28px] text-[#064E4A] leading-none mb-3">
+        RM{suggestedOffer.toLocaleString()}
+      </p>
+      <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
+        Penjual minta RM{askingPrice.toLocaleString()}. Harga pasaran sekitar RM{minPrice.toLocaleString()}–RM{maxPrice.toLocaleString()}. Anda boleh mula rundingan sekitar RM{suggestedOffer.toLocaleString()}.
+      </p>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="font-body text-[12px] text-[#6B7280]">Potensi jimat:</span>
+        <span className="font-heading font-extrabold text-[14px] text-[#15803D]">RM{savings.toLocaleString()}</span>
+      </div>
+      <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-3">
+        Kereta ini nampak sedikit mahal berbanding harga pasaran. Ini anggaran tawaran pertama yang lebih selamat untuk mula rundingan.
+      </p>
+      <p className="font-body text-[12px] text-[#374151] font-semibold">
+        Nak ayat rundingan penuh untuk WhatsApp seller? ↓
+      </p>
+    </div>
+  )
+}
 
 function CollapsedSummary({
   brand, model, year, askingPrice, onReset,
