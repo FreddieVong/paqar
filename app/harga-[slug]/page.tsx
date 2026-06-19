@@ -1,10 +1,10 @@
-import type { Metadata }         from 'next'
-import { notFound }              from 'next/navigation'
-import Link                      from 'next/link'
-import { Nav }                   from '@/components/layout/Nav'
-import { Shell }                 from '@/components/layout/Shell'
-import { DualCheckForm }         from '@/components/check/DualCheckForm'
-import { getCachedMarketPrices } from '@/lib/db/market-prices'
+import type { Metadata }  from 'next'
+import { notFound }       from 'next/navigation'
+import Link               from 'next/link'
+import { createClient }   from '@supabase/supabase-js'
+import { Nav }            from '@/components/layout/Nav'
+import { Shell }          from '@/components/layout/Shell'
+import { DualCheckForm }  from '@/components/check/DualCheckForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -123,10 +123,23 @@ export default async function YearModelPage({ params }: Props) {
   const info = MODEL_MAP[modelKey]
   if (!info) notFound()
 
-  const cached = await getCachedMarketPrices(info.make, info.model, year).catch(() => null)
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+  const { data: cached } = await supabase
+    .from('market_price_cache')
+    .select('listings, fetched_at')
+    .eq('make', info.make.toLowerCase())
+    .eq('model', info.model.toLowerCase())
+    .eq('year', year)
+    .gte('fetched_at', new Date(Date.now() - 7 * 86_400_000).toISOString())
+    .single()
+
   if (!cached) notFound()
 
-  const validPrices = cached.listings
+  const listings = cached.listings as { price: number }[]
+  const validPrices = listings
     .map(l => l.price)
     .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
 
@@ -138,7 +151,7 @@ export default async function YearModelPage({ params }: Props) {
   const medianPrice = medianOf(sorted)
   const listingCount = sorted.length
   const overpricedThreshold = Math.round(maxPrice * 1.08 / 1000) * 1000
-  const updatedLabel = cached.fetchedAt ? formatFetchedAt(cached.fetchedAt) : ''
+  const updatedLabel = cached.fetched_at ? formatFetchedAt(cached.fetched_at as string) : ''
 
   const displayModel = `${info.brand} ${info.model}`
   const modelHubSlug = `${info.make.toLowerCase()}-${info.model.toLowerCase()}`
