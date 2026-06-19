@@ -27,7 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/harga-honda-terpakai`,   lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.85 },
     // Comparison pages
     { url: `${base}/bandingkan`,             lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.8 },
-    ...['myvi-vs-axia','vios-vs-city','bezza-vs-saga','alza-vs-x50'].map(s => ({
+    ...['myvi-vs-axia','myvi-vs-saga','vios-vs-city','bezza-vs-saga','axia-vs-saga','myvi-vs-bezza','alza-vs-x50'].map(s => ({
       url: `${base}/bandingkan/${s}`, lastModified: new Date('2025-06-19'), changeFrequency: 'monthly' as const, priority: 0.8,
     })),
   ]

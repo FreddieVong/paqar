@@ -10,10 +10,13 @@ export const metadata: Metadata = {
 }
 
 const COMPARISONS = [
-  { slug: 'myvi-vs-axia',   titleA: 'Perodua Myvi',  titleB: 'Perodua Axia',  desc: 'Budget hatchback — mana lebih berbaloi untuk anda?', tag: 'Paling banyak dicari' },
+  { slug: 'myvi-vs-axia',   titleA: 'Perodua Myvi',  titleB: 'Perodua Axia',  desc: 'Budget hatchback — mana lebih berbaloi untuk anda?',          tag: 'Paling banyak dicari' },
+  { slug: 'myvi-vs-saga',   titleA: 'Perodua Myvi',  titleB: 'Proton Saga',   desc: 'Hatchback vs sedan — kereta paling popular di Malaysia.',       tag: null },
   { slug: 'vios-vs-city',   titleA: 'Toyota Vios',   titleB: 'Honda City',    desc: 'Sedan Jepun paling laris — nilai jual semula vs ruang dalaman.', tag: null },
-  { slug: 'bezza-vs-saga',  titleA: 'Perodua Bezza', titleB: 'Proton Saga',   desc: 'Dua sedan nasional — mana lebih jimat dan berbaloi?', tag: null },
-  { slug: 'alza-vs-x50',    titleA: 'Perodua Alza',  titleB: 'Proton X50',   desc: 'MPV 7-tempat duduk vs SUV kompak — pilihan untuk keluarga.', tag: null },
+  { slug: 'bezza-vs-saga',  titleA: 'Perodua Bezza', titleB: 'Proton Saga',   desc: 'Dua sedan nasional — mana lebih jimat dan berbaloi?',           tag: null },
+  { slug: 'axia-vs-saga',   titleA: 'Perodua Axia',  titleB: 'Proton Saga',   desc: 'Dua kereta bajet paling murah — enjin kecil vs ruang besar.',   tag: null },
+  { slug: 'myvi-vs-bezza',  titleA: 'Perodua Myvi',  titleB: 'Perodua Bezza', desc: 'Hatchback atau sedan Perodua — kabin besar vs boot besar.',     tag: null },
+  { slug: 'alza-vs-x50',    titleA: 'Perodua Alza',  titleB: 'Proton X50',    desc: 'MPV 7-tempat duduk vs SUV kompak — pilihan untuk keluarga.',    tag: null },
 ]
 
 export default function BandingkanHub() {
