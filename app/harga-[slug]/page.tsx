@@ -6,8 +6,7 @@ import { Shell }                 from '@/components/layout/Shell'
 import { DualCheckForm }         from '@/components/check/DualCheckForm'
 import { getCachedMarketPrices } from '@/lib/db/market-prices'
 
-export const dynamicParams = false
-export const revalidate    = 43200 // 12 h ISR
+export const dynamic = 'force-dynamic'
 
 // ── Model config ───────────────────────────────────────────────────────────
 
@@ -88,10 +87,6 @@ function medianOf(sorted: number[]): number {
 }
 
 // ── Static params + metadata ───────────────────────────────────────────────
-
-export function generateStaticParams() {
-  return PILOT_SLUGS.map(slug => ({ slug }))
-}
 
 type Props = { params: { slug: string } }
 
