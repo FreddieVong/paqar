@@ -10,6 +10,7 @@ type PriceRow = { year: string; min: number; max: number }
 type ModelConfig = {
   brand:       string
   model:       string
+  yearKey:     string   // key used in /harga-{yearKey}-{year} pages
   description: string
   priceRows:   PriceRow[]
   buyerTips:   string[]
@@ -18,7 +19,7 @@ type ModelConfig = {
 
 const MODELS: Record<string, ModelConfig> = {
   'perodua-myvi': {
-    brand: 'Perodua', model: 'Myvi',
+    brand: 'Perodua', model: 'Myvi', yearKey: 'myvi',
     description: 'Perodua Myvi adalah kereta terpakai paling popular di Malaysia. Mudah diselenggara, kos servis rendah, dan ada banyak pilihan di pasaran. Semak harga pasaran sebelum beli.',
     priceRows: [
       { year: '2017', min: 33000, max: 48000 },
@@ -43,7 +44,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'perodua-axia': {
-    brand: 'Perodua', model: 'Axia',
+    brand: 'Perodua', model: 'Axia', yearKey: 'axia',
     description: 'Perodua Axia adalah pilihan kereta terpakai paling berpatutan di Malaysia. Kos petrol dan insurans rendah, sesuai untuk pemandu baru atau guna dalam bandar.',
     priceRows: [
       { year: '2016', min: 20000, max: 28000 },
@@ -67,7 +68,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'perodua-bezza': {
-    brand: 'Perodua', model: 'Bezza',
+    brand: 'Perodua', model: 'Bezza', yearKey: 'bezza',
     description: 'Perodua Bezza ialah sedan ekonomi paling popular di Malaysia. Boot besar, enjin 1.0L dan 1.3L, kos servis rendah. Semak harga pasaran sebelum beli.',
     priceRows: [
       { year: '2016', min: 26000, max: 38000 },
@@ -91,7 +92,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'proton-saga': {
-    brand: 'Proton', model: 'Saga',
+    brand: 'Proton', model: 'Saga', yearKey: 'saga',
     description: 'Proton Saga adalah sedan nasional paling laris di Malaysia. Sejak dilancarkan semula pada 2016, ia menawarkan nilai terbaik dalam segmen sedan ekonomi. Semak harga sebelum beli.',
     priceRows: [
       { year: '2016', min: 20000, max: 30000 },
@@ -115,7 +116,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'toyota-vios': {
-    brand: 'Toyota', model: 'Vios',
+    brand: 'Toyota', model: 'Vios', yearKey: 'vios',
     description: 'Toyota Vios ialah sedan Jepun paling popular di Malaysia. Dikenali sebagai kereta tahan lama dengan kos penyelenggaraan rendah dan nilai tukar ganti yang stabil.',
     priceRows: [
       { year: '2014', min: 36000, max: 50000 },
@@ -139,7 +140,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'honda-city': {
-    brand: 'Honda', model: 'City',
+    brand: 'Honda', model: 'City', yearKey: 'city',
     description: 'Honda City adalah sedan Jepun popular di Malaysia dengan ruang dalaman luas dan prestasi enjin yang baik. Nilai tukar ganti yang stabil menjadikannya pilihan pelaburan yang bijak.',
     priceRows: [
       { year: '2014', min: 38000, max: 54000 },
@@ -163,7 +164,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'perodua-alza': {
-    brand: 'Perodua', model: 'Alza',
+    brand: 'Perodua', model: 'Alza', yearKey: 'alza',
     description: 'Perodua Alza adalah MPV 7-tempat duduk paling laris di Malaysia. Alza generasi baru (2022) adalah peningkatan besar dari generasi lama. Semak harga pasaran sebelum beli.',
     priceRows: [
       { year: '2015', min: 30000, max: 44000 },
@@ -186,7 +187,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'proton-x50': {
-    brand: 'Proton', model: 'X50',
+    brand: 'Proton', model: 'X50', yearKey: 'x50',
     description: 'Proton X50 adalah SUV kompak paling laris di Malaysia sejak dilancarkan pada 2020. Dengan teknologi terkini dari Geely, ia menawarkan nilai yang kompetitif dalam segmen B-SUV.',
     priceRows: [
       { year: '2020', min: 58000, max: 78000 },
@@ -207,7 +208,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'perodua-ativa': {
-    brand: 'Perodua', model: 'Ativa',
+    brand: 'Perodua', model: 'Ativa', yearKey: 'ativa',
     description: 'Perodua Ativa adalah SUV crossover kompak pertama Perodua, dilancarkan 2021. Enjin 1.0L turbo, platform DNGA, dan ASA standard menjadikannya pilihan popular dalam segmen crossover nasional.',
     priceRows: [
       { year: '2021', min: 53000, max: 68000 },
@@ -227,7 +228,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'honda-jazz': {
-    brand: 'Honda', model: 'Jazz',
+    brand: 'Honda', model: 'Jazz', yearKey: 'jazz',
     description: 'Honda Jazz generasi 3 (2014–2020) terkenal dengan Magic Seats yang fleksibel dan ruang dalaman yang sangat luas berbanding saiznya. Enjin VTEC 1.5L yang tahan lama menjadikannya pilihan popular.',
     priceRows: [
       { year: '2015', min: 38000, max: 52000 },
@@ -250,7 +251,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'proton-x70': {
-    brand: 'Proton', model: 'X70',
+    brand: 'Proton', model: 'X70', yearKey: 'x70',
     description: 'Proton X70 adalah SUV C-segment yang dilancarkan pada 2018 — lebih besar dari X50. Berdasarkan Geely Boyue dengan enjin 1.8L turbo, ia menawarkan ruang dalaman luas dan ciri keselamatan aktif.',
     priceRows: [
       { year: '2018', min: 65000, max: 85000 },
@@ -272,7 +273,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'proton-iriz': {
-    brand: 'Proton', model: 'Iriz',
+    brand: 'Proton', model: 'Iriz', yearKey: 'iriz',
     description: 'Proton Iriz adalah hatchback kompak yang dilancarkan pada 2014. Dengan enjin 1.3L dan 1.6L, ia bersaing langsung dengan Perodua Myvi dalam segmen hatchback nasional dengan harga yang lebih rendah.',
     priceRows: [
       { year: '2015', min: 24000, max: 36000 },
@@ -296,7 +297,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'honda-hrv': {
-    brand: 'Honda', model: 'HR-V',
+    brand: 'Honda', model: 'HR-V', yearKey: 'hr-v',
     description: 'Honda HR-V generasi 1 (2015–2021) adalah crossover SUV popular yang menawarkan ketinggian SUV dengan kecekapan kereta biasa. Enjin 1.8L tahan lama dan ruang dalaman luas menjadikannya pilihan keluarga.',
     priceRows: [
       { year: '2015', min: 56000, max: 72000 },
@@ -319,7 +320,7 @@ const MODELS: Record<string, ModelConfig> = {
     ],
   },
   'nissan-almera': {
-    brand: 'Nissan', model: 'Almera',
+    brand: 'Nissan', model: 'Almera', yearKey: 'almera',
     description: 'Nissan Almera generasi 3 (2019 ke atas) hadir dengan enjin 1.0L turbo yang sangat jimat petrol. Sedan kompak ini popular untuk kegunaan harian dan e-hailing kerana kos operasi yang rendah.',
     priceRows: [
       { year: '2019', min: 46000, max: 60000 },
@@ -420,12 +421,16 @@ export default function ModelPage({ params }: Props) {
               </p>
             </div>
             {cfg.priceRows.map((row, i) => (
-              <div key={row.year} className={`flex items-center justify-between px-5 py-3 ${i < cfg.priceRows.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
-                <span className="font-heading font-bold text-[14px] text-[#111827]">{row.year}</span>
+              <Link
+                key={row.year}
+                href={`/harga-${cfg.yearKey}-${row.year}`}
+                className={`flex items-center justify-between px-5 py-3 hover:bg-[#F9FAFB] ${i < cfg.priceRows.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}
+              >
+                <span className="font-heading font-bold text-[14px] text-[#064E4A]">{row.year}</span>
                 <span className="font-body text-[13px] text-[#374151]">
-                  RM{row.min.toLocaleString()} – RM{row.max.toLocaleString()}
+                  RM{row.min.toLocaleString()} – RM{row.max.toLocaleString()} →
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
 

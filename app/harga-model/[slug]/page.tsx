@@ -129,6 +129,16 @@ const MODEL_MAP: Record<string, ModelInfo> = {
       'Semak sama ada pernah digunakan untuk e-hailing — City popular untuk Grab',
     ],
   },
+  jazz: {
+    make: 'Honda', model: 'Jazz', brand: 'Honda',
+    description: 'Honda Jazz terkenal dengan Magic Seats yang fleksibel dan ruang dalaman yang sangat luas berbanding saiznya. Enjin 1.5L VTEC yang tahan lama menjadikannya pilihan popular.',
+    tips: [
+      'Semak Magic Seats — pastikan mekanisme lipatan baris kedua masih berfungsi ke semua posisi',
+      'Enjin VTEC 1.5L tahan lama tapi perlukan minyak enjin 0W-20 yang betul — tanya rekod servis',
+      'Jazz yang ada kemalangan sering tunjukkan cat tidak sekata di ruang enjin atau panel bawah pintu',
+      'CVT Jazz perlu penggantian minyak setiap 40,000km — semak rekod ini dengan teliti',
+    ],
+  },
   civic: {
     make: 'Honda', model: 'Civic', brand: 'Honda',
     description: 'Honda Civic ialah sedan sport yang popular. Prestasi enjin turbo yang baik dan teknologi keselamatan terkini.',

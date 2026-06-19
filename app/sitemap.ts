@@ -26,8 +26,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/harga-toyota-terpakai`,  lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/harga-honda-terpakai`,   lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/harga-nissan-terpakai`,  lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.85 },
-    // Year-specific model price pages (pilot — live data from market_price_cache)
-    ...['myvi-2020','myvi-2021','axia-2021','bezza-2021','vios-2020'].map(s => ({
+    // Year-specific model price pages (live data from market_price_cache, refreshed by warm-cache cron)
+    ...[
+      ...['2019','2020','2021','2022','2023'].map(y => `myvi-${y}`),
+      ...['2020','2021','2022','2023'].map(y => `axia-${y}`),
+      ...['2020','2021','2022','2023'].map(y => `bezza-${y}`),
+      ...['2021','2022','2023'].map(y => `alza-${y}`),
+      ...['2021','2022','2023'].map(y => `ativa-${y}`),
+      ...['2019','2020','2021','2022','2023'].map(y => `saga-${y}`),
+      ...['2020','2021','2022'].map(y => `persona-${y}`),
+      ...['2019','2020','2021'].map(y => `iriz-${y}`),
+      ...['2021','2022','2023'].map(y => `x50-${y}`),
+      ...['2020','2021','2022'].map(y => `x70-${y}`),
+      ...['2021','2022','2023'].map(y => `city-${y}`),
+      ...['2020','2021','2022'].map(y => `civic-${y}`),
+      ...['2021','2022','2023'].map(y => `hr-v-${y}`),
+      ...['2018','2019','2020'].map(y => `jazz-${y}`),
+      ...['2020','2021','2022','2023'].map(y => `vios-${y}`),
+      ...['2021','2022','2023'].map(y => `yaris-${y}`),
+      ...['2021','2022','2023'].map(y => `almera-${y}`),
+    ].map(s => ({
       url: `${base}/harga-${s}`, lastModified: new Date('2026-06-19'), changeFrequency: 'weekly' as const, priority: 0.85,
     })),
     // Comparison pages
