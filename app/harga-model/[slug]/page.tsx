@@ -4,7 +4,7 @@ import Link               from 'next/link'
 import { createClient }   from '@supabase/supabase-js'
 import { Nav }            from '@/components/layout/Nav'
 import { Shell }          from '@/components/layout/Shell'
-import { DualCheckForm }  from '@/components/check/DualCheckForm'
+import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -402,12 +402,16 @@ export default async function YearModelPage({ params }: Props) {
             </p>
           </div>
 
-          {/* CTA */}
+          {/* CTA — pre-filled with this page's model + year */}
           <div className="space-y-3">
             <p className="font-heading font-bold text-[14px] text-[#111827]">
-              Ada {info.model} {year} yang nak dibeli? Semak sebelum bayar:
+              Ada {info.model} {year} yang nak dibeli? Masukkan harga penjual:
             </p>
-            <DualCheckForm />
+            <OverpricedCheckerForm
+              initialBrand={info.brand}
+              initialModel={info.model}
+              initialYear={year}
+            />
           </div>
 
           {/* Buyer tips */}

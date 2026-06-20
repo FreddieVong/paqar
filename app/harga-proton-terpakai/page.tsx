@@ -11,10 +11,11 @@ export const metadata: Metadata = {
 }
 
 const MODELS = [
-  { slug: 'proton-saga', model: 'Saga', range: 'RM20k – RM48k',  tag: 'Sedan nasional terlaris' },
-  { slug: 'proton-iriz', model: 'Iriz', range: 'RM24k – RM52k',  tag: 'Hatchback kompak' },
-  { slug: 'proton-x50',  model: 'X50',  range: 'RM58k – RM92k',  tag: 'SUV kompak terlaris' },
-  { slug: 'proton-x70',  model: 'X70',  range: 'RM65k – RM104k', tag: 'SUV C-segment' },
+  { slug: 'proton-saga',    model: 'Saga',    yearKey: 'saga',    years: ['2019','2020','2021','2022','2023'], range: 'RM20k – RM48k',  tag: 'Sedan nasional terlaris' },
+  { slug: 'proton-persona', model: 'Persona', yearKey: 'persona', years: ['2020','2021','2022'],               range: 'RM30k – RM60k',  tag: 'Sedan keluarga berpatutan' },
+  { slug: 'proton-iriz',    model: 'Iriz',    yearKey: 'iriz',    years: ['2019','2020','2021'],               range: 'RM24k – RM52k',  tag: 'Hatchback kompak' },
+  { slug: 'proton-x50',     model: 'X50',     yearKey: 'x50',     years: ['2021','2022','2023'],               range: 'RM58k – RM92k',  tag: 'SUV kompak terlaris' },
+  { slug: 'proton-x70',     model: 'X70',     yearKey: 'x70',     years: ['2020','2021','2022'],               range: 'RM65k – RM104k', tag: 'SUV C-segment' },
 ]
 
 export default function HargaProton() {
@@ -33,16 +34,26 @@ export default function HargaProton() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {MODELS.map((m) => (
-              <Link key={m.slug} href={`/harga-kereta-terpakai/${m.slug}`}
-                className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group">
-                <div>
-                  <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">Proton {m.model}</p>
-                  <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{m.range} · {m.tag}</p>
+              <div key={m.slug} className="space-y-1.5">
+                <Link href={`/harga-kereta-terpakai/${m.slug}`}
+                  className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group">
+                  <div>
+                    <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">Proton {m.model}</p>
+                    <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{m.range} · {m.tag}</p>
+                  </div>
+                  <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
+                </Link>
+                <div className="flex gap-1.5 flex-wrap px-1">
+                  {m.years.map(y => (
+                    <Link key={y} href={`/harga-${m.yearKey}-${y}`}
+                      className="font-body text-[11px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[6px] px-2 py-0.5 hover:bg-[#DCFCE7] transition-colors">
+                      {y}
+                    </Link>
+                  ))}
                 </div>
-                <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
-              </Link>
+              </div>
             ))}
           </div>
 

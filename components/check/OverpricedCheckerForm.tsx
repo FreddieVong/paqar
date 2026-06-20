@@ -87,12 +87,14 @@ const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-x
 
 const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.5'
 
-export function OverpricedCheckerForm() {
+type Props = { initialBrand?: string; initialModel?: string; initialYear?: string }
+
+export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', initialYear = '' }: Props) {
   const router = useRouter()
 
-  const [brand,       setBrand]       = useState('')
-  const [model,       setModel]       = useState('')
-  const [year,        setYear]        = useState('')
+  const [brand,       setBrand]       = useState(initialBrand)
+  const [model,       setModel]       = useState(initialModel)
+  const [year,        setYear]        = useState(initialYear)
   const [askingPrice, setAskingPrice] = useState('')
   const [formState,   setFormState]   = useState<FormState>('idle')
   const [result,      setResult]      = useState<PriceCheckResult | null>(null)
@@ -229,36 +231,45 @@ export function OverpricedCheckerForm() {
 
   // ── Form (idle / error) ────────────────────────────────────────────────
   if (formState === 'idle' || formState === 'error') {
+    const prefilled = !!(initialBrand && initialModel && initialYear)
     return (
       <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
         <form onSubmit={handleCheck} className="space-y-3">
-          <div>
-            <label htmlFor="oc-brand" className={LABEL_CLS}>Jenama</label>
-            <select
-              id="oc-brand"
-              value={brand} onChange={e => setBrand(e.target.value)} required
-              className={INPUT_CLS}
-            >
-              <option value="">Pilih jenama…</option>
-              {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="oc-model" className={LABEL_CLS}>Model</label>
-            <input
-              id="oc-model"
-              type="text" value={model} onChange={e => setModel(e.target.value)}
-              placeholder="cth: Vios, Axia, X5" required className={INPUT_CLS}
-            />
-          </div>
-          <div>
-            <label htmlFor="oc-year" className={LABEL_CLS}>Tahun</label>
-            <input
-              id="oc-year"
-              type="number" value={year} onChange={e => setYear(e.target.value)}
-              placeholder="cth: 2020" min={2000} max={2026} required className={INPUT_CLS}
-            />
-          </div>
+          {prefilled ? (
+            <p className="font-heading font-bold text-[13px] text-[#374151]">
+              {initialBrand} {initialModel} {initialYear}
+            </p>
+          ) : (
+            <>
+              <div>
+                <label htmlFor="oc-brand" className={LABEL_CLS}>Jenama</label>
+                <select
+                  id="oc-brand"
+                  value={brand} onChange={e => setBrand(e.target.value)} required
+                  className={INPUT_CLS}
+                >
+                  <option value="">Pilih jenama…</option>
+                  {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="oc-model" className={LABEL_CLS}>Model</label>
+                <input
+                  id="oc-model"
+                  type="text" value={model} onChange={e => setModel(e.target.value)}
+                  placeholder="cth: Vios, Axia, X5" required className={INPUT_CLS}
+                />
+              </div>
+              <div>
+                <label htmlFor="oc-year" className={LABEL_CLS}>Tahun</label>
+                <input
+                  id="oc-year"
+                  type="number" value={year} onChange={e => setYear(e.target.value)}
+                  placeholder="cth: 2020" min={2000} max={2026} required className={INPUT_CLS}
+                />
+              </div>
+            </>
+          )}
           <div>
             <label htmlFor="oc-price" className={LABEL_CLS}>Harga Diminta (RM)</label>
             <input

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 const MODELS = [
-  { slug: 'nissan-almera', model: 'Almera', range: 'RM46k – RM72k', tag: 'Sedan turbo paling jimat petrol' },
+  { slug: 'nissan-almera', model: 'Almera', yearKey: 'almera', years: ['2021','2022','2023'], range: 'RM46k – RM72k', tag: 'Sedan turbo paling jimat petrol' },
 ]
 
 export default function HargaNissan() {
@@ -30,16 +30,26 @@ export default function HargaNissan() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {MODELS.map((m) => (
-              <Link key={m.slug} href={`/harga-kereta-terpakai/${m.slug}`}
-                className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group">
-                <div>
-                  <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">Nissan {m.model}</p>
-                  <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{m.range} · {m.tag}</p>
+              <div key={m.slug} className="space-y-1.5">
+                <Link href={`/harga-kereta-terpakai/${m.slug}`}
+                  className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group">
+                  <div>
+                    <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">Nissan {m.model}</p>
+                    <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{m.range} · {m.tag}</p>
+                  </div>
+                  <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
+                </Link>
+                <div className="flex gap-1.5 flex-wrap px-1">
+                  {m.years.map(y => (
+                    <Link key={y} href={`/harga-${m.yearKey}-${y}`}
+                      className="font-body text-[11px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[6px] px-2 py-0.5 hover:bg-[#DCFCE7] transition-colors">
+                      {y}
+                    </Link>
+                  ))}
                 </div>
-                <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
-              </Link>
+              </div>
             ))}
           </div>
 
