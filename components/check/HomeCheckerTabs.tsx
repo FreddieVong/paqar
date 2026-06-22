@@ -52,7 +52,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
           <p className={`font-body text-[11px] ${
             tab === 'plate' ? 'text-white/70' : 'text-[#9CA3AF]'
           }`}>
-            RM12 · laporan kenderaan + semak harga
+            Laporan Pembeli RM12 · maklumat kenderaan + skrip rundingan
           </p>
         </button>
       </div>

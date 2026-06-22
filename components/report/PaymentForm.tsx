@@ -21,8 +21,8 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
 
   useEffect(() => { analytics.paymentFormViewed() }, [])
 
-  const title = addJomCheck ? 'Laporan Lengkap — RM100' : 'Laporan Pembeli — RM12'
-  const ctaText = addJomCheck ? 'Bayar RM100 & Buka Laporan Lengkap →' : 'Bayar RM12 & Buka Laporan →'
+  const title = addJomCheck ? 'Laporan + Accident/Claim — RM100' : 'Laporan Pembeli — RM12'
+  const ctaText = addJomCheck ? 'Bayar RM100 & Buka Laporan →' : 'Bayar RM12 & Buka Laporan Pembeli →'
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -120,7 +120,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <p className="font-heading font-bold text-[13px] text-[#111827]">
-                    Semakan Rekod Tuntutan Insurans
+                    Semakan Accident/Claim Insurans
                   </p>
                   <p className={`font-heading font-bold text-[13px] flex-shrink-0 ${addJomCheck ? 'text-[#064E4A]' : 'text-[#6B7280]'}`}>
                     +RM88
@@ -128,19 +128,19 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
                 </div>
 
                 <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-2">
-                  Semak rekod tuntutan kemalangan, banjir, cermin dan jumlah kerugian.
+                  Semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum anda bayar booking atau deposit.
                 </p>
 
                 {/* Recommended badge */}
                 <span className={`inline-block font-heading font-bold text-[10px] px-2 py-0.5 rounded-full mb-2 ${
                   addJomCheck ? 'bg-[#CCFBF1] text-[#047857]' : 'bg-[#F3F4F6] text-[#6B7280]'
                 }`}>
-                  Disyorkan sebelum bayar deposit
+                  Disyorkan sebelum bayar booking atau deposit
                 </span>
 
                 {/* Feature chips */}
                 <div className="flex flex-wrap gap-1.5">
-                  {['Kemalangan', 'Banjir', 'Cermin', 'Jumlah Kerugian'].map(tag => (
+                  {['Own Damage', 'Banjir', 'Windscreen', 'Total Loss'].map(tag => (
                     <span key={tag} className={`font-body text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                       addJomCheck ? 'bg-[#CCFBF1] text-[#047857]' : 'bg-[#F3F4F6] text-[#9CA3AF]'
                     }`}>

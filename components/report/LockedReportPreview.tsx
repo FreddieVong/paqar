@@ -27,7 +27,7 @@ export function LockedReportPreview() {
       {/* Header */}
       <div className="px-5 pt-5 pb-4 border-b border-[#F3F4F6]">
         <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#9CA3AF] mb-1">
-          Laporan Pembeli Lengkap — RM12
+          Laporan Pembeli — RM12
         </p>
         <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
           Unlock semua bahagian di bawah untuk buat keputusan sebelum bayar deposit.

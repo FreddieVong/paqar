@@ -77,11 +77,11 @@ export function DualCheckForm() {
           className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold
                      text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-70"
         >
-          {loading ? 'Menyemak…' : 'Semak Sebelum Beli →'}
+          {loading ? 'Menyemak…' : 'Semak Plat Sebelum Beli →'}
         </button>
 
         <p className="font-body text-[11px] text-[#9CA3AF] text-center">
-          Percuma · Laporan penuh RM12 · Tanpa daftar akaun
+          Percuma · Laporan Pembeli RM12 · Tanpa daftar akaun
         </p>
       </form>
     </div>

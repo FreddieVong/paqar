@@ -1,4 +1,5 @@
 import 'server-only'
+import { env } from '@/lib/env'
 
 export type JomCheckStatus = 'not_requested' | 'pending' | 'success' | 'failed'
 
@@ -19,8 +20,79 @@ export function normalisePlate(raw: string): string {
   return raw.toUpperCase().replace(/\s/g, '')
 }
 
-export async function lookupJomCheck(_plate: string): Promise<JomCheckResult | null> {
+// ── Internal helpers ──────────────────────────────────────────────────────────
+
+const BASE = 'https://www.jomcheck.com.my'
+
+async function getToken(): Promise<string> {
+  const res = await fetch(`${BASE}/oauth/APIToken`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: env.JOMCHECK_API_KEY! },
+    body:    JSON.stringify({ username: env.JOMCHECK_USERNAME, password: env.JOMCHECK_PASSWORD }),
+    signal:  AbortSignal.timeout(10_000),
+  })
+  if (!res.ok) throw new Error(`JomCheck token request failed: ${res.status}`)
+  const data = await res.json() as { access_token: string }
+  return data.access_token
+}
+
+async function jomCheckPost(path: string, token: string, plate: string): Promise<unknown | null> {
+  const res = await fetch(`${BASE}${path}`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body:    JSON.stringify({
+      vehicleNo:   plate,
+      companyName: env.JOMCHECK_COMPANY_NAME ?? 'Paqar',
+    }),
+    signal:  AbortSignal.timeout(20_000),
+  })
+  if (!res.ok) return null
+  const data = await res.json() as { error: boolean; result?: unknown }
+  if (data.error || !data.result) return null
+  return data.result
+}
+
+function classifyClaim(claimType: string, accidentType: string): JomCheckClaim['type'] {
+  const t = `${claimType} ${accidentType}`.toLowerCase()
+  if (t.includes('flood'))                        return 'flood'
+  if (t.includes('total loss'))                   return 'total_loss'
+  if (t.includes('ws') || t.includes('windscreen')) return 'windscreen'
+  return 'accident'
+}
+
+type RawClaimItem = { ClaimType?: string; AccidentType?: string }
+type RawResult    = { ClaimList?: Array<{ Value?: RawClaimItem[] }> }
+
+function parseResult(plate: string, raw: unknown): JomCheckResult {
+  const r      = raw as RawResult
+  const items  = r.ClaimList?.flatMap(g => g.Value ?? []) ?? []
+
+  const counts: Partial<Record<JomCheckClaim['type'], number>> = {}
+  for (const item of items) {
+    const type = classifyClaim(item.ClaimType ?? '', item.AccidentType ?? '')
+    counts[type] = (counts[type] ?? 0) + 1
+  }
+
+  const claims: JomCheckClaim[] = (Object.entries(counts) as [JomCheckClaim['type'], number][])
+    .map(([type, count]) => ({ type, count, amount: null }))
+
+  return { plate, totalClaims: items.length, claims, checkedAt: new Date().toISOString() }
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+export async function lookupJomCheck(plate: string): Promise<JomCheckResult | null> {
   if (process.env.JOMCHECK_ENABLED !== 'true') return null
-  // TODO: wire real eAuto Asia API when sandbox credentials arrive
-  return null
+  if (!env.JOMCHECK_API_KEY || !env.JOMCHECK_USERNAME || !env.JOMCHECK_PASSWORD) return null
+
+  const token = await getToken()
+
+  // Try free cached result first (no charge if same plate searched within last 24h)
+  const cached = await jomCheckPost('/api/ThirdParty/GetSearchReport', token, plate)
+  if (cached) return parseResult(plate, cached)
+
+  // Fall back to paid search
+  const result = await jomCheckPost('/api/ThirdParty/Search', token, plate)
+  if (!result) return null
+  return parseResult(plate, result)
 }

@@ -22,7 +22,7 @@ export default function ContohLaporanPage() {
             Lihat apa yang anda akan dapat
           </h1>
           <p className="font-body text-[13px] text-[#6B7280] mb-5">
-            Contoh ringkas laporan Paqar sebelum anda beli kereta terpakai.
+            Pilih laporan yang sesuai untuk anda.
           </p>
           <SampleReportPreview />
           <div className="mt-5">

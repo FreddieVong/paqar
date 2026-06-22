@@ -24,6 +24,10 @@ const schema = z.object({
   BILLPLZ_COLLECTION_ID:        z.string().min(1).optional(),
   BILLPLZ_COLLECTION_ID_BUYER:  z.string().min(1).optional(),
   BILLPLZ_X_SIGNATURE_KEY:      z.string().min(1).optional(),
+  JOMCHECK_API_KEY:             z.string().min(1).optional(),
+  JOMCHECK_USERNAME:            z.string().min(1).optional(),
+  JOMCHECK_PASSWORD:            z.string().min(1).optional(),
+  JOMCHECK_COMPANY_NAME:        z.string().min(1).optional(),
 })
 
 const parsed = schema.safeParse(process.env)

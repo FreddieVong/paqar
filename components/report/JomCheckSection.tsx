@@ -1,10 +1,10 @@
 import type { JomCheckResult, JomCheckClaim } from '@/lib/jomcheck'
 
 const CLAIM_LABELS: Record<JomCheckClaim['type'], string> = {
-  accident:   'Tuntutan kemalangan',
-  flood:      'Tuntutan banjir',
-  windscreen: 'Tuntutan cermin',
-  total_loss: 'Jumlah kerugian',
+  accident:   'Own Damage',
+  flood:      'Banjir',
+  windscreen: 'Windscreen',
+  total_loss: 'Total Loss',
 }
 
 const CLAIM_ORDER: JomCheckClaim['type'][] = ['accident', 'flood', 'windscreen', 'total_loss']
@@ -27,7 +27,7 @@ export function JomCheckSection({ data }: Props) {
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
       <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
-        Semakan Rekod Tuntutan Insurans
+        Semakan Accident/Claim Insurans
       </p>
 
       {isClean ? (
@@ -40,12 +40,12 @@ export function JomCheckSection({ data }: Props) {
             </div>
             <div>
               <p className="font-heading font-bold text-[15px] text-[#065F46]">
-                Tiada Rekod Tuntutan Insurans Dijumpai
+                Tiada Rekod Claim Dijumpai
               </p>
             </div>
           </div>
           <p className="font-body text-[12px] text-[#047857] leading-relaxed ml-11">
-            Tiada rekod tuntutan insurans ditemui dalam pangkalan data.
+            Tiada rekod claim insurans ditemui dalam pangkalan data.
           </p>
         </div>
       ) : (
@@ -60,12 +60,12 @@ export function JomCheckSection({ data }: Props) {
             </div>
             <div>
               <p className="font-heading font-bold text-[15px] text-[#991B1B]">
-                {data.totalClaims} Rekod Tuntutan Dijumpai
+                {data.totalClaims} rekod claim dijumpai
               </p>
             </div>
           </div>
           <p className="font-body text-[12px] text-[#B45309] leading-relaxed ml-11 mb-3">
-            Terdapat rekod tuntutan insurans untuk kenderaan ini.
+            Terdapat rekod claim insurans untuk kenderaan ini.
           </p>
 
           <div className="grid grid-cols-2 gap-2">
@@ -95,8 +95,8 @@ export function JomCheckSection({ data }: Props) {
         </div>
       )}
 
-      <p className="font-body text-[10px] text-[#9CA3AF] text-right mt-3">
-        Dikuasakan oleh JomCheck / eAuto Asia
+      <p className="font-body text-[11px] text-[#9CA3AF] mt-4 leading-relaxed">
+        Tidak semua kemalangan mempunyai rekod claim insurans. Rekod claim juga tidak semestinya bermaksud kemalangan besar. Gunakan maklumat ini untuk bertanya soalan yang lebih tepat kepada penjual.
       </p>
     </div>
   )

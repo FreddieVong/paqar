@@ -29,7 +29,7 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Apakah beza semakan percuma dan laporan RM12?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri verdict harga dan jurang RM dari median pasaran. Laporan RM12 tambah harga pasaran penuh, anggaran trade-in, data JPJ, soalan untuk penjual dan skrip rundingan.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri verdict harga dan jurang RM dari median pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar booking atau deposit.' },
         },
         {
           '@type': 'Question',
@@ -39,7 +39,7 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Boleh guna sebelum tengok kereta?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar deposit.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar booking atau deposit.' },
         },
         {
           '@type': 'Question',
@@ -82,7 +82,7 @@ export default async function HomePage() {
           </h1>
 
           <p className="font-body text-[14px] text-[#6B7280] mb-7 leading-relaxed">
-            Dalam 60 saat, tahu sama ada harga tu patut atau mahal. Percuma. Tanpa daftar.
+            Semak harga kereta terpakai sebelum bayar booking atau deposit.
           </p>
 
           <HomeCheckerTabs countDisplay={countDisplay} />
@@ -130,14 +130,14 @@ export default async function HomePage() {
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#FACC15] flex-shrink-0" />
                   <span className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/45">
-                    Skrip Rundingan Harga Paqar
+                    Laporan Pembeli — RM12
                   </span>
                 </div>
                 <p className="font-heading font-extrabold text-[14px] leading-snug text-white mb-1.5">
                   Masuk rundingan dengan data.<br />Bukan agak-agak.
                 </p>
                 <p className="font-body text-[11px] text-white/55 leading-relaxed">
-                  Guna skrip siap untuk tanya soalan penting dan runding harga sebelum bayar deposit.
+                  Guna skrip siap untuk tanya soalan penting dan runding harga sebelum bayar booking atau deposit.
                 </p>
               </div>
 
@@ -146,7 +146,7 @@ export default async function HomePage() {
                 {[
                   { title: 'Skrip rundingan harga',            desc: 'Bantu anda bincang berdasarkan data.' },
                   { title: 'Harga pasaran & anggaran trade-in', desc: 'Faham harga sebenar dan ruang rundingan anda.' },
-                  { title: 'Data JPJ penuh',                    desc: 'Semak nombor rangka, status dan rekod kenderaan.' },
+                  { title: 'Maklumat kenderaan (JPJ)',            desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
                   { title: 'Soalan penting untuk seller',      desc: 'Tanya soalan yang boleh dedahkan risiko.' },
                 ].map((item, i, arr) => (
                   <div key={item.title} className={`flex gap-2.5 items-start py-2.5 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
@@ -164,7 +164,7 @@ export default async function HomePage() {
               {/* Price anchor */}
               <div className="px-4 py-2.5 bg-[#F8FAF7]">
                 <p className="font-body text-[11px] text-[#6B7280] leading-relaxed">
-                  Untuk pembelian kereta <span className="font-bold text-[#14453d]">bernilai ribuan ringgit</span>, laporan penuh hanya{' '}
+                  Untuk pembelian kereta <span className="font-bold text-[#14453d]">bernilai ribuan ringgit</span>, Laporan Pembeli hanya{' '}
                   <span className="font-extrabold text-[13px] text-[#14453d]">RM12</span>.
                 </p>
               </div>
@@ -211,7 +211,7 @@ export default async function HomePage() {
               {
                 n: '3',
                 title: 'Masuk rundingan dengan data',
-                desc:  'Dapat skrip rundingan, data JPJ dan harga sebenar untuk RM12 — sebelum bayar deposit.',
+                desc:  'Dapat skrip rundingan, maklumat kenderaan JPJ dan harga sebenar — Laporan Pembeli RM12. Tambah Semakan Accident/Claim Insurans untuk RM100 sebelum bayar booking atau deposit.',
               },
             ].map((step, i) => (
               <div key={step.n} className="flex gap-4 pb-6 relative">
@@ -311,7 +311,7 @@ export default async function HomePage() {
               Nak beli kereta terpakai? Semak dahulu.
             </h2>
             <p className="font-body text-[14px] text-white/70 leading-relaxed">
-              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda semak harga, data JPJ, dan runding dengan yakin — sebelum bayar deposit.
+              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda semak harga pasaran, maklumat kenderaan, dan runding dengan yakin — sebelum bayar booking atau deposit.
             </p>
           </div>
           <a
@@ -381,7 +381,7 @@ export default async function HomePage() {
             {[
               {
                 q: 'Apakah beza semakan percuma dan laporan RM12?',
-                a: 'Semakan percuma beri verdict harga dan jurang RM dari median pasaran. Laporan RM12 tambah harga pasaran penuh, anggaran trade-in, data JPJ, soalan untuk penjual dan skrip rundingan.',
+                a: 'Semakan percuma beri verdict harga dan jurang RM dari median pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar booking atau deposit.',
               },
               {
                 q: 'Adakah saya perlu daftar akaun?',
@@ -389,7 +389,7 @@ export default async function HomePage() {
               },
               {
                 q: 'Boleh guna sebelum tengok kereta?',
-                a: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar deposit.',
+                a: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar booking atau deposit.',
               },
               {
                 q: 'Adakah Paqar dari JPJ atau PDRM?',
@@ -419,7 +419,7 @@ export default async function HomePage() {
           <p className="font-body text-[14px] text-white/70 mb-7">
             Verdict harga percuma.
             <span className="inline-block w-1.5 h-1.5 bg-[#FACC15] rounded-full mx-2 align-middle" />
-            Laporan penuh RM12.
+            Laporan Pembeli RM12.
             <span className="inline-block w-1.5 h-1.5 bg-[#FACC15] rounded-full mx-2 align-middle" />
             Tanpa daftar akaun.
           </p>
@@ -427,7 +427,7 @@ export default async function HomePage() {
             href="/"
             className="inline-block bg-white text-[#064E4A] font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 hover:bg-[#F8FAF7] transition-colors"
           >
-            Semak Sekarang →
+            Semak Harga Percuma →
           </Link>
         </div>
       </section>

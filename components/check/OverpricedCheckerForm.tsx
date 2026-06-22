@@ -286,7 +286,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             Semak Harga Percuma →
           </button>
           <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-            Percuma untuk semak harga · RM12 untuk laporan penuh dengan bukti harga &amp; skrip rundingan
+            Percuma untuk semak harga · RM12 untuk Laporan Pembeli dengan bukti harga &amp; skrip rundingan
           </p>
         </form>
       </div>
@@ -334,8 +334,8 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             )}
             <p className="font-body text-[13px] text-[#6B7280] mb-4 leading-relaxed">
               {retried
-                ? 'Kami belum ada data pasaran yang cukup untuk model ini. Anda masih boleh teruskan laporan penuh untuk semak data kenderaan dan panduan tanya seller.'
-                : 'Ambil masa sebentar — atau teruskan dengan laporan penuh sekarang.'}
+                ? 'Kami belum ada data pasaran yang cukup untuk model ini. Anda masih boleh teruskan Laporan Pembeli untuk semak data kenderaan dan panduan tanya seller.'
+                : 'Ambil masa sebentar — atau teruskan dengan Laporan Pembeli sekarang.'}
             </p>
           </>
         ) : (
@@ -467,7 +467,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             type="submit" disabled={plateBusy}
             className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center transition-colors disabled:opacity-60"
           >
-            {plateBusy ? 'Memproses…' : suggestedOffer !== null ? 'Unlock Skrip Rundingan — RM12 →' : 'Unlock Laporan Penuh — RM12 →'}
+            {plateBusy ? 'Memproses…' : suggestedOffer !== null ? 'Unlock Skrip Rundingan — RM12 →' : 'Unlock Laporan Pembeli — RM12 →'}
           </button>
         </form>
 

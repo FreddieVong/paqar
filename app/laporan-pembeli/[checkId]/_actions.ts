@@ -42,7 +42,7 @@ export async function initiateBuyerReport(params: {
     const effectiveAddJomCheck = jomcheckEnabled && !!params.addJomCheck
     const amountCents      = effectiveAddJomCheck ? 10000 : 1200
     const description      = effectiveAddJomCheck
-      ? `Laporan Lengkap Paqar - ${params.checkId}`
+      ? `Laporan Pembeli + Semakan Accident/Claim - ${params.checkId}`
       : `Laporan Pembeli Paqar - ${params.checkId}`
 
     const bill = await createBill({

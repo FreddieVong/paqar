@@ -1,7 +1,7 @@
 const STACK = [
   { title: 'Skrip rundingan harga',        desc: 'Bantu anda bincang harga berdasarkan data.' },
   { title: 'Harga pasaran sebenar',        desc: 'Tahu sama ada harga kereta itu mahal, wajar atau berbaloi.' },
-  { title: 'Data JPJ penuh',               desc: 'Semak nombor rangka, status dan rekod kenderaan.' },
+  { title: 'Maklumat kenderaan (JPJ)',       desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
   { title: 'Soalan penting untuk seller', desc: 'Tanya soalan yang boleh dedahkan masalah tersembunyi.' },
 ]
 
@@ -21,7 +21,7 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
           Masuk rundingan dengan data.<br />Bukan agak-agak.
         </p>
         <p className="font-body text-[11px] text-white/55 leading-relaxed">
-          Guna skrip siap untuk tanya soalan penting dan runding harga sebelum bayar deposit.
+          Guna skrip siap untuk tanya soalan penting dan runding harga sebelum bayar booking atau deposit.
         </p>
         {plate && (
           <div className="mt-3">
@@ -52,7 +52,7 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
       <div className="px-[18px] py-[11px] bg-[#F8FAF7]">
         <p className="font-body text-[11px] text-[#6B7280] leading-relaxed">
           Untuk pembelian kereta <span className="font-bold text-[#14453d]">bernilai ribuan ringgit</span>,
-          laporan penuh hanya <span className="font-extrabold text-[13px] text-[#14453d]">RM12</span>.
+          Laporan Pembeli hanya <span className="font-extrabold text-[13px] text-[#14453d]">RM12</span>.
         </p>
       </div>
 

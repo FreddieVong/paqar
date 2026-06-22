@@ -1,114 +1,288 @@
+'use client'
+
+import { useState, useRef } from 'react'
+import { CopyButton } from './CopyButton'
+
 const MARKET_PRICES = ['RM37,500', 'RM38,000', 'RM39,800', 'RM41,500', 'RM42,000', 'RM43,000', 'RM44,500', 'RM45,000', 'RM46,200', 'RM47,000']
-const LOCKED_SECTIONS = ['Maklumat Kenderaan', 'Skrip Rundingan', 'Soalan untuk Penjual', 'Checklist Deposit']
+
+const SAMPLE_SCRIPT = `Salam, saya berminat dengan Perodua Myvi 2019 yang tuan/puan jual.
+
+Saya dah semak 10 listing serupa di pasaran — median harga sekarang RM42,750, dalam julat RM37,500–RM47,000.
+
+Harga RM55,000 agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM38,000–RM43,000?`
+
+const SELLER_QUESTIONS = [
+  'Ada accident besar sebelum ini?',
+  'Ada flood damage?',
+  'Kereta masih ada loan bank?',
+  'Geran atas nama siapa?',
+  'Boleh buat inspection sebelum bayar deposit?',
+]
+
+const DEPOSIT_CHECKLIST = [
+  'Nombor rangka sama dengan geran',
+  'Geran atas nama penjual',
+  'Semak loan / hutang bank',
+  'Semak saman tertunggak',
+  'Cukai jalan masih sah',
+  'Dapat resit deposit bertulis',
+  'Nyatakan syarat refund deposit',
+  'Confirm tarikh serah geran dan kunci',
+]
+
+const CLAIM_RECORDS = [
+  { year: '2021', type: 'Own Damage', amount: 'RM28,400' },
+  { year: '2023', type: 'Windscreen', amount: 'RM1,250' },
+]
 
 export function SampleReportPreview() {
-  return (
-    <div className="bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden">
-      {/* Header */}
-      <div className="px-5 pt-4 pb-3 border-b border-[#F3F4F6] flex items-center justify-between">
-        <div>
-          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-0.5">
-            Contoh Laporan
-          </p>
-          <p className="font-heading font-extrabold text-[18px] text-[#111827]">WXY 1234</p>
-        </div>
-        <span className="font-body text-[10px] text-[#15803D] bg-[#DCFCE7] border border-[#BBF7D0] px-2.5 py-1 rounded-full font-bold">
-          Contoh Sahaja
-        </span>
-      </div>
+  const [tab, setTab] = useState<'asas' | 'premium'>('asas')
+  const topRef = useRef<HTMLDivElement>(null)
 
-      {/* 1. Keputusan Paqar */}
-      <div className="px-5 py-4 border-b border-[#F3F4F6] bg-[#FEF2F2]">
-        <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
-          Keputusan Paqar
-        </p>
-        <p className="font-heading font-extrabold text-[20px] leading-tight text-[#DC2626] mb-0.5">
-          MAHAL
-        </p>
-        <p className="font-heading font-bold text-[13px] text-[#111827] mb-4">
-          Jangan bayar deposit dulu.
-        </p>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="font-body text-[12px] text-[#6B7280]">Seller minta</p>
+  function switchToPremium() {
+    setTab('premium')
+    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  return (
+    <div>
+      <div ref={topRef} className="bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden">
+
+        {/* Header */}
+        <div className="px-5 pt-4 pb-3 border-b border-[#F3F4F6] flex items-center justify-between">
+          <div>
+            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-0.5">
+              Contoh Laporan
+            </p>
+            <p className="font-heading font-extrabold text-[18px] text-[#111827]">WXY 1234</p>
+          </div>
+          <span className="font-body text-[10px] text-[#15803D] bg-[#DCFCE7] border border-[#BBF7D0] px-2.5 py-1 rounded-full font-bold">
+            Contoh Sahaja
+          </span>
+        </div>
+
+        {/* Segmented toggle */}
+        <div className="px-5 py-3 border-b border-[#F3F4F6]">
+          <div className="flex rounded-[10px] bg-[#F3F4F6] p-1 gap-1">
+            {(['asas', 'premium'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`flex-1 py-2 rounded-[8px] font-heading font-bold text-[12px] transition-colors ${
+                  tab === t
+                    ? 'bg-white text-[#111827] shadow-sm'
+                    : 'text-[#6B7280] hover:text-[#374151]'
+                }`}
+              >
+                {t === 'asas' ? 'Laporan Pembeli RM12' : '+ Accident/Claim RM100'}
+              </button>
+            ))}
+          </div>
+          {tab === 'premium' && (
+            <p className="font-body text-[11px] text-[#064E4A] font-semibold mt-2">
+              Termasuk semakan Accident/Claim Insurans
+            </p>
+          )}
+        </div>
+
+        {/* 1. Keputusan Paqar */}
+        <div className="px-5 py-4 border-b border-[#F3F4F6] bg-[#FEF2F2]">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
+            Keputusan Paqar
+          </p>
+          <p className="font-heading font-extrabold text-[20px] leading-tight text-[#DC2626] mb-0.5">
+            MAHAL
+          </p>
+          <p className="font-heading font-bold text-[13px] text-[#111827] mb-4">
+            Jangan bayar deposit dulu.
+          </p>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="font-body text-[12px] text-[#6B7280]">Seller minta</p>
+              <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="font-body text-[12px] text-[#6B7280]">Market semasa</p>
+              <p className="font-heading font-bold text-[13px] text-[#111827]">RM38,000 – RM46,000</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="font-body text-[12px] text-[#6B7280]">Anggaran lebih tinggi</p>
+              <p className="font-heading font-bold text-[13px] text-[#DC2626]">RM9,000+</p>
+            </div>
+            <div className="pt-2 border-t border-[#FECACA]">
+              <p className="font-body text-[11px] text-[#6B7280] mb-0.5">Cadangan</p>
+              <p className="font-heading font-bold text-[12px] text-[#111827]">
+                Target RM38,000–RM43,000. Kalau seller tak boleh turun, cari unit lain.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Rekod Accident / Claim Insurans — Premium only */}
+        {tab === 'premium' && (
+          <div className="px-5 py-4 border-b border-[#F3F4F6]">
+            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
+              Semakan Accident/Claim Insurans
+            </p>
+            <p className="font-body text-[12px] text-[#6B7280] mb-3 leading-relaxed">
+              Semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss untuk kenderaan ini.
+            </p>
+            <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg px-3 py-2.5 mb-3">
+              <p className="font-heading font-bold text-[13px] text-[#B45309]">2 rekod claim dijumpai</p>
+            </div>
+            <div className="space-y-2">
+              {CLAIM_RECORDS.map((c, i) => (
+                <div key={i} className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5">
+                  <p className="font-body text-[12px] text-[#374151]">{c.year} · {c.type}</p>
+                  <p className="font-heading font-bold text-[13px] text-[#111827]">{c.amount}</p>
+                </div>
+              ))}
+            </div>
+            <p className="font-body text-[11px] text-[#9CA3AF] mt-3 leading-relaxed">
+              Tidak semua kemalangan mempunyai rekod claim insurans. Rekod claim juga tidak semestinya bermaksud kemalangan besar. Gunakan maklumat ini untuk bertanya soalan yang lebih tepat kepada penjual.
+            </p>
+          </div>
+        )}
+
+        {/* 3. Perbandingan Harga */}
+        <div className="px-5 py-4 border-b border-[#F3F4F6]">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
+            Perbandingan Harga
+          </p>
+          <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
+            <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
             <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
           </div>
-          <div className="flex items-center justify-between">
-            <p className="font-body text-[12px] text-[#6B7280]">Market semasa</p>
-            <p className="font-heading font-bold text-[13px] text-[#111827]">RM38,000 – RM46,000</p>
+          <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti Harga Pasaran</p>
+          <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2 mb-2">
+            <p className="font-body text-[12px] text-[#6B7280]">Median pasaran</p>
+            <p className="font-heading font-bold text-[13px] text-[#064E4A]">RM42,750</p>
           </div>
-          <div className="flex items-center justify-between">
-            <p className="font-body text-[12px] text-[#6B7280]">Anggaran lebih tinggi</p>
-            <p className="font-heading font-bold text-[13px] text-[#DC2626]">RM9,000+</p>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {MARKET_PRICES.map(price => (
+              <span key={price} className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[11px] text-[#064E4A]">
+                {price}
+              </span>
+            ))}
           </div>
-          <div className="pt-2 border-t border-[#FECACA]">
-            <p className="font-body text-[11px] text-[#6B7280] mb-0.5">Cadangan</p>
-            <p className="font-heading font-bold text-[12px] text-[#111827]">
-              Target RM38,000–RM43,000. Kalau seller tak boleh turun, cari unit lain.
+          <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
+            Berdasarkan 10 listing serupa di pasaran
+          </p>
+          <div className="mb-3">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#22C55E]" />
+              <span className="font-body text-[11px] font-semibold text-[#15803D]">Keyakinan data: Tinggi</span>
+            </div>
+            <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+              Cukup stabil untuk dijadikan panduan.
+            </p>
+          </div>
+          <div className="pt-3 border-t border-[#F3F4F6]">
+            <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
+            <p className="font-heading font-bold text-[13px] text-[#111827]">RM34,000 – RM36,000</p>
+            <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+              Lebih kurang harga yang dealer akan bagi untuk kereta ni. Boleh guna ni bila nak tawar harga.
+            </p>
+            <p className="font-body text-[10px] text-[#9CA3AF] mt-1 leading-relaxed">
+              Anggaran sahaja. Bergantung pada kondisi, mileage dan pasaran semasa.
             </p>
           </div>
         </div>
-      </div>
 
-      {/* 2. Perbandingan Harga */}
-      <div className="px-5 py-4 border-b border-[#F3F4F6]">
-        <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
-          Perbandingan Harga
-        </p>
-        <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
-          <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
-          <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
-        </div>
-        <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti Harga Pasaran</p>
-
-        {/* Median row */}
-        <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2 mb-2">
-          <p className="font-body text-[12px] text-[#6B7280]">Median pasaran</p>
-          <p className="font-heading font-bold text-[13px] text-[#064E4A]">RM42,750</p>
-        </div>
-
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {MARKET_PRICES.map(price => (
-            <span key={price} className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[11px] text-[#064E4A]">
-              {price}
-            </span>
-          ))}
-        </div>
-
-        {/* Methodology + confidence */}
-        <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
-          Berdasarkan 10 listing serupa di pasaran
-        </p>
-        <div className="mb-3">
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#22C55E]" />
-            <span className="font-body text-[11px] font-semibold text-[#15803D]">Keyakinan data: Tinggi</span>
+        {/* Premium teaser — Asas only, after Perbandingan Harga */}
+        {tab === 'asas' && (
+          <div className="px-5 py-4 border-b border-[#F3F4F6]">
+            <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[12px] p-4">
+              <p className="font-heading font-bold text-[14px] text-[#064E4A] mb-1">
+                Risau kereta pernah accident?
+              </p>
+              <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-3">
+                Tambah Semakan Accident/Claim Insurans untuk semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum anda bayar booking atau deposit.
+              </p>
+              <button
+                onClick={switchToPremium}
+                className="w-full border border-[#064E4A] text-[#064E4A] font-heading font-bold text-[13px] rounded-[10px] py-2.5 transition-colors hover:bg-[#064E4A] hover:text-white"
+              >
+                Lihat Contoh RM100
+              </button>
+            </div>
           </div>
-          <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">
-            Cukup stabil untuk dijadikan panduan.
+        )}
+
+        {/* 4. Skrip Rundingan */}
+        <div className="px-5 py-4 border-b border-[#F3F4F6]">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
+            Skrip Rundingan
           </p>
+          <div className="bg-[#F9FAFB] rounded-lg p-4 mb-3">
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed whitespace-pre-line">
+              {SAMPLE_SCRIPT}
+            </p>
+          </div>
+          <CopyButton text={SAMPLE_SCRIPT} />
         </div>
 
-        {/* Trade-in estimate */}
-        <div className="pt-3 border-t border-[#F3F4F6]">
-          <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
-          <p className="font-heading font-bold text-[13px] text-[#111827]">RM34,000 – RM36,000</p>
-          <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
-            Lebih kurang harga yang dealer akan bagi untuk kereta ni. Boleh guna ni bila nak tawar harga.
+        {/* 5. Soalan untuk Penjual */}
+        <div className="px-5 py-4 border-b border-[#F3F4F6]">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-4">
+            Soalan untuk Penjual
           </p>
-          <p className="font-body text-[10px] text-[#9CA3AF] mt-1 leading-relaxed">
-            Anggaran sahaja. Bergantung pada kondisi, mileage dan pasaran semasa.
-          </p>
+          <div className="space-y-3">
+            {SELLER_QUESTIONS.map((q, i) => (
+              <div key={i} className="flex gap-3">
+                <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">{i + 1}.</span>
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">{q}</p>
+              </div>
+            ))}
+          </div>
         </div>
+
+        {/* 6. Checklist Deposit */}
+        <div className="px-5 py-4 border-b border-[#F3F4F6]">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-4">
+            Checklist Deposit
+          </p>
+          <div className="space-y-3">
+            {DEPOSIT_CHECKLIST.map((item, i) => (
+              <div key={i} className="flex gap-3 items-start">
+                <span className="w-[18px] h-[18px] rounded border-2 border-[#D1D5DB] flex-shrink-0 mt-0.5" />
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 7. Maklumat Kenderaan */}
+        <div className="px-5 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF]">
+              Maklumat Kenderaan
+            </p>
+            <span className="font-body text-[10px] text-[#9CA3AF]">Sumber: JPJ</span>
+          </div>
+          <p className="font-heading font-extrabold text-[16px] text-[#111827] mb-3 leading-tight">
+            PERODUA MYVI 1.3X AT
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: 'Tahun Daftar',  value: '2019' },
+              { label: 'Enjin',         value: '1300cc' },
+              { label: 'Jenis Badan',   value: 'Hatchback' },
+              { label: 'Nombor Rangka', value: 'MBBFE****' },
+            ].map(row => (
+              <div key={row.label} className="bg-[#F9FAFB] rounded-lg px-3 py-2">
+                <p className="font-body text-[10px] text-[#9CA3AF] uppercase tracking-[.05em]">{row.label}</p>
+                <p className="font-heading font-bold text-[13px] text-[#111827] mt-0.5">{row.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
 
-      {/* 3. Locked sections */}
-      {LOCKED_SECTIONS.map(title => (
-        <div key={title} className="flex items-center gap-3 px-5 py-3.5 border-b border-[#F3F4F6] last:border-0 bg-[#F9FAFB]">
-          <span className="text-[14px] flex-shrink-0">🔒</span>
-          <p className="font-heading font-bold text-[13px] text-[#9CA3AF]">{title}</p>
-        </div>
-      ))}
+      <p className="font-body text-[11px] text-[#9CA3AF] text-center mt-3 leading-relaxed">
+        Ini contoh sahaja. Laporan sebenar dijana berdasarkan nombor plat dan harga yang anda semak.
+      </p>
     </div>
   )
 }
