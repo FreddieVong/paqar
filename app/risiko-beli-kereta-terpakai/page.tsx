@@ -77,6 +77,15 @@ export default function RisikoBelihKeretaTerpakaiPage() {
         ],
       },
       {
+        '@type': 'Article',
+        headline: 'Risiko Beli Kereta Terpakai Malaysia — dan Cara Elaknya',
+        description: 'Risiko utama beli kereta terpakai di Malaysia — saman tersembunyi, odometer diputar, banjir, kemalangan, dan pinjaman aktif. Cara lindungi diri anda.',
+        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        datePublished: '2025-05-01',
+        url: 'https://paqar.my/risiko-beli-kereta-terpakai',
+      },
+      {
         '@type': 'FAQPage',
         mainEntity: [
           {
@@ -119,7 +128,7 @@ export default function RisikoBelihKeretaTerpakaiPage() {
               Risiko beli kereta terpakai — dan cara elaknya
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Kereta terpakai boleh jimat duit — tapi tanpa semakan yang betul, anda boleh rugi lebih banyak. Kenali risiko ini sebelum buat keputusan.
+              Paqar membantu pembeli kereta terpakai semak harga pasaran dan dapatkan laporan pembeli sebelum bayar booking atau deposit. Kenali 7 risiko tersembunyi ini sebelum buat keputusan.
             </p>
           </div>
 

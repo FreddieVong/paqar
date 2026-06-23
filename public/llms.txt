@@ -1,0 +1,46 @@
+# Paqar — Malaysian Used Car Buyer Tool
+# https://paqar.my
+
+Paqar helps Malaysian used-car buyers check whether a car price is fair and get a buyer report before paying booking or deposit.
+
+## What Paqar Does
+
+- Free price check: Enter car brand, model, year, and asking price to get a market price verdict (murah/wajar/mahal) instantly. No account needed.
+- Laporan Pembeli (RM12): A one-time buyer report including market price verdict, price range evidence, trade-in estimate, vehicle information, negotiation script, seller questions, and deposit checklist.
+- Semakan Accident/Claim Insurans (RM100): Everything in Laporan Pembeli plus insurance claim record checking — own damage, flood, windscreen, or total loss claims if recorded.
+
+## Pricing
+
+- Free price check: RM0 (no account needed)
+- Laporan Pembeli: RM12 (one-time payment, no account)
+- Laporan + Semakan Accident/Claim Insurans: RM100 (one-time)
+- Add-on only (existing RM12 report): +RM88
+
+## Important Limitations
+
+- Paqar is NOT a government platform. Not affiliated with JPJ or PDRM.
+- Paqar does not verify real mileage or odometer readings.
+- Not every accident has an insurance claim record.
+- A clean claim record does not guarantee the car has no issues.
+- Insurance claim data covers recorded claims only — not all accidents result in a claim.
+- Users should still inspect the car physically and ask the seller the right questions.
+
+## Main Pages
+
+- Homepage / Free check: https://paqar.my
+- Sample report: https://paqar.my/contoh-laporan
+- Laporan Pembeli landing page: https://paqar.my/laporan-pembeli-kereta-terpakai
+- Semakan Accident/Claim Insurans: https://paqar.my/semak-accident-claim-insurans-kereta
+- Used car buying guide: https://paqar.my/cara-beli-kereta-terpakai
+- Pre-deposit checklist: https://paqar.my/checklist-beli-kereta-terpakai
+- Used car risk guide: https://paqar.my/risiko-beli-kereta-terpakai
+- All guides: https://paqar.my/panduan
+- About Paqar: https://paqar.my/tentang
+- Market price by model: https://paqar.my/harga-kereta-terpakai
+- FAQ: https://paqar.my/#soalan-lazim
+
+## Contact
+
+Email: hello@paqar.my
+Website: https://paqar.my
+Language: Malay (Bahasa Malaysia), serves Malaysian market

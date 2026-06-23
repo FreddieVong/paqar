@@ -43,8 +43,8 @@ const VERDICT_CONFIG: Record<Verdict, {
     badgeCls:   'bg-[#064E4A] text-white',
     cardBg:     'bg-[#F0FDF4]',
     cardBorder: 'border-[#BBF7D0]',
-    copy:       () => 'Semak data JPJ dan soalan untuk penjual sebelum setuju.',
-    ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
+    copy:       () => 'Semak maklumat kenderaan dan soalan untuk penjual sebelum setuju.',
+    ctaSub:     'Harga baru · Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
   },
   good_deal: {
     badge:      'BERBALOI',

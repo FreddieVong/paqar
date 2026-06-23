@@ -25,7 +25,7 @@ export async function sendRetargetEmail(params: RetargetParams): Promise<void> {
         Masih mencari kereta${plateLabel}?
       </p>
       <p style="color:#374151;font-size:14px;margin:0 0 20px;line-height:1.6;">
-        Laporan penuh${plateLabel} masih tersedia — data JPJ, harga baru asal, status insurans, soalan untuk penjual, dan skrip rundingan. Bayar RM12 untuk buka laporan.
+        Laporan penuh${plateLabel} masih tersedia — maklumat kenderaan, harga pasaran semasa, soalan untuk penjual, dan skrip rundingan harga. Bayar RM12 untuk buka laporan.
       </p>
 
       <a href="${reportUrl}"
@@ -36,12 +36,13 @@ export async function sendRetargetEmail(params: RetargetParams): Promise<void> {
       <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin-bottom:20px;">
         <p style="color:#374151;font-size:13px;margin:0 0 8px;font-weight:700;">Laporan merangkumi:</p>
         <ul style="color:#6B7280;font-size:13px;margin:0;padding-left:16px;line-height:1.8;">
-          <li>Data kenderaan rasmi dari JPJ</li>
-          <li>Harga baru asal untuk model ini</li>
-          <li>Status insurans semasa</li>
+          <li>Verdict harga pasaran (murah / wajar / mahal)</li>
+          <li>Harga median &amp; range pasaran semasa</li>
+          <li>Anggaran harga trade-in</li>
+          <li>Maklumat kenderaan</li>
           <li>Soalan untuk tanya penjual (copy &amp; paste)</li>
-          <li>Skrip rundingan harga</li>
-          <li>Panduan inspection sebelum deposit</li>
+          <li>Skrip rundingan harga siap pakai</li>
+          <li>Checklist sebelum bayar deposit</li>
         </ul>
       </div>
 

@@ -26,6 +26,28 @@ export default function CaraBelihKeretaTerpakaiPage() {
         ],
       },
       {
+        '@type': 'Article',
+        headline: 'Cara Beli Kereta Terpakai Malaysia dengan Selamat',
+        description: 'Panduan lengkap cara beli kereta terpakai Malaysia. Dari semak saman, geran, pinjaman, hingga bayar deposit dengan selamat.',
+        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        datePublished: '2025-05-01',
+        url: 'https://paqar.my/cara-beli-kereta-terpakai',
+      },
+      {
+        '@type': 'HowTo',
+        name: 'Cara Beli Kereta Terpakai Malaysia',
+        description: '6 langkah untuk beli kereta terpakai dengan selamat di Malaysia — dari semak saman hingga tukar milik.',
+        step: [
+          { '@type': 'HowToStep', position: 1, name: 'Semak saman kenderaan', text: 'Minta nombor plat dari penjual. Semak saman PDRM di mybayar.rmp.gov.my dan saman JPJ di public.jpj.gov.my.' },
+          { '@type': 'HowToStep', position: 2, name: 'Semak geran dan hak milik', text: 'Pastikan nama dalam geran sama dengan IC penjual. Semak nombor enjin dan casis sama dengan geran. Pastikan tiada catatan cagaran bank.' },
+          { '@type': 'HowToStep', position: 3, name: 'Semak pinjaman bank aktif', text: 'Minta penjual tunjukkan surat penyelesaian pinjaman atau kelulusan bank untuk jual sebelum bayar apa-apa.' },
+          { '@type': 'HowToStep', position: 4, name: 'Semak kondisi fizikal', text: 'Semak cat, bonet, dan bawah kereta. Buat test drive dan bawa ke bengkel untuk inspection profesional.' },
+          { '@type': 'HowToStep', position: 5, name: 'Semak harga pasaran', text: 'Guna Paqar untuk dapat verdict harga percuma atau Laporan Pembeli RM12 dengan skrip rundingan. Tambah Semakan Accident/Claim Insurans RM100 untuk semak rekod claim.' },
+          { '@type': 'HowToStep', position: 6, name: 'Bayar deposit dengan betul', text: 'Bayar deposit hanya selepas semua semakan selesai. Pastikan perjanjian jual beli bertulis dengan syarat refund yang jelas.' },
+        ],
+      },
+      {
         '@type': 'FAQPage',
         mainEntity: [
           {
@@ -69,7 +91,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
               Cara beli kereta terpakai Malaysia dengan selamat
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Beli kereta terpakai boleh jimat puluhan ribu ringgit — tapi risiko tersembunyi boleh membuatkan anda rugi lebih banyak. Ikut panduan ini untuk lindungi diri anda.
+              Paqar membantu pembeli kereta terpakai semak harga pasaran dan dapatkan laporan pembeli sebelum bayar booking atau deposit. Panduan ini merangkumi 6 langkah penting dari semak saman hingga tukar milik dengan selamat.
             </p>
           </div>
 

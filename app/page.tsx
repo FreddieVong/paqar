@@ -21,7 +21,24 @@ const homeSchema = {
       name: 'Paqar',
       url: 'https://paqar.my',
       logo: 'https://paqar.my/paqar-logo.png',
+      description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan Laporan Pembeli, dan semak rekod claim insurans sebelum bayar booking atau deposit.',
       contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'hello@paqar.my' },
+    },
+    {
+      '@type': 'Service',
+      name: 'Laporan Pembeli Kereta Terpakai',
+      description: 'Laporan Pembeli RM12 merangkumi verdict harga pasaran, median dan range harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
+      provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+      areaServed: { '@type': 'Country', name: 'Malaysia' },
+      offers: { '@type': 'Offer', price: '12', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
+    },
+    {
+      '@type': 'Service',
+      name: 'Semakan Accident/Claim Insurans Kereta',
+      description: 'Semakan Accident/Claim Insurans RM100 merangkumi semua dalam Laporan Pembeli RM12 ditambah semakan rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum bayar booking atau deposit.',
+      provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+      areaServed: { '@type': 'Country', name: 'Malaysia' },
+      offers: { '@type': 'Offer', price: '100', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
     },
     {
       '@type': 'FAQPage',
@@ -30,6 +47,21 @@ const homeSchema = {
           '@type': 'Question',
           name: 'Apakah beza semakan percuma dan laporan RM12?',
           acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri verdict harga dan jurang RM dari median pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar booking atau deposit.' },
+        },
+        {
+          '@type': 'Question',
+          name: 'Apa yang ada dalam Laporan Pembeli RM12 Paqar?',
+          acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM12 merangkumi: verdict harga pasaran (murah/wajar/mahal), median dan range harga berdasarkan listing semasa, anggaran trade-in, maklumat kenderaan (tahun daftar, enjin, jenis badan, nombor rangka), skrip rundingan harga siap pakai, soalan penting untuk penjual, dan checklist sebelum bayar deposit.' },
+        },
+        {
+          '@type': 'Question',
+          name: 'Boleh semak rekod accident atau claim insurans kereta terpakai di Malaysia?',
+          acceptedAnswer: { '@type': 'Answer', text: 'Ya. Paqar menyediakan Semakan Accident/Claim Insurans (RM100) yang semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan. Penting: tidak semua kemalangan mempunyai rekod claim insurans, dan rekod bersih tidak bermakna kereta tiada isu. Gunakan maklumat ini untuk bertanya soalan yang lebih tepat kepada penjual.' },
+        },
+        {
+          '@type': 'Question',
+          name: 'Berapa harga semakan di Paqar?',
+          acceptedAnswer: { '@type': 'Answer', text: 'Semakan harga percuma. Laporan Pembeli RM12 (satu bayaran, tanpa akaun). Laporan + Semakan Accident/Claim Insurans RM100. Atau tambah +RM88 kepada laporan RM12 sedia ada.' },
         },
         {
           '@type': 'Question',
@@ -45,6 +77,11 @@ const homeSchema = {
           '@type': 'Question',
           name: 'Adakah Paqar dari JPJ atau PDRM?',
           acceptedAnswer: { '@type': 'Answer', text: 'Paqar adalah perkhidmatan pihak ketiga — bukan afiliasi JPJ atau PDRM.' },
+        },
+        {
+          '@type': 'Question',
+          name: 'Apakah had atau limitasi Paqar?',
+          acceptedAnswer: { '@type': 'Answer', text: 'Paqar tidak mengesahkan bacaan odometer sebenar. Tidak semua kemalangan mempunyai rekod claim insurans. Rekod claim bersih tidak bermaksud kereta tiada masalah. Pengguna tetap perlu buat inspection fizikal dan tanya penjual soalan yang tepat.' },
         },
       ],
     },

@@ -26,6 +26,15 @@ export default function CaraSemakInsuransPage() {
         ],
       },
       {
+        '@type': 'Article',
+        headline: 'Cara Semak Insurans Kereta Malaysia',
+        description: 'Cara semak status insurans kereta Malaysia — sama ada masih aktif, tamat, atau perlu diperbaharui. Penting sebelum beli atau pandu kereta terpakai.',
+        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        datePublished: '2025-05-01',
+        url: 'https://paqar.my/cara-semak-insurans-kereta',
+      },
+      {
         '@type': 'FAQPage',
         mainEntity: [
           {
@@ -166,6 +175,25 @@ export default function CaraSemakInsuransPage() {
               Semak kereta yang anda minat secara lengkap:
             </p>
             <DualCheckForm />
+          </div>
+
+          {/* Semakan Accident/Claim — different from status check */}
+          <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">
+            <h2 className="font-heading font-bold text-[16px] text-[#064E4A] mb-2">
+              Semak rekod claim insurans sebelum beli kereta terpakai
+            </h2>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
+              Cara semak insurans di atas sahkan sama ada polisi masih aktif. Ini berbeza daripada semakan rekod claim insurans — iaitu sama ada kereta pernah ada tuntutan seperti own damage, banjir, windscreen atau total loss.
+            </p>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-4">
+              Paqar menyediakan Semakan Accident/Claim Insurans (RM100) untuk semak rekod ini sebelum anda bayar booking atau deposit. Penting: tidak semua kemalangan ada rekod claim, dan rekod bersih tidak bermakna kereta tiada isu.
+            </p>
+            <Link
+              href="/semak-accident-claim-insurans-kereta"
+              className="inline-block w-full bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[12px] py-3 text-center hover:bg-[#053D3A] transition-colors"
+            >
+              Semakan Accident/Claim Insurans →
+            </Link>
           </div>
 
           <div className="space-y-2">

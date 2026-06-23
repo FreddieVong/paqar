@@ -1,19 +1,28 @@
 import type { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
+  const disallow = [
+    '/check/',
+    '/laporan-pembeli/',
+    '/dashboard/',
+    '/auth/',
+    '/api/',
+    '/semak-saman-kereta/',
+  ]
+
   return {
-    rules: {
-      userAgent: '*',
-      allow: ['/', '/panduan', '/panduan-semak-saman', '/cara-beli-kereta-terpakai', '/checklist-beli-kereta-terpakai', '/risiko-beli-kereta-terpakai', '/cara-semak-geran-kereta', '/cara-semak-roadtax-kereta', '/cara-semak-insurans-kereta', '/harga-kereta-terpakai', '/harga-kereta-terpakai/', '/harga-perodua-terpakai', '/harga-proton-terpakai', '/harga-toyota-terpakai', '/harga-honda-terpakai', '/harga-nissan-terpakai', '/bandingkan', '/bandingkan/', '/privasi', '/terma'],
-      disallow: [
-        '/check/',
-        '/laporan-pembeli/',
-        '/dashboard/',
-        '/auth/',
-        '/api/',
-        '/semak-saman-kereta/',
-      ],
-    },
+    rules: [
+      {
+        userAgent: '*',
+        allow: ['/'],
+        disallow,
+      },
+      // Explicitly welcome AI crawlers (belt-and-suspenders — already covered by *)
+      { userAgent: 'GPTBot',        allow: ['/'] },
+      { userAgent: 'OAI-SearchBot', allow: ['/'] },
+      { userAgent: 'PerplexityBot', allow: ['/'] },
+      { userAgent: 'ClaudeBot',     allow: ['/'] },
+    ],
     sitemap: 'https://paqar.my/sitemap.xml',
   }
 }

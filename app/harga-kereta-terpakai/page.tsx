@@ -5,7 +5,7 @@ import { Shell }         from '@/components/layout/Shell'
 
 export const metadata: Metadata = {
   title: 'Harga Kereta Terpakai Malaysia 2025 — Semak Harga Pasaran | Paqar',
-  description: 'Panduan harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Semak harga percuma sebelum bayar deposit.',
+  description: 'Panduan harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Semak harga percuma sebelum bayar booking atau deposit.',
   alternates: { canonical: 'https://paqar.my/harga-kereta-terpakai' },
 }
 

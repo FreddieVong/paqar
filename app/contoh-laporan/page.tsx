@@ -4,14 +4,28 @@ import { Shell }               from '@/components/layout/Shell'
 import { SampleReportPreview } from '@/components/report/SampleReportPreview'
 
 export const metadata = {
-  title: 'Contoh Laporan Pembeli — Paqar',
-  description: 'Lihat contoh laporan Paqar sebelum anda membeli kereta terpakai.',
-  robots: { index: false },
+  title: 'Contoh Laporan Pembeli Kereta Terpakai — Paqar',
+  description: 'Lihat contoh Laporan Pembeli RM12 dan Semakan Accident/Claim Insurans RM100 — sebelum beli kereta terpakai Malaysia.',
+  alternates: { canonical: 'https://paqar.my/contoh-laporan' },
+}
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+        { '@type': 'ListItem', position: 2, name: 'Contoh Laporan', item: 'https://paqar.my/contoh-laporan' },
+      ],
+    },
+  ],
 }
 
 export default function ContohLaporanPage() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <Nav />
       <Shell>
         <div className="pt-5 pb-10">

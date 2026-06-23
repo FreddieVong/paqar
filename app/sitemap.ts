@@ -2,31 +2,41 @@ import type { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = 'https://paqar.my'
+  const now  = new Date('2026-06-23')
 
   return [
-    { url: base,                                          lastModified: new Date('2025-06-01'), changeFrequency: 'weekly',  priority: 1.0 },
-    { url: `${base}/panduan`,                            lastModified: new Date('2025-05-01'), changeFrequency: 'weekly',  priority: 0.9 },
-    { url: `${base}/panduan-semak-saman`,                lastModified: new Date('2025-05-01'), changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/cara-beli-kereta-terpakai`,          lastModified: new Date('2025-05-01'), changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/checklist-beli-kereta-terpakai`,     lastModified: new Date('2025-05-01'), changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/risiko-beli-kereta-terpakai`,        lastModified: new Date('2025-05-01'), changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/cara-semak-geran-kereta`,            lastModified: new Date('2025-05-01'), changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/cara-semak-roadtax-kereta`,          lastModified: new Date('2025-05-01'), changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/cara-semak-insurans-kereta`,         lastModified: new Date('2025-05-01'), changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/privasi`,                            lastModified: new Date('2025-01-01'), changeFrequency: 'yearly',  priority: 0.3 },
-    { url: `${base}/terma`,                              lastModified: new Date('2025-01-01'), changeFrequency: 'yearly',  priority: 0.3 },
-    // Model price pages
-    { url: `${base}/harga-kereta-terpakai`,              lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.9 },
+    { url: base,                                                         lastModified: now,                        changeFrequency: 'weekly',  priority: 1.0 },
+    // Core product pages
+    { url: `${base}/contoh-laporan`,                                     lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${base}/laporan-pembeli-kereta-terpakai`,                    lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${base}/semak-accident-claim-insurans-kereta`,               lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
+    // Guide hub
+    { url: `${base}/panduan`,                                            lastModified: new Date('2025-05-01'),     changeFrequency: 'weekly',  priority: 0.9 },
+    // Guide pages
+    { url: `${base}/panduan-semak-saman`,                                lastModified: new Date('2025-05-01'),     changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${base}/cara-beli-kereta-terpakai`,                          lastModified: new Date('2025-05-01'),     changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${base}/checklist-beli-kereta-terpakai`,                     lastModified: new Date('2025-05-01'),     changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${base}/risiko-beli-kereta-terpakai`,                        lastModified: new Date('2025-05-01'),     changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${base}/cara-semak-geran-kereta`,                            lastModified: new Date('2025-05-01'),     changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${base}/cara-semak-roadtax-kereta`,                          lastModified: new Date('2025-05-01'),     changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${base}/cara-semak-insurans-kereta`,                         lastModified: new Date('2025-05-01'),     changeFrequency: 'monthly', priority: 0.8 },
+    // About / trust
+    { url: `${base}/tentang`,                                            lastModified: now,                        changeFrequency: 'yearly',  priority: 0.6 },
+    // Legal
+    { url: `${base}/privasi`,                                            lastModified: new Date('2025-01-01'),     changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${base}/terma`,                                              lastModified: new Date('2025-01-01'),     changeFrequency: 'yearly',  priority: 0.3 },
+    // Model price hub
+    { url: `${base}/harga-kereta-terpakai`,                              lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
     ...['perodua-myvi','perodua-axia','perodua-bezza','proton-saga','toyota-vios','honda-city','perodua-alza','proton-x50','perodua-ativa','honda-jazz','proton-x70','proton-iriz','honda-hrv','nissan-almera'].map(m => ({
-      url: `${base}/harga-kereta-terpakai/${m}`, lastModified: new Date('2025-06-19'), changeFrequency: 'monthly' as const, priority: 0.85,
+      url: `${base}/harga-kereta-terpakai/${m}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.85,
     })),
     // Brand hub pages
-    { url: `${base}/harga-perodua-terpakai`, lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.85 },
-    { url: `${base}/harga-proton-terpakai`,  lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.85 },
-    { url: `${base}/harga-toyota-terpakai`,  lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.85 },
-    { url: `${base}/harga-honda-terpakai`,   lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.85 },
-    { url: `${base}/harga-nissan-terpakai`,  lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.85 },
-    // Year-specific model price pages (live data from market_price_cache, refreshed by warm-cache cron)
+    { url: `${base}/harga-perodua-terpakai`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/harga-proton-terpakai`,  lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/harga-toyota-terpakai`,  lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/harga-honda-terpakai`,   lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/harga-nissan-terpakai`,  lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    // Year-specific model price pages
     ...[
       ...['2019','2020','2021','2022','2023'].map(y => `myvi-${y}`),
       ...['2020','2021','2022','2023'].map(y => `axia-${y}`),
@@ -46,12 +56,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       ...['2021','2022','2023'].map(y => `yaris-${y}`),
       ...['2021','2022','2023'].map(y => `almera-${y}`),
     ].map(s => ({
-      url: `${base}/harga-${s}`, lastModified: new Date('2026-06-19'), changeFrequency: 'weekly' as const, priority: 0.85,
+      url: `${base}/harga-${s}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.85,
     })),
     // Comparison pages
-    { url: `${base}/bandingkan`,             lastModified: new Date('2025-06-19'), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${base}/bandingkan`,             lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     ...['myvi-vs-axia','myvi-vs-saga','vios-vs-city','bezza-vs-saga','axia-vs-saga','myvi-vs-bezza','alza-vs-x50'].map(s => ({
-      url: `${base}/bandingkan/${s}`, lastModified: new Date('2025-06-19'), changeFrequency: 'monthly' as const, priority: 0.8,
+      url: `${base}/bandingkan/${s}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8,
     })),
   ]
 }

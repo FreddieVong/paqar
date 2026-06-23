@@ -26,6 +26,15 @@ export default function PanduanSemakSamanPage() {
         ],
       },
       {
+        '@type': 'Article',
+        headline: 'Cara Semak Saman Kereta Secara Rasmi di Malaysia',
+        description: 'Panduan lengkap cara semak saman PDRM dan JPJ secara rasmi. Step by step, percuma, tanpa daftar akaun.',
+        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        datePublished: '2025-05-01',
+        url: 'https://paqar.my/panduan-semak-saman',
+      },
+      {
         '@type': 'FAQPage',
         mainEntity: [
           {
