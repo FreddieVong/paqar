@@ -77,7 +77,7 @@ export function DualCheckForm() {
           className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold
                      text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-70"
         >
-          {loading ? 'Menyemak…' : 'Semak Plat Sebelum Beli →'}
+          {loading ? 'Menyemak…' : 'Semak Nombor Plat →'}
         </button>
 
         <p className="font-body text-[11px] text-[#9CA3AF] text-center">

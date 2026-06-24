@@ -114,12 +114,12 @@ export default async function HomePage() {
           </div>
 
           <h1 className="font-heading font-extrabold text-[30px] md:text-[36px] leading-[1.1] tracking-[-0.03em] text-[#111827] mb-3">
-            Penjual tahu harga sebenar.<br />
+            Penjual tahu harga dan cerita sebenar.<br />
             <span className="text-[#064E4A]">Sekarang anda pun tahu.</span>
           </h1>
 
           <p className="font-body text-[14px] text-[#6B7280] mb-7 leading-relaxed">
-            Semak harga kereta terpakai sebelum bayar booking atau deposit.
+            Semak harga pasaran dan sejarah kemalangan kenderaan sebelum bayar booking atau deposit.
           </p>
 
           <HomeCheckerTabs countDisplay={countDisplay} />
@@ -451,7 +451,7 @@ export default async function HomePage() {
       <section className="bg-[#14453d] px-5 py-14 text-center md:py-20">
         <div className="max-w-lg mx-auto">
           <h2 className="font-heading font-extrabold text-[24px] md:text-[30px] leading-tight tracking-tight text-white mb-3">
-            Semak sebelum<br />bayar deposit
+            Semak sebelum<br />bayar booking atau deposit
           </h2>
           <p className="font-body text-[14px] text-white/70 mb-7">
             Verdict harga percuma.
