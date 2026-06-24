@@ -28,7 +28,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#FEF2F2]',
     cardBorder: 'border-[#FECACA]',
     copy:       () => '',
-    ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
+    ctaSub:     'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
   },
   slightly_high: {
     badge:      'AGAK MAHAL',
@@ -36,7 +36,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#FFFBEB]',
     cardBorder: 'border-[#FDE68A]',
     copy:       () => 'Ada ruang untuk tawar turun.',
-    ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
+    ctaSub:     'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
   },
   fair_price: {
     badge:      'WAJAR',
@@ -44,15 +44,15 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#F0FDF4]',
     cardBorder: 'border-[#BBF7D0]',
     copy:       () => 'Semak maklumat kenderaan dan soalan untuk penjual sebelum setuju.',
-    ctaSub:     'Harga baru · Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
+    ctaSub:     'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
   },
   good_deal: {
     badge:      'BERBALOI',
     badgeCls:   'bg-[#0891B2] text-white',
     cardBg:     'bg-[#F0FAFA]',
     cardBorder: 'border-[#99D4D1]',
-    copy:       () => 'Tapi kenapa murah? Semak rekod JPJ sebelum bayar deposit.',
-    ctaSub:     'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan',
+    copy:       () => 'Tapi kenapa murah? Semak sejarah kemalangan sebelum bayar booking atau deposit.',
+    ctaSub:     'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
   },
 }
 
@@ -439,7 +439,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
 
         {/* Malaysian plate input */}
         <form onSubmit={handlePlateSubmit} className="space-y-2">
-          <div className="bg-[#1a1a1a] rounded-[7px] p-[5px]">
+          <div className="bg-[#1a1a1a] rounded-[7px] p-[5px] border border-transparent focus-within:border-[#064E4A] focus-within:shadow-[0_0_0_3px_rgba(6,78,74,0.15)] transition-all duration-150">
             <div className="bg-[#1a1a1a] rounded-[3px] flex items-center justify-center min-h-[60px] px-3">
               <input
                 type="text"
@@ -458,7 +458,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             </p>
           </div>
           <p className="font-body text-[9px] text-[#9CA3AF] text-center leading-relaxed">
-            Diperlukan untuk semak rekod JPJ kereta ini.
+            Diperlukan untuk jana laporan kereta ini.
           </p>
           {plateError && (
             <p className="font-body text-[12px] text-[#DC2626] text-center">{plateError}</p>
@@ -472,7 +472,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
         </form>
 
         <p className="font-body text-[9px] text-[#9CA3AF] text-center mt-2">
-          {'Harga baru · Harga pasaran sebenar · Data JPJ · Skrip rundingan'}
+          {'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan'}
         </p>
       </div>
     </div>

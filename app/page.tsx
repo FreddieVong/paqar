@@ -220,54 +220,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── CARA IA BERFUNGSI ── */}
-      <section className="bg-white px-5 py-12 md:py-16">
-        <div className="max-w-xl mx-auto">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
-            Cara Ia Berfungsi
-          </p>
-          <h2 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827] mb-2">
-            Tiga langkah. Satu minit.
-          </h2>
-          <p className="font-body text-[14px] text-[#6B7280] mb-8">
-            Tiada pendaftaran diperlukan.
-          </p>
-
-          <div className="flex flex-col gap-0">
-            {[
-              {
-                n: '1',
-                title: 'Masukkan maklumat kereta',
-                desc:  'Jenama, model, tahun, dan harga yang penjual minta.',
-              },
-              {
-                n: '2',
-                title: 'Dapat verdict harga — percuma',
-                desc:  'Kami semak harga pasaran dan tunjukkan sama ada berpatutan.',
-              },
-              {
-                n: '3',
-                title: 'Masuk rundingan dengan data',
-                desc:  'Dapat skrip rundingan, maklumat kenderaan JPJ dan harga sebenar — Laporan Pembeli RM12. Tambah Semakan Accident/Claim Insurans untuk RM100 sebelum bayar booking atau deposit.',
-              },
-            ].map((step, i) => (
-              <div key={step.n} className="flex gap-4 pb-6 relative">
-                {i < 2 && (
-                  <div className="absolute left-5 top-10 w-0.5 h-[calc(100%-16px)] bg-[#E5E7EB]" />
-                )}
-                <div className="w-10 h-10 bg-[#064E4A] rounded-xl flex items-center justify-center font-heading font-extrabold text-[16px] text-white flex-shrink-0 z-10">
-                  {step.n}
-                </div>
-                <div className="pt-2">
-                  <p className="font-heading font-bold text-[16px] text-[#111827] mb-1">{step.title}</p>
-                  <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── KENAPA PERLU SEMAK DULU ── */}
       <section className="bg-[#1C1917] px-5 py-10 md:py-12">
         <div className="max-w-xl mx-auto">
@@ -360,50 +312,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── PANDUAN PERCUMA ── */}
-      <section className="bg-[#F8FAF7] px-5 py-12">
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-6 md:text-center">
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
-              Panduan Percuma
-            </p>
-            <h2 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827]">
-              Semua yang perlu anda tahu sebelum beli
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              { href: '/checklist-beli-kereta-terpakai', title: 'Checklist sebelum bayar deposit',       desc: 'Tandakan semua ini dulu' },
-              { href: '/cara-beli-kereta-terpakai',      title: 'Cara beli kereta terpakai',             desc: '6 langkah dari semak hingga deposit' },
-              { href: '/risiko-beli-kereta-terpakai',    title: 'Risiko beli kereta terpakai',           desc: '7 risiko dan cara elaknya' },
-              { href: '/harga-kereta-terpakai',          title: 'Harga kereta terpakai mengikut model', desc: 'Myvi, Axia, Vios, City, Saga & lebih' },
-            ].map((guide) => (
-              <Link
-                key={guide.href}
-                href={guide.href}
-                className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group"
-              >
-                <div>
-                  <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">
-                    {guide.title}
-                  </p>
-                  <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{guide.desc}</p>
-                </div>
-                <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
-              </Link>
-            ))}
-          </div>
-          <div className="mt-4 text-center md:text-left">
-            <Link
-              href="/panduan"
-              className="font-body text-[13px] text-[#064E4A] font-semibold hover:underline underline-offset-2"
-            >
-              Lihat semua panduan →
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* ── SOALAN LAZIM ── */}
       <section className="bg-white px-5 py-12 md:py-16">
         <div className="max-w-xl mx-auto">
@@ -471,6 +379,17 @@ export default async function HomePage() {
 
       {/* ── FOOTER ── */}
       <footer className="bg-white border-t border-[#E5E7EB] px-5 py-6 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-4">
+          <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Checklist</Link>
+          <span className="text-[#E5E7EB]">·</span>
+          <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Cara Beli</Link>
+          <span className="text-[#E5E7EB]">·</span>
+          <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Risiko</Link>
+          <span className="text-[#E5E7EB]">·</span>
+          <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Harga Model</Link>
+          <span className="text-[#E5E7EB]">·</span>
+          <Link href="/panduan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Semua Panduan</Link>
+        </div>
         <p className="font-body text-[12px] text-[#D1D5DB] leading-relaxed mb-2">
           © 2026 Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
         </p>
