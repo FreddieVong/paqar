@@ -217,6 +217,24 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
+
+          {/* RM100 upgrade row */}
+          <Link
+            href="/semak-accident-claim-insurans-kereta"
+            className="mt-3 flex items-center justify-between gap-4 bg-white border-l-[3px] border-l-[#064E4A] border border-[#E5E7EB] rounded-[14px] px-4 py-4 hover:bg-[#F0FDF4] transition-colors group"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-[#064E4A]">Semakan Accident/Claim Insurans</span>
+                <span className="font-heading font-bold text-[9px] px-2 py-0.5 rounded-full bg-[#F0FDF4] text-[#064E4A]">RM100</span>
+              </div>
+              <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
+                Semak sejarah kemalangan kenderaan — own damage, banjir, windscreen atau total loss jika direkodkan. Atau tambah +RM88 kepada Laporan Pembeli sedia ada.
+              </p>
+            </div>
+            <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 text-[18px]">→</span>
+          </Link>
+
         </div>
       </section>
 
@@ -300,7 +318,7 @@ export default async function HomePage() {
               Nak beli kereta terpakai? Semak dahulu.
             </h2>
             <p className="font-body text-[14px] text-white/70 leading-relaxed">
-              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda semak harga pasaran, maklumat kenderaan, dan runding dengan yakin — sebelum bayar booking atau deposit.
+              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda semak harga pasaran, sejarah kemalangan, dan maklumat kenderaan — sebelum bayar booking atau deposit.
             </p>
           </div>
           <a
