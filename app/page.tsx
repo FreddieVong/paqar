@@ -4,6 +4,10 @@ import { Nav }           from '@/components/layout/Nav'
 import { HomeCheckerTabs } from '@/components/check/HomeCheckerTabs'
 import { getCheckCount } from '@/lib/db/checks'
 
+// ISR: without this the page is fully static and the social-proof check count
+// freezes at build time. Hourly revalidation keeps it fresh, still CDN-served.
+export const revalidate = 3600
+
 // Social-proof count only needs to be roughly fresh — cache for an hour
 // instead of hitting the DB on every homepage view.
 const getCachedCheckCount = unstable_cache(getCheckCount, ['home-check-count'], { revalidate: 3600 })
