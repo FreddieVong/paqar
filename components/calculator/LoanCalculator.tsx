@@ -38,6 +38,8 @@ export function LoanCalculator() {
   const [rate,       setRate]       = useState('3.5')
   const [years,      setYears]      = useState(9)
   const [cc,         setCc]         = useState('')
+  const [leadEmail,  setLeadEmail]  = useState('')
+  const [leadState,  setLeadState]  = useState<'idle' | 'sending' | 'done'>('idle')
 
   const priceNum = parseInt(price, 10) || 0
   const rateNum  = parseFloat(rate) || 0
@@ -61,6 +63,31 @@ export function LoanCalculator() {
   const trueMonthly  = hasResult && roadTax != null
     ? monthly + roadTax / 12 + insMid / 12
     : null
+
+  async function handleLeadCapture(e: React.FormEvent) {
+    e.preventDefault()
+    if (!leadEmail.includes('@') || leadState !== 'idle') return
+    setLeadState('sending')
+    try {
+      await fetch('/api/capture-calculator-lead', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          email:         leadEmail.trim(),
+          priceRm:       priceNum,
+          depositRm:     deposit,
+          monthlyRm:     Math.round(monthly),
+          totalInterest: Math.round(totalInterest),
+          years,
+          ratePct:       rateNum,
+          roadTaxRm:     roadTax != null ? Math.round(roadTax) : null,
+          insLowRm:      priceNum ? Math.round(insLow) : null,
+          insHighRm:     priceNum ? Math.round(insHigh) : null,
+        }),
+      })
+    } catch { /* non-fatal — still show done */ }
+    setLeadState('done')
+  }
 
   return (
     <div className="space-y-4">
@@ -145,6 +172,46 @@ export function LoanCalculator() {
               <p className="font-heading font-bold text-[13px] text-white/90">RM{fmt(totalPayment)}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Save calculation via email — turns calculator traffic into leads ── */}
+      {hasResult && (
+        <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-4">
+          {leadState === 'done' ? (
+            <p className="font-body text-[13px] text-[#064E4A] font-semibold">
+              ✓ Kiraan dihantar ke e-mel anda. Semak inbox (atau spam).
+            </p>
+          ) : (
+            <>
+              <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
+                Simpan kiraan ini
+              </p>
+              <p className="font-body text-[12px] text-[#6B7280] mb-3">
+                Kami hantar breakdown penuh ke e-mel anda — mudah rujuk semula bila jumpa kereta.
+              </p>
+              <form onSubmit={handleLeadCapture} className="flex gap-2">
+                <input
+                  type="email"
+                  value={leadEmail}
+                  onChange={e => setLeadEmail(e.target.value)}
+                  placeholder="anda@email.com"
+                  required
+                  className="flex-1 bg-white border border-[#D1D5DB] rounded-lg px-3 py-2
+                             font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB]
+                             focus:outline-none focus:border-[#064E4A] min-w-0"
+                />
+                <button
+                  type="submit"
+                  disabled={leadState === 'sending'}
+                  className="bg-[#064E4A] text-white font-heading font-bold text-[13px]
+                             px-4 py-2 rounded-lg disabled:opacity-60 whitespace-nowrap"
+                >
+                  {leadState === 'sending' ? '…' : 'Hantar'}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       )}
 
