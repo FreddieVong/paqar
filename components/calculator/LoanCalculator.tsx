@@ -175,46 +175,6 @@ export function LoanCalculator() {
         </div>
       )}
 
-      {/* ── Save calculation via email — turns calculator traffic into leads ── */}
-      {hasResult && (
-        <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-4">
-          {leadState === 'done' ? (
-            <p className="font-body text-[13px] text-[#064E4A] font-semibold">
-              ✓ Kiraan dihantar ke e-mel anda. Semak inbox (atau spam).
-            </p>
-          ) : (
-            <>
-              <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
-                Simpan kiraan ini
-              </p>
-              <p className="font-body text-[12px] text-[#6B7280] mb-3">
-                Kami hantar breakdown penuh ke e-mel anda — mudah rujuk semula bila jumpa kereta.
-              </p>
-              <form onSubmit={handleLeadCapture} className="flex gap-2">
-                <input
-                  type="email"
-                  value={leadEmail}
-                  onChange={e => setLeadEmail(e.target.value)}
-                  placeholder="anda@email.com"
-                  required
-                  className="flex-1 bg-white border border-[#D1D5DB] rounded-lg px-3 py-2
-                             font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB]
-                             focus:outline-none focus:border-[#064E4A] min-w-0"
-                />
-                <button
-                  type="submit"
-                  disabled={leadState === 'sending'}
-                  className="bg-[#064E4A] text-white font-heading font-bold text-[13px]
-                             px-4 py-2 rounded-lg disabled:opacity-60 whitespace-nowrap"
-                >
-                  {leadState === 'sending' ? '…' : 'Hantar'}
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-      )}
-
       {/* ── Kos lain setahun ── */}
       {hasResult && (
         <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-4 space-y-3">
@@ -267,6 +227,46 @@ export function LoanCalculator() {
               </div>
               <p className="font-heading font-extrabold text-[18px] text-[#064E4A]">≈ RM{fmt(trueMonthly)}</p>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Save calculation via email — turns calculator traffic into leads ── */}
+      {hasResult && (
+        <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-4">
+          {leadState === 'done' ? (
+            <p className="font-body text-[13px] text-[#064E4A] font-semibold">
+              ✓ Kiraan dihantar ke e-mel anda. Semak inbox (atau spam).
+            </p>
+          ) : (
+            <>
+              <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
+                Simpan kiraan ini
+              </p>
+              <p className="font-body text-[12px] text-[#6B7280] mb-3">
+                Kami hantar breakdown penuh ke e-mel anda — mudah rujuk semula bila jumpa kereta.
+              </p>
+              <form onSubmit={handleLeadCapture} className="flex gap-2">
+                <input
+                  type="email"
+                  value={leadEmail}
+                  onChange={e => setLeadEmail(e.target.value)}
+                  placeholder="anda@email.com"
+                  required
+                  className="flex-1 bg-white border border-[#D1D5DB] rounded-lg px-3 py-2
+                             font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB]
+                             focus:outline-none focus:border-[#064E4A] min-w-0"
+                />
+                <button
+                  type="submit"
+                  disabled={leadState === 'sending'}
+                  className="bg-[#064E4A] text-white font-heading font-bold text-[13px]
+                             px-4 py-2 rounded-lg disabled:opacity-60 whitespace-nowrap"
+                >
+                  {leadState === 'sending' ? '…' : 'Hantar'}
+                </button>
+              </form>
+            </>
           )}
         </div>
       )}
