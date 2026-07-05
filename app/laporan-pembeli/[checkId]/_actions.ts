@@ -2,6 +2,8 @@
 
 import { createBill }             from '@/lib/billplz'
 import { createBuyerReport,
+         getBuyerReport,
+         setUpgradeBillId,
          setVehicleApiData }      from '@/lib/db/buyer-reports'
 import { getCheck }               from '@/lib/db/checks'
 import { fetchAndCacheMarketPrices } from '@/lib/db/market-prices'
@@ -72,6 +74,50 @@ export async function initiateBuyerReport(params: {
     return { error: null, billUrl: bill.url }
   } catch (err) {
     console.error('[initiateBuyerReport]', err)
+    return { error: 'Ralat membuat pembayaran — sila cuba semula' }
+  }
+}
+
+// +RM88 JomCheck add-on for an already-paid RM12 report. Creates a separate
+// Billplz bill; the webhook (or the redirect page) flips add_jomcheck on payment.
+export async function initiateJomCheckUpgrade(params: {
+  checkId:    string
+  claimToken: string
+  baseUrl:    string
+}): Promise<{ error: string | null; billUrl?: string }> {
+  if (process.env.JOMCHECK_ENABLED !== 'true') {
+    return { error: 'Semakan Accident/Claim belum tersedia' }
+  }
+
+  let row = await getCheck(params.checkId, params.claimToken)
+  if (!row) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const candidate = await getCheck(params.checkId)
+      if (candidate?.check.user_id === user.id) row = candidate
+    }
+  }
+  if (!row) return { error: 'Semakan tidak dijumpai' }
+
+  const report = await getBuyerReport(params.checkId)
+  if (!report || report.status !== 'paid') return { error: 'Laporan belum dibayar' }
+  if (report.add_jomcheck) return { error: 'Semakan Accident/Claim sudah ditambah' }
+
+  try {
+    const bill = await createBill({
+      email:        report.buyer_email,
+      name:         report.buyer_email,
+      amountCents:  8800,
+      description:  `Semakan Accident/Claim (add-on) - ${params.checkId}`,
+      callbackUrl:  `${params.baseUrl}/api/webhooks/billplz`,
+      redirectUrl:  `${params.baseUrl}/laporan-pembeli/${params.checkId}/selesai?claim_token=${params.claimToken}&upgrade=1`,
+      collectionId: env.BILLPLZ_COLLECTION_ID_BUYER ?? env.BILLPLZ_COLLECTION_ID,
+    })
+    await setUpgradeBillId(report.id, bill.id)
+    return { error: null, billUrl: bill.url }
+  } catch (err) {
+    console.error('[initiateJomCheckUpgrade]', err)
     return { error: 'Ralat membuat pembayaran — sila cuba semula' }
   }
 }

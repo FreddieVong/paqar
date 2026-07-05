@@ -4,6 +4,7 @@ import { InspectionCTA }   from './InspectionCTA'
 import { InsuranceCTA }    from './InsuranceCTA'
 import { CopyButton }      from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
+import { JomCheckUpsell }  from './JomCheckUpsell'
 
 const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const floorClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.floor(n / u) * u }
@@ -76,9 +77,10 @@ interface Props {
   jomcheckData?:     JomCheckResult | null
   jomcheckStatus?:   JomCheckStatus
   generatedAt?:      string | null
+  upsellJomCheck?:   { checkId: string; claimToken: string } | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, generatedAt }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, generatedAt, upsellJomCheck }: Props) {
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
 
@@ -257,6 +259,11 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               </p>
             </div>
           )
+      )}
+
+      {/* RM88 add-on upsell — RM12 buyers who haven't added the claim check */}
+      {!addJomCheck && upsellJomCheck && (
+        <JomCheckUpsell checkId={upsellJomCheck.checkId} claimToken={upsellJomCheck.claimToken} />
       )}
 
       {/* 2. Perbandingan Harga */}

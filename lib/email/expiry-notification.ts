@@ -46,11 +46,23 @@ export async function sendExpiryNotification(params: {
       <p style="color:#374151;font-size:14px;line-height:1.6;">
         Pastikan anda membaharui sebelum tamat untuk elak saman atau masalah undang-undang.
       </p>
+      ${params.docType === 'insurance' ? `
+      <a href="https://bjak.my/?p=FREDDIE-0FC9AL"
+         style="display:inline-block;background:#064E4A;color:#fff;text-decoration:none;
+                padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;margin-top:16px;">
+        Bandingkan &amp; Renew Insurans — Percuma →
+      </a>
+      <p style="color:#9CA3AF;font-size:12px;margin-top:8px;">
+        Bandingkan harga dari semua syarikat insurans dalam satu tempat.
+      </p>
+      <a href="https://paqar.my/dashboard" style="color:#064E4A;font-size:13px;">Atau semak dashboard anda →</a>
+      ` : `
       <a href="https://paqar.my/dashboard"
          style="display:inline-block;background:#064E4A;color:#fff;text-decoration:none;
                 padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;margin-top:16px;">
         Semak Dashboard →
       </a>
+      `}
       <p style="color:#9CA3AF;font-size:12px;margin-top:24px;">
         Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
       </p>

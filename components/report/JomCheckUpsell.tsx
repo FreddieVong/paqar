@@ -1,0 +1,65 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import { initiateJomCheckUpgrade } from '@/app/laporan-pembeli/[checkId]/_actions'
+import { analytics }               from '@/lib/analytics'
+
+interface Props {
+  checkId:    string
+  claimToken: string
+}
+
+// +RM88 add-on upsell shown inside a paid RM12 report (only when the buyer
+// hasn't already bought the accident/claim check and JomCheck is live).
+export function JomCheckUpsell({ checkId, claimToken }: Props) {
+  const [error,     setError]        = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  function handleUpgrade() {
+    setError(null)
+    analytics.paymentInitiated()
+    startTransition(async () => {
+      const result = await initiateJomCheckUpgrade({
+        checkId,
+        claimToken,
+        baseUrl: window.location.origin,
+      })
+      if (result.error) { setError(result.error); return }
+      if (result.billUrl) window.location.href = result.billUrl
+    })
+  }
+
+  return (
+    <div className="bg-white border-l-[3px] border-l-[#064E4A] border border-[#E5E7EB] rounded-[14px] p-5">
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A]">
+          Semakan Accident/Claim Insurans
+        </p>
+        <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0">+RM88</span>
+      </div>
+      <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
+        Kereta ini pernah accident, banjir, atau total loss? Semak rekod claim insurans
+        yang direkodkan — sebelum anda bayar booking atau deposit.
+      </p>
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {['Own Damage', 'Banjir', 'Windscreen', 'Total Loss'].map(tag => (
+          <span key={tag} className="font-body text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280]">
+            {tag}
+          </span>
+        ))}
+      </div>
+      {error && <p className="font-body text-[13px] text-[#DC2626] mb-2">{error}</p>}
+      <button
+        type="button"
+        onClick={handleUpgrade}
+        disabled={isPending}
+        className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 disabled:opacity-60 transition-colors"
+      >
+        {isPending ? 'Memproses…' : 'Tambah ke Laporan Ini — RM88 →'}
+      </button>
+      <p className="font-body text-[11px] text-[#9CA3AF] text-center mt-2">
+        Keputusan terus dalam laporan ini selepas bayaran
+      </p>
+    </div>
+  )
+}

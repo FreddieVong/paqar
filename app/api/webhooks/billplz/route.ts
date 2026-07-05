@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse }              from 'next/server'
 import { verifyWebhookSignature }                 from '@/lib/billplz'
-import { markReportPaid, getBuyerReportByBillId, setVehicleApiData } from '@/lib/db/buyer-reports'
+import { markReportPaid, getBuyerReportByBillId,
+         markUpgradePaid, getBuyerReportByUpgradeBillId,
+         setVehicleApiData } from '@/lib/db/buyer-reports'
 import { sendReceiptEmail }                       from '@/lib/email/receipt'
 import { getCheck }                              from '@/lib/db/checks'
 import { decrypt }                               from '@/lib/crypto'
-import { lookupVehicle }                         from '@/lib/vehicleapi'
+import { getOrFetchVehicleData }                 from '@/lib/db/plate-lookups'
 import { getValuationByNvic }                    from '@/lib/db/vehicle-valuations'
 import { getCachedMarketPrices,
          fetchAndCacheMarketPrices }             from '@/lib/db/market-prices'
@@ -32,7 +34,25 @@ export async function POST(request: NextRequest) {
 
   try {
     const buyerReport = await getBuyerReportByBillId(billId)
-    if (!buyerReport) return NextResponse.json({ ok: true })
+
+    // Not a primary report bill — check if it's a JomCheck add-on upgrade bill
+    if (!buyerReport) {
+      const upgradeReport = await getBuyerReportByUpgradeBillId(billId)
+      if (upgradeReport) {
+        const wasJustUpgraded = await markUpgradePaid(billId)
+        if (wasJustUpgraded) {
+          sendReceiptEmail({
+            product:     'buyer_report',
+            toEmail:     upgradeReport.buyer_email,
+            amountCents: 8800,
+            paidAt,
+            plate:       null,
+            reportUrl:   `https://paqar.my/laporan-pembeli/${upgradeReport.check_id}`,
+          }).catch(err => console.error('[receipt-email:jomcheck-upgrade]', err))
+        }
+      }
+      return NextResponse.json({ ok: true })
+    }
 
     const wasJustPaid = await markReportPaid(billId)
     if (wasJustPaid) {
@@ -62,7 +82,7 @@ export async function POST(request: NextRequest) {
       if (plate) {
         ;(async () => {
           try {
-            const apiResult = await lookupVehicle(plate)
+            const apiResult = await getOrFetchVehicleData(plate)
             if (!apiResult) return
             const valuation = await getValuationByNvic(
               apiResult.nvic,

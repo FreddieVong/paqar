@@ -100,10 +100,10 @@ export function PlateCheckerForm() {
           disabled={busy}
           className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60"
         >
-          {busy ? 'Memproses…' : 'Semak Nombor Plat — RM12 →'}
+          {busy ? 'Memproses…' : 'Semak Plat Percuma →'}
         </button>
         <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-          Sekali bayar · Tiada langganan · Tiada caj tersembunyi
+          Percuma untuk semak · Laporan penuh RM12 — bayar hanya jika mahu
         </p>
       </form>
     </div>

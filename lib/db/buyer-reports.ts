@@ -134,3 +134,42 @@ export async function getBuyerReportByBillId(billId: string): Promise<BuyerRepor
   if (error && error.code !== 'PGRST116') throw error
   return data as BuyerReport | null
 }
+
+// ── JomCheck add-on upgrade (+RM88 on an existing paid RM12 report) ──────────
+
+export async function setUpgradeBillId(reportId: string, billId: string): Promise<void> {
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('buyer_reports')
+    .update({ upgrade_bill_id: billId, updated_at: new Date().toISOString() })
+    .eq('id', reportId)
+  if (error) throw error
+}
+
+export async function getBuyerReportByUpgradeBillId(billId: string): Promise<BuyerReport | null> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .select('*')
+    .eq('upgrade_bill_id', billId)
+    .single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data as BuyerReport | null
+}
+
+// Returns true if this call flipped add_jomcheck false→true (atomic — one winner
+// between the webhook and the redirect page, mirroring markReportPaid).
+export async function markUpgradePaid(billId: string): Promise<boolean> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .update({
+      add_jomcheck: true,
+      updated_at:   new Date().toISOString(),
+    })
+    .eq('upgrade_bill_id', billId)
+    .eq('add_jomcheck', false)
+    .select('id')
+  if (error) throw error
+  return (data?.length ?? 0) > 0
+}

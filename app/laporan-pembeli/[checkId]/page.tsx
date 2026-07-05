@@ -11,6 +11,7 @@ import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
 import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
+import { VehiclePreviewTeaser } from '@/components/report/VehiclePreviewTeaser'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
 import { getOrFetchVehicleData }      from '@/lib/db/plate-lookups'
@@ -154,6 +155,11 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               jomcheckData={jomcheckData}
               jomcheckStatus={jomcheckStatus}
               generatedAt={report.created_at}
+              upsellJomCheck={
+                process.env.JOMCHECK_ENABLED === 'true' && !report.add_jomcheck
+                  ? { checkId: params.checkId, claimToken: claimToken ?? '' }
+                  : null
+              }
             />
             <ReportFeedback checkId={params.checkId} plate={plate} />
           </div>
@@ -182,6 +188,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               {plate}
             </h1>
           </div>
+
+          {/* Free teaser — proof the car was found, before asking for RM12 */}
+          <VehiclePreviewTeaser checkId={params.checkId} claimToken={claimToken} />
 
           {isPlateFlow ? (
             <>

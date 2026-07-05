@@ -3,7 +3,9 @@ import Image                                         from 'next/image'
 import { Nav }                                       from '@/components/layout/Nav'
 import { Shell }                                     from '@/components/layout/Shell'
 import { getCheck }                                  from '@/lib/db/checks'
-import { markReportPaid, getBuyerReportByBillId }    from '@/lib/db/buyer-reports'
+import { markReportPaid, getBuyerReportByBillId,
+         markUpgradePaid, getBuyerReportByUpgradeBillId,
+         getBuyerReport } from '@/lib/db/buyer-reports'
 import { decrypt }                                   from '@/lib/crypto'
 import { sendReceiptEmail }                          from '@/lib/email/receipt'
 import { AnalyticsEvent }                            from '@/components/layout/AnalyticsEvent'
@@ -22,32 +24,60 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
 
   if (!claimToken) redirect('/')
 
-  // Mark report paid. Returns true if this page won the pending→paid race.
-  // If so, send receipt here — webhook may arrive after and find status already 'paid'.
+  const isUpgrade = searchParams['upgrade'] === '1'
+  const reportUrl = `https://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}`
+
   let buyerEmail: string | undefined
   if (billId && billplzPaid === 'true') {
-    const [wasJustPaid, report] = await Promise.all([
-      markReportPaid(billId).catch(() => false),
-      getBuyerReportByBillId(billId).catch(() => null),
-    ])
-    buyerEmail = report?.buyer_email ?? undefined
-    if (wasJustPaid && report) {
-      const reportUrl = claimToken
-        ? `https://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}`
-        : `https://paqar.my/laporan-pembeli/${params.checkId}`
-      sendReceiptEmail({
-        product:     'buyer_report',
-        toEmail:     report.buyer_email,
-        amountCents: report.amount_cents,
-        paidAt:      new Date().toISOString(),
-        plate:       null,
-        reportUrl,
-      }).catch(() => {})
+    if (isUpgrade) {
+      // JomCheck add-on bill — flip add_jomcheck on the existing report.
+      // Same race pattern as markReportPaid: this page or the webhook wins.
+      const [wasJustUpgraded, upgradeReport] = await Promise.all([
+        markUpgradePaid(billId).catch(() => false),
+        getBuyerReportByUpgradeBillId(billId).catch(() => null),
+      ])
+      buyerEmail = upgradeReport?.buyer_email ?? undefined
+      if (wasJustUpgraded && upgradeReport) {
+        sendReceiptEmail({
+          product:     'buyer_report',
+          toEmail:     upgradeReport.buyer_email,
+          amountCents: 8800,
+          paidAt:      new Date().toISOString(),
+          plate:       null,
+          reportUrl,
+        }).catch(() => {})
+      }
+    } else {
+      // Mark report paid. Returns true if this page won the pending→paid race.
+      // If so, send receipt here — webhook may arrive after and find status already 'paid'.
+      const [wasJustPaid, report] = await Promise.all([
+        markReportPaid(billId).catch(() => false),
+        getBuyerReportByBillId(billId).catch(() => null),
+      ])
+      buyerEmail = report?.buyer_email ?? undefined
+      if (wasJustPaid && report) {
+        sendReceiptEmail({
+          product:     'buyer_report',
+          toEmail:     report.buyer_email,
+          amountCents: report.amount_cents,
+          paidAt:      new Date().toISOString(),
+          plate:       null,
+          reportUrl,
+        }).catch(() => {})
+      }
     }
   }
 
   const row   = await getCheck(params.checkId, claimToken)
   const plate = row ? decrypt(row.check.plate_encrypted as string).toUpperCase() : null
+
+  // RM88 add-on nudge — only for RM12 buyers when JomCheck is live
+  const paidReport = await getBuyerReport(params.checkId).catch(() => null)
+  const showJomCheckNudge =
+    process.env.JOMCHECK_ENABLED === 'true' &&
+    !isUpgrade &&
+    paidReport?.status === 'paid' &&
+    !paidReport.add_jomcheck
 
   return (
     <>
@@ -86,6 +116,14 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
           >
             Lihat Laporan Saya →
           </a>
+
+          {showJomCheckNudge && (
+            <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
+              Kereta ini pernah accident atau banjir? Tambah{' '}
+              <span className="font-semibold text-[#064E4A]">Semakan Accident/Claim Insurans (+RM88)</span>{' '}
+              terus dalam laporan anda.
+            </p>
+          )}
 
           {plate && (
             <WhatsAppShareButton
