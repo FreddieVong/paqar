@@ -501,17 +501,17 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           low: {
             badge:    'RENDAH untuk umur kereta',
             badgeCls: 'text-[#B45309]',
-            note:     'Mileage rendah boleh jadi genuine — tapi ia juga hasil odometer yang diputar. Minta rekod servis penuh untuk sahkan bacaan ini sebelum percaya.',
+            note:     'Boleh jadi genuine — tapi boleh jadi juga meter dah diputar. Minta rekod servis penuh untuk sahkan.',
           },
           normal: {
             badge:    'MUNASABAH untuk umur kereta',
             badgeCls: 'text-[#15803D]',
-            note:     'Sepadan dengan purata penggunaan di Malaysia (12–20k km setahun). Tetap minta rekod servis untuk sahkan.',
+            note:     'Normal untuk kegunaan biasa di Malaysia (12–20k km setahun). Tetap minta rekod servis untuk sahkan.',
           },
           high: {
             badge:    'TINGGI untuk umur kereta',
             badgeCls: 'text-[#B45309]',
-            note:     'Lebih tinggi dari purata — kemungkinan penggunaan berat seperti e-hailing atau kerja outstation. Harga patut mencerminkan ini.',
+            note:     'Lebih tinggi dari biasa — mungkin bekas e-hailing atau selalu outstation. Guna ini untuk tawar harga lebih rendah.',
           },
         } as const)[level]
 
@@ -529,7 +529,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             <p className={`font-heading font-bold text-[13px] mb-2 ${cfg.badgeCls}`}>{cfg.badge}</p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed">{cfg.note}</p>
             <p className="font-body text-[10px] text-[#9CA3AF] mt-2">
-              Berdasarkan mileage yang dinyatakan penjual — Paqar tidak dapat sahkan bacaan sebenar odometer.
+              Berdasarkan mileage yang penjual bagi — Paqar tidak dapat sahkan bacaan sebenar meter.
             </p>
           </div>
         )
@@ -553,8 +553,8 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             <p className="font-body text-[12px] text-[#6B7280]">{translateCoverType(ins.coverType)}</p>
             {!ins.policyStatus?.toLowerCase().includes('active') && (
               <p className="font-body text-[12px] text-[#6B7280] leading-relaxed pt-1">
-                Biasa untuk kereta yang sedang dijual — penjual selalunya berhenti renew semasa
-                menjual. Pastikan anda beli insurans baru sebelum tukar nama.
+                Ini biasa untuk kereta yang nak dijual. Pastikan anda beli insurans baru
+                sebelum tukar nama.
               </p>
             )}
           </div>

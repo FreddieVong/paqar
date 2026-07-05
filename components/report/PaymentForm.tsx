@@ -96,7 +96,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
                        transition-all"
           />
           <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
-            Mileage yang penjual nyatakan — kami semak sama ada ia munasabah untuk umur kereta.
+            Mileage yang penjual bagi — kami semak sama ada ia munasabah untuk umur kereta.
           </p>
         </div>
 
