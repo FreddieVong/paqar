@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient }             from '@supabase/supabase-js'
 import { env }                      from '@/lib/env'
 
-export const maxDuration = 60
+export const maxDuration = 300
 
 // ── Combinations to keep warm ─────────────────────────────────────────────
 
@@ -68,32 +68,45 @@ export async function GET(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
 
-  // Run all scrapes in parallel — faster than sequential, fits within 60s limit.
-  // Promise.allSettled means one Railway timeout doesn't abort the rest.
-  const results = await Promise.allSettled(
-    COMBINATIONS.map(async ({ make, model, year }) => {
-      const { listings, searchUrl } = await scrape(scraperUrl, apiKey, make, model, year)
-      if (!listings.length) return { key: `${make} ${model} ${year}`, status: 'skip' as const }
+  // Bounded concurrency: the Railway scraper is a single Puppeteer instance —
+  // firing all ~57 scrapes at once overwhelms it and nearly everything times
+  // out (observed: only 1-2 rows refreshed per cron run, cache decayed past
+  // TTL and free checks went "no data"). 3 workers pulling from a shared
+  // queue keep it saturated but healthy; maxDuration 300 gives them room.
+  const CONCURRENCY = 3
+  const queue = [...COMBINATIONS]
+  let ok = 0, skipped = 0, failed = 0
 
-      const { error } = await supabase.from('market_price_cache').upsert(
-        {
-          make:       make.toLowerCase(),
-          model:      model.toLowerCase(),
-          year,
-          listings,
-          search_url: searchUrl,
-          fetched_at: new Date().toISOString(),
-        },
-        { onConflict: 'make,model,year' },
-      )
-      if (error) throw new Error(`${make} ${model} ${year}: ${error.message}`)
-      return { key: `${make} ${model} ${year}`, status: 'ok' as const, count: listings.length }
-    })
-  )
+  async function worker() {
+    for (;;) {
+      const combo = queue.shift()
+      if (!combo) return
+      const { make, model, year } = combo
+      try {
+        const { listings, searchUrl } = await scrape(scraperUrl!, apiKey!, make, model, year)
+        if (!listings.length) { skipped++; continue }
 
-  const ok      = results.filter(r => r.status === 'fulfilled' && r.value.status === 'ok').length
-  const skipped = results.filter(r => r.status === 'fulfilled' && r.value.status === 'skip').length
-  const failed  = results.filter(r => r.status === 'rejected').length
+        const { error } = await supabase.from('market_price_cache').upsert(
+          {
+            make:       make.toLowerCase(),
+            model:      model.toLowerCase(),
+            year,
+            listings,
+            search_url: searchUrl,
+            fetched_at: new Date().toISOString(),
+          },
+          { onConflict: 'make,model,year' },
+        )
+        if (error) throw new Error(`${make} ${model} ${year}: ${error.message}`)
+        ok++
+      } catch (err) {
+        console.error('[warm-cache]', `${make} ${model} ${year}`, err)
+        failed++
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()))
 
   return NextResponse.json({ total: COMBINATIONS.length, ok, skipped, failed })
 }
