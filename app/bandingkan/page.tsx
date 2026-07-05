@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: 'Bandingkan Kereta Terpakai Malaysia — Myvi vs Axia, Vios vs City | Paqar',
   description: 'Bandingkan harga kereta terpakai Malaysia side-by-side. Myvi vs Axia, Vios vs City, Bezza vs Saga, Alza vs X50.',
   alternates: { canonical: 'https://paqar.my/bandingkan' },
+  openGraph: {
+    title: 'Bandingkan Kereta Terpakai Malaysia — Myvi vs Axia, Vios vs City',
+    description: 'Bandingkan harga kereta terpakai Malaysia side-by-side. Myvi vs Axia, Vios vs City, Bezza vs Saga, Alza vs X50.',
+    url: 'https://paqar.my/bandingkan',
+  },
 }
 
 const COMPARISONS = [

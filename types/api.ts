@@ -5,8 +5,16 @@ export interface CreateCheckResponse {
   claimToken: string
 }
 
+export interface VehiclePreview {
+  description:      string
+  make:             string
+  model:            string
+  registrationYear: string
+}
+
 export interface PollCheckResponse {
-  check: Check
+  check:           Check
+  vehiclePreview?: VehiclePreview | null
 }
 
 export type Verdict = 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'

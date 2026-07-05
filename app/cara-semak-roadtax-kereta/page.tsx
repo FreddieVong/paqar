@@ -4,11 +4,16 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 
+const YEAR = new Date().getFullYear()
+
 export const metadata: Metadata = {
-  title: 'Cara Semak Roadtax Kereta Malaysia 2025 | Paqar',
+  title: `Cara Semak Roadtax Kereta Malaysia ${YEAR} | Paqar`,
   description: 'Cara semak status roadtax kereta Malaysia — sama ada masih sah, dah tamat, atau perlu diperbaharui. Penting sebelum beli kereta terpakai.',
   alternates: { canonical: 'https://paqar.my/cara-semak-roadtax-kereta' },
   openGraph: {
+    title: `Cara Semak Roadtax Kereta Malaysia ${YEAR}`,
+    description: 'Cara semak status roadtax kereta Malaysia — sama ada masih sah, dah tamat, atau perlu diperbaharui. Penting sebelum beli kereta terpakai.',
+    url: 'https://paqar.my/cara-semak-roadtax-kereta',
     images: [{ url: '/api/og?title=Cara%20Semak%20Roadtax%20Kereta&subtitle=Semak%20status%20roadtax%20percuma', width: 1200, height: 630 }],
   },
 }

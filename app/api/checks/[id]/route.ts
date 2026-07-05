@@ -3,6 +3,8 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis }     from '@upstash/redis'
 import { getCheck }  from '@/lib/db/checks'
 import { createClient } from '@/lib/supabase/server'
+import { decrypt } from '@/lib/crypto'
+import { getCachedVehicleData } from '@/lib/db/plate-lookups'
 
 const ratelimit = new Ratelimit({
   redis:   Redis.fromEnv(),
@@ -54,5 +56,23 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
-  return NextResponse.json(row)
+  // Free teaser — only identity fields; the full record (VIN, insurance,
+  // valuation) stays behind the RM12 report. Cache read only, never an API call.
+  let vehiclePreview: { description: string; make: string; model: string; registrationYear: string } | null = null
+  if (row.check.plate_encrypted) {
+    try {
+      const plate = decrypt(row.check.plate_encrypted)
+      const data  = await getCachedVehicleData(plate)
+      if (data?.make) {
+        vehiclePreview = {
+          description:      data.description,
+          make:             data.make,
+          model:            data.model,
+          registrationYear: data.registrationYear,
+        }
+      }
+    } catch { /* teaser is best-effort */ }
+  }
+
+  return NextResponse.json({ ...row, vehiclePreview })
 }

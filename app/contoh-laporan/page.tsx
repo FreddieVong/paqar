@@ -7,6 +7,11 @@ export const metadata = {
   title: 'Contoh Laporan Pembeli Kereta Terpakai — Paqar',
   description: 'Lihat contoh Laporan Pembeli RM12 dan Semakan Accident/Claim Insurans RM100 — sebelum beli kereta terpakai Malaysia.',
   alternates: { canonical: 'https://paqar.my/contoh-laporan' },
+  openGraph: {
+    title: 'Contoh Laporan Pembeli Kereta Terpakai — Paqar',
+    description: 'Lihat contoh Laporan Pembeli RM12 dan Semakan Accident/Claim Insurans RM100 — sebelum beli kereta terpakai Malaysia.',
+    url: 'https://paqar.my/contoh-laporan',
+  },
 }
 
 const schema = {

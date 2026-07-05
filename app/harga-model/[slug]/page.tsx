@@ -234,6 +234,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
+      url: `https://paqar.my/harga-${params.slug}`,
       images: [{
         url:    `/api/og?title=Harga%20${encodeURIComponent(`${info.brand} ${info.model} ${parsed.year}`)}&subtitle=Semak%20harga%20pasaran%20sebelum%20beli`,
         width:  1200,
@@ -266,22 +267,29 @@ export default async function YearModelPage({ params }: Props) {
     .gte('fetched_at', new Date(Date.now() - 7 * 86_400_000).toISOString())
     .single()
 
-  if (!cached) notFound()
-
-  const listings = cached.listings as { price: number }[]
+  // Compute price stats when cache has enough data; otherwise render the page
+  // without the live price sections. A fallback page keeps the URL alive for
+  // Google — a 404 here (e.g. after a failed cron run) would deindex the page.
+  const listings = (cached?.listings ?? []) as { price: number }[]
   const validPrices = listings
     .map(l => l.price)
     .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
 
-  if (validPrices.length < 3) notFound()
-
-  const sorted      = [...validPrices].sort((a, b) => a - b)
-  const minPrice    = sorted[0]!
-  const maxPrice    = sorted[sorted.length - 1]!
-  const medianPrice = medianOf(sorted)
-  const listingCount = sorted.length
-  const overpricedThreshold = Math.round(maxPrice * 1.08 / 1000) * 1000
-  const updatedLabel = cached.fetched_at ? formatFetchedAt(cached.fetched_at as string) : ''
+  const stats = validPrices.length >= 3
+    ? (() => {
+        const sorted   = [...validPrices].sort((a, b) => a - b)
+        const minPrice = sorted[0]!
+        const maxPrice = sorted[sorted.length - 1]!
+        return {
+          minPrice,
+          maxPrice,
+          medianPrice:         medianOf(sorted),
+          listingCount:        sorted.length,
+          overpricedThreshold: Math.round(maxPrice * 1.08 / 1000) * 1000,
+          updatedLabel:        cached?.fetched_at ? formatFetchedAt(cached.fetched_at as string) : '',
+        }
+      })()
+    : null
 
   const displayModel = `${info.brand} ${info.model}`
   const modelHubSlug = `${info.make.toLowerCase()}-${info.model.toLowerCase()}`
@@ -298,7 +306,7 @@ export default async function YearModelPage({ params }: Props) {
           { '@type': 'ListItem', position: 4, name: `${displayModel} ${year}`, item: `https://paqar.my/harga-${params.slug}` },
         ],
       },
-      {
+      ...(stats ? [{
         '@type': 'FAQPage',
         mainEntity: [
           {
@@ -306,7 +314,7 @@ export default async function YearModelPage({ params }: Props) {
             name:    `Berapa harga ${displayModel} ${year} terpakai?`,
             acceptedAnswer: {
               '@type': 'Answer',
-              text:    `Berdasarkan listing terkini di Mudah.my, harga ${displayModel} ${year} terpakai berada antara RM${minPrice.toLocaleString()} hingga RM${maxPrice.toLocaleString()}. Harga median ialah RM${medianPrice.toLocaleString()}.${updatedLabel ? ` Data dikemaskini ${updatedLabel}.` : ''}`,
+              text:    `Berdasarkan listing terkini di Mudah.my, harga ${displayModel} ${year} terpakai berada antara RM${stats.minPrice.toLocaleString()} hingga RM${stats.maxPrice.toLocaleString()}. Harga median ialah RM${stats.medianPrice.toLocaleString()}.${stats.updatedLabel ? ` Data dikemaskini ${stats.updatedLabel}.` : ''}`,
             },
           },
           {
@@ -314,11 +322,11 @@ export default async function YearModelPage({ params }: Props) {
             name:    `Berapa harga yang dianggap mahal untuk ${displayModel} ${year}?`,
             acceptedAnswer: {
               '@type': 'Answer',
-              text:    `Harga melebihi RM${overpricedThreshold.toLocaleString()} — lebih 8% dari paras tertinggi pasaran — patut dipersoalkan. Gunakan Paqar untuk semak sama ada harga yang ditawarkan berpatutan.`,
+              text:    `Harga melebihi RM${stats.overpricedThreshold.toLocaleString()} — lebih 8% dari paras tertinggi pasaran — patut dipersoalkan. Gunakan Paqar untuk semak sama ada harga yang ditawarkan berpatutan.`,
             },
           },
         ],
-      },
+      }] : []),
     ],
   }
 
@@ -345,62 +353,78 @@ export default async function YearModelPage({ params }: Props) {
             </p>
           </div>
 
-          {/* Live price card */}
-          <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-[#F3F4F6]">
-              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">
+          {/* Live price card — fallback shown while cache data is unavailable */}
+          {stats ? (
+            <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-[#F3F4F6]">
+                <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">
+                  Harga Pasaran Semasa
+                </p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="font-heading font-extrabold text-[28px] text-[#064E4A] leading-none mb-1">
+                  RM{stats.minPrice.toLocaleString()} – RM{stats.maxPrice.toLocaleString()}
+                </p>
+                <p className="font-body text-[13px] text-[#374151] mb-3">
+                  Median: <span className="font-semibold">RM{stats.medianPrice.toLocaleString()}</span>
+                </p>
+                <p className="font-body text-[11px] text-[#9CA3AF]">
+                  Berdasarkan {stats.listingCount} listing terkini di Mudah.my
+                  {stats.updatedLabel ? ` · Dikemaskini: ${stats.updatedLabel}` : ''}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">
                 Harga Pasaran Semasa
               </p>
-            </div>
-            <div className="px-5 py-4">
-              <p className="font-heading font-extrabold text-[28px] text-[#064E4A] leading-none mb-1">
-                RM{minPrice.toLocaleString()} – RM{maxPrice.toLocaleString()}
-              </p>
-              <p className="font-body text-[13px] text-[#374151] mb-3">
-                Median: <span className="font-semibold">RM{medianPrice.toLocaleString()}</span>
-              </p>
-              <p className="font-body text-[11px] text-[#9CA3AF]">
-                Berdasarkan {listingCount} listing terkini di Mudah.my
-                {updatedLabel ? ` · Dikemaskini: ${updatedLabel}` : ''}
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                Data harga pasaran {displayModel} {year} sedang dikemaskini. Masukkan harga
+                penjual di bawah — kami akan semak harga pasaran terkini untuk anda secara percuma.
               </p>
             </div>
-          </div>
+          )}
 
-          {/* Section 1: Berapa harga pasaran? */}
-          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-            <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-2">
-              Berapa harga pasaran {info.model} {year} sekarang?
-            </h2>
-            <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-              Berdasarkan {listingCount} listing di Mudah.my{updatedLabel ? ` pada ${updatedLabel}` : ''},
-              harga pasaran {displayModel} {year} terpakai berada antara{' '}
-              <strong>RM{minPrice.toLocaleString()}</strong> hingga{' '}
-              <strong>RM{maxPrice.toLocaleString()}</strong>. Harga median ialah{' '}
-              <strong>RM{medianPrice.toLocaleString()}</strong>.
-            </p>
-            <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-2">
-              Harga ini merangkumi pelbagai varian dan jarak tempuh. Kereta dengan rekod servis penuh,
-              jarak tempuh rendah, dan tiada kemalangan biasanya ada harga lebih tinggi dalam julat ini.
-            </p>
-          </div>
+          {stats && (
+            <>
+              {/* Section 1: Berapa harga pasaran? */}
+              <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+                <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-2">
+                  Berapa harga pasaran {info.model} {year} sekarang?
+                </h2>
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                  Berdasarkan {stats.listingCount} listing di Mudah.my{stats.updatedLabel ? ` pada ${stats.updatedLabel}` : ''},
+                  harga pasaran {displayModel} {year} terpakai berada antara{' '}
+                  <strong>RM{stats.minPrice.toLocaleString()}</strong> hingga{' '}
+                  <strong>RM{stats.maxPrice.toLocaleString()}</strong>. Harga median ialah{' '}
+                  <strong>RM{stats.medianPrice.toLocaleString()}</strong>.
+                </p>
+                <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-2">
+                  Harga ini merangkumi pelbagai varian dan jarak tempuh. Kereta dengan rekod servis penuh,
+                  jarak tempuh rendah, dan tiada kemalangan biasanya ada harga lebih tinggi dalam julat ini.
+                </p>
+              </div>
 
-          {/* Section 2: Bila harga mahal? */}
-          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-            <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-2">
-              Bila harga {info.model} {year} dianggap mahal?
-            </h2>
-            <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-              Sebarang tawaran melebihi{' '}
-              <strong>RM{overpricedThreshold.toLocaleString()}</strong> — lebih 8% dari
-              paras tertinggi pasaran — patut dipersoalkan. Harga tinggi tidak semestinya salah
-              jika kereta ada rekod servis penuh atau jarak tempuh sangat rendah, tetapi
-              penjual perlu beri justifikasi yang jelas.
-            </p>
-            <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-2">
-              Gunakan Paqar untuk semak sama ada harga yang ditawarkan berpatutan, mahal,
-              atau murah berbanding pasaran semasa.
-            </p>
-          </div>
+              {/* Section 2: Bila harga mahal? */}
+              <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+                <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-2">
+                  Bila harga {info.model} {year} dianggap mahal?
+                </h2>
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                  Sebarang tawaran melebihi{' '}
+                  <strong>RM{stats.overpricedThreshold.toLocaleString()}</strong> — lebih 8% dari
+                  paras tertinggi pasaran — patut dipersoalkan. Harga tinggi tidak semestinya salah
+                  jika kereta ada rekod servis penuh atau jarak tempuh sangat rendah, tetapi
+                  penjual perlu beri justifikasi yang jelas.
+                </p>
+                <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-2">
+                  Gunakan Paqar untuk semak sama ada harga yang ditawarkan berpatutan, mahal,
+                  atau murah berbanding pasaran semasa.
+                </p>
+              </div>
+            </>
+          )}
 
           {/* CTA — pre-filled with this page's model + year */}
           <div className="space-y-3">

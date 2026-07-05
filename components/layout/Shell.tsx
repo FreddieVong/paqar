@@ -21,14 +21,29 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Checklist
             </Link>
+            <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+              Risiko
+            </Link>
           </div>
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">
+            <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+              Harga Model
+            </Link>
+            <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+              Bandingkan
+            </Link>
+            <Link href="/tentang" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+              Tentang
+            </Link>
             <Link href="/privasi" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Privasi
             </Link>
             <Link href="/terma" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Terma
             </Link>
+            <a href="mailto:hello@paqar.my" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+              Hubungi Kami
+            </a>
           </div>
           <p className="font-body text-[11px] text-[#D1D5DB]">
             © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan

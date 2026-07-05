@@ -3,10 +3,17 @@ import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 
+const YEAR = new Date().getFullYear()
+
 export const metadata: Metadata = {
-  title: 'Harga Kereta Terpakai Malaysia 2025 — Semak Harga Pasaran | Paqar',
+  title: `Harga Kereta Terpakai Malaysia ${YEAR} — Semak Harga Pasaran | Paqar`,
   description: 'Panduan harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Semak harga percuma sebelum bayar booking atau deposit.',
   alternates: { canonical: 'https://paqar.my/harga-kereta-terpakai' },
+  openGraph: {
+    title: `Harga Kereta Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
+    description: 'Panduan harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Semak harga percuma sebelum bayar booking atau deposit.',
+    url: 'https://paqar.my/harga-kereta-terpakai',
+  },
 }
 
 const MODELS = [
@@ -37,7 +44,7 @@ export default function HargaKeretaTerpakaiPage() {
               Panduan Harga
             </p>
             <h1 className="font-heading font-extrabold text-[26px] text-[#111827] leading-tight mb-3">
-              Harga kereta terpakai Malaysia 2025
+              Harga kereta terpakai Malaysia {YEAR}
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
               Pilih model untuk lihat anggaran harga pasaran mengikut tahun — kemudian semak harga kereta yang anda minat secara percuma.
@@ -60,6 +67,15 @@ export default function HargaKeretaTerpakaiPage() {
                 <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
               </Link>
             ))}
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Semak mengikut jenama</p>
+            <Link href="/harga-perodua-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua terpakai →</Link>
+            <Link href="/harga-proton-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton terpakai →</Link>
+            <Link href="/harga-toyota-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Toyota terpakai →</Link>
+            <Link href="/harga-honda-terpakai"   className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Honda terpakai →</Link>
+            <Link href="/harga-nissan-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Nissan terpakai →</Link>
           </div>
 
           <div className="space-y-2">

@@ -1,11 +1,8 @@
 import Link  from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { NavAuthLink } from './NavAuthLink'
 
-export async function Nav() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
+export function Nav() {
   return (
     <nav className="sticky top-0 z-10 bg-white border-b border-[#F3F4F6]">
       <div className="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between">
@@ -26,21 +23,7 @@ export async function Nav() {
           >
             Panduan
           </Link>
-          {user ? (
-            <Link
-              href="/dashboard"
-              className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <Link
-              href="/auth"
-              className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
-            >
-              Log Masuk
-            </Link>
-          )}
+          <NavAuthLink />
         </div>
       </div>
     </nav>

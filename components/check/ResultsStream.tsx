@@ -8,12 +8,16 @@ import { PaymentForm }              from '@/components/report/PaymentForm'
 import { CollapsibleSampleReport }  from '@/components/report/CollapsibleSampleReport'
 import { BuyerReportPitch }         from '@/components/report/BuyerReportPitch'
 import { createClient }  from '@/lib/supabase/client'
+import { analytics }     from '@/lib/analytics'
 
 import type { Check } from '@/types/domain'
-import type { PollCheckResponse } from '@/types/api'
+import type { PollCheckResponse, VehiclePreview } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
 const POLL_TIMEOUT_MS  = 90_000
+// The check completes instantly but the vehicle lookup runs in the background
+// (~1-3s) — keep polling briefly after completion so the teaser can appear.
+const MAX_PREVIEW_POLLS = 8
 
 interface Props {
   checkId:      string
@@ -25,11 +29,14 @@ interface Props {
 export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props) {
   const router = useRouter()
   const [check,        setCheck]        = useState<Check | null>(null)
+  const [preview,      setPreview]      = useState<VehiclePreview | null>(null)
   const [error,        setError]        = useState<string | null>(null)
   const [authedUser,   setAuthedUser]   = useState<string | null | undefined>(undefined)
   const [captureEmail, setCaptureEmail] = useState('')
   const [captureState, setCaptureState] = useState<'idle' | 'sending' | 'done'>('idle')
-  const captureRef = useRef<HTMLInputElement>(null)
+  const captureRef      = useRef<HTMLInputElement>(null)
+  const previewPollsRef = useRef(0)
+  const teaserTrackedRef = useRef(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -46,24 +53,44 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
       if (!res.ok) { setError('Tidak dapat memuatkan keputusan'); return }
       const data = await res.json() as PollCheckResponse
       setCheck(data.check)
+      if (data.vehiclePreview) setPreview(data.vehiclePreview)
     } catch {
       setError('Ralat rangkaian — cuba semula…')
     }
   }, [checkId, claimToken])
 
   useEffect(() => {
-    if (check?.status === 'complete') return
+    const done = check?.status === 'complete'
+      && (preview != null || previewPollsRef.current >= MAX_PREVIEW_POLLS)
+    if (done) return
     void poll()
     const interval = setInterval(() => {
-      if (check?.status === 'complete') { clearInterval(interval); return }
+      if (check?.status === 'complete') previewPollsRef.current += 1
+      const stop = check?.status === 'complete'
+        && (preview != null || previewPollsRef.current >= MAX_PREVIEW_POLLS)
+      if (stop) { clearInterval(interval); return }
       void poll()
     }, POLL_INTERVAL_MS)
     const timeout = setTimeout(() => {
       clearInterval(interval)
-      setError('Semakan mengambil masa terlalu lama — sila muat semula halaman')
+      if (check?.status !== 'complete') {
+        setError('Semakan mengambil masa terlalu lama — sila muat semula halaman')
+      }
     }, POLL_TIMEOUT_MS)
     return () => { clearInterval(interval); clearTimeout(timeout) }
-  }, [poll, check?.status])
+  }, [poll, check?.status, preview])
+
+  // Track the teaser outcome once the polling window settles
+  useEffect(() => {
+    if (teaserTrackedRef.current || check?.status !== 'complete') return
+    if (preview != null) {
+      teaserTrackedRef.current = true
+      analytics.teaserShown({ has_vehicle: true })
+    } else if (previewPollsRef.current >= MAX_PREVIEW_POLLS) {
+      teaserTrackedRef.current = true
+      analytics.teaserShown({ has_vehicle: false })
+    }
+  }, [check?.status, preview])
 
   const isComplete  = check?.status === 'complete'
 
@@ -87,13 +114,35 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
     return (
       <div className="flex flex-col items-center gap-3 py-8">
         <div className="w-7 h-7 rounded-full border-[3px] border-[#E5E7EB] border-t-[#064E4A] animate-spin" />
-        <p className="font-heading font-bold text-[14px] text-[#6B7280]">Menyemak kereta anda…</p>
+        <p className="font-heading font-bold text-[14px] text-[#6B7280]">Menyediakan laporan untuk plat anda…</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-3">
+      {/* Free teaser — proof we found the car, before asking for RM12 */}
+      {preview && (
+        <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-4">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="w-[16px] h-[16px] rounded-full bg-[#15803D] flex items-center justify-center flex-shrink-0">
+              <svg width="8" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </span>
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#15803D]">
+              Kenderaan Dijumpai
+            </p>
+          </div>
+          <p className="font-heading font-extrabold text-[17px] text-[#111827] leading-tight">
+            {preview.description || `${preview.make} ${preview.model}`.trim()}
+          </p>
+          {preview.registrationYear && (
+            <p className="font-body text-[12px] text-[#6B7280] mt-0.5">
+              Didaftar {preview.registrationYear}
+            </p>
+          )}
+        </div>
+      )}
+
       <BuyerReportPitch plate={plate ?? ''} />
       <PaymentForm
         checkId={checkId}

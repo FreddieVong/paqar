@@ -4,10 +4,17 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 
+const YEAR = new Date().getFullYear()
+
 export const metadata: Metadata = {
-  title: 'Harga Honda Terpakai Malaysia 2025 — Semak Harga Pasaran | Paqar',
-  description: 'Harga pasaran kereta terpakai Honda — City, Jazz, Civic mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
+  title: `Harga Honda Terpakai Malaysia ${YEAR} — Semak Harga Pasaran | Paqar`,
+  description: 'Harga pasaran kereta terpakai Honda — City, Jazz, HR-V, Civic mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/harga-honda-terpakai' },
+  openGraph: {
+    title: `Harga Honda Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
+    description: 'Harga pasaran kereta terpakai Honda — City, Jazz, HR-V, Civic mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
+    url: 'https://paqar.my/harga-honda-terpakai',
+  },
 }
 
 const MODELS = [
@@ -66,6 +73,7 @@ export default function HargaHonda() {
             <Link href="/harga-perodua-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua terpakai →</Link>
             <Link href="/harga-proton-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton terpakai →</Link>
             <Link href="/harga-toyota-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Toyota terpakai →</Link>
+            <Link href="/harga-nissan-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Nissan terpakai →</Link>
             <Link href="/harga-kereta-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semua model →</Link>
           </div>
         </div>

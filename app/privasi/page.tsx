@@ -1,5 +1,17 @@
+import type { Metadata } from 'next'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
+
+export const metadata: Metadata = {
+  title: 'Dasar Privasi | Paqar',
+  description: 'Dasar privasi Paqar — bagaimana kami mengumpul, menggunakan, dan melindungi data anda di bawah PDPA Malaysia.',
+  alternates: { canonical: 'https://paqar.my/privasi' },
+  openGraph: {
+    title: 'Dasar Privasi | Paqar',
+    description: 'Dasar privasi Paqar — bagaimana kami mengumpul, menggunakan, dan melindungi data anda di bawah PDPA Malaysia.',
+    url: 'https://paqar.my/privasi',
+  },
+}
 
 export default function PrivasiPage() {
   return (

@@ -4,11 +4,16 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 
+const YEAR = new Date().getFullYear()
+
 export const metadata: Metadata = {
-  title: 'Cara Semak Insurans Kereta Malaysia 2025 | Paqar',
+  title: `Cara Semak Insurans Kereta Malaysia ${YEAR} | Paqar`,
   description: 'Cara semak status insurans kereta Malaysia — sama ada masih aktif, tamat, atau perlu diperbaharui. Penting sebelum beli atau pandu kereta terpakai.',
   alternates: { canonical: 'https://paqar.my/cara-semak-insurans-kereta' },
   openGraph: {
+    title: `Cara Semak Insurans Kereta Malaysia ${YEAR}`,
+    description: 'Cara semak status insurans kereta Malaysia — sama ada masih aktif, tamat, atau perlu diperbaharui. Penting sebelum beli atau pandu kereta terpakai.',
+    url: 'https://paqar.my/cara-semak-insurans-kereta',
     images: [{ url: '/api/og?title=Cara%20Semak%20Insurans%20Kereta&subtitle=Semak%20status%20insurans%20kenderaan', width: 1200, height: 630 }],
   },
 }

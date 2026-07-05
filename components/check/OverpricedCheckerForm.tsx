@@ -14,6 +14,29 @@ const BRANDS = [
   'Volvo', 'Audi', 'MINI', 'Lexus', 'Isuzu', 'Chery', 'BYD',
 ]
 
+// Known models per brand — shown as autocomplete suggestions. Consistent
+// spelling matters: the market-price cache is keyed on the model string, so
+// "Myvi" hits cached data while "myvi se" misses it. Free text still allowed.
+const MODELS_BY_BRAND: Record<string, string[]> = {
+  Perodua:    ['Myvi', 'Axia', 'Bezza', 'Alza', 'Ativa', 'Aruz', 'Kancil', 'Viva'],
+  Proton:     ['Saga', 'Persona', 'Iriz', 'X50', 'X70', 'X90', 'S70', 'Exora', 'Wira'],
+  Toyota:     ['Vios', 'Yaris', 'Corolla', 'Camry', 'Hilux', 'Fortuner', 'Innova', 'Avanza', 'Alphard', 'Vellfire'],
+  Honda:      ['City', 'Civic', 'Jazz', 'HR-V', 'CR-V', 'BR-V', 'Accord', 'WR-V'],
+  Nissan:     ['Almera', 'X-Trail', 'Serena', 'Navara', 'Grand Livina'],
+  Mazda:      ['CX-5', 'CX-3', 'CX-30', 'Mazda 2', 'Mazda 3', 'CX-8'],
+  Mitsubishi: ['Xpander', 'Triton', 'ASX', 'Outlander', 'Attrage'],
+  Hyundai:    ['Elantra', 'Tucson', 'Santa Fe', 'i30', 'Sonata'],
+  Kia:        ['Picanto', 'Cerato', 'Sportage', 'Seltos', 'Carnival'],
+  Suzuki:     ['Swift', 'Jimny', 'Vitara'],
+  Volkswagen: ['Polo', 'Golf', 'Passat', 'Tiguan', 'Vento'],
+  BMW:        ['3 Series', '5 Series', 'X1', 'X3', 'X5', '1 Series'],
+  'Mercedes-Benz': ['C-Class', 'E-Class', 'A-Class', 'GLC', 'CLA'],
+  Ford:       ['Ranger', 'Everest', 'Fiesta', 'Focus'],
+  Isuzu:      ['D-Max', 'MU-X'],
+  Chery:      ['Omoda 5', 'Tiggo 8 Pro', 'Tiggo 7 Pro'],
+  BYD:        ['Atto 3', 'Dolphin', 'Seal'],
+}
+
 const VERDICT_CONFIG: Record<Verdict, {
   badge:        string
   badgeCls:     string
@@ -258,7 +281,11 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
                   id="oc-model"
                   type="text" value={model} onChange={e => setModel(e.target.value)}
                   placeholder="cth: Vios, Axia, X5" required className={INPUT_CLS}
+                  list="oc-model-suggestions" autoComplete="off"
                 />
+                <datalist id="oc-model-suggestions">
+                  {(MODELS_BY_BRAND[brand] ?? []).map(m => <option key={m} value={m} />)}
+                </datalist>
               </div>
               <div>
                 <label htmlFor="oc-year" className={LABEL_CLS}>Tahun</label>

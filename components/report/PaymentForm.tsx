@@ -55,7 +55,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
         {/* Asking price */}
         <div>
           <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
-            Harga Diminta (RM) <span className="text-[#9CA3AF] font-normal normal-case tracking-normal">— pilihan</span>
+            Harga Diminta Penjual (RM)
           </label>
           <input
             type="number"
@@ -70,6 +70,9 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
                        focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
                        transition-all"
           />
+          <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
+            Disyorkan — dengan harga ini, laporan anda dapat verdict harga dan skrip rundingan peribadi.
+          </p>
         </div>
 
         {/* Divider */}

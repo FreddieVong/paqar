@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: 'Panduan Beli Kereta Terpakai Malaysia | Paqar',
   description: 'Koleksi panduan lengkap untuk pembeli kereta terpakai Malaysia — semak saman, baca geran, kenal risiko, dan buat keputusan dengan yakin.',
   alternates: { canonical: 'https://paqar.my/panduan' },
+  openGraph: {
+    title: 'Panduan Beli Kereta Terpakai Malaysia',
+    description: 'Koleksi panduan lengkap untuk pembeli kereta terpakai Malaysia — semak saman, baca geran, kenal risiko, dan buat keputusan dengan yakin.',
+    url: 'https://paqar.my/panduan',
+  },
 }
 
 const GUIDES = [

@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: 'Tentang Paqar — Semak Harga Kereta Terpakai Malaysia',
   description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar booking atau deposit.',
   alternates: { canonical: 'https://paqar.my/tentang' },
+  openGraph: {
+    title: 'Tentang Paqar — Semak Harga Kereta Terpakai Malaysia',
+    description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar booking atau deposit.',
+    url: 'https://paqar.my/tentang',
+  },
 }
 
 export default function TentangPage() {

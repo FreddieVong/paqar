@@ -9,7 +9,7 @@ import { getValuationByNvic }     from '@/lib/db/vehicle-valuations'
 import { env }                    from '@/lib/env'
 import { decrypt }                from '@/lib/crypto'
 import { buildMarketModelKeyword } from '@/lib/market-keyword'
-import { lookupVehicle }          from '@/lib/vehicleapi'
+import { getOrFetchVehicleData }  from '@/lib/db/plate-lookups'
 import { createClient }           from '@/lib/supabase/server'
 
 export async function initiateBuyerReport(params: {
@@ -78,7 +78,8 @@ export async function initiateBuyerReport(params: {
 
 async function prewarmReportData(plate: string, reportId: string): Promise<void> {
   try {
-    const apiResult = await lookupVehicle(plate)
+    // Cache-first: if the free teaser already looked this plate up, no new API cost
+    const apiResult = await getOrFetchVehicleData(plate)
     if (!apiResult) return
 
     const valuation = await getValuationByNvic(apiResult.nvic, {

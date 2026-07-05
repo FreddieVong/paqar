@@ -59,6 +59,14 @@ interface VehicleData {
   } | null
 }
 
+const MALAY_MONTHS = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogos', 'Sep', 'Okt', 'Nov', 'Dis']
+
+function formatMalayDate(isoString: string): string {
+  const d = new Date(isoString)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getDate()} ${MALAY_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+}
+
 interface Props {
   plate:             string
   askingPriceRm?:    number | null
@@ -67,9 +75,10 @@ interface Props {
   addJomCheck?:      boolean
   jomcheckData?:     JomCheckResult | null
   jomcheckStatus?:   JomCheckStatus
+  generatedAt?:      string | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, generatedAt }: Props) {
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
 
@@ -124,8 +133,34 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const verdictSource    = priceVerdict ? 'market' : depreciationVerdict ? 'depreciation' : null
   const vehicleNotFound  = !vehicleData?.make
 
+  const carIdentity = vehicleData?.make
+    ? [
+        vehicleData.description ?? `${vehicleData.make} ${vehicleData.model ?? ''}`.trim(),
+        vehicleData.registrationYear ? `Didaftar ${vehicleData.registrationYear}` : null,
+      ].filter(Boolean).join(' · ')
+    : null
+  const generatedLabel = generatedAt ? formatMalayDate(generatedAt) : ''
+
   return (
     <div className="space-y-5">
+
+      {/* 0. Report header — the buyer's car, front and centre */}
+      <div className="bg-[#14453d] rounded-[14px] p-5">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.12em] text-white/45">
+            Laporan Pembeli
+          </p>
+          {generatedLabel && (
+            <p className="font-body text-[10px] text-white/40">Dijana: {generatedLabel}</p>
+          )}
+        </div>
+        <p className="font-heading font-extrabold text-[30px] text-white leading-none tracking-tight mb-1.5">
+          {plate}
+        </p>
+        {carIdentity && (
+          <p className="font-body text-[13px] text-white/70">{carIdentity}</p>
+        )}
+      </div>
 
       {/* Vehicle not found — shown when RegCheck returns null for this plate */}
       {vehicleNotFound && (
@@ -234,17 +269,6 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         const valVariant = valVariantRaw
           ? valVariantRaw.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
           : null
-        const verdictDisplay = effectiveVerdict ? (verdictSource === 'market' ? ({
-          good_deal:     { text: 'BERBALOI — tapi semak condition dulu',   color: 'text-[#0891B2]', sub: 'Semak dokumen, JPJ dan condition kereta sebelum bayar deposit.' },
-          fair_price:    { text: 'WAJAR — boleh teruskan, tapi semak dulu', color: 'text-[#064E4A]', sub: 'Harga dalam julat pasaran. Pastikan rekod dan condition kereta jelas.' },
-          slightly_high: { text: 'AGAK MAHAL — masih boleh tawar',          color: 'text-[#B45309]', sub: 'Harga sedikit atas pasaran. Gunakan skrip rundingan untuk minta harga lebih baik.' },
-          overpriced:    { text: 'MAHAL — jangan bayar deposit dulu',       color: 'text-[#DC2626]', sub: 'Harga seller lebih tinggi daripada kereta serupa. Gunakan skrip rundingan sebelum jumpa seller.' },
-        } as const)[effectiveVerdict] : ({
-          good_deal:     { text: 'BERBALOI — tapi semak condition dulu',   color: 'text-[#0891B2]', sub: 'Harga di bawah anggaran susut nilai. Pastikan condition dan dokumen elok sebelum deposit.' },
-          fair_price:    { text: 'WAJAR — berpatutan untuk umur kereta ini', color: 'text-[#064E4A]', sub: 'Harga sepadan dengan anggaran susut nilai. Pastikan rekod dan condition kereta jelas.' },
-          slightly_high: { text: 'AGAK MAHAL — ada ruang untuk tawar',      color: 'text-[#B45309]', sub: 'Harga sedikit melebihi anggaran susut nilai. Cuba tawar sebelum setuju.' },
-          overpriced:    { text: 'MAHAL — jangan bayar deposit dulu',       color: 'text-[#DC2626]', sub: 'Harga jauh melebihi anggaran susut nilai untuk kereta umur ini.' },
-        } as const)[effectiveVerdict]) : null
 
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -252,16 +276,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               Perbandingan Harga
             </p>
 
-            {askingPriceRm != null && (
-              <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
-                <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
-                <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(askingPriceRm)}</p>
-              </div>
-            )}
-
             {mPrices.length > 0 && marketPrices && (() => {
-              const minP    = Math.min(...mPrices)
-              const maxP    = Math.max(...mPrices)
               const median  = marketMedian!
               const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
               const conf    = CONFIDENCE_CONFIG[dataConfidenceLevel(mPrices.length)]
@@ -295,12 +310,6 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       </a>
                     ))}
                   </div>
-
-                  {minP !== maxP && (
-                    <p className="font-body text-[11px] text-[#6B7280]">
-                      Julat: RM{fmt(minP)} – RM{fmt(maxP)}
-                    </p>
-                  )}
 
                   {/* Methodology + confidence */}
                   <p className="font-body text-[11px] text-[#9CA3AF]">
@@ -336,14 +345,10 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               )
             })()}
 
-            {verdictDisplay && (
-              <div className="mb-3 space-y-1">
-                <p className={`font-heading font-bold text-[13px] ${verdictDisplay.color}`}>{verdictDisplay.text}</p>
-                <p className="font-body text-[11px] text-[#6B7280]">{verdictDisplay.sub}</p>
-              </div>
-            )}
-
-            {wmNewPrice != null && (
+            {/* Original new price — only shown when it's the verdict's basis
+                (depreciation fallback). Next to live market data it just
+                makes any used price look cheap and muddies the comparison. */}
+            {wmNewPrice != null && verdictSource !== 'market' && (
               <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5">
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[12px] text-[#6B7280]">Harga baru asal kenderaan ini</p>
@@ -409,6 +414,16 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak menarik. Bila boleh saya datang tengok kereta?`,
         }
         const script = scripts[effectiveVerdict]
+
+        // Follow-up for when the seller pushes back — negotiations rarely end
+        // after one message. Only shown when we have a concrete target price.
+        const followUpTarget = (effectiveVerdict === 'overpriced' || effectiveVerdict === 'slightly_high')
+          ? (hasMarketData ? fmt(offerHigh) : depOffer)
+          : null
+        const followUpScript = followUpTarget
+          ? `Saya faham tuan/puan ada harga sendiri. Tapi berdasarkan listing yang saya semak, RM${followUpTarget} memang harga pasaran sekarang.\n\nKalau boleh buat RM${followUpTarget}, saya boleh confirm minggu ini juga. Kalau tak boleh, takpe — terima kasih, saya consider unit lain.`
+          : null
+
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
@@ -420,56 +435,25 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               </p>
             </div>
             <CopyButton text={script} />
+
+            {followUpScript && (
+              <div className="mt-4 pt-4 border-t border-[#F3F4F6]">
+                <p className="font-heading font-bold text-[12px] text-[#111827] mb-2">
+                  Kalau seller kata harga dah final:
+                </p>
+                <div className="bg-[#F9FAFB] rounded-lg p-4 mb-3">
+                  <p className="font-body text-[13px] text-[#374151] leading-relaxed whitespace-pre-line">
+                    {followUpScript}
+                  </p>
+                </div>
+                <CopyButton text={followUpScript} />
+              </div>
+            )}
           </div>
         )
       })()}
 
-      {/* 4. Soalan Wajib Tanya Seller */}
-      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-4">
-          Soalan Wajib Tanya Seller
-        </p>
-        <div className="space-y-3">
-          {[
-            'Ada accident besar sebelum ini?',
-            'Ada flood damage?',
-            'Kereta masih ada loan bank?',
-            'Geran atas nama siapa?',
-            'Boleh buat inspection sebelum bayar deposit?',
-          ].map((q, i) => (
-            <div key={i} className="flex gap-3">
-              <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">{i + 1}.</span>
-              <p className="font-body text-[13px] text-[#374151] leading-relaxed">{q}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 5. Checklist Deposit */}
-      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-4">
-          Checklist sebelum bayar deposit
-        </p>
-        <div className="space-y-3">
-          {[
-            'Nombor rangka sama dengan geran',
-            'Geran atas nama penjual',
-            'Semak loan / hutang bank',
-            'Semak saman tertunggak',
-            'Cukai jalan masih sah',
-            'Dapat resit deposit bertulis',
-            'Nyatakan syarat refund deposit',
-            'Confirm tarikh serah geran dan kunci',
-          ].map((item, i) => (
-            <div key={i} className="flex gap-3 items-start">
-              <span className="w-[18px] h-[18px] rounded border-2 border-[#D1D5DB] flex-shrink-0 mt-0.5" />
-              <p className="font-body text-[13px] text-[#374151] leading-relaxed">{item}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 6. Data Kenderaan Rasmi (JPJ) */}
+      {/* 4. Data Kenderaan Rasmi (JPJ) */}
       {vehicleData?.make && (
         <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
           <div className="flex items-center justify-between mb-3">
@@ -497,7 +481,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         </div>
       )}
 
-      {/* 6. Status Insurans */}
+      {/* 5. Status Insurans */}
       {ins && (
         <div className={`border rounded-[14px] p-5 ${
           ins.policyStatus?.toLowerCase().includes('active') ? 'bg-[#F0FDF4] border-[#BBF7D0]' : 'bg-[#FEF2F2] border-[#FECACA]'
@@ -517,7 +501,89 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         </div>
       )}
 
-      {/* 7. CTAs */}
+      {/* 6. Soalan Wajib Tanya Seller — base questions + conditions specific to this car */}
+      {(() => {
+        const carAge = vehicleData?.registrationYear
+          ? new Date().getFullYear() - parseInt(vehicleData.registrationYear)
+          : null
+        const insuranceExpired = ins != null && !ins.policyStatus?.toLowerCase().includes('active')
+
+        const questions = [
+          'Ada accident besar sebelum ini?',
+          'Ada flood damage?',
+          'Kereta masih ada loan bank?',
+          'Geran atas nama siapa?',
+          'Boleh buat inspection sebelum bayar deposit?',
+          ...(effectiveVerdict === 'overpriced' || effectiveVerdict === 'slightly_high'
+            ? ['Kenapa harga ni lebih tinggi dari listing serupa di pasaran?'] : []),
+          ...(carAge != null && carAge >= 8
+            ? ['Timing belt dan servis besar dah buat? Ada resit?'] : []),
+          ...(insuranceExpired
+            ? ['Kenapa insurans dah tamat? Kereta ni lama tak diguna?'] : []),
+        ].slice(0, 7)
+
+        return (
+          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+            <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-4">
+              Soalan Wajib Tanya Seller
+            </p>
+            <div className="space-y-3">
+              {questions.map((q, i) => (
+                <div key={i} className="flex gap-3">
+                  <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">{i + 1}.</span>
+                  <p className="font-body text-[13px] text-[#374151] leading-relaxed">{q}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* 7. Checklist Deposit */}
+      <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-4">
+          Checklist sebelum bayar deposit
+        </p>
+        <div className="space-y-3">
+          {[
+            'Nombor rangka sama dengan geran',
+            'Geran atas nama penjual',
+            'Semak loan / hutang bank',
+            'Semak saman tertunggak',
+            'Cukai jalan masih sah',
+            'Dapat resit deposit bertulis',
+            'Nyatakan syarat refund deposit',
+            'Confirm tarikh serah geran dan kunci',
+          ].map((item, i) => (
+            <div key={i} className="flex gap-3 items-start">
+              <span className="w-[18px] h-[18px] rounded border-2 border-[#D1D5DB] flex-shrink-0 mt-0.5" />
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed">{item}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 8. Langkah Seterusnya — end with a plan, not a trailing CTA */}
+      <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-5">
+        <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#15803D] mb-4">
+          Langkah Seterusnya
+        </p>
+        <div className="space-y-3">
+          {[
+            'Hantar skrip rundingan ke seller melalui WhatsApp',
+            'Kalau harga dah okay — buat inspection dulu, jangan bayar deposit lagi',
+            'Bawa checklist di atas semasa jumpa seller',
+            'Dah confirm beli? Dapatkan insurans sebelum tukar nama',
+          ].map((step, i) => (
+            <div key={i} className="flex gap-3">
+              <span className="w-[20px] h-[20px] rounded-full bg-[#15803D] text-white font-heading font-bold text-[11px] flex items-center justify-center flex-shrink-0">{i + 1}</span>
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed">{step}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 9. CTAs */}
       <InspectionCTA plate={plate} />
       <InsuranceCTA />
 

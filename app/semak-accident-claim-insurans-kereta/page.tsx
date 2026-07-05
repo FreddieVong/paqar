@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description: 'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan. Paqar Semakan Accident/Claim Insurans RM100 sebelum bayar booking atau deposit.',
   alternates: { canonical: 'https://paqar.my/semak-accident-claim-insurans-kereta' },
   openGraph: {
+    title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia',
+    description: 'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan. RM100 sebelum bayar booking atau deposit.',
+    url: 'https://paqar.my/semak-accident-claim-insurans-kereta',
     images: [{ url: '/api/og?title=Semak%20Rekod%20Claim%20Insurans%20Kereta&subtitle=Sebelum%20bayar%20booking%20atau%20deposit', width: 1200, height: 630 }],
   },
 }

@@ -4,11 +4,16 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 
+const YEAR = new Date().getFullYear()
+
 export const metadata: Metadata = {
-  title: 'Cara Beli Kereta Terpakai Malaysia 2025 — Panduan Lengkap | Paqar',
+  title: `Cara Beli Kereta Terpakai Malaysia ${YEAR} — Panduan Lengkap | Paqar`,
   description: 'Panduan lengkap cara beli kereta terpakai Malaysia. Dari semak saman, geran, pinjaman, hingga bayar deposit dengan selamat. Elak tertipu.',
   alternates: { canonical: 'https://paqar.my/cara-beli-kereta-terpakai' },
   openGraph: {
+    title: `Cara Beli Kereta Terpakai Malaysia ${YEAR} — Panduan Lengkap`,
+    description: 'Panduan lengkap cara beli kereta terpakai Malaysia. Dari semak saman, geran, pinjaman, hingga bayar deposit dengan selamat. Elak tertipu.',
+    url: 'https://paqar.my/cara-beli-kereta-terpakai',
     images: [{ url: '/api/og?title=Cara%20Beli%20Kereta%20Terpakai&subtitle=6%20langkah%20beli%20dengan%20selamat', width: 1200, height: 630 }],
   },
 }

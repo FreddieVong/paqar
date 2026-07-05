@@ -351,11 +351,17 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cfg = MODELS[params.model]
   if (!cfg) return {}
+  const year        = new Date().getFullYear()
+  const title       = `Harga ${cfg.brand} ${cfg.model} Terpakai Malaysia ${year} | Paqar`
+  const description = `Semak harga pasaran ${cfg.brand} ${cfg.model} terpakai Malaysia — anggaran harga mengikut tahun, tip pembeli, dan verdict harga percuma.`
   return {
-    title:       `Harga ${cfg.brand} ${cfg.model} Terpakai Malaysia 2025 | Paqar`,
-    description: `Semak harga pasaran ${cfg.brand} ${cfg.model} terpakai Malaysia — anggaran harga mengikut tahun, tip pembeli, dan verdict harga percuma.`,
-    alternates:  { canonical: `https://paqar.my/harga-kereta-terpakai/${params.model}` },
+    title,
+    description,
+    alternates: { canonical: `https://paqar.my/harga-kereta-terpakai/${params.model}` },
     openGraph: {
+      title,
+      description,
+      url: `https://paqar.my/harga-kereta-terpakai/${params.model}`,
       images: [{
         url:    `/api/og?title=Harga%20${encodeURIComponent(cfg.brand + ' ' + cfg.model)}%20Terpakai&subtitle=Semak%20harga%20pasaran%20sebelum%20beli`,
         width:  1200,

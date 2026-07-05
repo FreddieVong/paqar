@@ -4,11 +4,16 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 
+const YEAR = new Date().getFullYear()
+
 export const metadata: Metadata = {
-  title: 'Cara Semak Saman Kereta Malaysia 2025 | Panduan Lengkap — Paqar',
+  title: `Cara Semak Saman Kereta Malaysia ${YEAR} | Panduan Lengkap — Paqar`,
   description: 'Panduan lengkap cara semak saman PDRM dan JPJ secara rasmi. Step by step, percuma, tanpa daftar akaun.',
   alternates: { canonical: 'https://paqar.my/panduan-semak-saman' },
   openGraph: {
+    title: `Cara Semak Saman Kereta Malaysia ${YEAR} | Panduan Lengkap`,
+    description: 'Panduan lengkap cara semak saman PDRM dan JPJ secara rasmi. Step by step, percuma, tanpa daftar akaun.',
+    url: 'https://paqar.my/panduan-semak-saman',
     images: [{ url: '/api/og?title=Cara%20Semak%20Saman%20Kereta&subtitle=Panduan%20rasmi%20PDRM%20%26%20JPJ%20%E2%80%94%20percuma', width: 1200, height: 630 }],
   },
 }

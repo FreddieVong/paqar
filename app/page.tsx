@@ -1,7 +1,12 @@
 import Link           from 'next/link'
+import { unstable_cache } from 'next/cache'
 import { Nav }           from '@/components/layout/Nav'
 import { HomeCheckerTabs } from '@/components/check/HomeCheckerTabs'
 import { getCheckCount } from '@/lib/db/checks'
+
+// Social-proof count only needs to be roughly fresh — cache for an hour
+// instead of hitting the DB on every homepage view.
+const getCachedCheckCount = unstable_cache(getCheckCount, ['home-check-count'], { revalidate: 3600 })
 
 const homeSchema = {
   '@context': 'https://schema.org',
@@ -89,7 +94,7 @@ const homeSchema = {
 }
 
 export default async function HomePage() {
-  const checkCount = await getCheckCount().catch(() => 0)
+  const checkCount = await getCachedCheckCount().catch(() => 0)
   const countDisplay = checkCount > 20
     ? `${(Math.floor(checkCount / 10) * 10).toLocaleString()}+`
     : null
@@ -123,6 +128,22 @@ export default async function HomePage() {
           </p>
 
           <HomeCheckerTabs countDisplay={countDisplay} />
+
+          {/* How it works — the free-then-paid ladder in one glance */}
+          <div className="mt-6 flex flex-col gap-2">
+            {[
+              'Masukkan kereta & harga seller',
+              'Dapat verdict percuma serta-merta',
+              'Nak skrip rundingan & data penuh? RM12',
+            ].map((step, i) => (
+              <div key={i} className="flex items-center gap-2.5">
+                <span className="w-[18px] h-[18px] rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-[#15803D] font-heading font-bold text-[10px] flex items-center justify-center flex-shrink-0">
+                  {i + 1}
+                </span>
+                <p className="font-body text-[12px] text-[#6B7280]">{step}</p>
+              </div>
+            ))}
+          </div>
 
         </div>
       </section>
@@ -253,16 +274,20 @@ export default async function HomePage() {
           </p>
           <div className="h-px bg-white/7 mb-5" />
           <div className="flex flex-col gap-4">
-            <div className="flex gap-3 items-start">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 mt-0.5">
-                <path d="M8 2L14.5 13H1.5L8 2Z" stroke="#F59E0B" strokeWidth="1.5" strokeLinejoin="round"/>
-                <path d="M8 6.5V9" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round"/>
-                <circle cx="8" cy="11" r="0.75" fill="#F59E0B"/>
-              </svg>
-              <p className="font-body text-[13px] text-white/65 leading-relaxed">
-                Harga yang penjual minta belum tentu mencerminkan harga pasaran sebenar.
-              </p>
-            </div>
+            {[
+              'Harga yang penjual minta belum tentu mencerminkan harga pasaran sebenar.',
+              'Kereta dengan rekod kemalangan atau banjir jarang diberitahu awal-awal.',
+              'Deposit yang dah dibayar susah nak dapat balik bila masalah muncul kemudian.',
+            ].map((risk) => (
+              <div key={risk} className="flex gap-3 items-start">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 mt-0.5">
+                  <path d="M8 2L14.5 13H1.5L8 2Z" stroke="#F59E0B" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M8 6.5V9" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="8" cy="11" r="0.75" fill="#F59E0B"/>
+                </svg>
+                <p className="font-body text-[13px] text-white/65 leading-relaxed">{risk}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -306,29 +331,6 @@ export default async function HomePage() {
         </div>
       </section>
       */}
-
-      {/* ── BELI KERETA TERPAKAI? ── */}
-      <section className="bg-[#111827] px-5 py-10">
-        <div className="max-w-5xl mx-auto md:flex md:items-center md:justify-between md:gap-8">
-          <div className="mb-5 md:mb-0">
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-white/50 mb-2">
-              Untuk Pembeli
-            </p>
-            <h2 className="font-heading font-extrabold text-[22px] text-white mb-2">
-              Nak beli kereta terpakai? Semak dahulu.
-            </h2>
-            <p className="font-body text-[14px] text-white/70 leading-relaxed">
-              Penjual tidak selalu dedahkan semua risiko. Paqar bantu anda semak harga pasaran, sejarah kemalangan, dan maklumat kenderaan — sebelum bayar booking atau deposit.
-            </p>
-          </div>
-          <a
-            href="/#semak"
-            className="block w-full md:w-auto bg-[#FACC15] text-[#111827] font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 text-center hover:bg-[#FDE047] transition-colors"
-          >
-            Semak Kereta Yang Nak Dibeli →
-          </a>
-        </div>
-      </section>
 
       {/* ── SOALAN LAZIM ── */}
       <section className="bg-white px-5 py-12 md:py-16">
@@ -387,7 +389,7 @@ export default async function HomePage() {
             Tanpa daftar akaun.
           </p>
           <Link
-            href="/"
+            href="/#semak"
             className="inline-block bg-white text-[#064E4A] font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 hover:bg-[#F8FAF7] transition-colors"
           >
             Semak Harga Percuma →
@@ -406,12 +408,16 @@ export default async function HomePage() {
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Harga Model</Link>
           <span className="text-[#E5E7EB]">·</span>
+          <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Bandingkan</Link>
+          <span className="text-[#E5E7EB]">·</span>
           <Link href="/panduan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Semua Panduan</Link>
         </div>
         <p className="font-body text-[12px] text-[#D1D5DB] leading-relaxed mb-2">
-          © 2026 Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
+          © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
         </p>
         <div className="flex items-center justify-center gap-4">
+          <Link href="/tentang" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Tentang</Link>
+          <span className="text-[#E5E7EB]">·</span>
           <Link href="/privasi" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Privasi</Link>
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/terma" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Terma</Link>

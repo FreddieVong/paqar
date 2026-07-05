@@ -4,10 +4,17 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 
+const YEAR = new Date().getFullYear()
+
 export const metadata: Metadata = {
-  title: 'Harga Nissan Terpakai Malaysia 2025 — Semak Harga Pasaran | Paqar',
+  title: `Harga Nissan Terpakai Malaysia ${YEAR} — Semak Harga Pasaran | Paqar`,
   description: 'Harga pasaran kereta terpakai Nissan — Almera mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/harga-nissan-terpakai' },
+  openGraph: {
+    title: `Harga Nissan Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
+    description: 'Harga pasaran kereta terpakai Nissan — Almera mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
+    url: 'https://paqar.my/harga-nissan-terpakai',
+  },
 }
 
 const MODELS = [

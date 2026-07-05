@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: 'Risiko utama beli kereta terpakai di Malaysia — saman tersembunyi, odometer diputar, banjir, kemalangan, dan pinjaman aktif. Cara lindungi diri anda.',
   alternates: { canonical: 'https://paqar.my/risiko-beli-kereta-terpakai' },
   openGraph: {
+    title: 'Risiko Beli Kereta Terpakai Malaysia — Cara Elak Tertipu',
+    description: 'Risiko utama beli kereta terpakai di Malaysia — saman tersembunyi, odometer diputar, banjir, kemalangan, dan pinjaman aktif. Cara lindungi diri anda.',
+    url: 'https://paqar.my/risiko-beli-kereta-terpakai',
     images: [{ url: '/api/og?title=Risiko%20Beli%20Kereta%20Terpakai&subtitle=7%20risiko%20tersembunyi%20%26%20cara%20elak', width: 1200, height: 630 }],
   },
 }

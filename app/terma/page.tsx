@@ -1,5 +1,17 @@
+import type { Metadata } from 'next'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
+
+export const metadata: Metadata = {
+  title: 'Terma & Syarat | Paqar',
+  description: 'Terma dan syarat penggunaan perkhidmatan Paqar — semakan status kenderaan pihak ketiga di Malaysia.',
+  alternates: { canonical: 'https://paqar.my/terma' },
+  openGraph: {
+    title: 'Terma & Syarat | Paqar',
+    description: 'Terma dan syarat penggunaan perkhidmatan Paqar — semakan status kenderaan pihak ketiga di Malaysia.',
+    url: 'https://paqar.my/terma',
+  },
+}
 
 export default function TermaPage() {
   return (

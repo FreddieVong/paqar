@@ -13,7 +13,7 @@ import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleRe
 import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
-import { lookupVehicle }              from '@/lib/vehicleapi'
+import { getOrFetchVehicleData }      from '@/lib/db/plate-lookups'
 import { getValuationByNvic }         from '@/lib/db/vehicle-valuations'
 import { getCachedMarketPrices,
          fetchAndCacheMarketPrices }  from '@/lib/db/market-prices'
@@ -63,7 +63,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
     // Lazy fetch: call VehicleAPI once, store in DB, serve from cache on subsequent views
     let vehicleData = report.vehicleapi_data as Record<string, unknown> | null ?? null
     if (!vehicleData) {
-      const apiResult = await lookupVehicle(plate)
+      const apiResult = await getOrFetchVehicleData(plate)
       if (apiResult) {
         const valuation = await getValuationByNvic(
           apiResult.nvic,
@@ -153,6 +153,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               addJomCheck={report.add_jomcheck}
               jomcheckData={jomcheckData}
               jomcheckStatus={jomcheckStatus}
+              generatedAt={report.created_at}
             />
             <ReportFeedback checkId={params.checkId} plate={plate} />
           </div>

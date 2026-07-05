@@ -56,4 +56,7 @@ export const analytics = {
 
   tabSelected: (props: { tab: 'model' | 'plate' }) =>
     posthog.capture('tab_selected', props),
+
+  teaserShown: (props: { has_vehicle: boolean }) =>
+    posthog.capture('teaser_shown', props),
 }

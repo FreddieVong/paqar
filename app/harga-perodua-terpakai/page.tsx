@@ -4,10 +4,17 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 
+const YEAR = new Date().getFullYear()
+
 export const metadata: Metadata = {
-  title: 'Harga Perodua Terpakai Malaysia 2025 — Semak Harga Pasaran | Paqar',
+  title: `Harga Perodua Terpakai Malaysia ${YEAR} — Semak Harga Pasaran | Paqar`,
   description: 'Harga pasaran kereta terpakai Perodua — Myvi, Axia, Bezza, Alza mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/harga-perodua-terpakai' },
+  openGraph: {
+    title: `Harga Perodua Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
+    description: 'Harga pasaran kereta terpakai Perodua — Myvi, Axia, Bezza, Alza mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
+    url: 'https://paqar.my/harga-perodua-terpakai',
+  },
 }
 
 const MODELS = [
@@ -67,6 +74,7 @@ export default function HargaPerodua() {
             <Link href="/harga-proton-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton terpakai →</Link>
             <Link href="/harga-toyota-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Toyota terpakai →</Link>
             <Link href="/harga-honda-terpakai"   className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Honda terpakai →</Link>
+            <Link href="/harga-nissan-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Nissan terpakai →</Link>
             <Link href="/harga-kereta-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semua model →</Link>
           </div>
         </div>

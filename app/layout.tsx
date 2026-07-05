@@ -31,11 +31,10 @@ export const metadata: Metadata = {
     type: 'website',
     images: [{ url: '/api/og', width: 1200, height: 630 }],
   },
+  // Twitter title/description/images intentionally omitted — Next.js falls back
+  // to each page's resolved openGraph values, keeping cards page-specific.
   twitter: {
     card: 'summary_large_image',
-    title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
-    description: 'Semak harga kereta terpakai — verdict percuma atau Laporan Pembeli RM12. Tambah Semakan Accident/Claim Insurans RM100 sebelum bayar booking atau deposit.',
-    images: ['/api/og'],
   },
   alternates: {
     canonical: 'https://paqar.my',
