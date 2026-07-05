@@ -155,6 +155,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               jomcheckData={jomcheckData}
               jomcheckStatus={jomcheckStatus}
               generatedAt={report.created_at}
+              claimedMileageKm={report.claimed_mileage_km}
               upsellJomCheck={
                 process.env.JOMCHECK_ENABLED === 'true' && !report.add_jomcheck
                   ? { checkId: params.checkId, claimToken: claimToken ?? '' }

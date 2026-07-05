@@ -15,12 +15,13 @@ import { getOrFetchVehicleData }  from '@/lib/db/plate-lookups'
 import { createClient }           from '@/lib/supabase/server'
 
 export async function initiateBuyerReport(params: {
-  checkId:        string
-  claimToken:     string
-  buyerEmail:     string
-  baseUrl:        string
-  addJomCheck?:   boolean
-  askingPriceRm?: number
+  checkId:           string
+  claimToken:        string
+  buyerEmail:        string
+  baseUrl:           string
+  addJomCheck?:      boolean
+  askingPriceRm?:    number
+  claimedMileageKm?: number
 }): Promise<{ error: string | null; billUrl?: string }> {
   if (!params.buyerEmail.includes('@')) {
     return { error: 'Alamat e-mel tidak sah' }
@@ -58,12 +59,13 @@ export async function initiateBuyerReport(params: {
     })
 
     const report = await createBuyerReport({
-      checkId:       params.checkId,
-      buyerEmail:    params.buyerEmail,
-      billplzBillId: bill.id,
+      checkId:          params.checkId,
+      buyerEmail:       params.buyerEmail,
+      billplzBillId:    bill.id,
       amountCents,
-      addJomCheck:   effectiveAddJomCheck,
-      askingPriceRm: params.askingPriceRm,
+      addJomCheck:      effectiveAddJomCheck,
+      askingPriceRm:    params.askingPriceRm,
+      claimedMileageKm: params.claimedMileageKm,
     })
 
     // Pre-warm vehicle data and market prices during the Billplz payment window (~30-60s).

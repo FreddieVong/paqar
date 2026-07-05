@@ -15,6 +15,7 @@ interface Props {
 export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) {
   const [email,        setEmail]        = useState('')
   const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
+  const [mileage,      setMileage]      = useState('')
   const [addJomCheck,  setAddJomCheck]  = useState(false)
   const [error,        setError]        = useState<string | null>(null)
   const [isPending,    startTransition] = useTransition()
@@ -35,7 +36,8 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
         buyerEmail:    email,
         baseUrl:       window.location.origin,
         addJomCheck,
-        askingPriceRm: price ? parseInt(price, 10) : undefined,
+        askingPriceRm:    price   ? parseInt(price, 10)   : undefined,
+        claimedMileageKm: mileage ? parseInt(mileage, 10) : undefined,
       })
       if (result.error) { setError(result.error); return }
       if (result.billUrl) window.location.href = result.billUrl
@@ -72,6 +74,29 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
           />
           <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
             Disyorkan — dengan harga ini, laporan anda dapat verdict harga dan skrip rundingan peribadi.
+          </p>
+        </div>
+
+        {/* Claimed mileage — unlocks the mileage plausibility check */}
+        <div>
+          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+            Mileage (km) <span className="text-[#9CA3AF] font-normal normal-case tracking-normal">— pilihan</span>
+          </label>
+          <input
+            type="number"
+            value={mileage}
+            onChange={(e) => setMileage(e.target.value)}
+            placeholder="contoh: 85000"
+            min="0"
+            max="1000000"
+            className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
+                       font-heading font-semibold text-[16px] text-[#111827]
+                       placeholder:text-[#D1D5DB] placeholder:font-normal
+                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       transition-all"
+          />
+          <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
+            Mileage yang penjual nyatakan — kami semak sama ada ia munasabah untuk umur kereta.
           </p>
         </div>
 

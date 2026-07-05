@@ -78,9 +78,10 @@ interface Props {
   jomcheckStatus?:   JomCheckStatus
   generatedAt?:      string | null
   upsellJomCheck?:   { checkId: string; claimToken: string } | null
+  claimedMileageKm?: number | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, generatedAt, upsellJomCheck }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, generatedAt, upsellJomCheck, claimedMileageKm }: Props) {
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
 
@@ -488,6 +489,52 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         </div>
       )}
 
+      {/* 4b. Semakan Mileage — plausibility of the seller's CLAIMED reading.
+          Paqar can't verify the real odometer; this checks whether the claimed
+          number is believable for the car's age (MY average ~12-20k km/yr). */}
+      {claimedMileageKm != null && claimedMileageKm > 0 && vehicleData?.registrationYear && (() => {
+        const carAge    = Math.max(1, new Date().getFullYear() - parseInt(vehicleData.registrationYear))
+        const kmPerYear = Math.round(claimedMileageKm / carAge)
+        const level     = kmPerYear < 10_000 ? 'low' : kmPerYear <= 25_000 ? 'normal' : 'high'
+
+        const cfg = ({
+          low: {
+            badge:    'RENDAH untuk umur kereta',
+            badgeCls: 'text-[#B45309]',
+            note:     'Mileage rendah boleh jadi genuine — tapi ia juga hasil odometer yang diputar. Minta rekod servis penuh untuk sahkan bacaan ini sebelum percaya.',
+          },
+          normal: {
+            badge:    'MUNASABAH untuk umur kereta',
+            badgeCls: 'text-[#15803D]',
+            note:     'Sepadan dengan purata penggunaan di Malaysia (12–20k km setahun). Tetap minta rekod servis untuk sahkan.',
+          },
+          high: {
+            badge:    'TINGGI untuk umur kereta',
+            badgeCls: 'text-[#B45309]',
+            note:     'Lebih tinggi dari purata — kemungkinan penggunaan berat seperti e-hailing atau kerja outstation. Harga patut mencerminkan ini.',
+          },
+        } as const)[level]
+
+        return (
+          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+            <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
+              Semakan Mileage
+            </p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="font-heading font-extrabold text-[20px] text-[#111827]">
+                {claimedMileageKm.toLocaleString()} km
+              </p>
+              <p className="font-body text-[12px] text-[#6B7280]">≈ {kmPerYear.toLocaleString()} km/tahun</p>
+            </div>
+            <p className={`font-heading font-bold text-[13px] mb-2 ${cfg.badgeCls}`}>{cfg.badge}</p>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed">{cfg.note}</p>
+            <p className="font-body text-[10px] text-[#9CA3AF] mt-2">
+              Berdasarkan mileage yang dinyatakan penjual — Paqar tidak dapat sahkan bacaan sebenar odometer.
+            </p>
+          </div>
+        )
+      })()}
+
       {/* 5. Status Insurans */}
       {ins && (
         <div className={`border rounded-[14px] p-5 ${
@@ -504,6 +551,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             </span>
             <p className="font-body text-[13px] text-[#374151]">{ins.insurer}</p>
             <p className="font-body text-[12px] text-[#6B7280]">{translateCoverType(ins.coverType)}</p>
+            {!ins.policyStatus?.toLowerCase().includes('active') && (
+              <p className="font-body text-[12px] text-[#6B7280] leading-relaxed pt-1">
+                Biasa untuk kereta yang sedang dijual — penjual selalunya berhenti renew semasa
+                menjual. Pastikan anda beli insurans baru sebelum tukar nama.
+              </p>
+            )}
           </div>
         </div>
       )}
