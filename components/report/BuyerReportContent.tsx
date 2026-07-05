@@ -529,12 +529,14 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             ? ['Kenapa insurans dah tamat? Kereta ni lama tak diguna?'] : []),
         ].slice(0, 7)
 
+        const questionsText = questions.map((q, i) => `${i + 1}. ${q}`).join('\n')
+
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-4">
               Soalan Wajib Tanya Seller
             </p>
-            <div className="space-y-3">
+            <div className="space-y-3 mb-4">
               {questions.map((q, i) => (
                 <div key={i} className="flex gap-3">
                   <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">{i + 1}.</span>
@@ -542,6 +544,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                 </div>
               ))}
             </div>
+            <CopyButton text={questionsText} />
           </div>
         )
       })()}
