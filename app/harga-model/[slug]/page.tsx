@@ -459,6 +459,12 @@ export default async function YearModelPage({ params }: Props) {
               Panduan berkaitan
             </p>
             <Link
+              href={stats ? `/kira-ansuran-kereta?harga=${stats.medianPrice}` : '/kira-ansuran-kereta'}
+              className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+            >
+              Kira ansuran bulanan untuk {info.model} {year} →
+            </Link>
+            <Link
               href={`/harga-kereta-terpakai/${modelHubSlug}`}
               className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
             >

@@ -415,6 +415,8 @@ export default async function HomePage() {
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Harga Model</Link>
           <span className="text-[#E5E7EB]">·</span>
+          <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Kira Ansuran</Link>
+          <span className="text-[#E5E7EB]">·</span>
           <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Bandingkan</Link>
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/panduan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Semua Panduan</Link>

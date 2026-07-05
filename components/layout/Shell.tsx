@@ -29,6 +29,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Harga Model
             </Link>
+            <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+              Kira Ansuran
+            </Link>
             <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Bandingkan
             </Link>

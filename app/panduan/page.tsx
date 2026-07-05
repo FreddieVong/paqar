@@ -16,6 +16,13 @@ export const metadata: Metadata = {
 
 const GUIDES = [
   {
+    href:    '/kira-ansuran-kereta',
+    title:   'Kira ansuran kereta',
+    desc:    'Kalkulator loan kereta — bayaran bulanan, jumlah faedah, roadtax dan anggaran insurans.',
+    tag:     'Kalkulator',
+    tagStyle:'bg-[#F0FDF4] text-[#15803D]',
+  },
+  {
     href:    '/panduan-semak-saman',
     title:   'Cara semak saman kereta',
     desc:    'Panduan step by step semak saman PDRM dan JPJ di portal rasmi. Apa buat kalau ada saman.',

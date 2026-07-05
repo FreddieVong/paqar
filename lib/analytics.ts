@@ -59,4 +59,7 @@ export const analytics = {
 
   teaserShown: (props: { has_vehicle: boolean }) =>
     posthog.capture('teaser_shown', props),
+
+  calculatorUsed: (props: { price: number }) =>
+    posthog.capture('calculator_used', props),
 }
