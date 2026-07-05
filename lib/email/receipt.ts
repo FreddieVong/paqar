@@ -73,6 +73,11 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
       </div>
       ` : ''}
 
+      <p style="color:#374151;font-size:13px;margin-top:20px;line-height:1.7;">
+        Berjaya runding harga atau beli dengan lebih yakin? <strong>Balas e-mel ini</strong> dan
+        kongsi pengalaman anda — kami mungkin paparkan cerita anda di paqar.my (nama pertama sahaja).
+      </p>
+
       <p style="color:#9CA3AF;font-size:11px;margin-top:24px;line-height:1.7;">
         Paqar &middot; Perkhidmatan pihak ketiga &middot; Bukan platform rasmi kerajaan<br/>
         <a href="https://paqar.my" style="color:#064E4A;text-decoration:none;">paqar.my</a>
@@ -82,6 +87,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
 
   await resend.emails.send({
     from:    'Paqar <noreply@paqar.my>',
+    replyTo: 'hello@paqar.my',
     to:      params.toEmail,
     subject,
     html,

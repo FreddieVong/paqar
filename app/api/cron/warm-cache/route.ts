@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }             from '@supabase/supabase-js'
+import { Resend }                   from 'resend'
 import { env }                      from '@/lib/env'
+
+// Dead-man alert: if a full cron run caches nothing, the pipeline is broken
+// (scraper down, Railway lapsed, Mudah layout changed, Mudah blocking us).
+// This failure mode is otherwise silent — the June 2026 Railway expiry went
+// unnoticed for a week until free checks visibly returned "no data".
+async function sendPipelineAlert(detail: string): Promise<void> {
+  if (!env.RESEND_API_KEY) return
+  const resend = new Resend(env.RESEND_API_KEY)
+  await resend.emails.send({
+    from:    'Paqar <noreply@paqar.my>',
+    to:      'hello@paqar.my',
+    subject: '🔴 Paqar: market price pipeline is failing',
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+        <h2 style="color:#DC2626;font-size:18px;margin:0 0 12px;">Warm-cache cron cached 0 combos</h2>
+        <p style="color:#374151;font-size:14px;line-height:1.7;">${detail}</p>
+        <p style="color:#374151;font-size:14px;line-height:1.7;">
+          Likely causes: Railway scraper down or account lapsed, Mudah.my layout changed,
+          or Mudah blocking the scraper. Free price checks and year pages degrade until fixed.
+        </p>
+        <p style="color:#374151;font-size:14px;line-height:1.7;">
+          Check: Railway dashboard → scraper service, then run <code>npm run warm-market-cache</code> after fixing.
+        </p>
+      </div>
+    `,
+  }).catch(err => console.error('[warm-cache:alert]', err))
+}
 
 export const maxDuration = 300
 
@@ -107,6 +135,12 @@ export async function GET(request: NextRequest) {
   }
 
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()))
+
+  if (ok === 0) {
+    await sendPipelineAlert(
+      `Run finished with ok=0, skipped=${skipped}, failed=${failed} of ${COMBINATIONS.length} combos.`
+    )
+  }
 
   return NextResponse.json({ total: COMBINATIONS.length, ok, skipped, failed })
 }
