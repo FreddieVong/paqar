@@ -67,13 +67,13 @@ export function ReportFeedback({ checkId, plate }: { checkId: string; plate: str
           onChange={e => setQuote(e.target.value)}
           placeholder="Contoh: &quot;Tahu kereta tu overpriced sebelum pegi tengok. Jimat banyak masa.&quot;"
           rows={3}
-          className="w-full font-body text-[13px] text-[#111827] placeholder:text-[#D1D5DB] border border-[#E5E7EB] rounded-[10px] px-3 py-2.5 resize-none focus:outline-none focus:border-[#064E4A] mb-2"
+          className="w-full font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB] border border-[#E5E7EB] rounded-[10px] px-3 py-2.5 resize-none focus:outline-none focus:border-[#064E4A] mb-2"
         />
         <input
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder="Nama anda (contoh: Hafiz, Selangor)"
-          className="w-full font-body text-[13px] text-[#111827] placeholder:text-[#D1D5DB] border border-[#E5E7EB] rounded-[10px] px-3 py-2.5 focus:outline-none focus:border-[#064E4A] mb-3"
+          className="w-full font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB] border border-[#E5E7EB] rounded-[10px] px-3 py-2.5 focus:outline-none focus:border-[#064E4A] mb-3"
         />
         <div className="flex gap-2">
           <button

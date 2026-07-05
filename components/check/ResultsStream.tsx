@@ -179,7 +179,7 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
                   placeholder="anda@email.com"
                   required
                   className="flex-1 bg-white border border-[#D1D5DB] rounded-lg px-3 py-2
-                             font-body text-[13px] text-[#111827] placeholder:text-[#D1D5DB]
+                             font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB]
                              focus:outline-none focus:border-[#064E4A]"
                 />
                 <button

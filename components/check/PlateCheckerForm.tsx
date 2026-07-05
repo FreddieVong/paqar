@@ -6,7 +6,7 @@ import type { CreateCheckResponse } from '@/types/api'
 import { analytics } from '@/lib/analytics'
 
 const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
-  font-heading font-semibold text-[14px] text-[#111827]
+  font-heading font-semibold text-[16px] text-[#111827]
   placeholder:text-[#D1D5DB] placeholder:font-normal
   focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
   transition-all`

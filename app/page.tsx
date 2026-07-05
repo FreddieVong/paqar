@@ -98,9 +98,12 @@ const homeSchema = {
 }
 
 export default async function HomePage() {
+  // Social proof only helps once the number is genuinely impressive — "100+"
+  // reads as a small/new site (and includes our own test checks). Hidden
+  // until 1,000, then rounded down to the nearest hundred.
   const checkCount = await getCachedCheckCount().catch(() => 0)
-  const countDisplay = checkCount > 20
-    ? `${(Math.floor(checkCount / 10) * 10).toLocaleString()}+`
+  const countDisplay = checkCount >= 1000
+    ? `${(Math.floor(checkCount / 100) * 100).toLocaleString()}+`
     : null
 
   return (

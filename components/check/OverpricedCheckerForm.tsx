@@ -103,7 +103,7 @@ function computeSuggestedOffer(
 }
 
 const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
-  font-heading font-semibold text-[14px] text-[#111827]
+  font-heading font-semibold text-[16px] text-[#111827]
   placeholder:text-[#D1D5DB] placeholder:font-normal
   focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
   transition-all`
@@ -451,7 +451,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
               onChange={e => setLeadEmail(e.target.value)}
               placeholder="Simpan keputusan ini ke emel anda"
               required
-              className="flex-1 bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 font-body text-[12px] text-[#111827] placeholder:text-[#D1D5DB] focus:outline-none focus:border-[#064E4A] transition-all min-w-0"
+              className="flex-1 bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB] focus:outline-none focus:border-[#064E4A] transition-all min-w-0"
             />
             <button
               type="submit" disabled={leadBusy}
