@@ -349,6 +349,15 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       Anggaran sahaja. Bergantung pada kondisi, mileage dan pasaran semasa.
                     </p>
                   </div>
+
+                  {askingPriceRm != null && (
+                    <a
+                      href={`/kira-ansuran-kereta?harga=${askingPriceRm}`}
+                      className="font-body text-[12px] text-[#064E4A] underline underline-offset-2 mt-1 inline-block"
+                    >
+                      Kira ansuran bulanan untuk harga ini →
+                    </a>
+                  )}
                 </div>
               )
             })()}

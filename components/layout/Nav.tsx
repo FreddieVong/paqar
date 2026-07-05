@@ -18,6 +18,12 @@ export function Nav() {
         </Link>
         <div className="flex items-center gap-4">
           <Link
+            href="/kira-ansuran-kereta"
+            className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
+          >
+            Kira Ansuran
+          </Link>
+          <Link
             href="/panduan"
             className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
           >

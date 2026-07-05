@@ -502,6 +502,18 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
           {'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan'}
         </p>
       </div>
+
+      {/* Calculator cross-link — buyer just got a verdict; next thought is "boleh afford ke?" */}
+      {askingPrice && (
+        <p className="font-body text-[12px] text-center">
+          <a
+            href={`/kira-ansuran-kereta?harga=${parseInt(askingPrice, 10)}`}
+            className="text-[#064E4A] underline underline-offset-2"
+          >
+            Kira ansuran bulanan untuk RM{(parseInt(askingPrice, 10) || 0).toLocaleString()} →
+          </a>
+        </p>
+      )}
     </div>
   )
 }

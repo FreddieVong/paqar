@@ -246,6 +246,23 @@ export default async function HomePage() {
             </div>
           </div>
 
+          {/* Calculator tool row */}
+          <Link
+            href="/kira-ansuran-kereta"
+            className="mt-3 flex items-center justify-between gap-4 bg-white border-l-[3px] border-l-[#15803D] border border-[#E5E7EB] rounded-[14px] px-4 py-4 hover:bg-[#F0FDF4] transition-colors group"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-[#064E4A]">Kira Ansuran Kereta</span>
+                <span className="font-heading font-bold text-[9px] px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D]">Percuma</span>
+              </div>
+              <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
+                Bayaran bulanan, jumlah faedah, roadtax dan anggaran insurans — tahu kos sebenar sebulan.
+              </p>
+            </div>
+            <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 text-[18px]">→</span>
+          </Link>
+
           {/* RM100 upgrade row */}
           <Link
             href="/semak-accident-claim-insurans-kereta"
