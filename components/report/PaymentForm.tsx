@@ -22,6 +22,20 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
 
   useEffect(() => { analytics.paymentFormViewed() }, [])
 
+  // Silent abandonment capture: the moment a valid email is typed, save it as
+  // a retarget lead — if they never complete payment, the retarget cron can
+  // still reach them. Replaces the separate "Simpan laporan ini" card that
+  // made the page ask for email twice.
+  function captureLeadOnBlur() {
+    const trimmed = email.trim()
+    if (!trimmed.includes('@')) return
+    fetch('/api/capture-email', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ checkId, claimToken, email: trimmed }),
+    }).catch(() => { /* best-effort */ })
+  }
+
   const title = addJomCheck ? 'Laporan + Accident/Claim — RM100' : 'Laporan Pembeli — RM12'
   const ctaText = addJomCheck ? 'Bayar RM100 & Buka Laporan →' : 'Bayar RM12 & Buka Laporan Pembeli →'
 
@@ -112,6 +126,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onBlur={captureLeadOnBlur}
             placeholder="anda@email.com"
             required
             className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3

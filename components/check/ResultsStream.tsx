@@ -32,9 +32,6 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
   const [preview,      setPreview]      = useState<VehiclePreview | null>(null)
   const [error,        setError]        = useState<string | null>(null)
   const [authedUser,   setAuthedUser]   = useState<string | null | undefined>(undefined)
-  const [captureEmail, setCaptureEmail] = useState('')
-  const [captureState, setCaptureState] = useState<'idle' | 'sending' | 'done'>('idle')
-  const captureRef      = useRef<HTMLInputElement>(null)
   const previewPollsRef = useRef(0)
   const teaserTrackedRef = useRef(false)
 
@@ -94,20 +91,6 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
 
   const isComplete  = check?.status === 'complete'
 
-  async function handleEmailCapture(e: React.FormEvent) {
-    e.preventDefault()
-    if (!captureEmail.includes('@')) return
-    setCaptureState('sending')
-    try {
-      await fetch('/api/capture-email', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ checkId, claimToken, email: captureEmail }),
-      })
-    } catch { /* non-fatal */ }
-    setCaptureState('done')
-  }
-
   if (error) return <p className="font-body text-[14px] text-[#DC2626] py-4">{error}</p>
 
   if (!isComplete) {
@@ -150,52 +133,6 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
         defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
       />
       <CollapsibleSampleReport />
-
-      {/* Email capture before the inspection upsell — a visitor scrolling past
-          the RM12 form is exiting; their email (feeds the retarget cron) is
-          worth more than showing a bigger ask to someone who declined a smaller one */}
-      {authedUser === null && (
-        <div className="border border-[#E5E7EB] rounded-xl p-4 bg-white">
-          {captureState === 'done' ? (
-            <>
-              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Terima kasih!</p>
-              <p className="font-body text-[12px] text-[#6B7280]">
-                Kami akan hantarkan link laporan ini ke e-mel anda jika anda belum buka laporan dalam 24 jam.
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">
-                Simpan laporan ini
-              </p>
-              <p className="font-body text-[12px] text-[#6B7280] mb-3">
-                Masukkan e-mel untuk kami hantarkan link laporan ini — boleh buka semula bila-bila masa.
-              </p>
-              <form onSubmit={handleEmailCapture} className="flex gap-2">
-                <input
-                  ref={captureRef}
-                  type="email"
-                  value={captureEmail}
-                  onChange={e => setCaptureEmail(e.target.value)}
-                  placeholder="anda@email.com"
-                  required
-                  className="flex-1 bg-white border border-[#D1D5DB] rounded-lg px-3 py-2
-                             font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB]
-                             focus:outline-none focus:border-[#064E4A]"
-                />
-                <button
-                  type="submit"
-                  disabled={captureState === 'sending'}
-                  className="bg-[#064E4A] text-white font-heading font-bold text-[13px]
-                             px-4 py-2 rounded-lg disabled:opacity-60 whitespace-nowrap"
-                >
-                  {captureState === 'sending' ? '…' : 'Simpan'}
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-      )}
 
       {authedUser != null && (
         <div className="border-[1.5px] border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
