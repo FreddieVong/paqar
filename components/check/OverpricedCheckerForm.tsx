@@ -551,6 +551,9 @@ function NegotiationNudge({
   suggestedOffer: number
 }) {
   const savings = askingPrice - suggestedOffer
+  // Same 1.08 threshold as computeVerdict — "sedikit mahal" on a MAHAL result
+  // contradicts the red badge and weakens the buyer's negotiating stance
+  const isOverpriced = askingPrice > maxPrice * 1.08
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 mb-3">
       <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
@@ -567,7 +570,9 @@ function NegotiationNudge({
         <span className="font-heading font-extrabold text-[14px] text-[#15803D]">RM{savings.toLocaleString()}</span>
       </div>
       <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-3">
-        Kereta ini nampak sedikit mahal berbanding harga pasaran. Ini anggaran tawaran pertama yang lebih selamat untuk mula rundingan.
+        {isOverpriced
+          ? 'Kereta ini jauh lebih mahal berbanding harga pasaran. Ini anggaran tawaran pertama yang lebih selamat untuk mula rundingan.'
+          : 'Kereta ini nampak sedikit mahal berbanding harga pasaran. Ini anggaran tawaran pertama yang lebih selamat untuk mula rundingan.'}
       </p>
       <p className="font-body text-[12px] text-[#374151] font-semibold">
         Nak ayat rundingan penuh untuk WhatsApp seller? ↓
