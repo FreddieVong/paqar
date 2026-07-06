@@ -5,7 +5,7 @@ import { createClient }   from '@supabase/supabase-js'
 import { Nav }            from '@/components/layout/Nav'
 import { Shell }          from '@/components/layout/Shell'
 import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
-import { filterOutlierPrices }   from '@/lib/price-stats'
+import { filterOutlierPrices, filterListingsByYear } from '@/lib/price-stats'
 
 export const dynamic = 'force-dynamic'
 
@@ -271,9 +271,9 @@ export default async function YearModelPage({ params }: Props) {
   // Compute price stats when cache has enough data; otherwise render the page
   // without the live price sections. A fallback page keeps the URL alive for
   // Google — a 404 here (e.g. after a failed cron run) would deindex the page.
-  const listings = (cached?.listings ?? []) as { price: number }[]
+  const listings = (cached?.listings ?? []) as { price: number; year?: string | null }[]
   const validPrices = filterOutlierPrices(
-    listings
+    filterListingsByYear(listings, year)
       .map(l => l.price)
       .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
   )

@@ -1,6 +1,6 @@
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
-import { filterOutlierPrices } from '@/lib/price-stats'
+import { filterOutlierPrices, filterListingsByYear } from '@/lib/price-stats'
 import { InspectionCTA }   from './InspectionCTA'
 import { InsuranceCTA }    from './InsuranceCTA'
 import { CopyButton }      from './CopyButton'
@@ -86,9 +86,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
 
-  // Market price calculations (outlier-trimmed — see lib/price-stats.ts)
+  // Market price calculations — year-matched then outlier-trimmed (lib/price-stats.ts)
+  const relevantListings = vehicleData?.registrationYear
+    ? filterListingsByYear(marketPrices?.listings ?? [], vehicleData.registrationYear)
+    : (marketPrices?.listings ?? [])
   const mPrices       = filterOutlierPrices(
-    (marketPrices?.listings ?? [])
+    relevantListings
       .map(l => l.price)
       .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
   )
@@ -316,7 +319,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
                   <p className="font-body text-[11px] text-[#6B7280]">Harga listing dijumpai:</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {marketPrices.listings.filter(l => mPrices.includes(l.price)).map((l, i) => (
+                    {relevantListings.filter(l => mPrices.includes(l.price)).map((l, i) => (
                       <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
                         className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A] hover:bg-[#E0F2F1] transition-colors">
                         RM{fmt(l.price)}
