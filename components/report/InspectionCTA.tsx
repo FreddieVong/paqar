@@ -60,10 +60,7 @@ export function InspectionCTA({ plate }: Props) {
       </a>
       <div className="mt-2 text-center">
         <p className="font-body text-[11px] text-[#9CA3AF]">
-          Chan Sow Lin · PJ · Puchong · Glenmarie · Kota Kemuning · Kajang
-        </p>
-        <p className="font-body text-[10px] text-[#D1D5DB] mt-0.5">
-          Johor Bahru — akan datang
+          Chan Sow Lin · PJ · Puchong · Glenmarie · Kota Kemuning · Kajang · Johor Bahru
         </p>
       </div>
     </div>
