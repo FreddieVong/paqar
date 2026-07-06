@@ -6,9 +6,14 @@ import { PlateCheckerForm }      from './PlateCheckerForm'
 import { analytics }             from '@/lib/analytics'
 
 type Tab = 'model' | 'plate'
+type FormState = 'idle' | 'loading' | 'result' | 'error'
 
 export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null }) {
   const [tab, setTab] = useState<Tab>('model')
+  const [modelFormState, setModelFormState] = useState<FormState>('idle')
+
+  // Hide the how-it-works strip once the user is past those steps
+  const showSteps = !(tab === 'model' && (modelFormState === 'result' || modelFormState === 'loading'))
 
   return (
     <div>
@@ -58,13 +63,32 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
       </div>
 
       {/* Active form */}
-      {tab === 'model' ? <OverpricedCheckerForm /> : <PlateCheckerForm />}
+      {tab === 'model' ? <OverpricedCheckerForm onStateChange={setModelFormState} /> : <PlateCheckerForm />}
 
       {/* Soft social proof — below the form, not competing */}
       {countDisplay && (
         <p className="font-body text-[11px] text-[#9CA3AF] text-center mt-4">
           {countDisplay} semakan dibuat
         </p>
+      )}
+
+      {/* How it works — hidden once a check is running/showing a verdict,
+          because steps 1-2 are already done at that point */}
+      {showSteps && (
+        <div className="mt-6 flex flex-col gap-2">
+          {[
+            'Masukkan kereta & harga seller',
+            'Dapat verdict percuma serta-merta',
+            'Nak skrip rundingan & data penuh? RM12',
+          ].map((step, i) => (
+            <div key={i} className="flex items-center gap-2.5">
+              <span className="w-[18px] h-[18px] rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-[#15803D] font-heading font-bold text-[10px] flex items-center justify-center flex-shrink-0">
+                {i + 1}
+              </span>
+              <p className="font-body text-[12px] text-[#6B7280]">{step}</p>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )

@@ -110,9 +110,14 @@ const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-x
 
 const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.5'
 
-type Props = { initialBrand?: string; initialModel?: string; initialYear?: string }
+type Props = {
+  initialBrand?:  string
+  initialModel?:  string
+  initialYear?:   string
+  onStateChange?: (state: FormState) => void
+}
 
-export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', initialYear = '' }: Props) {
+export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', initialYear = '', onStateChange }: Props) {
   const router = useRouter()
 
   const [brand,       setBrand]       = useState(initialBrand)
@@ -130,6 +135,10 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
   const [leadEmail,   setLeadEmail]   = useState('')
   const [leadSaved,   setLeadSaved]   = useState(false)
   const [leadBusy,    setLeadBusy]    = useState(false)
+
+  // Let the parent react to form state (e.g. homepage hides its how-it-works
+  // strip once a verdict is showing)
+  useEffect(() => { onStateChange?.(formState) }, [formState, onStateChange])
 
   // Scroll to top when result arrives so verdict is visible from the start
   useEffect(() => {

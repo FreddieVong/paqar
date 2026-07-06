@@ -136,22 +136,6 @@ export default async function HomePage() {
 
           <HomeCheckerTabs countDisplay={countDisplay} />
 
-          {/* How it works — the free-then-paid ladder in one glance */}
-          <div className="mt-6 flex flex-col gap-2">
-            {[
-              'Masukkan kereta & harga seller',
-              'Dapat verdict percuma serta-merta',
-              'Nak skrip rundingan & data penuh? RM12',
-            ].map((step, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <span className="w-[18px] h-[18px] rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-[#15803D] font-heading font-bold text-[10px] flex items-center justify-center flex-shrink-0">
-                  {i + 1}
-                </span>
-                <p className="font-body text-[12px] text-[#6B7280]">{step}</p>
-              </div>
-            ))}
-          </div>
-
         </div>
       </section>
 
