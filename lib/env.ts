@@ -28,6 +28,9 @@ const schema = z.object({
   JOMCHECK_USERNAME:            z.string().min(1).optional(),
   JOMCHECK_PASSWORD:            z.string().min(1).optional(),
   JOMCHECK_COMPANY_NAME:        z.string().min(1).optional(),
+  NEXT_PUBLIC_META_PIXEL_ID:    z.string().min(1).optional(),
+  META_PIXEL_ID:                z.string().min(1).optional(),
+  META_CAPI_TOKEN:              z.string().min(1).optional(),
 })
 
 const parsed = schema.safeParse(process.env)

@@ -8,6 +8,7 @@ import { markReportPaid, getBuyerReportByBillId,
          getBuyerReport } from '@/lib/db/buyer-reports'
 import { decrypt }                                   from '@/lib/crypto'
 import { sendReceiptEmail }                          from '@/lib/email/receipt'
+import { sendPurchaseEvent }                         from '@/lib/meta-capi'
 import { AnalyticsEvent }                            from '@/components/layout/AnalyticsEvent'
 import { GoogleAdsConversion }                       from '@/components/layout/GoogleAdsConversion'
 import { WhatsAppShareButton }                       from '@/components/report/WhatsAppShareButton'
@@ -46,6 +47,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
           plate:       null,
           reportUrl,
         }).catch(() => {})
+        void sendPurchaseEvent({ email: upgradeReport.buyer_email, amountCents: 8800, billId })
       }
     } else {
       // Mark report paid. Returns true if this page won the pending→paid race.
@@ -64,6 +66,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
           plate:       null,
           reportUrl,
         }).catch(() => {})
+        void sendPurchaseEvent({ email: report.buyer_email, amountCents: report.amount_cents, billId })
       }
     }
   }

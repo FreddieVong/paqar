@@ -47,7 +47,7 @@ export default function PrivasiPage() {
             },
             {
               title: 'Perkongsian Data',
-              body: 'Kami tidak menjual, menyewakan, atau berkongsi data peribadi anda kepada pihak ketiga untuk tujuan pemasaran. Data anda hanya diakses oleh sistem kami dan pembekal perkhidmatan infrastruktur (Supabase untuk pangkalan data, Vercel untuk pengehosan, Resend untuk e-mel).',
+              body: 'Kami tidak menjual, menyewakan, atau berkongsi data peribadi anda kepada pihak ketiga untuk tujuan pemasaran. Data anda hanya diakses oleh sistem kami dan pembekal perkhidmatan infrastruktur (Supabase untuk pangkalan data, Vercel untuk pengehosan, Resend untuk e-mel). Kami juga menggunakan alat pengukuran pengiklanan seperti Meta Pixel untuk memahami keberkesanan pemasaran kami — data ini dikongsi dalam bentuk yang disamarkan (hashed).',
             },
             {
               title: 'Penyimpanan Data',

@@ -43,6 +43,11 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
     e.preventDefault()
     setError(null)
     analytics.paymentInitiated()
+    // Meta funnel signal — no-op unless the pixel is loaded
+    ;(window as { fbq?: (...a: unknown[]) => void }).fbq?.('track', 'InitiateCheckout', {
+      currency: 'MYR',
+      value:    addJomCheck ? 100 : 12,
+    })
     startTransition(async () => {
       const result = await initiateBuyerReport({
         checkId,

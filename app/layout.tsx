@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, DM_Sans } from 'next/font/google'
 import './globals.css'
 import { AnalyticsProvider } from '@/components/layout/AnalyticsProvider'
 import { GoogleTagScript } from '@/components/layout/GoogleTagScript'
+import { MetaPixelScript } from '@/components/layout/MetaPixelScript'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ms" className={`${plusJakartaSans.variable} ${dmSans.variable}`}>
       <body className="bg-[#F8FAF7] font-body antialiased">
         <GoogleTagScript />
+        <MetaPixelScript />
         <AnalyticsProvider>{children}</AnalyticsProvider>
       </body>
     </html>
