@@ -128,14 +128,8 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
         <Shell>
           <div className="pt-5 pb-6 space-y-5">
             <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: true }} />
-            <div>
-              <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A] mb-1">
-                Laporan untuk
-              </p>
-              <h1 className="font-heading font-extrabold text-[38px] tracking-tight text-[#111827] leading-none">
-                {plate}
-              </h1>
-            </div>
+            {/* No page-level plate header — the report's own header card
+                (plate + car + date) opens the document directly below */}
             {report.asking_price_rm == null && vehicleData && claimToken && (
               <AskingPriceForm checkId={params.checkId} claimToken={claimToken} />
             )}

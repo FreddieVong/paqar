@@ -2,6 +2,7 @@ import { NextRequest, NextResponse }                          from 'next/server'
 import { waitUntil }                                          from '@vercel/functions'
 import { z }                                                  from 'zod'
 import { getCachedMarketPrices, fetchAndCacheMarketPrices }   from '@/lib/db/market-prices'
+import { filterOutlierPrices }                                from '@/lib/price-stats'
 import type { Verdict }                                       from '@/types/api'
 
 const schema = z.object({
@@ -56,9 +57,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hasData: false })
   }
 
-  const validPrices = cached.listings
-    .map(l => l.price)
-    .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
+  const validPrices = filterOutlierPrices(
+    cached.listings
+      .map(l => l.price)
+      .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
+  )
 
   if (validPrices.length < 2) {
     return NextResponse.json({ hasData: false })

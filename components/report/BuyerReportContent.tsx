@@ -1,5 +1,6 @@
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
+import { filterOutlierPrices } from '@/lib/price-stats'
 import { InspectionCTA }   from './InspectionCTA'
 import { InsuranceCTA }    from './InsuranceCTA'
 import { CopyButton }      from './CopyButton'
@@ -85,10 +86,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
 
-  // Market price calculations
-  const mPrices       = (marketPrices?.listings ?? [])
-    .map(l => l.price)
-    .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
+  // Market price calculations (outlier-trimmed — see lib/price-stats.ts)
+  const mPrices       = filterOutlierPrices(
+    (marketPrices?.listings ?? [])
+      .map(l => l.price)
+      .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
+  )
   const marketMin     = mPrices.length ? Math.min(...mPrices) : null
   const marketMax     = mPrices.length ? Math.max(...mPrices) : null
   const marketMedian  = mPrices.length >= 2 ? medianOf(mPrices) : null
@@ -136,9 +139,11 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const verdictSource    = priceVerdict ? 'market' : depreciationVerdict ? 'depreciation' : null
   const vehicleNotFound  = !vehicleData?.make
 
+  // Short identity (make + model) — the full official variant string lives in
+  // the JPJ card; repeating the all-caps wall here would duplicate it
   const carIdentity = vehicleData?.make
     ? [
-        vehicleData.description ?? `${vehicleData.make} ${vehicleData.model ?? ''}`.trim(),
+        `${vehicleData.make} ${vehicleData.model ?? ''}`.trim(),
         vehicleData.registrationYear ? `Didaftar ${vehicleData.registrationYear}` : null,
       ].filter(Boolean).join(' · ')
     : null
@@ -311,7 +316,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
                   <p className="font-body text-[11px] text-[#6B7280]">Harga listing dijumpai:</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {marketPrices.listings.map((l, i) => (
+                    {marketPrices.listings.filter(l => mPrices.includes(l.price)).map((l, i) => (
                       <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
                         className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A] hover:bg-[#E0F2F1] transition-colors">
                         RM{fmt(l.price)}
@@ -485,7 +490,9 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           <div className="grid grid-cols-2 gap-2">
             {[
               { label: 'Tahun Daftar',  value: vehicleData.registrationYear },
-              { label: 'Enjin',         value: vehicleData.engineCc ? `${vehicleData.engineCc}cc` : null },
+              { label: 'Enjin',         value: vehicleData.engineCc
+                  ? `${Number.isFinite(parseFloat(vehicleData.engineCc)) ? Math.round(parseFloat(vehicleData.engineCc)) : vehicleData.engineCc}cc`
+                  : null },
               { label: 'Jenis Badan',   value: vehicleData.body },
               { label: 'Nombor Rangka', value: vehicleData.vin ? `${vehicleData.vin.slice(0, -4)}****` : null },
             ].filter(r => r.value).map(row => (
