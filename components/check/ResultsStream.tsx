@@ -150,9 +150,10 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
         defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
       />
       <CollapsibleSampleReport />
-      <InspectionCTA plate={plate} />
 
-      {/* Email capture for non-authed users */}
+      {/* Email capture before the inspection upsell — a visitor scrolling past
+          the RM12 form is exiting; their email (feeds the retarget cron) is
+          worth more than showing a bigger ask to someone who declined a smaller one */}
       {authedUser === null && (
         <div className="border border-[#E5E7EB] rounded-xl p-4 bg-white">
           {captureState === 'done' ? (
@@ -212,6 +213,8 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
           </Button>
         </div>
       )}
+
+      <InspectionCTA plate={plate} />
     </div>
   )
 }
