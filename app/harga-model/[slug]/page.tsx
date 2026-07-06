@@ -271,7 +271,7 @@ export default async function YearModelPage({ params }: Props) {
   // Compute price stats when cache has enough data; otherwise render the page
   // without the live price sections. A fallback page keeps the URL alive for
   // Google — a 404 here (e.g. after a failed cron run) would deindex the page.
-  const listings = (cached?.listings ?? []) as { price: number; year?: string | null }[]
+  const listings = (cached?.listings ?? []) as { price: number; year?: string | null; title?: string | null }[]
   const validPrices = filterOutlierPrices(
     filterListingsByYear(listings, year)
       .map(l => l.price)

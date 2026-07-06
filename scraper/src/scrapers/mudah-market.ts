@@ -136,7 +136,11 @@ export async function scrapeMudahMarket(
           price:   item.price,
           title:   item.title,
           url:     item.url,
-          year:    item.title.match(/\b(19|20)\d{2}\b/)?.[0] ?? null,
+          // Mudah titles glue year to mileage/cc digits ("...699992021 1329cc")
+          // — try free-standing year first, then year-followed-by-cc pattern
+          year:    item.title.match(/\b(19|20)\d{2}\b/)?.[0]
+                ?? item.title.match(/((?:19|20)\d{2})(?=\d{3,4}\s*cc)/i)?.[1]
+                ?? null,
           mileage: item.title.match(/([\d,]+)\s*km/i)?.[1] ?? null,
         })
       }
