@@ -443,28 +443,6 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
           />
         )}
 
-        {/* Email lead capture */}
-        {!leadSaved ? (
-          <form onSubmit={handleLeadCapture} className="flex gap-2 mb-3">
-            <input
-              type="email"
-              value={leadEmail}
-              onChange={e => setLeadEmail(e.target.value)}
-              placeholder="Simpan keputusan ini ke emel anda"
-              required
-              className="flex-1 bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB] focus:outline-none focus:border-[#064E4A] transition-all min-w-0"
-            />
-            <button
-              type="submit" disabled={leadBusy}
-              className="bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#374151] font-heading font-bold text-[12px] rounded-xl px-3 py-2.5 flex-shrink-0 transition-colors disabled:opacity-60"
-            >
-              {leadBusy ? '…' : 'Simpan'}
-            </button>
-          </form>
-        ) : (
-          <p className="font-body text-[11px] text-[#15803D] mb-3 text-center">✓ Keputusan disimpan ke emel anda</p>
-        )}
-
         {/* Malaysian plate input */}
         <form onSubmit={handlePlateSubmit} className="space-y-2">
           <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827]">
@@ -514,6 +492,28 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
         <p className="font-body text-[9px] text-[#9CA3AF] text-center mt-2">
           {'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan'}
         </p>
+
+        {/* Email lead capture — below the RM12 CTA so it never interrupts a buyer */}
+        {!leadSaved ? (
+          <form onSubmit={handleLeadCapture} className="flex gap-2 mt-3">
+            <input
+              type="email"
+              value={leadEmail}
+              onChange={e => setLeadEmail(e.target.value)}
+              placeholder="Simpan keputusan ini ke emel anda"
+              required
+              className="flex-1 bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB] focus:outline-none focus:border-[#064E4A] transition-all min-w-0"
+            />
+            <button
+              type="submit" disabled={leadBusy}
+              className="bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#374151] font-heading font-bold text-[12px] rounded-xl px-3 py-2.5 flex-shrink-0 transition-colors disabled:opacity-60"
+            >
+              {leadBusy ? '…' : 'Simpan'}
+            </button>
+          </form>
+        ) : (
+          <p className="font-body text-[11px] text-[#15803D] mt-3 text-center">✓ Keputusan disimpan ke emel anda</p>
+        )}
       </div>
 
       {/* Calculator cross-link — buyer just got a verdict; next thought is "boleh afford ke?" */}
@@ -580,7 +580,7 @@ function CollapsedSummary({
     <div className="flex items-center justify-between py-1">
       <div className="min-w-0">
         <p className="font-heading font-bold text-[13px] text-[#374151] truncate">{brand} {model}</p>
-        <p className="font-body text-[11px] text-[#6B7280]">{year} · RM {fmt(askingPrice)}</p>
+        <p className="font-body text-[11px] text-[#6B7280]">{year} · RM{fmt(askingPrice)}</p>
       </div>
       <button
         type="button" onClick={onReset}
