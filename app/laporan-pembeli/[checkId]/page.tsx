@@ -195,7 +195,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
 
           {isPlateFlow ? (
             <>
-              <BuyerReportPitch plate={plate} />
+              {/* plate="" — the page header above already shows the plate;
+                  the pitch's plate block is only load-bearing on /check/[id] */}
+              <BuyerReportPitch plate="" />
               <PaymentForm
                 checkId={params.checkId}
                 claimToken={claimToken}
