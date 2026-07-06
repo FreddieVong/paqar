@@ -24,9 +24,20 @@ export function MetaPixelScript() {
     window.__fbqLoaded = true
 
     // Standard fbq bootstrap (queues calls until the script loads)
-    const fbq: any = function (...args: unknown[]) {
-      fbq.callMethod ? fbq.callMethod.apply(fbq, args) : fbq.queue.push(args)
+    type FbqFn = ((...args: unknown[]) => void) & {
+      callMethod?: (...args: unknown[]) => void
+      queue: unknown[][]
+      push: unknown
+      loaded: boolean
+      version: string
     }
+    const fbq = function (...args: unknown[]) {
+      if (fbq.callMethod) {
+        fbq.callMethod(...args)
+      } else {
+        fbq.queue.push(args)
+      }
+    } as FbqFn
     fbq.push = fbq
     fbq.loaded = true
     fbq.version = '2.0'
