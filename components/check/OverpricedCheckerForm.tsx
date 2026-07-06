@@ -123,6 +123,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
   const [result,      setResult]      = useState<PriceCheckResult | null>(null)
   const [checkError,  setCheckError]  = useState<string | null>(null)
   const [plate,       setPlate]       = useState('')
+  const [plateFocused, setPlateFocused] = useState(false)
   const [plateBusy,   setPlateBusy]   = useState(false)
   const [plateError,  setPlateError]  = useState<string | null>(null)
   const [retried,     setRetried]     = useState(false)
@@ -466,19 +467,31 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
 
         {/* Malaysian plate input */}
         <form onSubmit={handlePlateSubmit} className="space-y-2">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827]">
+            Taip Nombor Plat Kereta
+          </p>
           <div className="bg-[#1a1a1a] rounded-[7px] p-[5px] border border-transparent focus-within:border-[#064E4A] focus-within:shadow-[0_0_0_3px_rgba(6,78,74,0.15)] transition-all duration-150">
-            <div className="bg-[#1a1a1a] rounded-[3px] flex items-center justify-center min-h-[60px] px-3">
+            <div className="relative bg-[#1a1a1a] rounded-[3px] flex items-center justify-center min-h-[60px] px-3">
               <input
                 type="text"
                 value={plate}
                 onChange={e => setPlate(e.target.value.toUpperCase())}
-                placeholder="WWW 1234"
+                onFocus={() => setPlateFocused(true)}
+                onBlur={() => setPlateFocused(false)}
                 maxLength={10}
                 required
                 aria-label="Nombor plat kenderaan"
-                className="w-full bg-transparent border-none outline-none text-center font-black text-[22px] sm:text-[28px] tracking-[.15em] sm:tracking-[.2em] text-white uppercase placeholder:text-white/30 placeholder:font-normal"
+                className="w-full bg-transparent border-none outline-none text-center font-black text-[22px] sm:text-[28px] tracking-[.15em] sm:tracking-[.2em] text-white uppercase caret-white"
                 style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
               />
+              {/* Fake placeholder with blinking caret — plate-styled input reads as
+                  a picture; the cursor is the universal "type here" signal */}
+              {plate === '' && !plateFocused && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <span className="text-white text-[22px] sm:text-[28px] font-light animate-pulse">|</span>
+                  <span className="text-white/30 text-[16px] sm:text-[18px] font-normal tracking-[.15em] ml-1.5">WWW 1234</span>
+                </div>
+              )}
             </div>
             <p className="text-center text-[7px] font-black text-white tracking-[.18em] uppercase py-0.5">
               Malaysia
