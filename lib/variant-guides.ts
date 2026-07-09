@@ -9,6 +9,7 @@ export type VariantVerdict = 'best-value' | 'ok' | 'avoid' | 'worth-it-if'
 
 export interface VariantInfo {
   name:            string
+  years?:          string     // only when availability differs from the generation span
   verdict:         VariantVerdict
   verdictNote:     string
   differentiators: string[]   // max 3
@@ -246,6 +247,250 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
     ],
   },
 }
+
+const BEZZA_GUIDE: VariantGuide = {
+  modelSlug: 'perodua-bezza',
+  make: 'Perodua', model: 'Bezza', brand: 'Perodua',
+  question: 'Bezza varian mana patut anda beli?',
+  answerLine: 'Untuk kebanyakan pembeli: 1.3 X — enjin 4 silinder yang lebih lancar dengan kit cukup. 1.0 G hanya jika bajet sangat ketat dan guna bandar sahaja.',
+  bestValue: '1.3 X',
+  avoid: null,
+  generations: [
+    {
+      label: 'Generasi 1',
+      years: '2016–kini',
+      variants: [
+        {
+          name: '1.0 G',
+          verdict: 'worth-it-if',
+          verdictNote: 'Berbaloi jika bajet sangat ketat dan kegunaan bandar sahaja — enjin 3 silinder terasa mengah di lebuh raya dengan muatan penuh.',
+          differentiators: [
+            'Enjin 1.0L 3 silinder — paling jimat minyak, tapi kurang bertenaga',
+            'Kit paling asas — skrin dan rim lebih ringkas',
+            'Pilihan manual masih banyak di pasaran',
+          ],
+          usedPriceBand: 'Termurah — biasanya RM2–4k bawah 1.3 X tahun sama',
+          spotChecks: [
+            'Emblem "1.0" di belakang',
+            'Bunyi enjin 3 silinder lebih kasar semasa idle',
+          ],
+        },
+        {
+          name: '1.3 X',
+          verdict: 'best-value',
+          verdictNote: 'Nilai terbaik — enjin 1.3 4 silinder lebih lancar dan senyap, kit harian cukup, dan paling mudah dijual semula.',
+          differentiators: [
+            'Enjin 1.3L 4 silinder — lebih selesa untuk lebuh raya',
+            'Kit harian lengkap tanpa premium varian atas',
+            'Paling banyak pilihan di pasaran terpakai',
+          ],
+          usedPriceBand: 'Biasanya RM2–4k atas 1.0 G, RM2–3k bawah Advance/AV',
+          spotChecks: [
+            'Emblem "1.3" di belakang',
+            'Sahkan butang VSC jika iklan kata ada (bukan semua tahun)',
+          ],
+        },
+        {
+          name: '1.3 Advance / AV',
+          years: 'Advance: 2016–2019 · AV: 2020+',
+          verdict: 'worth-it-if',
+          verdictNote: 'Berbaloi jika beza dengan X kurang dari RM3k — anda dapat push-start dan kit keselamatan tambahan.',
+          differentiators: [
+            'Butang push-start + kunci pintar',
+            'VSC (dan ASA pada AV 2020 ke atas)',
+            'Kerusi separa kulit + sandaran tangan belakang',
+          ],
+          usedPriceBand: 'Varian termahal — biasanya RM2–3k atas X',
+          spotChecks: [
+            'Butang START/STOP (bukan lubang kunci) — emblem "Advance" boleh ditampal, butang tak boleh',
+            'Kerusi separa kulit',
+            'AV 2020+: butang ASA berhampiran stereng',
+          ],
+        },
+      ],
+    },
+  ],
+  redFlags: [
+    'Bezza adalah kereta e-hailing paling popular — banyak unit ex-Grab dengan mileage sangat tinggi. Semak kerusi pemandu haus, kesan pelekat/pemegang telefon di dashboard',
+    'Mileage rendah pada unit 5+ tahun patut disyaki — bandingkan dengan keadaan pedal, stereng dan kerusi',
+    'Emblem "Advance" ditampal pada varian X — sahkan dengan butang push-start, bukan emblem',
+  ],
+  faq: [
+    {
+      q: 'Bezza 1.0 ke 1.3 — mana patut pilih?',
+      a: '1.3 untuk kebanyakan orang — 4 silinder lebih lancar, senyap, dan tidak mengah di lebuh raya. 1.0 hanya berbaloi jika bajet sangat ketat dan kegunaan bandar sahaja. Beza penggunaan minyak sebenar tidak sebesar yang disangka.',
+    },
+    {
+      q: 'Bezza varian mana paling berbaloi untuk dibeli terpakai?',
+      a: '1.3 X — kit cukup, enjin yang betul, dan paling mudah dijual semula. Advance/AV berbaloi hanya jika bezanya dengan X kurang dari RM3k.',
+    },
+    {
+      q: 'Macam mana nak tahu Bezza tu bekas Grab atau e-hailing?',
+      a: 'Semak kehausan kerusi pemandu berbanding kerusi lain, kesan pemegang telefon di dashboard, dan keadaan pedal. Mileage sangat tinggi (atau mencurigakan rendah untuk umur kereta) adalah petanda. Laporan Paqar juga semak sama ada mileage munasabah untuk umur kereta.',
+    },
+    {
+      q: 'Kenapa harga Bezza terpakai kekal tinggi?',
+      a: 'Permintaan tinggi — jimat minyak, kos servis rendah, dan popular untuk e-hailing. Nilai jual semula yang kuat bermakna anda juga tidak banyak rugi bila jual nanti.',
+    },
+  ],
+}
+
+const CITY_GUIDE: VariantGuide = {
+  modelSlug: 'honda-city',
+  make: 'Honda', model: 'City', brand: 'Honda',
+  question: 'Honda City varian mana patut anda beli?',
+  answerLine: 'Untuk kebanyakan pembeli: varian E — kit harian cukup tanpa premium varian V. Hybrid berbaloi hanya dengan rekod servis Honda yang penuh.',
+  bestValue: 'E',
+  avoid: null,
+  generations: [
+    {
+      label: 'Generasi 6 (GM6)',
+      years: '2014–2019',
+      variants: [
+        {
+          name: 'S',
+          verdict: 'worth-it-if',
+          verdictNote: 'Berbaloi jika harga jelas lebih murah dari E — kit sangat asas untuk kereta kelas ini.',
+          differentiators: [
+            'Rim besi berpenutup, lampu halogen',
+            'Radio asas tanpa skrin sentuh',
+            'Kit paling minimum dalam barisan',
+          ],
+          usedPriceBand: 'Termurah — biasanya RM2–4k bawah E',
+          spotChecks: [
+            'Rim besi berpenutup plastik',
+            'Tiada skrin sentuh di tengah dashboard',
+          ],
+        },
+        {
+          name: 'E',
+          verdict: 'best-value',
+          verdictNote: 'Nilai terbaik — sports rim, skrin sentuh dan kunci pintar, tanpa harga varian V.',
+          differentiators: [
+            'Sports rim 16 inci + skrin sentuh',
+            'Kunci pintar dengan push-start',
+            'Kit harian yang cukup untuk kebanyakan orang',
+          ],
+          usedPriceBand: 'Biasanya RM2–4k atas S, RM3–5k bawah V',
+          spotChecks: [
+            'Butang push-start',
+            'Sports rim (bukan penutup plastik)',
+          ],
+        },
+        {
+          name: 'V',
+          verdict: 'worth-it-if',
+          verdictNote: 'Berbaloi jika anda mahu kit penuh dan bezanya dengan E kurang dari RM4k.',
+          differentiators: [
+            'Kerusi separa kulit + lampu LED',
+            '6 beg udara (varian bawah biasanya kurang)',
+            'Kamera undur berbilang sudut',
+          ],
+          usedPriceBand: 'Biasanya RM3–5k atas E',
+          spotChecks: [
+            'Kerusi separa kulit',
+            'Lampu depan LED (bukan halogen)',
+          ],
+        },
+        {
+          name: 'Sport Hybrid (i-DCD)',
+          years: '2017–2019 sahaja',
+          verdict: 'worth-it-if',
+          verdictNote: 'Hanya dengan rekod servis Honda yang penuh — sistem hibrid i-DCD dan bateri berumur adalah risiko kos yang sebenar.',
+          differentiators: [
+            'Hibrid dengan gearbox dual-clutch (bukan CVT)',
+            'Paling jimat minyak dalam generasi ini',
+            'Bateri hibrid berumur — kos ganti boleh mencecah ribuan ringgit',
+          ],
+          usedPriceBand: 'Harga hampir sama dengan V — jangan bayar premium besar untuk unit tanpa rekod',
+          spotChecks: [
+            'Emblem "Sport Hybrid" + paparan bateri di meter',
+            'MINTA rekod servis Honda penuh — paling penting untuk varian ini',
+            'Test drive: gearbox dual-clutch patut lancar, bukan tersentak-sentak',
+          ],
+        },
+      ],
+    },
+    {
+      label: 'Generasi 7 (GN2)',
+      years: '2020–kini',
+      variants: [
+        {
+          name: 'S / E',
+          verdict: 'best-value',
+          verdictNote: 'E adalah nilai terbaik generasi ini — beza dengan V kebanyakannya keselesaan, bukan keperluan.',
+          differentiators: [
+            'Enjin 1.5L DOHC baru — lebih bertenaga dari generasi lama',
+            'E tambah kunci pintar + rim lebih besar dari S',
+            'Kit asas generasi ini sudah cukup lengkap',
+          ],
+          usedPriceBand: 'S biasanya RM2–3k bawah E',
+          spotChecks: [
+            'E: butang push-start; S: kunci biasa',
+          ],
+        },
+        {
+          name: 'V',
+          verdict: 'worth-it-if',
+          verdictNote: 'Berbaloi jika anda mahu LED penuh dan kit keselamatan tambahan — sahkan ciri sebenar, bukan andaian.',
+          differentiators: [
+            'Lampu LED penuh + kerusi separa kulit',
+            'Kit keselamatan lebih lengkap (sahkan Honda Sensing — bukan semua tahun/varian)',
+            'Skrin lebih besar dengan sambungan telefon',
+          ],
+          usedPriceBand: 'Biasanya RM3–5k atas E',
+          spotChecks: [
+            'Kerusi separa kulit + lampu LED',
+            'Sahkan Honda Sensing: kamera kecil di cermin depan atas',
+          ],
+        },
+        {
+          name: 'RS e:HEV (Hybrid)',
+          verdict: 'worth-it-if',
+          verdictNote: 'Hibrid i-MMD yang jauh lebih baik dari i-DCD lama — tapi tetap perlukan rekod servis Honda dan pemahaman kos hibrid.',
+          differentiators: [
+            'Hibrid i-MMD — paling jimat minyak, pemanduan paling senyap',
+            'Honda Sensing standard',
+            'Bodykit RS + dalaman gelap',
+          ],
+          usedPriceBand: 'Varian termahal — premium ketara atas V; pastikan bateri masih dalam waranti',
+          spotChecks: [
+            'Emblem RS + e:HEV di belakang',
+            'Semak baki waranti bateri hibrid dengan Honda Malaysia',
+            'Rekod servis pusat Honda — bukan bengkel biasa',
+          ],
+        },
+      ],
+    },
+  ],
+  redFlags: [
+    'City adalah antara kereta paling terjejas banjir Disember 2021 (Klang Valley) — semak bau lembap, karat bawah kerusi, dan air dalam lampu',
+    'Popular untuk e-hailing — semak kehausan kerusi pemandu dan mileage yang munasabah',
+    'Unit hibrid tanpa rekod servis Honda penuh — risiko bateri dan gearbox yang mahal; tawar lebih rendah atau cari unit lain',
+    'Iklan kata "V" tapi kerusi fabrik dan lampu halogen — kemungkinan varian bawah',
+  ],
+  faq: [
+    {
+      q: 'Honda City E ke V — berbaloi ke tambah untuk V?',
+      a: 'V tambah kerusi kulit, LED, dan kit keselamatan — keselesaan, bukan keperluan. Berbaloi jika bezanya kurang dari RM4k dan anda mahu kit penuh. Untuk nilai semata-mata, E adalah pilihan yang betul.',
+    },
+    {
+      q: 'City hybrid berbaloi ke untuk dibeli terpakai?',
+      a: 'Bergantung pada generasi dan rekod. RS e:HEV (2020+) guna sistem i-MMD yang lebih baik dan berbaloi jika bateri masih dalam waranti. Sport Hybrid lama (i-DCD) lebih berisiko — hanya beli dengan rekod servis Honda yang penuh.',
+    },
+    {
+      q: 'Berapa kos ganti bateri hibrid Honda City?',
+      a: 'Anggaran boleh mencecah beberapa ribu ringgit bergantung model dan sumber (baru vs recond). Sebab itu baki waranti bateri dan rekod servis adalah perkara paling penting untuk semak sebelum beli unit hibrid.',
+    },
+    {
+      q: 'Macam mana nak tahu City tu kena banjir?',
+      a: 'Bau lembap atau pewangi yang terlalu kuat, karat pada rel kerusi dan bawah karpet, wap air dalam lampu, dan elektronik yang tidak konsisten. Kereta banjir Disember 2021 masih beredar di pasaran — inspection fizikal sangat penting untuk City.',
+    },
+  ],
+}
+
+VARIANT_GUIDES['perodua-bezza'] = BEZZA_GUIDE
+VARIANT_GUIDES['honda-city']   = CITY_GUIDE
 
 export function findGuideByMakeModel(make?: string | null, model?: string | null): VariantGuide | null {
   if (!make || !model) return null

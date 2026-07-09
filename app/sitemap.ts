@@ -14,6 +14,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Variant decision guides
     { url: `${base}/varian/perodua-myvi`,                                lastModified: now,                        changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/varian/toyota-alphard`,                              lastModified: now,                        changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/varian/perodua-bezza`,                               lastModified: now,                        changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/varian/honda-city`,                                  lastModified: now,                        changeFrequency: 'monthly', priority: 0.85 },
     // Guide hub
     { url: `${base}/panduan`,                                            lastModified: new Date('2025-05-01'),     changeFrequency: 'weekly',  priority: 0.9 },
     // Guide pages

@@ -109,6 +109,9 @@ export default function VariantGuidePage({ params }: Props) {
                         {style.label}
                       </span>
                     </div>
+                    {v.years && (
+                      <p className="font-body text-[11px] text-[#9CA3AF] mb-1">{v.years}</p>
+                    )}
                     <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">{v.verdictNote}</p>
 
                     <div className="space-y-1.5 mb-3">
