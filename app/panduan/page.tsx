@@ -23,6 +23,13 @@ const GUIDES = [
     tagStyle:'bg-[#F0FDF4] text-[#15803D]',
   },
   {
+    href:    '/varian/perodua-myvi',
+    title:   'Varian mana patut beli?',
+    desc:    'Panduan varian — nilai terbaik, varian untuk elak, dan cara cam varian sebenar sebelum bayar.',
+    tag:     'Baru',
+    tagStyle:'bg-[#EFF6FF] text-[#1D4ED8]',
+  },
+  {
     href:    '/panduan-semak-saman',
     title:   'Cara semak saman kereta',
     desc:    'Panduan step by step semak saman PDRM dan JPJ di portal rasmi. Apa buat kalau ada saman.',

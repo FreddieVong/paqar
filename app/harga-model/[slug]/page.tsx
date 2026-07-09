@@ -6,6 +6,7 @@ import { Nav }            from '@/components/layout/Nav'
 import { Shell }          from '@/components/layout/Shell'
 import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
 import { filterOutlierPrices, filterListingsByYear } from '@/lib/price-stats'
+import { VARIANT_GUIDES } from '@/lib/variant-guides'
 
 export const dynamic = 'force-dynamic'
 
@@ -473,6 +474,14 @@ export default async function YearModelPage({ params }: Props) {
             >
               Harga {displayModel} semua tahun →
             </Link>
+            {VARIANT_GUIDES[modelHubSlug] && (
+              <Link
+                href={`/varian/${modelHubSlug}`}
+                className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+              >
+                {info.model} varian mana patut beli? →
+              </Link>
+            )}
             <Link
               href="/cara-beli-kereta-terpakai"
               className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"

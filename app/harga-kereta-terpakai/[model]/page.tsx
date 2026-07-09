@@ -4,6 +4,7 @@ import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { VARIANT_GUIDES } from '@/lib/variant-guides'
 
 type PriceRow = { year: string; min: number; max: number }
 
@@ -482,6 +483,11 @@ export default function ModelPage({ params }: Props) {
           {/* Related guides */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
+            {VARIANT_GUIDES[params.model] && (
+              <Link href={`/varian/${params.model}`} className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+                {cfg.model} varian mana patut beli? →
+              </Link>
+            )}
             <Link href="/cara-beli-kereta-terpakai"      className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
             <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
             <Link href="/risiko-beli-kereta-terpakai"    className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Risiko beli kereta terpakai →</Link>

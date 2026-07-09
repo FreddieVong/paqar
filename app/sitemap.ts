@@ -11,6 +11,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/laporan-pembeli-kereta-terpakai`,                    lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/semak-accident-claim-insurans-kereta`,               lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/kira-ansuran-kereta`,                                lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
+    // Variant decision guides
+    { url: `${base}/varian/perodua-myvi`,                                lastModified: now,                        changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/varian/toyota-alphard`,                              lastModified: now,                        changeFrequency: 'monthly', priority: 0.85 },
     // Guide hub
     { url: `${base}/panduan`,                                            lastModified: new Date('2025-05-01'),     changeFrequency: 'weekly',  priority: 0.9 },
     // Guide pages

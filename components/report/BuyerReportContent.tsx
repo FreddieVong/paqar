@@ -6,6 +6,7 @@ import { InsuranceCTA }    from './InsuranceCTA'
 import { CopyButton }      from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
 import { JomCheckUpsell }  from './JomCheckUpsell'
+import { VariantCheckCard } from './VariantCheckCard'
 
 const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const floorClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.floor(n / u) * u }
@@ -521,6 +522,22 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           </div>
         </div>
       )}
+
+      {/* 4a. Semakan Varian — official variant vs what the seller advertises */}
+      {(() => {
+        const val = vehicleData?.valuation
+        const raw = val?.family && val?.variant ? `${val.family} ${val.variant}`.trim() : (val?.family ?? null)
+        const officialVariant = raw
+          ? raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+          : null
+        return (
+          <VariantCheckCard
+            make={vehicleData?.make}
+            model={vehicleData?.model}
+            officialVariant={officialVariant}
+          />
+        )
+      })()}
 
       {/* 4b. Semakan Mileage — plausibility of the seller's CLAIMED reading.
           Paqar can't verify the real odometer; this checks whether the claimed
