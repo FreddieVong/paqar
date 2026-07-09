@@ -194,15 +194,23 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
       {/* 1. Keputusan Paqar — top decision card */}
       {effectiveVerdict != null && (() => {
+        // A price FAR below the market floor is a scam/hidden-problem
+        // signature (deposit scams, accident/flood cars), not a bargain —
+        // escalate the guidance instead of celebrating
+        const suspiciouslyCheap = effectiveVerdict === 'good_deal'
+          && hasMarketData && askingPriceRm! < marketMin! * 0.8
+
         const kepConfig = ({
-          good_deal:     { headline: 'BERBALOI',    sub: 'Tapi semak condition dan dokumen sebelum deposit.', headlineColor: 'text-[#0891B2]', bg: 'bg-[#F0FAFA]', border: 'border-[#99D4D1]' },
+          good_deal:     { headline: 'BERBALOI',    sub: suspiciouslyCheap ? 'Harga jauh di bawah pasaran — berhati-hati.' : 'Tapi semak condition dan dokumen sebelum deposit.', headlineColor: 'text-[#0891B2]', bg: 'bg-[#F0FAFA]', border: 'border-[#99D4D1]' },
           fair_price:    { headline: 'WAJAR',       sub: 'Teruskan, tapi semak condition dan dokumen dulu.',  headlineColor: 'text-[#064E4A]', bg: 'bg-[#F0FDF4]', border: 'border-[#BBF7D0]' },
           slightly_high: { headline: 'AGAK MAHAL',  sub: 'Ada ruang untuk tawar sebelum setuju.',            headlineColor: 'text-[#B45309]', bg: 'bg-[#FFFBEB]', border: 'border-[#FDE68A]' },
           overpriced:    { headline: 'MAHAL',       sub: 'Jangan bayar deposit dulu.',                       headlineColor: 'text-[#DC2626]', bg: 'bg-[#FEF2F2]', border: 'border-[#FECACA]' },
         } as const)[effectiveVerdict]
 
         const cadangan = ({
-          good_deal:     'Harga nampak berbaloi. Fokus semak condition, dokumen dan inspection sebelum bayar deposit.',
+          good_deal: suspiciouslyCheap
+            ? 'Harga macam ni selalunya ada sebab — scam deposit, kereta accident/banjir, atau masalah dokumen. Jangan bayar apa-apa sebelum jumpa kereta, penjual dan geran sendiri.'
+            : 'Harga nampak berbaloi. Fokus semak condition, dokumen dan inspection sebelum bayar deposit.',
           fair_price:    'Harga nampak wajar. Masih boleh minta sedikit kurang sebelum setuju.',
           slightly_high: hasMarketData
             ? `Target RM${fmt(offerLow)}–RM${fmt(offerHigh)}. Gunakan skrip di bawah.`

@@ -402,12 +402,22 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
               )
             })()}
 
-            {/* Short copy */}
-            {cfg!.copy(brand, model, year) && (
-              <p className="font-body text-[12px] text-[#6B7280] mb-1">
-                {cfg!.copy(brand, model, year)}
-              </p>
-            )}
+            {/* Short copy — a price FAR below market is a scam/hidden-problem
+                signature, not a bargain; escalate the guidance */}
+            {(() => {
+              const suspiciouslyCheap = hasDataResult!.verdict === 'good_deal'
+                && askInt > 0 && askInt < hasDataResult!.minPrice * 0.8
+              if (suspiciouslyCheap) return (
+                <p className="font-body text-[12px] font-semibold text-[#B45309] mb-1 leading-relaxed">
+                  Harga ini jauh di bawah pasaran — selalunya tanda scam deposit atau kereta
+                  bermasalah. Jangan bayar apa-apa sebelum jumpa kereta dan penjual sendiri.
+                </p>
+              )
+              const copy = cfg!.copy(brand, model, year)
+              return copy ? (
+                <p className="font-body text-[12px] text-[#6B7280] mb-1">{copy}</p>
+              ) : null
+            })()}
 
             {/* Price range */}
             {hasDataResult!.minPrice !== hasDataResult!.maxPrice && (
