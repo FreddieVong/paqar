@@ -226,7 +226,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!info) return {}
 
   const title       = `Harga ${info.brand} ${info.model} ${parsed.year} Terpakai Malaysia | Paqar`
-  const description = `Semak harga pasaran ${info.brand} ${info.model} ${parsed.year} terpakai berdasarkan listing terkini Mudah.my. Jangan bayar lebih dari yang sepatutnya.`
+  const description = `Semak harga pasaran ${info.brand} ${info.model} ${parsed.year} terpakai berdasarkan listing pasaran terkini. Jangan bayar lebih dari yang sepatutnya.`
 
   return {
     title,
@@ -317,7 +317,7 @@ export default async function YearModelPage({ params }: Props) {
             name:    `Berapa harga ${displayModel} ${year} terpakai?`,
             acceptedAnswer: {
               '@type': 'Answer',
-              text:    `Berdasarkan listing terkini di Mudah.my, harga ${displayModel} ${year} terpakai berada antara RM${stats.minPrice.toLocaleString()} hingga RM${stats.maxPrice.toLocaleString()}. Harga median ialah RM${stats.medianPrice.toLocaleString()}.${stats.updatedLabel ? ` Data dikemaskini ${stats.updatedLabel}.` : ''}`,
+              text:    `Berdasarkan listing pasaran terkini, harga ${displayModel} ${year} terpakai berada antara RM${stats.minPrice.toLocaleString()} hingga RM${stats.maxPrice.toLocaleString()}. Harga median ialah RM${stats.medianPrice.toLocaleString()}.${stats.updatedLabel ? ` Data dikemaskini ${stats.updatedLabel}.` : ''}`,
             },
           },
           {
@@ -372,7 +372,7 @@ export default async function YearModelPage({ params }: Props) {
                   Median: <span className="font-semibold">RM{stats.medianPrice.toLocaleString()}</span>
                 </p>
                 <p className="font-body text-[11px] text-[#9CA3AF]">
-                  Berdasarkan {stats.listingCount} listing terkini di Mudah.my
+                  Berdasarkan {stats.listingCount} listing pasaran terkini
                   {stats.updatedLabel ? ` · Dikemaskini: ${stats.updatedLabel}` : ''}
                 </p>
               </div>
@@ -397,7 +397,7 @@ export default async function YearModelPage({ params }: Props) {
                   Berapa harga pasaran {info.model} {year} sekarang?
                 </h2>
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                  Berdasarkan {stats.listingCount} listing di Mudah.my{stats.updatedLabel ? ` pada ${stats.updatedLabel}` : ''},
+                  Berdasarkan {stats.listingCount} listing pasaran{stats.updatedLabel ? ` pada ${stats.updatedLabel}` : ''},
                   harga pasaran {displayModel} {year} terpakai berada antara{' '}
                   <strong>RM{stats.minPrice.toLocaleString()}</strong> hingga{' '}
                   <strong>RM{stats.maxPrice.toLocaleString()}</strong>. Harga median ialah{' '}

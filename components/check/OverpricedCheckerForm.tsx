@@ -418,7 +418,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
 
             {/* Source + count + confidence */}
             <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
-              Berdasarkan {hasDataResult!.listingCount} listing terkini di Mudah.my
+              Berdasarkan {hasDataResult!.listingCount} listing pasaran terkini
               {hasDataResult!.fetchedAt ? ` · Dikemaskini: ${formatFetchedAt(hasDataResult!.fetchedAt)}` : ''}
             </p>
             {(() => {
