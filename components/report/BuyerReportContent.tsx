@@ -297,6 +297,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
               const conf    = CONFIDENCE_CONFIG[dataConfidenceLevel(mPrices.length)]
 
+              // Filtering is a feature — say it. A buyer who later browses the
+              // marketplace sees MORE results than our chips (fuzzy search mixes
+              // other years in); without this line, our rigor reads as gaps.
+              const shownCount    = relevantListings.filter(l => mPrices.includes(l.price)).length
+              const excludedCount = (marketPrices.listings.length ?? 0) - shownCount
+
               // Trade-in estimate (only when median is valid)
               const tradeInLow  = Math.round(median * 0.80 / 1000) * 1000
               const tradeInHigh = Math.round(median * 0.85 / 1000) * 1000
@@ -317,7 +323,11 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                     <p className="font-heading font-bold text-[14px] text-[#064E4A]">RM{fmt(median)}</p>
                   </div>
 
-                  <p className="font-body text-[11px] text-[#6B7280]">Harga listing dijumpai:</p>
+                  <p className="font-body text-[11px] text-[#6B7280]">
+                    {vehicleData?.registrationYear
+                      ? `Harga listing dijumpai (tahun ${vehicleData.registrationYear} sahaja):`
+                      : 'Harga listing dijumpai:'}
+                  </p>
                   <div className="flex flex-wrap gap-1.5">
                     {relevantListings.filter(l => mPrices.includes(l.price)).map((l, i) => (
                       <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
@@ -330,6 +340,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                   {/* Methodology + confidence */}
                   <p className="font-body text-[11px] text-[#9CA3AF]">
                     Berdasarkan {mPrices.length} listing serupa di pasaran
+                    {excludedCount > 0 ? ` · ${excludedCount} listing ditapis (tahun berbeza atau harga luar biasa)` : ''}
                   </p>
                   <div>
                     <div className="flex items-center gap-1.5">
@@ -338,11 +349,6 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                     </div>
                     <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">{conf.text}</p>
                   </div>
-
-                  <a href={marketPrices.searchUrl} target="_blank" rel="noopener noreferrer"
-                    className="font-body text-[11px] text-[#064E4A] hover:underline block">
-                    Lihat semua listing di Mudah →
-                  </a>
 
                   {/* Trade-in estimate */}
                   <div className="mt-1 pt-3 border-t border-[#F3F4F6]">

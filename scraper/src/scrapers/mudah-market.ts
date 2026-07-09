@@ -77,7 +77,9 @@ export async function scrapeMudahMarket(
       console.log('[mudah-market] page:', pageTitle, pageUrl)
 
       if (captured.length > 0) {
-        listings.push(...captured.slice(0, 15))
+        // Higher cap: consumption-side year/outlier filters discard non-matching
+        // listings, so more raw captures = more true comparables surviving
+        listings.push(...captured.slice(0, 25))
         return
       }
 
@@ -120,7 +122,7 @@ export async function scrapeMudahMarket(
             seen.add(href)
             results.push({ price, title: context.slice(0, 120), url: href })
           })
-          return results.slice(0, 10)
+          return results.slice(0, 25)
         },
         [makeKw, modelKw] as [string, string]
       )
