@@ -390,14 +390,14 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
               const gap  = Math.round(diff / 100) * 100
               if (diff / med < 0.02) return (
                 <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
-                  Harga ini hampir sama dengan harga pasaran median.
+                  Harga ini hampir sama dengan harga tengah pasaran.
                 </p>
               )
               return (
                 <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
                   {ask > med
-                    ? `Harga ini lebih tinggi RM${gap.toLocaleString()} dari harga pasaran median.`
-                    : `Harga ini lebih rendah RM${gap.toLocaleString()} dari harga pasaran median.`}
+                    ? `Harga ini lebih tinggi RM${gap.toLocaleString()} dari harga tengah pasaran.`
+                    : `Harga ini lebih rendah RM${gap.toLocaleString()} dari harga tengah pasaran.`}
                 </p>
               )
             })()}

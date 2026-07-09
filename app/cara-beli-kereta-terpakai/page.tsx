@@ -48,7 +48,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
           { '@type': 'HowToStep', position: 2, name: 'Semak geran dan hak milik', text: 'Pastikan nama dalam geran sama dengan IC penjual. Semak nombor enjin dan casis sama dengan geran. Pastikan tiada catatan cagaran bank.' },
           { '@type': 'HowToStep', position: 3, name: 'Semak pinjaman bank aktif', text: 'Minta penjual tunjukkan surat penyelesaian pinjaman atau kelulusan bank untuk jual sebelum bayar apa-apa.' },
           { '@type': 'HowToStep', position: 4, name: 'Semak kondisi fizikal', text: 'Semak cat, bonet, dan bawah kereta. Buat test drive dan bawa ke bengkel untuk inspection profesional.' },
-          { '@type': 'HowToStep', position: 5, name: 'Semak harga pasaran', text: 'Guna Paqar untuk dapat verdict harga percuma atau Laporan Pembeli RM12 dengan skrip rundingan. Tambah Semakan Accident/Claim Insurans RM100 untuk semak rekod claim.' },
+          { '@type': 'HowToStep', position: 5, name: 'Semak harga pasaran', text: 'Guna Paqar untuk dapat keputusan harga percuma atau Laporan Pembeli RM12 dengan skrip rundingan. Tambah Semakan Accident/Claim Insurans RM100 untuk semak rekod claim.' },
           { '@type': 'HowToStep', position: 6, name: 'Bayar deposit dengan betul', text: 'Bayar deposit hanya selepas semua semakan selesai. Pastikan perjanjian jual beli bertulis dengan syarat refund yang jelas.' },
         ],
       },

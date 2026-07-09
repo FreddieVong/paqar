@@ -7,7 +7,7 @@ const MARKET_PRICES = ['RM37,500', 'RM38,000', 'RM39,800', 'RM41,500', 'RM42,000
 
 const SAMPLE_SCRIPT = `Salam, saya berminat dengan Perodua Myvi 2019 yang tuan/puan jual.
 
-Saya dah semak 10 listing serupa di pasaran — median harga sekarang RM42,750, dalam julat RM37,500–RM47,000.
+Saya dah semak 10 listing serupa di pasaran — harga tengah pasaran sekarang RM42,750, dalam julat RM37,500–RM47,000.
 
 Harga RM55,000 agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM38,000–RM43,000?`
 
@@ -155,7 +155,7 @@ export function SampleReportPreview() {
           </div>
           <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti Harga Pasaran</p>
           <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2 mb-2">
-            <p className="font-body text-[12px] text-[#6B7280]">Median pasaran</p>
+            <p className="font-body text-[12px] text-[#6B7280]">Harga tengah pasaran</p>
             <p className="font-heading font-bold text-[13px] text-[#064E4A]">RM42,750</p>
           </div>
           <div className="flex flex-wrap gap-1.5 mb-2">

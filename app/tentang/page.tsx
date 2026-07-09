@@ -58,14 +58,14 @@ export default function TentangPage() {
             <div>
               <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semak harga pasaran — percuma</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Masukkan model, tahun, dan harga penjual. Paqar semak data listing semasa dan bagi verdict: murah, wajar, atau mahal — dengan jurang RM dari median pasaran.
+                Masukkan model, tahun, dan harga penjual. Paqar semak data listing semasa dan bagi keputusan: murah, wajar, atau mahal — dengan jurang RM dari harga tengah pasaran.
               </p>
             </div>
 
             <div>
               <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Laporan Pembeli — RM12</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Laporan satu bayaran yang merangkumi verdict harga, range pasaran penuh, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.
+                Laporan satu bayaran yang merangkumi keputusan harga, julat pasaran penuh, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.
               </p>
             </div>
 

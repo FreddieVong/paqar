@@ -92,7 +92,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
                        transition-all"
           />
           <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
-            Disyorkan — dengan harga ini, laporan anda dapat verdict harga dan skrip rundingan peribadi.
+            Disyorkan — dengan harga ini, laporan anda dapat keputusan harga dan skrip rundingan peribadi.
           </p>
         </div>
 

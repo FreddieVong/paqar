@@ -37,10 +37,10 @@ const MODELS: Record<string, ModelConfig> = {
       'Cat bumbung dan tiang A/B perlu sekata — kereta banjir sering ada kelunturan di sini',
     ],
     faqs: [
-      { q: 'Berapa harga Myvi terpakai 2020?', a: 'Harga Myvi 2020 terpakai biasanya antara RM46,000 hingga RM60,000 bergantung kepada varian (E, X, AV, H) dan jarak tempuh. Semak harga semasa di Paqar untuk verdict yang tepat.' },
+      { q: 'Berapa harga Myvi terpakai 2020?', a: 'Harga Myvi 2020 terpakai biasanya antara RM46,000 hingga RM60,000 bergantung kepada varian (E, X, AV, H) dan jarak tempuh. Semak harga semasa di Paqar untuk keputusan harga yang tepat.' },
       { q: 'Varian Myvi mana yang paling berbaloi dibeli terpakai?', a: 'Varian H (1.5L) dan AV menawarkan nilai terbaik kerana ada VSC, ASA, dan pelek aloi. Varian X 1.3L lebih murah tapi ketiadaan VSC bermakna kurang selamat.' },
       { q: 'Apa yang perlu disemak sebelum beli Myvi terpakai?', a: 'Semak saman dengan PDRM dan JPJ, semak geran asal, rekod servis di Perodua, kondisi airbag, dan test drive untuk dengar bunyi gear atau enjin.' },
-      { q: 'Boleh tawar berapa untuk Myvi terpakai?', a: 'Bergantung kepada verdict harga semasa. Jika Paqar tunjukkan harga MAHAL, anda ada asas untuk tawar turun menggunakan harga median pasaran sebagai rujukan.' },
+      { q: 'Boleh tawar berapa untuk Myvi terpakai?', a: 'Bergantung kepada keputusan harga semasa. Jika Paqar tunjukkan harga MAHAL, anda ada asas untuk tawar turun menggunakan harga tengah pasaran sebagai rujukan.' },
     ],
   },
   'perodua-axia': {
@@ -353,7 +353,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!cfg) return {}
   const year        = new Date().getFullYear()
   const title       = `Harga ${cfg.brand} ${cfg.model} Terpakai Malaysia ${year} | Paqar`
-  const description = `Semak harga pasaran ${cfg.brand} ${cfg.model} terpakai Malaysia — anggaran harga mengikut tahun, tip pembeli, dan verdict harga percuma.`
+  const description = `Semak harga pasaran ${cfg.brand} ${cfg.model} terpakai Malaysia — anggaran harga mengikut tahun, tip pembeli, dan keputusan harga percuma.`
   return {
     title,
     description,

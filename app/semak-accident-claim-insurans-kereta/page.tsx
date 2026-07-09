@@ -158,8 +158,8 @@ export default function SemakAccidentClaimInsuransPage() {
             </div>
             <div className="px-5 py-1">
               {[
-                { title: 'Verdict harga pasaran', desc: 'Murah, wajar, atau mahal — berdasarkan data semasa.' },
-                { title: 'Harga pasaran & anggaran trade-in', desc: 'Median, range, dan ruang rundingan anda.' },
+                { title: 'Keputusan harga pasaran', desc: 'Murah, wajar, atau mahal — berdasarkan data semasa.' },
+                { title: 'Harga pasaran & anggaran trade-in', desc: 'Harga tengah, julat, dan ruang rundingan anda.' },
                 { title: 'Maklumat kenderaan', desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
                 { title: 'Skrip rundingan harga', desc: 'Masuk rundingan dengan data, bukan agak-agak.' },
                 { title: 'Soalan penting untuk penjual', desc: 'Tanya soalan yang boleh dedahkan risiko tersembunyi.' },

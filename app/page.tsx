@@ -36,7 +36,7 @@ const homeSchema = {
     {
       '@type': 'Service',
       name: 'Laporan Pembeli Kereta Terpakai',
-      description: 'Laporan Pembeli RM12 merangkumi verdict harga pasaran, median dan range harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
+      description: 'Laporan Pembeli RM12 merangkumi keputusan harga pasaran, harga tengah dan julat harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
       provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
       areaServed: { '@type': 'Country', name: 'Malaysia' },
       offers: { '@type': 'Offer', price: '12', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
@@ -55,12 +55,12 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Apakah beza semakan percuma dan laporan RM12?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri verdict harga dan jurang RM dari median pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar booking atau deposit.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar booking atau deposit.' },
         },
         {
           '@type': 'Question',
           name: 'Apa yang ada dalam Laporan Pembeli RM12 Paqar?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM12 merangkumi: verdict harga pasaran (murah/wajar/mahal), median dan range harga berdasarkan listing semasa, anggaran trade-in, maklumat kenderaan (tahun daftar, enjin, jenis badan, nombor rangka), skrip rundingan harga siap pakai, soalan penting untuk penjual, dan checklist sebelum bayar deposit.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM12 merangkumi: keputusan harga pasaran (murah/wajar/mahal), harga tengah dan julat harga berdasarkan listing semasa, anggaran trade-in, maklumat kenderaan (tahun daftar, enjin, jenis badan, nombor rangka), skrip rundingan harga siap pakai, soalan penting untuk penjual, dan checklist sebelum bayar deposit.' },
         },
         {
           '@type': 'Question',
@@ -155,8 +155,8 @@ export default async function HomePage() {
               <p className="font-body text-[13px] text-[#6B7280] mb-3">Tahu sama ada harga seller mahal, wajar atau berbaloi.</p>
               <div className="space-y-1.5 mb-3">
                 {[
-                  'Verdict harga percuma',
-                  'Median & range pasaran',
+                  'Keputusan harga percuma',
+                  'Harga tengah & julat pasaran',
                   'Analisis siap — bukan data mentah',
                 ].map(item => (
                   <div key={item} className="flex items-center gap-2">
@@ -314,7 +314,7 @@ export default async function HomePage() {
           <div className="flex flex-col gap-3">
             {[
               {
-                quote: '"Semak dulu sebelum pegi tengok kereta. Penjual minta RM42k tapi verdict cakap overpriced. Lepas tunjuk data, dia turun RM3k."',
+                quote: '"Semak dulu sebelum pegi tengok kereta. Penjual minta RM42k tapi Paqar cakap MAHAL. Lepas tunjuk data, dia turun RM3k."',
                 name: 'Hafiz, Selangor',
                 car: 'Perodua Myvi 2019',
                 outcome: 'Jimat RM3,000',
@@ -354,7 +354,7 @@ export default async function HomePage() {
             {[
               {
                 q: 'Apakah beza semakan percuma dan laporan RM12?',
-                a: 'Semakan percuma beri verdict harga dan jurang RM dari median pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar booking atau deposit.',
+                a: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar booking atau deposit.',
               },
               {
                 q: 'Adakah saya perlu daftar akaun?',
@@ -390,7 +390,7 @@ export default async function HomePage() {
             Semak sebelum<br />bayar booking atau deposit
           </h2>
           <p className="font-body text-[14px] text-white/70 mb-7">
-            Verdict harga percuma.
+            Keputusan harga percuma.
             <span className="inline-block w-1.5 h-1.5 bg-[#FACC15] rounded-full mx-2 align-middle" />
             Laporan Pembeli RM12.
             <span className="inline-block w-1.5 h-1.5 bg-[#FACC15] rounded-full mx-2 align-middle" />

@@ -317,7 +317,7 @@ export default async function YearModelPage({ params }: Props) {
             name:    `Berapa harga ${displayModel} ${year} terpakai?`,
             acceptedAnswer: {
               '@type': 'Answer',
-              text:    `Berdasarkan listing pasaran terkini, harga ${displayModel} ${year} terpakai berada antara RM${stats.minPrice.toLocaleString()} hingga RM${stats.maxPrice.toLocaleString()}. Harga median ialah RM${stats.medianPrice.toLocaleString()}.${stats.updatedLabel ? ` Data dikemaskini ${stats.updatedLabel}.` : ''}`,
+              text:    `Berdasarkan listing pasaran terkini, harga ${displayModel} ${year} terpakai berada antara RM${stats.minPrice.toLocaleString()} hingga RM${stats.maxPrice.toLocaleString()}. Harga tengah ialah RM${stats.medianPrice.toLocaleString()}.${stats.updatedLabel ? ` Data dikemaskini ${stats.updatedLabel}.` : ''}`,
             },
           },
           {
@@ -400,7 +400,7 @@ export default async function YearModelPage({ params }: Props) {
                   Berdasarkan {stats.listingCount} listing pasaran{stats.updatedLabel ? ` pada ${stats.updatedLabel}` : ''},
                   harga pasaran {displayModel} {year} terpakai berada antara{' '}
                   <strong>RM{stats.minPrice.toLocaleString()}</strong> hingga{' '}
-                  <strong>RM{stats.maxPrice.toLocaleString()}</strong>. Harga median ialah{' '}
+                  <strong>RM{stats.maxPrice.toLocaleString()}</strong>. Harga tengah ialah{' '}
                   <strong>RM{stats.medianPrice.toLocaleString()}</strong>.
                 </p>
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-2">

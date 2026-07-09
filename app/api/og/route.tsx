@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
               Tahu sama ada harga penjual berpatutan
             </span>
             <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '22px', lineHeight: 1.4 }}>
-              Verdict percuma · Laporan Pembeli RM12
+              Keputusan harga percuma · Laporan Pembeli RM12
             </span>
           </div>
           <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '14px', letterSpacing: '0.05em' }}>

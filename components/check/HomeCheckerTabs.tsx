@@ -78,7 +78,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
         <div className="mt-6 flex flex-col gap-2">
           {[
             'Masukkan kereta & harga seller',
-            'Dapat verdict percuma serta-merta',
+            'Dapat keputusan harga serta-merta',
             'Nak skrip rundingan & data penuh? RM12',
           ].map((step, i) => (
             <div key={i} className="flex items-center gap-2.5">

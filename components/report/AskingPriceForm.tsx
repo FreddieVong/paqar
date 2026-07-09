@@ -36,10 +36,10 @@ export function AskingPriceForm({ checkId, claimToken }: Props) {
   return (
     <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
       <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#B45309] mb-1">
-        Verdict Harga Belum Tersedia
+        Keputusan Harga Belum Tersedia
       </p>
       <p className="font-body text-[13px] text-[#374151] mb-4">
-        Masukkan harga yang penjual minta untuk dapatkan verdict dan skrip rundingan.
+        Masukkan harga yang penjual minta untuk dapatkan keputusan harga dan skrip rundingan.
       </p>
       <form onSubmit={handleSubmit} className="flex gap-2">
         <div className="relative flex-1">
