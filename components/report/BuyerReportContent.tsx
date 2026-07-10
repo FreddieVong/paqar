@@ -7,6 +7,7 @@ import { CopyButton }      from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
 import { JomCheckUpsell }  from './JomCheckUpsell'
 import { VariantCheckCard } from './VariantCheckCard'
+import { findGuideByMakeModel, findVariantPosition, VERDICT_LABELS } from '@/lib/variant-guides'
 
 const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const floorClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.floor(n / u) * u }
@@ -142,6 +143,15 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const effectiveVerdict = priceVerdict ?? depreciationVerdict
   const verdictSource    = priceVerdict ? 'market' : depreciationVerdict ? 'depreciation' : null
   const vehicleNotFound  = !vehicleData?.make
+
+  // Official variant (from NVIC valuation) — shared by the compact context
+  // line in Perbandingan Harga and the full Semakan Varian card below
+  const rawVariant = vehicleData?.valuation?.family && vehicleData?.valuation?.variant
+    ? `${vehicleData.valuation.family} ${vehicleData.valuation.variant}`.trim()
+    : (vehicleData?.valuation?.family ?? null)
+  const officialVariant = rawVariant
+    ? rawVariant.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+    : null
 
   // Short identity (make + model) — the full official variant string lives in
   // the JPJ card; repeating the all-caps wall here would duplicate it
@@ -300,6 +310,31 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
               Perbandingan Harga
             </p>
+
+            {/* Compact variant context — price must be judged for the RIGHT
+                variant; the full ladder/advice stays in Semakan Varian below */}
+            {officialVariant && (() => {
+              const guide = findGuideByMakeModel(vehicleData?.make, vehicleData?.model)
+              const pos = guide
+                ? findVariantPosition(guide, `${officialVariant} ${vehicleData?.description ?? ''}`, vehicleData?.registrationYear)
+                : null
+              const matched = pos?.matchedVariantName
+                ? pos.generation.variants.find(v => v.name === pos.matchedVariantName) ?? null
+                : null
+              return (
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 bg-[#F9FAFB] rounded-lg px-3 py-2 mb-3">
+                  <p className="font-body text-[12px] text-[#6B7280]">
+                    Varian rekod: <span className="font-heading font-bold text-[#111827]">{officialVariant}</span>
+                  </p>
+                  {matched && (
+                    <span className="font-heading font-bold text-[10px] px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D]">
+                      {VERDICT_LABELS[matched.verdict]}
+                    </span>
+                  )}
+                  <p className="font-body text-[12px] text-[#6B7280]">— banding harga ikut varian ini.</p>
+                </div>
+              )
+            })()}
 
             {mPrices.length > 0 && marketPrices && (() => {
               const median  = marketMedian!
@@ -524,22 +559,13 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       )}
 
       {/* 4a. Semakan Varian — official variant vs what the seller advertises */}
-      {(() => {
-        const val = vehicleData?.valuation
-        const raw = val?.family && val?.variant ? `${val.family} ${val.variant}`.trim() : (val?.family ?? null)
-        const officialVariant = raw
-          ? raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
-          : null
-        return (
-          <VariantCheckCard
-            make={vehicleData?.make}
-            model={vehicleData?.model}
-            officialVariant={officialVariant}
-            description={vehicleData?.description}
-            registrationYear={vehicleData?.registrationYear}
-          />
-        )
-      })()}
+      <VariantCheckCard
+        make={vehicleData?.make}
+        model={vehicleData?.model}
+        officialVariant={officialVariant}
+        description={vehicleData?.description}
+        registrationYear={vehicleData?.registrationYear}
+      />
 
       {/* 4b. Semakan Mileage — plausibility of the seller's CLAIMED reading.
           Paqar can't verify the real odometer; this checks whether the claimed
