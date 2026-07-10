@@ -8,6 +8,7 @@ import { JomCheckSection } from './JomCheckSection'
 import { JomCheckUpsell }  from './JomCheckUpsell'
 import { VariantCheckCard } from './VariantCheckCard'
 import { findGuideByMakeModel, findVariantPosition, VERDICT_LABELS } from '@/lib/variant-guides'
+import { assessDepreciation } from '@/lib/depreciation'
 
 const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const floorClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.floor(n / u) * u }
@@ -142,6 +143,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
   const effectiveVerdict = priceVerdict ?? depreciationVerdict
   const verdictSource    = priceVerdict ? 'market' : depreciationVerdict ? 'depreciation' : null
+
+  // New-price context — only shown WITH an interpretation (lib/depreciation.ts);
+  // a bare new-price anchor next to market data is the dealer's pitch
+  const depreciationInsight = (wmNewPrice != null && marketMedian != null && regYear != null)
+    ? assessDepreciation(wmNewPrice, marketMedian, new Date().getFullYear() - regYear)
+    : null
   const vehicleNotFound  = !vehicleData?.make
 
   // Official variant (from NVIC valuation) — shared by the compact context
@@ -408,6 +415,20 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                     </p>
                   </div>
 
+                  {/* New price + depreciation insight — answers "what happens
+                      when I sell this later?", which nothing else covers */}
+                  {depreciationInsight && wmNewPrice != null && (
+                    <div className="pt-3 border-t border-[#F3F4F6]">
+                      <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Harga ketika baru (anggaran)</p>
+                      <p className="font-heading font-bold text-[14px] text-[#111827]">
+                        RM{fmt(wmNewPrice)}
+                      </p>
+                      <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+                        {depreciationInsight.note}
+                      </p>
+                    </div>
+                  )}
+
                   {askingPriceRm != null && (
                     <a
                       href={`/kira-ansuran-kereta?harga=${askingPriceRm}`}
@@ -422,8 +443,9 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
             {/* Original new price — only shown when it's the verdict's basis
                 (depreciation fallback). Next to live market data it just
-                makes any used price look cheap and muddies the comparison. */}
-            {wmNewPrice != null && verdictSource !== 'market' && (
+                makes any used price look cheap and muddies the comparison.
+                Suppressed when the interpreted block above already shows it. */}
+            {wmNewPrice != null && verdictSource !== 'market' && depreciationInsight == null && (
               <div className="bg-[#F9FAFB] rounded-lg px-3 py-2.5">
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[12px] text-[#6B7280]">Harga baru asal kenderaan ini</p>
