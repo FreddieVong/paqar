@@ -291,9 +291,94 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
     make: 'Toyota', model: 'Alphard', brand: 'Toyota',
     question: 'Alphard varian mana patut anda beli?',
     answerLine: 'Untuk kebanyakan pembeli: 2.5 G — kerusi kapten dan kit cukup. SC berbaloi untuk rupa; Executive Lounge hanya jika bajet bukan isu.',
-    bestValue: '2.5 G',
-    avoid: null,
+    bestValue: '2.5 G (AH30) · 240G (AH20)',
+    avoid: 'Hybrid AH20 lama tanpa rekod bateri',
     generations: [
+      {
+        label: 'AH20',
+        years: '2008–2014',
+        variants: [
+          {
+            name: '240X',
+            matchTokens: ['X'],
+            verdict: 'ok',
+            verdictNote: 'Varian asas 8 tempat duduk — okay untuk keluarga besar berbajet, tapi jangan bayar harga G.',
+            differentiators: [
+              '8 tempat duduk (bangku, bukan kerusi kapten)',
+              'Biasanya satu pintu gelangsar elektrik sahaja — sahkan',
+              'Trim fabrik asas',
+            ],
+            usedPriceBand: 'Termurah — biasanya RM5–10k bawah 240G tahun sama',
+            spotChecks: [
+              'Baris kedua: bangku 3 tempat duduk = X',
+              'Tekan butang pintu: berapa pintu yang bergerak sendiri?',
+            ],
+          },
+          {
+            name: '240S',
+            matchTokens: ['S'],
+            verdict: 'worth-it-if',
+            verdictNote: 'Berbaloi jika anda suka rupa sport dan bezanya dengan X kecil — kit dalaman tak jauh beza.',
+            differentiators: [
+              'Bodykit + rim lebih sport dari X/G',
+              'Dua pintu gelangsar elektrik pada kebanyakan unit — sahkan',
+            ],
+            usedPriceBand: 'Biasanya antara X dan G',
+            spotChecks: [
+              'Bodykit S asal kilang — sahkan dengan rekod, badge senang tampal',
+              'Dua-dua pintu gelangsar elektrik berfungsi',
+            ],
+          },
+          {
+            name: '240G',
+            matchTokens: ['G'],
+            verdict: 'best-value',
+            verdictNote: 'Nilai terbaik generasi ini — kerusi kapten dan pintu elektrik dua belah, dengan kos minyak 2.4.',
+            differentiators: [
+              'Kerusi kapten baris kedua',
+              'Dua pintu gelangsar elektrik + trim lebih mewah',
+              'Enjin 2.4 jauh lebih jimat dari 3.5 (minyak + cukai jalan)',
+            ],
+            usedPriceBand: 'Biasanya RM5–10k atas X',
+            spotChecks: [
+              '2 kerusi kapten di baris kedua',
+              'Pintu gelangsar elektrik kiri DAN kanan berfungsi',
+            ],
+          },
+          {
+            name: '3.5 (350S / 350G)',
+            matchTokens: ['3.5'],
+            verdict: 'worth-it-if',
+            verdictNote: 'Berbaloi jika kerap bawa muatan penuh dan sanggup tanggung minyak + cukai jalan V6 — untuk kegunaan biasa, 2.4 memadai.',
+            differentiators: [
+              'Enjin V6 3.5 — tenaga sebenar bila penuh penumpang',
+              'Minyak dan cukai jalan jauh lebih mahal dari 2.4',
+              '350G L Package tambah kerusi executive',
+            ],
+            usedPriceBand: 'Biasanya atas 240G — ikut grade dan tahun',
+            spotChecks: [
+              'Sahkan cc pada geran: sekitar 3,456cc (2.4 = sekitar 2,362cc)',
+              'Jangan bayar harga 3.5 hanya kerana emblem',
+            ],
+          },
+          {
+            name: 'Hybrid (ATH20)',
+            years: '2011–2014',
+            matchTokens: ['HYBRID'],
+            verdict: 'avoid',
+            verdictNote: 'Elak kecuali ada bukti bateri hibrid diganti atau disahkan sihat — pada umur ini, kos bateri boleh melebihi penjimatan minyak.',
+            differentiators: [
+              'Bateri hibrid berumur 10+ tahun — kos ganti ribuan ringgit',
+              'Sistem hibrid E-Four lebih kompleks untuk servis luar',
+            ],
+            usedPriceBand: 'Jangan bayar premium untuk unit tanpa rekod bateri',
+            spotChecks: [
+              'Paparan bateri hibrid di meter',
+              'MINTA bukti servis atau tukar bateri — paling penting untuk varian ini',
+            ],
+          },
+        ],
+      },
       {
         label: 'AH30',
         years: '2015–2023',
@@ -391,6 +476,10 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
       {
         q: 'Alphard 2.5 ke 3.5 — apa bezanya?',
         a: '3.5L V6 lebih bertenaga tapi cukai jalan, minyak, dan penyelenggaraan jauh lebih mahal. Untuk kegunaan keluarga biasa, 2.5L sudah memadai — kebanyakan unit di Malaysia adalah 2.5L.',
+      },
+      {
+        q: 'Alphard lama (2008–2014) masih berbaloi beli?',
+        a: 'Boleh, tapi pilih dengan teliti — kebanyakan unit berumur 12 tahun ke atas. 240G nilai terbaik: kerusi kapten dan pintu elektrik dua belah dengan kos minyak 2.4. Pintu gelangsar elektrik dan suspensi adalah kos pembaikan biasa pada umur ini — test semua fungsi elektrik semasa inspection.',
       },
     ],
   },
