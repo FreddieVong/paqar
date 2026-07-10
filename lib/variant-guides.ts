@@ -495,6 +495,44 @@ const CITY_GUIDE: VariantGuide = {
   avoid: null,
   generations: [
     {
+      label: 'Generasi 5 (GM2)',
+      years: '2008–2014',
+      variants: [
+        {
+          name: '1.5 S',
+          matchTokens: ['S'],
+          verdict: 'ok',
+          verdictNote: 'Pilihan bajet yang okay — enjin dan gearbox sama dengan E, cuma kit lebih ringkas. Selepas facelift 2012 ada juga gred S+ dengan kit sikit lebih.',
+          differentiators: [
+            'Enjin 1.5 i-VTEC sama dengan E',
+            'Tiada paddle shifter',
+            'Rim lebih kecil, tiada fog lamp',
+          ],
+          usedPriceBand: 'Termurah — biasanya RM1–3k bawah E',
+          spotChecks: [
+            'Tiada paddle shifter belakang stereng',
+            'Tiada fog lamp depan',
+          ],
+        },
+        {
+          name: '1.5 E',
+          matchTokens: ['E'],
+          verdict: 'best-value',
+          verdictNote: 'Nilai terbaik generasi ini — kit penuh zaman itu dengan beza harga yang kecil dari S.',
+          differentiators: [
+            'Paddle shifter belakang stereng',
+            'Rim 16 inci + fog lamp',
+            'VSA pada sesetengah unit — sahkan',
+          ],
+          usedPriceBand: 'Biasanya RM1–3k atas S',
+          spotChecks: [
+            'Paddle shifter belakang stereng — penanda E paling mudah',
+            'Fog lamp depan + rim 16 inci',
+          ],
+        },
+      ],
+    },
+    {
       label: 'Generasi 6 (GM6)',
       years: '2014–2019',
       variants: [
@@ -643,6 +681,10 @@ const CITY_GUIDE: VariantGuide = {
     {
       q: 'Macam mana nak tahu City tu kena banjir?',
       a: 'Bau lembap atau pewangi yang terlalu kuat, karat pada rel kerusi dan bawah karpet, wap air dalam lampu, dan elektronik yang tidak konsisten. Kereta banjir Disember 2021 masih beredar di pasaran — inspection fizikal sangat penting untuk City.',
+    },
+    {
+      q: 'City lama (2008–2014) masih berbaloi beli?',
+      a: 'Boleh — enjin 1.5 i-VTEC generasi ini terkenal tahan lasak dan kos servis berpatutan. Pilih gred E untuk kit penuh; beza harga dengan S biasanya kecil. Pada umur ini, kondisi dan rekod servis lebih penting dari varian.',
     },
   ],
 }
