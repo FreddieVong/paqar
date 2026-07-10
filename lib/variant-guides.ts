@@ -529,7 +529,11 @@ function variantTokens(v: VariantInfo): string[] {
 
 /**
  * Locate a car within its model's variant ladder.
- * - Generation picked by registration year (falls back to the latest)
+ * - Generation picked by registration year. A known year OUTSIDE every
+ *   covered generation returns null — showing a wrong-era ladder (2006 Myvi
+ *   against the 2018+ range) is worse than showing nothing. Unknown year
+ *   falls back to the latest generation (rare; ladder is labeled with its
+ *   years so it stays honest).
  * - Matching is whole-token only and curator-controlled via matchTokens —
  *   single letters like H/G/S are substring landmines ("H" is inside "HEV")
  * - Ambiguity (two variants match equally) returns NO match: a wrong
@@ -540,11 +544,12 @@ export function findVariantPosition(
   guide: VariantGuide,
   officialText: string | null | undefined,
   registrationYear: string | null | undefined,
-): { generation: VariantGeneration; matchedVariantName: string | null } {
+): { generation: VariantGeneration; matchedVariantName: string | null } | null {
   // Generation by registration year
   const regYear = registrationYear ? parseInt(registrationYear, 10) : NaN
-  let generation = guide.generations[guide.generations.length - 1]!
+  let generation: VariantGeneration | null = guide.generations[guide.generations.length - 1]!
   if (Number.isFinite(regYear)) {
+    generation = null
     for (const gen of guide.generations) {
       const nums = gen.years.match(/\d{4}/g)?.map(Number) ?? []
       const start = nums[0]
@@ -552,6 +557,7 @@ export function findVariantPosition(
       if (start != null && regYear >= start && regYear <= end) { generation = gen; break }
     }
   }
+  if (!generation) return null
 
   if (!officialText) return { generation, matchedVariantName: null }
   const textTokens = new Set(tokenize(officialText))

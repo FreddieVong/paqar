@@ -122,8 +122,9 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
         </div>
       )}
 
-      {/* Unsupported model with a record — simple advice, softened wording */}
-      {!guide && officialVariant && (
+      {/* Unsupported model OR out-of-coverage year, with a record —
+          simple advice, softened wording */}
+      {(!guide || !position) && officialVariant && (
         <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
           Pastikan iklan penjual sebutkan varian yang sama. Kalau iklan kata varian
           lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan
