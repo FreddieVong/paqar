@@ -10,6 +10,8 @@ export type VariantVerdict = 'best-value' | 'ok' | 'avoid' | 'worth-it-if'
 export interface VariantInfo {
   name:            string
   years?:          string     // only when availability differs from the generation span
+  matchTokens?:    string[]   // uppercase whole tokens that identify this variant in
+                              // official record strings; fallback derives from name
   verdict:         VariantVerdict
   verdictNote:     string
   differentiators: string[]   // max 3
@@ -54,6 +56,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
         variants: [
           {
             name: '1.3 G (Standard)',
+          matchTokens: ['G'],
             verdict: 'avoid',
             verdictNote: 'Elak jika ada pilihan — beza harga dengan X terlalu kecil untuk apa yang anda hilang.',
             differentiators: [
@@ -69,6 +72,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
           },
           {
             name: '1.3 X',
+          matchTokens: ['X'],
             verdict: 'ok',
             verdictNote: 'Pilihan bajet yang okay — dapat ASA pada kebanyakan tahun.',
             differentiators: [
@@ -84,6 +88,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
           },
           {
             name: '1.5 H',
+          matchTokens: ['H'],
             verdict: 'best-value',
             verdictNote: 'Nilai terbaik — enjin 1.5, kit hampir penuh, tanpa harga AV.',
             differentiators: [
@@ -100,6 +105,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
           },
           {
             name: '1.5 AV',
+          matchTokens: ['AV'],
             verdict: 'worth-it-if',
             verdictNote: 'Berbaloi jika anda mahu kit penuh dan bezanya dengan H kurang dari RM3k.',
             differentiators: [
@@ -156,6 +162,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
         variants: [
           {
             name: '2.5 X',
+          matchTokens: ['X'],
             verdict: 'ok',
             verdictNote: 'Varian asas 8 tempat duduk — okay untuk kegunaan keluarga besar, tapi jangan bayar harga G.',
             differentiators: [
@@ -171,6 +178,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
           },
           {
             name: '2.5 G',
+          matchTokens: ['G'],
             verdict: 'best-value',
             verdictNote: 'Nilai terbaik — kerusi kapten baris kedua dan kit selesa, tanpa premium SC/EL.',
             differentiators: [
@@ -186,6 +194,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
           },
           {
             name: '2.5 SC',
+          matchTokens: ['SC'],
             verdict: 'worth-it-if',
             verdictNote: 'Berbaloi jika anda mahu rupa sporty — mekanikalnya sama dengan G.',
             differentiators: [
@@ -202,6 +211,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
           },
           {
             name: '3.5 Executive Lounge',
+          matchTokens: ['EXECUTIVE', 'LOUNGE', '3.5'],
             verdict: 'worth-it-if',
             verdictNote: 'Flagship 3.5L — hanya jika bajet bukan isu. Kos penyelenggaraan dan minyak jauh lebih tinggi.',
             differentiators: [
@@ -262,6 +272,7 @@ const BEZZA_GUIDE: VariantGuide = {
       variants: [
         {
           name: '1.0 G',
+          matchTokens: ['G', '1.0'],
           verdict: 'worth-it-if',
           verdictNote: 'Berbaloi jika bajet sangat ketat dan kegunaan bandar sahaja — enjin 3 silinder terasa mengah di lebuh raya dengan muatan penuh.',
           differentiators: [
@@ -277,6 +288,7 @@ const BEZZA_GUIDE: VariantGuide = {
         },
         {
           name: '1.3 X',
+          matchTokens: ['X'],
           verdict: 'best-value',
           verdictNote: 'Nilai terbaik — enjin 1.3 4 silinder lebih lancar dan senyap, kit harian cukup, dan paling mudah dijual semula.',
           differentiators: [
@@ -292,6 +304,7 @@ const BEZZA_GUIDE: VariantGuide = {
         },
         {
           name: '1.3 Advance / AV',
+          matchTokens: ['ADVANCE', 'AV'],
           years: 'Advance: 2016–2019 · AV: 2020+',
           verdict: 'worth-it-if',
           verdictNote: 'Berbaloi jika beza dengan X kurang dari RM3k — anda dapat push-start dan kit keselamatan tambahan.',
@@ -349,6 +362,7 @@ const CITY_GUIDE: VariantGuide = {
       variants: [
         {
           name: 'S',
+          matchTokens: ['S'],
           verdict: 'worth-it-if',
           verdictNote: 'Berbaloi jika harga jelas lebih murah dari E — kit sangat asas untuk kereta kelas ini.',
           differentiators: [
@@ -364,6 +378,7 @@ const CITY_GUIDE: VariantGuide = {
         },
         {
           name: 'E',
+          matchTokens: ['E'],
           verdict: 'best-value',
           verdictNote: 'Nilai terbaik — sports rim, skrin sentuh dan kunci pintar, tanpa harga varian V.',
           differentiators: [
@@ -379,6 +394,7 @@ const CITY_GUIDE: VariantGuide = {
         },
         {
           name: 'V',
+          matchTokens: ['V'],
           verdict: 'worth-it-if',
           verdictNote: 'Berbaloi jika anda mahu kit penuh dan bezanya dengan E kurang dari RM4k.',
           differentiators: [
@@ -394,6 +410,7 @@ const CITY_GUIDE: VariantGuide = {
         },
         {
           name: 'Sport Hybrid (i-DCD)',
+          matchTokens: ['HYBRID'],
           years: '2017–2019 sahaja',
           verdict: 'worth-it-if',
           verdictNote: 'Hanya dengan rekod servis Honda yang penuh — sistem hibrid i-DCD dan bateri berumur adalah risiko kos yang sebenar.',
@@ -417,6 +434,7 @@ const CITY_GUIDE: VariantGuide = {
       variants: [
         {
           name: 'S / E',
+          matchTokens: ['S', 'E'],
           verdict: 'best-value',
           verdictNote: 'E adalah nilai terbaik generasi ini — beza dengan V kebanyakannya keselesaan, bukan keperluan.',
           differentiators: [
@@ -431,6 +449,7 @@ const CITY_GUIDE: VariantGuide = {
         },
         {
           name: 'V',
+          matchTokens: ['V'],
           verdict: 'worth-it-if',
           verdictNote: 'Berbaloi jika anda mahu LED penuh dan kit keselamatan tambahan — sahkan ciri sebenar, bukan andaian.',
           differentiators: [
@@ -446,6 +465,7 @@ const CITY_GUIDE: VariantGuide = {
         },
         {
           name: 'RS e:HEV (Hybrid)',
+          matchTokens: ['RS', 'HYBRID', 'HEV'],
           verdict: 'worth-it-if',
           verdictNote: 'Hibrid i-MMD yang jauh lebih baik dari i-DCD lama — tapi tetap perlukan rekod servis Honda dan pemahaman kos hibrid.',
           differentiators: [
@@ -491,6 +511,67 @@ const CITY_GUIDE: VariantGuide = {
 
 VARIANT_GUIDES['perodua-bezza'] = BEZZA_GUIDE
 VARIANT_GUIDES['honda-city']   = CITY_GUIDE
+
+export const VERDICT_LABELS: Record<VariantVerdict, string> = {
+  'best-value':  'nilai terbaik',
+  'ok':          'okay',
+  'worth-it-if': 'berbaloi jika',
+  'avoid':       'elak',
+}
+
+function tokenize(text: string): string[] {
+  return text.toUpperCase().split(/[^A-Z0-9.]+/).filter(Boolean)
+}
+
+function variantTokens(v: VariantInfo): string[] {
+  return v.matchTokens ?? tokenize(v.name)
+}
+
+/**
+ * Locate a car within its model's variant ladder.
+ * - Generation picked by registration year (falls back to the latest)
+ * - Matching is whole-token only and curator-controlled via matchTokens —
+ *   single letters like H/G/S are substring landmines ("H" is inside "HEV")
+ * - Ambiguity (two variants match equally) returns NO match: a wrong
+ *   "← Kereta ini" on a paid report is worse than asking the buyer to
+ *   match the record themselves.
+ */
+export function findVariantPosition(
+  guide: VariantGuide,
+  officialText: string | null | undefined,
+  registrationYear: string | null | undefined,
+): { generation: VariantGeneration; matchedVariantName: string | null } {
+  // Generation by registration year
+  const regYear = registrationYear ? parseInt(registrationYear, 10) : NaN
+  let generation = guide.generations[guide.generations.length - 1]!
+  if (Number.isFinite(regYear)) {
+    for (const gen of guide.generations) {
+      const nums = gen.years.match(/\d{4}/g)?.map(Number) ?? []
+      const start = nums[0]
+      const end   = nums[1] ?? new Date().getFullYear()
+      if (start != null && regYear >= start && regYear <= end) { generation = gen; break }
+    }
+  }
+
+  if (!officialText) return { generation, matchedVariantName: null }
+  const textTokens = new Set(tokenize(officialText))
+
+  let best: { name: string; score: number } | null = null
+  let tie = false
+  for (const v of generation.variants) {
+    const tokens  = variantTokens(v)
+    const matched = tokens.filter(t => textTokens.has(t))
+    // multi-token sets: require all; single-token sets: require the one
+    const fullMatch = tokens.length > 1 ? matched.length === tokens.length : matched.length === 1
+    const partial   = tokens.length > 1 && matched.length > 0
+    const score     = fullMatch ? tokens.length + 1 : partial ? matched.length : 0
+    if (score === 0) continue
+    if (!best || score > best.score) { best = { name: v.name, score }; tie = false }
+    else if (score === best.score) tie = true
+  }
+
+  return { generation, matchedVariantName: best && !tie ? best.name : null }
+}
 
 export function findGuideByMakeModel(make?: string | null, model?: string | null): VariantGuide | null {
   if (!make || !model) return null

@@ -1,27 +1,38 @@
 import Link from 'next/link'
-import { findGuideByMakeModel } from '@/lib/variant-guides'
+import {
+  findGuideByMakeModel,
+  findVariantPosition,
+  VERDICT_LABELS,
+} from '@/lib/variant-guides'
 
 interface Props {
-  make?:            string | null
-  model?:           string | null
-  officialVariant?: string | null   // from NVIC valuation (family + variant)
+  make?:             string | null
+  model?:            string | null
+  officialVariant?:  string | null   // from NVIC valuation (family + variant)
+  description?:      string | null   // official JPJ description — extra match signal
+  registrationYear?: string | null   // picks the right generation ladder
 }
 
 /**
- * Semakan Varian — the verification half of variant decision support.
- * Sellers over-badge variants (SC bodykit on an X, "AV" emblem on an H);
- * the official record (when present) plus physical spot-checks let the
- * buyer catch it before paying variant-premium money for a lower spec.
+ * Semakan Varian — variant position card.
+ * First answers "where does this car sit in the range?" (ladder with
+ * "← Kereta ini"), then the double-check advice. Matching is whole-token
+ * and curator-controlled; ambiguity shows the ladder WITHOUT a marker —
+ * a wrong arrow on a paid report is worse than asking the buyer to match
+ * the record themselves.
  */
-export function VariantCheckCard({ make, model, officialVariant }: Props) {
+export function VariantCheckCard({ make, model, officialVariant, description, registrationYear }: Props) {
   const guide = findGuideByMakeModel(make, model)
 
   // Nothing authoritative AND nothing to teach — render nothing
   if (!officialVariant && !guide) return null
 
-  const spotChecks = guide
-    ? guide.generations.flatMap(g => g.variants.flatMap(v => v.spotChecks)).slice(0, 4)
-    : []
+  const position = guide
+    ? findVariantPosition(guide, [officialVariant, description].filter(Boolean).join(' '), registrationYear)
+    : null
+  const matchedVariant = position?.matchedVariantName
+    ? position.generation.variants.find(v => v.name === position.matchedVariantName) ?? null
+    : null
 
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -29,15 +40,12 @@ export function VariantCheckCard({ make, model, officialVariant }: Props) {
         Semakan Varian
       </p>
 
+      {/* Official record */}
       {officialVariant ? (
         <>
           <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Varian mengikut rekod</p>
-          <p className="font-heading font-extrabold text-[16px] text-[#111827] mb-2 leading-snug">
+          <p className="font-heading font-extrabold text-[16px] text-[#111827] leading-snug">
             {officialVariant}
-          </p>
-          <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-            Pastikan iklan penjual sebutkan varian yang sama. Kalau iklan kata varian
-            lebih tinggi dari rekod ini — red flag besar, dan harga patut ikut rekod.
           </p>
         </>
       ) : (
@@ -54,14 +62,57 @@ export function VariantCheckCard({ make, model, officialVariant }: Props) {
         </>
       )}
 
-      {guide && (
-        <div className="bg-[#F9FAFB] rounded-lg p-3 mt-3">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.05em] text-[#6B7280] mb-1.5">
-            Sahkan sendiri semasa tengok kereta
+      {/* Variant position ladder — supported models only */}
+      {guide && position && (
+        <div className="mt-4">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.05em] text-[#6B7280] mb-2">
+            Kedudukan varian · {guide.model} {position.generation.years}
           </p>
-          {spotChecks.map(s => (
-            <p key={s} className="font-body text-[12px] text-[#374151] leading-relaxed">✓ {s}</p>
-          ))}
+          <div className="space-y-1">
+            {position.generation.variants.map(v => {
+              const isThis = v.name === position.matchedVariantName
+              return (
+                <div
+                  key={v.name}
+                  className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 ${
+                    isThis ? 'bg-[#F0FDF4] border border-[#BBF7D0]' : 'bg-[#F9FAFB]'
+                  }`}
+                >
+                  <p className={`font-body text-[13px] ${isThis ? 'font-bold text-[#064E4A]' : 'text-[#374151]'}`}>
+                    {v.name}
+                    <span className="text-[#9CA3AF] font-normal"> — {VERDICT_LABELS[v.verdict]}</span>
+                  </p>
+                  {isThis && (
+                    <span className="font-heading font-bold text-[11px] text-[#15803D] flex-shrink-0">
+                      ← Kereta ini
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Matched: this variant's own spot-checks. No match: honest ask. */}
+          {matchedVariant ? (
+            <div className="bg-[#F9FAFB] rounded-lg p-3 mt-3">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.05em] text-[#6B7280] mb-1.5">
+                Sahkan sendiri semasa tengok kereta
+              </p>
+              {matchedVariant.spotChecks.slice(0, 3).map(s => (
+                <p key={s} className="font-body text-[12px] text-[#374151] leading-relaxed">✓ {s}</p>
+              ))}
+            </div>
+          ) : (
+            <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mt-3">
+              Padankan varian rekod di atas dengan senarai ini sebelum banding harga.
+            </p>
+          )}
+
+          <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-3">
+            Kalau iklan penjual kata varian lebih tinggi dari rekod ini — semak dahulu
+            sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.
+          </p>
+
           <Link
             href={`/varian/${guide.modelSlug}`}
             className="font-body text-[12px] text-[#064E4A] underline underline-offset-2 mt-2 inline-block"
@@ -69,6 +120,15 @@ export function VariantCheckCard({ make, model, officialVariant }: Props) {
             Panduan penuh varian {guide.model} →
           </Link>
         </div>
+      )}
+
+      {/* Unsupported model with a record — simple advice, softened wording */}
+      {!guide && officialVariant && (
+        <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
+          Pastikan iklan penjual sebutkan varian yang sama. Kalau iklan kata varian
+          lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan
+          jangan bayar harga varian lebih tinggi tanpa bukti jelas.
+        </p>
       )}
     </div>
   )

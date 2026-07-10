@@ -535,6 +535,8 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             make={vehicleData?.make}
             model={vehicleData?.model}
             officialVariant={officialVariant}
+            description={vehicleData?.description}
+            registrationYear={vehicleData?.registrationYear}
           />
         )
       })()}
