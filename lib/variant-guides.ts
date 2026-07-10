@@ -47,9 +47,143 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
     make: 'Perodua', model: 'Myvi', brand: 'Perodua',
     question: 'Myvi varian mana patut anda beli?',
     answerLine: 'Untuk kebanyakan pembeli: 1.5 H — kit hampir penuh tanpa bayar harga AV. Bajet ketat? 1.3 X pun cukup.',
-    bestValue: '1.5 H',
-    avoid: '1.3 G (Standard) lama — tiada kit keselamatan penting',
+    bestValue: '1.5 H (2018–kini)',
+    avoid: '1.3 G tanpa ASA · 1.0 EZ lama — enjin lemah',
     generations: [
+      {
+        label: 'Generasi 1',
+        years: '2005–2011',
+        variants: [
+          {
+            name: '1.0 EZ',
+            matchTokens: ['1.0'],
+            verdict: 'avoid',
+            verdictNote: 'Elak — enjin 1.0 tiga silinder tak larat bila penuh penumpang, dan harga terpakai hampir sama dengan 1.3.',
+            differentiators: [
+              'Enjin 1.0 (bukan 1.3) — lemah untuk lebuh raya',
+              'Kit paling asas — biasanya tiada ABS dan airbag',
+            ],
+            usedPriceBand: 'Termurah — tapi biasanya cuma RM1–2k bawah 1.3',
+            spotChecks: [
+              'Semak cc pada geran: bawah 1,000cc bermakna 1.0',
+            ],
+          },
+          {
+            name: '1.3 EZ (auto) / SX (manual)',
+            matchTokens: ['1.3', 'EZ'],
+            verdict: 'ok',
+            verdictNote: 'Pilihan bajet yang okay — enjin 1.3 yang sama dengan EZi, tapi kit keselamatan asas.',
+            differentiators: [
+              'Enjin 1.3 sama dengan EZi/SXi',
+              'Biasanya tiada ABS dan airbag — sahkan ikut unit',
+              'Rim besi dengan penutup',
+            ],
+            usedPriceBand: 'Biasanya RM1–2k bawah EZi/SXi',
+            spotChecks: [
+              'Rim besi berpenutup plastik',
+              'Tiada tanda SRS AIRBAG pada dashboard penumpang',
+            ],
+          },
+          {
+            name: '1.3 EZi (auto) / SXi (manual)',
+            matchTokens: ['EZI'],
+            verdict: 'best-value',
+            verdictNote: 'Nilai terbaik generasi ini — dual airbag dan ABS dengan beza harga yang kecil.',
+            differentiators: [
+              'Dual airbag + ABS (varian bawah biasanya tiada)',
+              'Rim aloi asal kilang',
+              'Kit dalaman lebih lengkap',
+            ],
+            usedPriceBand: 'Biasanya RM1–2k atas EZ/SX',
+            spotChecks: [
+              'Tanda SRS AIRBAG di dashboard sisi penumpang',
+              'Rim aloi (bukan penutup plastik)',
+            ],
+          },
+          {
+            name: '1.3 SE',
+            matchTokens: ['SE'],
+            verdict: 'worth-it-if',
+            verdictNote: 'Berbaloi jika anda suka rupa sport dan bezanya dengan EZi tak lebih RM1–2k — mekanikalnya sama.',
+            differentiators: [
+              'Bodykit + spoiler asal kilang',
+              'Rim aloi lebih sport',
+            ],
+            usedPriceBand: 'Biasanya paling mahal dalam generasi ini',
+            spotChecks: [
+              'Bodykit dan spoiler nampak asal, bukan tampal aftermarket',
+              'Sahkan varian pada geran — badge SE senang ditiru',
+            ],
+          },
+        ],
+      },
+      {
+        label: 'Generasi 2 (Lagi Best)',
+        years: '2011–2017',
+        variants: [
+          {
+            name: '1.3 Standard (G)',
+            matchTokens: ['G'],
+            verdict: 'ok',
+            verdictNote: 'Okay untuk bajet — tapi kit keselamatan berbeza ikut tahun, sahkan sebelum beli.',
+            differentiators: [
+              'Kit paling asas dalam generasi ini',
+              'ABS tiada pada sesetengah tahun — sahkan',
+            ],
+            usedPriceBand: 'Termurah — biasanya RM1–2k bawah Premium',
+            spotChecks: [
+              'Tanya penjual sahkan ABS dan bilangan airbag',
+              'Rim besi berpenutup = Standard',
+            ],
+          },
+          {
+            name: '1.3 Premium (X)',
+            matchTokens: ['X'],
+            verdict: 'best-value',
+            verdictNote: 'Nilai terbaik generasi ini — kit cukup, harga tak jauh dari Standard.',
+            differentiators: [
+              'Rim aloi + kit luaran lebih kemas',
+              'Audio dan dalaman lebih lengkap',
+            ],
+            usedPriceBand: 'Biasanya RM1–2k atas Standard',
+            spotChecks: [
+              'Rim aloi asal kilang',
+              'Padankan varian pada geran atau rekod — bukan emblem',
+            ],
+          },
+          {
+            name: '1.5 SE',
+            matchTokens: ['SE'],
+            verdict: 'worth-it-if',
+            verdictNote: 'Berbaloi jika anda nak enjin 1.5 dan beza dengan 1.3 Premium bawah RM2k.',
+            differentiators: [
+              'Enjin 1.5 — lebih selesa untuk lebuh raya',
+              'Bodykit SE + rim lebih besar',
+            ],
+            usedPriceBand: 'Biasanya RM2–3k atas 1.3 Premium',
+            spotChecks: [
+              'Sahkan 1.5 dengan cc pada geran — bukan emblem sahaja',
+              'Bodykit SE asal kilang',
+            ],
+          },
+          {
+            name: '1.5 Advance',
+            years: '2015–2017 (sebelum facelift dipanggil Extreme)',
+            matchTokens: ['ADVANCE'],
+            verdict: 'worth-it-if',
+            verdictNote: 'Trim tertinggi — berbaloi jika nak kit penuh dan bezanya dengan SE kecil.',
+            differentiators: [
+              'Kerusi kulit + skrin sentuh dengan navigasi',
+              'Kit paling lengkap dalam generasi ini',
+            ],
+            usedPriceBand: 'Termahal — biasanya RM1–2k atas SE',
+            spotChecks: [
+              'Kerusi kulit asal, bukan sarung aftermarket',
+              'Skrin sentuh dengan navigasi berfungsi',
+            ],
+          },
+        ],
+      },
       {
         label: 'Generasi 3',
         years: '2018–kini',
@@ -144,6 +278,10 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
       {
         q: 'Myvi 1.3 ke 1.5 — mana patut pilih?',
         a: '1.3 cukup untuk guna bandar dan lebih jimat minyak sedikit. 1.5 lebih selesa untuk lebuh raya dan membawa penumpang penuh. Jika kerap ke luar bandar, pilih 1.5.',
+      },
+      {
+        q: 'Myvi lama (2005–2017) masih berbaloi beli?',
+        a: 'Boleh — Myvi pegang nilai dan alat ganti murah. Untuk 2005–2011, pilih 1.3 EZi/SXi yang ada airbag dan ABS. Untuk 2011–2017, 1.3 Premium cukup untuk kebanyakan orang. Pada umur ini, kondisi dan rekod servis lebih penting dari varian.',
       },
     ],
   },

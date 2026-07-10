@@ -15,7 +15,9 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: Props): Metadata {
   const guide = VARIANT_GUIDES[params.model]
   if (!guide) return {}
-  const variantNames = guide.generations[0]?.variants.map(v => v.name.split(' ')[0]).join(' vs ') ?? ''
+  // Newest generation — that's what most searchers are cross-shopping
+  const newestGen    = guide.generations[guide.generations.length - 1]
+  const variantNames = newestGen?.variants.map(v => v.name.split(' ')[0]).join(' vs ') ?? ''
   const title = `${guide.model} Varian Mana Patut Beli? ${variantNames} | Paqar`
   const description = `${guide.answerLine} Panduan varian ${guide.brand} ${guide.model} terpakai — nilai terbaik, varian untuk elak, cara cam varian sebenar, dan harga berpatutan.`
   return {
