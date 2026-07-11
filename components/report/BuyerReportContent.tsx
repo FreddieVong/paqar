@@ -354,9 +354,10 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               const shownCount    = relevantListings.filter(l => mPrices.includes(l.price)).length
               const excludedCount = (marketPrices.listings.length ?? 0) - shownCount
 
-              // Trade-in estimate (only when median is valid)
-              const tradeInLow  = Math.round(median * 0.80 / 1000) * 1000
-              const tradeInHigh = Math.round(median * 0.85 / 1000) * 1000
+              // Trade-in estimate (only when median is valid). Floor/ceil so
+              // cheap cars can't collapse to "RM7,000 – RM7,000"
+              const tradeInLow  = Math.floor(median * 0.80 / 1000) * 1000
+              const tradeInHigh = Math.ceil(median * 0.85 / 1000) * 1000
 
 
               return (
