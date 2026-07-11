@@ -53,7 +53,7 @@ export async function getValuationByNvic(
         .ilike('make', fallback.make)
         .eq('year', fallback.year)
         .ilike('family', `%${keyword}%`)
-        .not('wm_new_pr', 'is', null)
+        .gt('wm_new_pr', 10_000) // table has junk RM0/near-zero rows; no MY car was under RM10k new
         .order('wm_new_pr', { ascending: true })
         .limit(1)
         .maybeSingle()
@@ -77,7 +77,7 @@ async function familyFloor(
     .ilike('make', make)
     .eq('year', year)
     .ilike('family', family)
-    .not('wm_new_pr', 'is', null)
+    .gt('wm_new_pr', 10_000) // junk RM0/near-zero rows would fake a floor and mis-trigger the guard
     .order('wm_new_pr', { ascending: true })
     .limit(1)
     .maybeSingle()
