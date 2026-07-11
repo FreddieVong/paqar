@@ -29,6 +29,14 @@ export function createServiceClient() {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: { getAll: () => [], setAll: () => {} } }
+    {
+      cookies: { getAll: () => [], setAll: () => {} },
+      global: {
+        // Next.js patches global fetch with a Data Cache that can persist
+        // across deployments; DB reads must never be served from it
+        fetch: (url: RequestInfo | URL, init?: RequestInit) =>
+          fetch(url, { ...init, cache: 'no-store' }),
+      },
+    }
   )
 }

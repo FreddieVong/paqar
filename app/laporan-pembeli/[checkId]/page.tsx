@@ -73,6 +73,23 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
         vehicleData = { ...apiResult, valuation: valuation ?? null }
         setVehicleApiData(report.id, vehicleData).catch(() => {}) // non-blocking
       }
+    } else if ((vehicleData.valuation as Record<string, unknown> | null)?.familyFloorNewPrice === undefined) {
+      // Heal pre-guard valuations: the old exact-NVIC lookup silently failed
+      // on duplicate table rows and stored the CHEAPEST fallback variant
+      // (a JCW GP frozen as a Clubman). Re-derive once with the fixed
+      // lookup and persist; healed rows carry familyFloorNewPrice and skip this.
+      const healed = await getValuationByNvic(
+        (vehicleData.nvic as string) ?? '',
+        {
+          make:  (vehicleData.make as string) ?? '',
+          year:  (vehicleData.registrationYear as string) ?? '',
+          model: (vehicleData.model as string) ?? undefined,
+        }
+      ).catch(() => null)
+      if (healed) {
+        vehicleData = { ...vehicleData, valuation: healed }
+        setVehicleApiData(report.id, vehicleData).catch(() => {}) // non-blocking
+      }
     }
 
     // JomCheck — lazy lookup, cached after first success, never retried after failure
