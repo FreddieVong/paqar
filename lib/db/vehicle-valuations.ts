@@ -7,6 +7,11 @@ export interface VehicleValuation {
   family:      string
   variant:     string
   year:        number
+  // Cheapest same-family same-year variant's new price. When wmNewPrice is
+  // far above this floor, the car is a special/top variant and generic
+  // model-level market listings are NOT valid comparables (a JCW GP must
+  // not be verdict'd against base Cooper listings).
+  familyFloorNewPrice: number | null
 }
 
 export async function getValuationByNvic(
@@ -26,7 +31,10 @@ export async function getValuationByNvic(
       .eq('nvic', nvic.toUpperCase())
       .limit(1)
       .maybeSingle()
-    if (data) return map(data)
+    if (data) {
+      const floor = await familyFloor(supabase, data.make as string, data.year as string, data.family as string)
+      return map(data, floor)
+    }
   }
 
   if (!fallback?.make || !fallback?.year) return null
@@ -48,15 +56,35 @@ export async function getValuationByNvic(
         .not('wm_new_pr', 'is', null)
         .order('wm_new_pr', { ascending: true })
         .limit(1)
-        .single()
-      if (data) return map(data)
+        .maybeSingle()
+      // Fallback already picks the cheapest variant — it IS the floor
+      if (data) return map(data, Number(data.wm_new_pr))
     }
   }
 
   return null
 }
 
-function map(data: Record<string, unknown>): VehicleValuation {
+async function familyFloor(
+  supabase: ReturnType<typeof createServiceClient>,
+  make: string,
+  year: string,
+  family: string,
+): Promise<number | null> {
+  const { data } = await supabase
+    .from('vehicle_valuations')
+    .select('wm_new_pr')
+    .ilike('make', make)
+    .eq('year', year)
+    .ilike('family', family)
+    .not('wm_new_pr', 'is', null)
+    .order('wm_new_pr', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  return data?.wm_new_pr != null ? Number(data.wm_new_pr) : null
+}
+
+function map(data: Record<string, unknown>, floor: number | null): VehicleValuation {
   return {
     wmNewPrice: data.wm_new_pr as number,
     sumInsured: data.sum_insured as number | null,
@@ -64,5 +92,6 @@ function map(data: Record<string, unknown>): VehicleValuation {
     family:     data.family as string,
     variant:    data.variant as string,
     year:       data.year as number,
+    familyFloorNewPrice: floor,
   }
 }

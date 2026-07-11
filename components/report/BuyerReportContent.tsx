@@ -61,6 +61,7 @@ interface VehicleData {
     sumInsured: number | null
     family?:    string
     variant?:   string
+    familyFloorNewPrice?: number | null
   } | null
 }
 
@@ -144,10 +145,21 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const effectiveVerdict = priceVerdict ?? depreciationVerdict
   const verdictSource    = priceVerdict ? 'market' : depreciationVerdict ? 'depreciation' : null
 
+  // Special/top variant: record's new price far above the family's cheapest
+  // variant that year (JCW GP = 1.78× a Clubman). Generic model-level
+  // listings are then NOT valid comparables — every number derived from them
+  // must warn or disappear, and the verdict must not pretend.
+  // (JSON round-trip stores prices as strings — coerce before comparing.)
+  const familyFloor      = vehicleData?.valuation?.familyFloorNewPrice != null
+    ? Number(vehicleData.valuation.familyFloorNewPrice) : null
+  const isSpecialVariant = wmNewPrice != null && familyFloor != null && familyFloor > 0
+    && Number(wmNewPrice) >= familyFloor * 1.3
+
   // New-price context — only shown WITH an interpretation (lib/depreciation.ts);
-  // a bare new-price anchor next to market data is the dealer's pitch
-  const depreciationInsight = (wmNewPrice != null && marketMedian != null && regYear != null)
-    ? assessDepreciation(wmNewPrice, marketMedian, new Date().getFullYear() - regYear)
+  // a bare new-price anchor next to market data is the dealer's pitch.
+  // Suppressed for special variants: the median is other variants' prices.
+  const depreciationInsight = (!isSpecialVariant && wmNewPrice != null && marketMedian != null && regYear != null)
+    ? assessDepreciation(Number(wmNewPrice), marketMedian, new Date().getFullYear() - regYear)
     : null
   const vehicleNotFound  = !vehicleData?.make
 
@@ -156,8 +168,14 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const rawVariant = vehicleData?.valuation?.family && vehicleData?.valuation?.variant
     ? `${vehicleData.valuation.family} ${vehicleData.valuation.variant}`.trim()
     : (vehicleData?.valuation?.family ?? null)
+  // Title-case ALL-CAPS records, but keep grade tokens ("GP", "AV", "EZ")
+  // uppercase; records that already carry lowercase ("EZi") are left alone
   const officialVariant = rawVariant
-    ? rawVariant.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+    ? (/[a-z]/.test(rawVariant)
+        ? rawVariant
+        : rawVariant.split(' ').map(w =>
+            w.length <= 2 ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+          ).join(' '))
     : null
 
   // Short identity (make + model) — the full official variant string lives in
@@ -212,6 +230,51 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
       {/* 1. Keputusan Paqar — top decision card */}
       {effectiveVerdict != null && (() => {
+        // Special variant + market-based verdict: the comps are other
+        // variants' prices, so a confident MAHAL/BERBALOI would be a lie
+        // (a JCW GP at RM150k is not "RM29k over" base-Cooper listings).
+        // Say what we know, say what we can't, tell the buyer what to do.
+        if (isSpecialVariant && verdictSource === 'market') {
+          return (
+            <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
+                Keputusan Paqar
+              </p>
+              <p className="font-heading font-extrabold text-[22px] leading-tight mb-1 text-[#B45309]">
+                VARIAN KHAS
+              </p>
+              <p className="font-heading font-bold text-[15px] text-[#111827] mb-4">
+                Harga pasaran biasa tak boleh dipakai untuk varian ni.
+              </p>
+              <div className="space-y-2.5">
+                {askingPriceRm != null && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-body text-[12px] text-[#6B7280]">Seller minta</p>
+                    <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(askingPriceRm)}</p>
+                  </div>
+                )}
+                {wmNewPrice != null && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-body text-[12px] text-[#6B7280]">Harga ketika baru (anggaran)</p>
+                    <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(Number(wmNewPrice))}</p>
+                  </div>
+                )}
+                <div className="pt-2 border-t border-black/10">
+                  <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Cadangan</p>
+                  <p className="font-heading font-bold text-[13px] text-[#111827]">
+                    Ini {officialVariant} — varian yang jauh lebih mahal dari{' '}
+                    {vehicleData?.model ?? 'model'} biasa ketika baru. Banding hanya dengan iklan
+                    varian sama, sahkan varian dalam geran, dan buat inspection sebelum bayar deposit.
+                  </p>
+                </div>
+                <p className="font-body text-[11px] text-[#6B7280] leading-relaxed">
+                  Harga yang nampak terlalu murah untuk varian macam ni pun perlu disemak — selalunya ada sebab.
+                </p>
+              </div>
+            </div>
+          )
+        }
+
         // A price FAR below the market floor is a scam/hidden-problem
         // signature (deposit scams, accident/flood cars), not a bargain —
         // escalate the guidance instead of celebrating
@@ -303,14 +366,9 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
       {/* 2. Perbandingan Harga */}
       {!vehicleNotFound && (vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {
-        const val           = vehicleData?.valuation
-        const wmNewPrice    = val?.wmNewPrice ?? null
-        const valVariantRaw = val?.family && val?.variant
-          ? `${val.family} ${val.variant}`.trim()
-          : (val?.family ?? null)
-        const valVariant = valVariantRaw
-          ? valVariantRaw.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
-          : null
+        const val        = vehicleData?.valuation
+        const wmNewPrice = val?.wmNewPrice ?? null
+        const valVariant = officialVariant
 
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -343,10 +401,24 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               )
             })()}
 
+            {/* Special variant: the listings below are (mostly) other
+                variants' prices — say so before the buyer reads them */}
+            {isSpecialVariant && mPrices.length > 0 && (
+              <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg px-3 py-2.5 mb-3">
+                <p className="font-body text-[12px] text-[#B45309] leading-relaxed">
+                  ⚠️ Varian rekod ini jauh lebih mahal dari {vehicleData?.model ?? 'model'} biasa
+                  ketika baru. Listing di bawah mungkin varian lain — banding hanya dengan iklan
+                  yang sebut varian sama.
+                </p>
+              </div>
+            )}
+
             {mPrices.length > 0 && marketPrices && (() => {
               const median  = marketMedian!
               const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
-              const conf    = CONFIDENCE_CONFIG[dataConfidenceLevel(mPrices.length)]
+              // Special variant: listing count means nothing when the
+              // listings are other variants — never claim "Tinggi"
+              const conf    = CONFIDENCE_CONFIG[isSpecialVariant ? 'limited' : dataConfidenceLevel(mPrices.length)]
 
               // Filtering is a feature — say it. A buyer who later browses the
               // marketplace sees MORE results than our chips (fuzzy search mixes
@@ -402,19 +474,22 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                     <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">{conf.text}</p>
                   </div>
 
-                  {/* Trade-in estimate */}
-                  <div className="mt-1 pt-3 border-t border-[#F3F4F6]">
-                    <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
-                    <p className="font-heading font-bold text-[14px] text-[#111827]">
-                      RM{fmt(tradeInLow)} – RM{fmt(tradeInHigh)}
-                    </p>
-                    <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
-                      Lebih kurang harga yang dealer akan bagi untuk kereta ni. Boleh guna ni bila nak tawar harga.
-                    </p>
-                    <p className="font-body text-[10px] text-[#9CA3AF] mt-1 leading-relaxed">
-                      Anggaran sahaja. Bergantung pada kondisi, mileage dan pasaran semasa.
-                    </p>
-                  </div>
+                  {/* Trade-in estimate — median-derived, so meaningless for
+                      special variants whose comps are other variants */}
+                  {!isSpecialVariant && (
+                    <div className="mt-1 pt-3 border-t border-[#F3F4F6]">
+                      <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
+                      <p className="font-heading font-bold text-[14px] text-[#111827]">
+                        RM{fmt(tradeInLow)} – RM{fmt(tradeInHigh)}
+                      </p>
+                      <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+                        Lebih kurang harga yang dealer akan bagi untuk kereta ni. Boleh guna ni bila nak tawar harga.
+                      </p>
+                      <p className="font-body text-[10px] text-[#9CA3AF] mt-1 leading-relaxed">
+                        Anggaran sahaja. Bergantung pada kondisi, mileage dan pasaran semasa.
+                      </p>
+                    </div>
+                  )}
 
                   {/* New price + depreciation insight — answers "what happens
                       when I sell this later?", which nothing else covers */}
@@ -496,6 +571,30 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         const model   = String(vehicleData.model ?? '')
         const year    = String(vehicleData.registrationYear ?? '')
         const carName = [make, model, year].filter(Boolean).join(' ')
+
+        // Special variant: quoting the generic median at the seller would
+        // embarrass the buyer ("RM99k for a GP?"). The script's job here is
+        // variant verification, not price anchoring.
+        if (isSpecialVariant && verdictSource === 'market') {
+          const specialScript = `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya faham ini varian ${officialVariant}. Boleh tuan/puan sahkan varian ni dalam geran atau rekod kenderaan, dan share sejarah servis?\n\nSaya serius nak beli kalau semua okay — boleh saya buat inspection sebelum bayar deposit?`
+          return (
+            <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+              <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
+                Skrip Rundingan
+              </p>
+              <div className="bg-[#F9FAFB] rounded-lg p-4 mb-3">
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed whitespace-pre-line">
+                  {specialScript}
+                </p>
+              </div>
+              <CopyButton text={specialScript} />
+              <p className="font-body text-[11px] text-[#9CA3AF] mt-3 leading-relaxed">
+                Untuk varian khas, harga ditentukan oleh kondisi, kesahihan varian dan rekod —
+                bukan harga tengah model biasa. Rundingan harga dibuat selepas semua ini disahkan.
+              </p>
+            </div>
+          )
+        }
 
         // Market-data scripts include live RM ranges; depreciation scripts use expected value as target
         const depOffer = depreciationExpected != null ? fmt(roundClean(depreciationExpected * 0.95)) : null
