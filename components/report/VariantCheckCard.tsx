@@ -33,6 +33,12 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
   const matchedVariant = position?.matchedVariantName
     ? position.generation.variants.find(v => v.name === position.matchedVariantName) ?? null
     : null
+  // Last ladder row = nothing higher a seller could inflate to, so the
+  // "varian lebih tinggi" warning is dead copy — the risk flips to paying
+  // top-variant price for features that aren't really there. ("antara paling
+  // tinggi", not "tertinggi": some ladders end on a Hybrid special row.)
+  const isTopOfLadder = matchedVariant != null && position != null &&
+    position.matchedVariantName === position.generation.variants[position.generation.variants.length - 1]?.name
 
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -109,8 +115,9 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
           )}
 
           <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-3">
-            Kalau iklan penjual kata varian lebih tinggi dari rekod ini — semak dahulu
-            sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.
+            {isTopOfLadder
+              ? 'Rekod ini antara varian paling tinggi dalam barisan — jangan bayar harga varian ini atas emblem sahaja. Sahkan ciri dengan senarai di atas sebelum bayar deposit.'
+              : 'Kalau iklan penjual kata varian lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.'}
           </p>
 
           <Link

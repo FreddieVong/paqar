@@ -149,6 +149,15 @@ export function SampleReportPreview() {
           <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
             Perbandingan Harga
           </p>
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 bg-[#F9FAFB] rounded-lg px-3 py-2 mb-3">
+            <p className="font-body text-[12px] text-[#6B7280]">
+              Varian rekod: <span className="font-heading font-bold text-[#111827]">Myvi 1.3 X</span>
+            </p>
+            <span className="font-heading font-bold text-[10px] px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D]">
+              okay
+            </span>
+            <p className="font-body text-[12px] text-[#6B7280]">— banding harga ikut varian ini.</p>
+          </div>
           <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
             <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
             <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
@@ -179,12 +188,19 @@ export function SampleReportPreview() {
           </div>
           <div className="pt-3 border-t border-[#F3F4F6]">
             <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
-            <p className="font-heading font-bold text-[13px] text-[#111827]">RM34,000 – RM36,000</p>
+            <p className="font-heading font-bold text-[13px] text-[#111827]">RM34,000 – RM37,000</p>
             <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
               Lebih kurang harga yang dealer akan bagi untuk kereta ni. Boleh guna ni bila nak tawar harga.
             </p>
             <p className="font-body text-[10px] text-[#9CA3AF] mt-1 leading-relaxed">
               Anggaran sahaja. Bergantung pada kondisi, mileage dan pasaran semasa.
+            </p>
+          </div>
+          <div className="pt-3 mt-3 border-t border-[#F3F4F6]">
+            <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Harga ketika baru (anggaran)</p>
+            <p className="font-heading font-bold text-[13px] text-[#111827]">RM46,000</p>
+            <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+              Model ni pegang nilai berbanding kereta lain seusia — biasanya senang jual balik nanti.
             </p>
           </div>
         </div>
@@ -253,7 +269,7 @@ export function SampleReportPreview() {
         </div>
 
         {/* 7. Maklumat Kenderaan */}
-        <div className="px-5 py-4">
+        <div className="px-5 py-4 border-b border-[#F3F4F6]">
           <div className="flex items-center justify-between mb-3">
             <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF]">
               Maklumat Kenderaan
@@ -276,6 +292,56 @@ export function SampleReportPreview() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* 8. Semakan Varian */}
+        <div className="px-5 py-4">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
+            Semakan Varian
+          </p>
+          <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Varian mengikut rekod</p>
+          <p className="font-heading font-extrabold text-[16px] text-[#111827] leading-snug mb-3">
+            Myvi 1.3 X
+          </p>
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.05em] text-[#6B7280] mb-2">
+            Kedudukan varian · Myvi 2018–kini
+          </p>
+          <div className="space-y-1 mb-3">
+            {[
+              { name: '1.3 G (Standard)', verdict: 'elak',          isThis: false },
+              { name: '1.3 X',            verdict: 'okay',          isThis: true },
+              { name: '1.5 H',            verdict: 'nilai terbaik', isThis: false },
+              { name: '1.5 AV',           verdict: 'berbaloi jika', isThis: false },
+            ].map(v => (
+              <div
+                key={v.name}
+                className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 ${
+                  v.isThis ? 'bg-[#F0FDF4] border border-[#BBF7D0]' : 'bg-[#F9FAFB]'
+                }`}
+              >
+                <p className={`font-body text-[13px] ${v.isThis ? 'font-bold text-[#064E4A]' : 'text-[#374151]'}`}>
+                  {v.name}
+                  <span className="text-[#9CA3AF] font-normal"> — {v.verdict}</span>
+                </p>
+                {v.isThis && (
+                  <span className="font-heading font-bold text-[11px] text-[#15803D] flex-shrink-0">
+                    ← Kereta ini
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="bg-[#F9FAFB] rounded-lg p-3 mb-3">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.05em] text-[#6B7280] mb-1.5">
+              Sahkan sendiri semasa tengok kereta
+            </p>
+            <p className="font-body text-[12px] text-[#374151] leading-relaxed">✓ Sahkan ASA: ada butang OFF ASA di kanan stereng</p>
+            <p className="font-body text-[12px] text-[#374151] leading-relaxed">✓ Rim sport 14 inci (bukan penutup plastik)</p>
+          </div>
+          <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+            Kalau iklan penjual kata varian lebih tinggi dari rekod ini — semak dahulu
+            sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.
+          </p>
         </div>
 
       </div>
