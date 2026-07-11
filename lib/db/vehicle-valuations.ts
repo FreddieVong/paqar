@@ -16,13 +16,16 @@ export async function getValuationByNvic(
   if (!nvic && !fallback) return null
   const supabase = createServiceClient()
 
-  // 1. Exact NVIC match (most accurate)
+  // 1. Exact NVIC match (most accurate). The table contains duplicate NVIC
+  // rows (~20%) — .single() errors on multiples, silently dropping the exact
+  // match and handing a GP3 the cheapest Clubman via the fallback below.
   if (nvic) {
     const { data } = await supabase
       .from('vehicle_valuations')
       .select('wm_new_pr, sum_insured, make, family, variant, year')
       .eq('nvic', nvic.toUpperCase())
-      .single()
+      .limit(1)
+      .maybeSingle()
     if (data) return map(data)
   }
 
