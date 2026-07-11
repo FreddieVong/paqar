@@ -11,6 +11,7 @@ interface Props {
   officialVariant?:  string | null   // from NVIC valuation (family + variant)
   description?:      string | null   // official JPJ description — extra match signal
   registrationYear?: string | null   // picks the right generation ladder
+  isSpecialVariant?: boolean         // new price ≫ family floor — nothing meaningful sits above it
 }
 
 /**
@@ -21,7 +22,7 @@ interface Props {
  * a wrong arrow on a paid report is worse than asking the buyer to match
  * the record themselves.
  */
-export function VariantCheckCard({ make, model, officialVariant, description, registrationYear }: Props) {
+export function VariantCheckCard({ make, model, officialVariant, description, registrationYear, isSpecialVariant }: Props) {
   const guide = findGuideByMakeModel(make, model)
 
   // Nothing authoritative AND nothing to teach — render nothing
@@ -130,12 +131,14 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
       )}
 
       {/* Unsupported model OR out-of-coverage year, with a record —
-          simple advice, softened wording */}
+          simple advice, softened wording. Special variants sit at/near the
+          top of their range, so "varian lebih tinggi" is dead copy — the
+          risk flips to paying a special-variant price on an emblem. */}
       {(!guide || !position) && officialVariant && (
         <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
-          Pastikan iklan penjual sebutkan varian yang sama. Kalau iklan kata varian
-          lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan
-          jangan bayar harga varian lebih tinggi tanpa bukti jelas.
+          {isSpecialVariant
+            ? 'Ini antara varian paling tinggi untuk model ni — jangan bayar harga varian ini atas emblem sahaja. Sahkan varian dalam geran dan minta bukti sebelum bayar deposit.'
+            : 'Pastikan iklan penjual sebutkan varian yang sama. Kalau iklan kata varian lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.'}
         </p>
       )}
     </div>

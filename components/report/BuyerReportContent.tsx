@@ -165,17 +165,21 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
   // Official variant (from NVIC valuation) — shared by the compact context
   // line in Perbandingan Harga and the full Semakan Varian card below
-  const rawVariant = vehicleData?.valuation?.family && vehicleData?.valuation?.variant
-    ? `${vehicleData.valuation.family} ${vehicleData.valuation.variant}`.trim()
-    : (vehicleData?.valuation?.family ?? null)
-  // Title-case ALL-CAPS records, but keep grade tokens ("GP", "AV", "EZ")
-  // uppercase; records that already carry lowercase ("EZi") are left alone
+  // Skip the family prefix when the variant already carries it
+  // ("COOPER" + "JOHN COOPER WORKS GP" must not render "Cooper John Cooper…")
+  const valFamily  = vehicleData?.valuation?.family
+  const valVarName = vehicleData?.valuation?.variant
+  const rawVariant = valFamily && valVarName
+    ? (new RegExp(`\\b${valFamily.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(valVarName)
+        ? valVarName
+        : `${valFamily} ${valVarName}`.trim())
+    : (valFamily ?? null)
+  // Title-case ALL-CAPS words, but keep grade tokens ("GP", "AV", "EZ")
+  // uppercase and leave words that already carry lowercase ("EZi") alone
   const officialVariant = rawVariant
-    ? (/[a-z]/.test(rawVariant)
-        ? rawVariant
-        : rawVariant.split(' ').map(w =>
-            w.length <= 2 ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-          ).join(' '))
+    ? rawVariant.split(' ').map(w =>
+        (/[a-z]/.test(w) || w.length <= 2) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+      ).join(' ')
     : null
 
   // Short identity (make + model) — the full official variant string lives in
@@ -687,6 +691,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         officialVariant={officialVariant}
         description={vehicleData?.description}
         registrationYear={vehicleData?.registrationYear}
+        isSpecialVariant={isSpecialVariant}
       />
 
       {/* 4b. Semakan Mileage — plausibility of the seller's CLAIMED reading.
