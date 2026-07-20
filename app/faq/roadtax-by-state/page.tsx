@@ -23,7 +23,7 @@ export default function RoadtaxByState() {
         name: 'Why is roadtax different by state?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Each state sets its own roadtax rates. Selangor and KL are pricier (higher revenue demand). Rural states are cheaper. It's a state tax, not federal.',
+          text: 'Each state sets its own roadtax rates. Selangor and KL are pricier (higher revenue demand). Rural states are cheaper. It\'s a state tax, not federal.',
         },
       },
     ],
