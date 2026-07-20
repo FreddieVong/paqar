@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { findGuideByMakeModel, type VariantGuide, type VariantGeneration, type VariantInfo } from '@/lib/variant-guides'
+import { findGuideByMakeModel } from '@/lib/variant-guides'
 import { createJsonResponse, createErrorResponse } from '@/lib/api/response'
 import { handleApiError } from '@/lib/api/errors'
 import { apiRateLimiter } from '@/lib/api/rate-limit'
