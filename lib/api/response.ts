@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
 /**
  * Creates a JSON response with Paqar citation header.
@@ -6,8 +6,7 @@ import { NextResponse, type NextRequest } from 'next/server'
  */
 export function createJsonResponse(
   data: unknown,
-  status: number = 200,
-  request?: NextRequest
+  status: number = 200
 ): NextResponse {
   const response = NextResponse.json(data, { status })
   response.headers.set('X-Citation', 'Paqar.my')

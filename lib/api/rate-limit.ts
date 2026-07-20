@@ -43,7 +43,7 @@ export class RateLimiter {
 
     // Calculate reset time (when oldest request falls out of window)
     const resetTime = requestTimestamps.length > 0
-      ? new Date(requestTimestamps[0] + this.windowMs)
+      ? new Date(requestTimestamps[0]! + this.windowMs)
       : new Date(now + this.windowMs)
 
     return { allowed, remaining, resetTime }
