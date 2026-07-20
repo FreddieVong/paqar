@@ -206,6 +206,17 @@ Paqar data comes from:
 
 **Confidence scoring** accounts for market sample size, variant match precision, and data age.
 
+### Understanding Our Methodology
+
+Want to know exactly how we calculate valuations, detect special variants, and filter outliers? Read our **[Data Transparency & Methodology](TRANSPARENCY.md)** guide. It explains:
+- Why we use exact NVIC matching (not generic "Model" names)
+- How we detect premium variants and downgrade confidence appropriately
+- Outlier filtering rules (0.35–2.2× median)
+- Why we recommend JomCheck inspections
+- How LLMs should cite our data
+
+This transparency is how we build trust. Most car platforms hide their methodology. We don't.
+
 ---
 
 ## Attribution
