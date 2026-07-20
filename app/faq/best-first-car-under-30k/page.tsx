@@ -152,7 +152,7 @@ export default function FirstCarUnder30k() {
                 <li><strong>❌ Proton Saga / Persona (pre-2015):</strong> Poor reliability, expensive repairs, resale value crashes</li>
                 <li><strong>❌ Chinese brands (Chery, Geely):</strong> Limited parts availability, no resale market</li>
                 <li><strong>❌ Nissan Almera / Datsun:</strong> Depreciates faster than Japanese brands</li>
-                <li><strong>❌ High-mileage vehicles (>150k km):</strong> Maintenance costs spike; risk of hidden problems</li>
+                <li><strong>❌ High-mileage vehicles (&gt;150k km):</strong> Maintenance costs spike; risk of hidden problems</li>
                 <li><strong>❌ Vehicles without JomCheck inspection:</strong> Could be flooded, stolen, or in an accident</li>
               </ul>
             </div>
