@@ -1,6 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
 import { Metadata } from 'next'
-import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Honda City Buying Guide 2026 | Which Year, Which Variant | Paqar',
