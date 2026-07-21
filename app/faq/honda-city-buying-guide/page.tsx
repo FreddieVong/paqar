@@ -1,5 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import { Metadata } from 'next'
+import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 
 export const metadata: Metadata = {
   title: 'Honda City Buying Guide 2026 | Which Year, Which Variant | Paqar',
@@ -200,10 +201,7 @@ export default function HondaCityGuide() {
           </div>
         </section>
 
-        <div className="text-center mt-12">
-          <p className="text-[#374151] mb-4">Ready to check a specific Honda City?</p>
-          <a href="/" className="inline-block bg-[#064E4A] text-white px-6 py-3 rounded-lg font-semibold">Get Valuation</a>
-        </div>
+        <FaqGetValuationCta faqSlug="honda-city-buying-guide" />
       </div>
     </>
   )

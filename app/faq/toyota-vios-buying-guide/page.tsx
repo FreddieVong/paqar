@@ -1,4 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
+import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -103,10 +104,7 @@ export default function ViosBuyingGuide() {
         </ul>
       </div>
 
-      <div className="text-center mt-12">
-        <p className="text-[#374151] mb-4">Check the exact price for any Vios plate.</p>
-        <a href="/" className="inline-block bg-[#064E4A] text-white px-6 py-3 rounded-lg font-semibold">Get Valuation</a>
-      </div>
+        <FaqGetValuationCta faqSlug="toyota-vios-buying-guide" />
     </div>
   )
 }

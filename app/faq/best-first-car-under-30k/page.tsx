@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 
 export const metadata: Metadata = {
   title: 'Best First Car Under RM30k in Malaysia | Paqar',
@@ -291,13 +292,7 @@ export default function FirstCarUnder30k() {
           </section>
 
           {/* CTA */}
-          <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-8 text-center">
-            <h3 className="text-xl font-bold text-[#064E4A] mb-3">Ready to Find Your First Car?</h3>
-            <p className="text-[#374151] mb-6">Enter a plate number to see its instant valuation, market price range, and whether it's a good deal.</p>
-            <Link href="/" className="inline-block bg-[#064E4A] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#053935]">
-              Check a Car Now
-            </Link>
-          </div>
+          <FaqGetValuationCta faqSlug="best-first-car-under-30k" />
 
           {/* Related */}
           <div className="mt-12 pt-8 border-t">

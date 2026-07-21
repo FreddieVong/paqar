@@ -1,4 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
+import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -125,12 +126,7 @@ export default function HowToNegotiate() {
         </ul>
       </div>
 
-      <div className="text-center">
-        <p className="text-[#374151] mb-4">Ready to negotiate? Get armed with data.</p>
-        <a href="/" className="inline-block bg-[#064E4A] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#053935]">
-          Get a Car Valuation
-        </a>
-      </div>
+        <FaqGetValuationCta faqSlug="how-to-negotiate-used-car" />
     </div>
   )
 }

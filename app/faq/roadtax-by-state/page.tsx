@@ -1,4 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
+import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -139,10 +140,7 @@ export default function RoadtaxByState() {
           </ul>
         </section>
 
-        <div className="text-center mt-12">
-          <p className="text-[#374151] mb-4">Calculate your total car cost before buying.</p>
-          <a href="/" className="inline-block bg-[#064E4A] text-white px-6 py-3 rounded-lg font-semibold">Get Car Valuation</a>
-        </div>
+        <FaqGetValuationCta faqSlug="roadtax-by-state" />
       </div>
     </>
   )

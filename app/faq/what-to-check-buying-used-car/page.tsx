@@ -1,4 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
+import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -133,10 +134,7 @@ export default function ChecklistBuyingUsedCar() {
         </div>
       </section>
 
-      <div className="text-center mt-12">
-        <p className="text-[#374151] mb-4">Get armed with market data before viewing.</p>
-        <a href="/" className="inline-block bg-[#064E4A] text-white px-6 py-3 rounded-lg font-semibold">Check a Car Now</a>
-      </div>
+        <FaqGetValuationCta faqSlug="what-to-check-buying-used-car" />
     </div>
   )
 }
