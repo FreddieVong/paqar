@@ -6,10 +6,23 @@ import { usePathname, useSearchParams } from 'next/navigation'
 declare global {
   interface Window {
     __gtagLoaded?: boolean
-    __gapageViewSent?: boolean
     dataLayer: IArguments[]
     gtag?: (...args: unknown[]) => void
   }
+}
+
+// Safe UTM campaign parameters allowed in GA4
+const SAFE_PARAMS = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'])
+
+function sanitizeSearchParams(params: URLSearchParams): string {
+  const filtered = new URLSearchParams()
+  Array.from(params.entries()).forEach(([key, value]) => {
+    if (SAFE_PARAMS.has(key)) {
+      filtered.append(key, value)
+    }
+  })
+  const str = filtered.toString()
+  return str ? `?${str}` : ''
 }
 
 export function GoogleTagScript() {
@@ -41,6 +54,7 @@ export function GoogleTagScript() {
       window.gtag('config', gaMeasurementId, {
         allow_google_signals: false,
         anonymize_ip: true,
+        send_page_view: false, // Prevent duplicate page_view; we send manually
       })
     }
 
@@ -52,24 +66,18 @@ export function GoogleTagScript() {
     document.head.appendChild(script)
   }, [])
 
-  // Track page views on route change (client-side navigation)
+  // Track page views on initial load and route changes
   useEffect(() => {
     if (!window.__gtagLoaded || !window.gtag) return
 
     const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
     if (!gaMeasurementId) return
 
-    // Prevent duplicate page_view events on initial load
-    if (!window.__gapageViewSent) {
-      window.__gapageViewSent = true
-      return
-    }
-
-    // Send page_view event for route changes
-    const url = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
+    // Send page_view with sanitized URL (only safe UTM params, no plate/email/etc)
+    const pageUrl = pathname + sanitizeSearchParams(searchParams)
     window.gtag('event', 'page_view', {
       page_path: pathname,
-      page_location: url,
+      page_location: pageUrl,
     })
   }, [pathname, searchParams])
 
