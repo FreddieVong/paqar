@@ -69,5 +69,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...['myvi-vs-axia','myvi-vs-saga','vios-vs-city','bezza-vs-saga','axia-vs-saga','myvi-vs-bezza','alza-vs-x50'].map(s => ({
       url: `${base}/bandingkan/${s}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8,
     })),
+    // FAQ pages
+    ...['best-first-car-under-30k','honda-city-buying-guide','honda-city-vs-toyota-vios','how-to-negotiate-used-car','how-to-spot-flood-cars','roadtax-by-state','toyota-vios-buying-guide','what-to-check-buying-used-car'].map(s => ({
+      url: `${base}/faq/${s}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8,
+    })),
   ]
 }
