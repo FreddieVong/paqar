@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 import { Plus_Jakarta_Sans, DM_Sans } from 'next/font/google'
 import './globals.css'
 import { AnalyticsProvider } from '@/components/layout/AnalyticsProvider'
-import { GoogleTagScript } from '@/components/layout/GoogleTagScript'
 import { MetaPixelScript } from '@/components/layout/MetaPixelScript'
+
+const GoogleTagScript = dynamic(() => import('@/components/layout/GoogleTagScript').then(mod => ({ default: mod.GoogleTagScript })), { ssr: false })
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
