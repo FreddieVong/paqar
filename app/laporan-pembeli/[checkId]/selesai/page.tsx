@@ -12,6 +12,7 @@ import { sendPurchaseEvent }                         from '@/lib/meta-capi'
 import { verifyRedirectSignature }                   from '@/lib/billplz'
 import { resolvePaymentDisplayState }                from '@/lib/payment-display-state'
 import { AnalyticsEvent }                            from '@/components/layout/AnalyticsEvent'
+import { GA4PurchaseEvent }                          from '@/components/layout/GA4PurchaseEvent'
 import { GoogleAdsConversion }                       from '@/components/layout/GoogleAdsConversion'
 import { WhatsAppShareButton }                       from '@/components/report/WhatsAppShareButton'
 
@@ -137,6 +138,14 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
       <Shell>
         <div className="pt-10 pb-10 max-w-sm mx-auto space-y-5 text-center">
           {displayState.state === 'verified_paid' && <AnalyticsEvent event="payment_completed" />}
+          {displayState.state === 'verified_paid' && (
+            <GA4PurchaseEvent
+              transactionId={displayState.purchaseInfo.transactionId}
+              value={displayState.purchaseInfo.valueRm}
+              itemId={displayState.purchaseInfo.itemId}
+              itemName={displayState.purchaseInfo.itemName}
+            />
+          )}
           {displayState.state === 'verified_paid' && (
             <GoogleAdsConversion
               email={displayState.buyerEmail}

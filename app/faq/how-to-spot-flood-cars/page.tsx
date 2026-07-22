@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import { Metadata } from 'next'
-import Link from 'next/link'
+import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 
 export const metadata: Metadata = {
   title: 'How to Spot a Flooded Car | Paqar Guide',
@@ -91,9 +91,7 @@ export default function HowToSpotFloodedCars() {
           <p className="text-[#374151]">Use Paqar valuation on the plate. If the car is priced RM3–5k below market median, ask yourself why. Flood damage is often the reason.</p>
         </section>
 
-        <section className="mt-8">
-          <Link href="/" className="text-[#064E4A] underline">← Back to all FAQ</Link>
-        </section>
+        <FaqGetValuationCta faqSlug="how-to-spot-flood-cars" />
       </div>
     </>
   )

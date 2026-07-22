@@ -94,3 +94,28 @@ export function trackValuationCompleted(props: {
 
   window.gtag('event', 'valuation_completed', eventData)
 }
+
+export interface PurchaseItem {
+  item_id:   string
+  item_name: string
+  price:     number
+  quantity:  number
+}
+
+// GA4's standard ecommerce `purchase` event. The payload shape is
+// intentionally narrow — no email, plate, name, phone, or claim_token can be
+// passed through this type signature.
+export function trackPurchase(props: {
+  transaction_id: string
+  value:          number
+  items:          PurchaseItem[]
+}): void {
+  if (typeof window === 'undefined' || !window.gtag) return
+
+  window.gtag('event', 'purchase', {
+    transaction_id: props.transaction_id,
+    value:          props.value,
+    currency:       'MYR',
+    items:          props.items,
+  })
+}
