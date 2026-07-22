@@ -57,7 +57,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
           <p className={`font-body text-[11px] ${
             tab === 'plate' ? 'text-white/70' : 'text-[#9CA3AF]'
           }`}>
-            Laporan Pembeli RM12 · maklumat kenderaan + skrip rundingan
+            Cari kereta — percuma · Laporan penuh RM12
           </p>
         </button>
       </div>
