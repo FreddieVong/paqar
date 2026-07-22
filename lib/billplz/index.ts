@@ -60,12 +60,20 @@ function compareCaseInsensitive(a: string, b: string): number {
   return la < lb ? -1 : la > lb ? 1 : 0
 }
 
-// Per Billplz docs: sort keys ascending case-insensitively, concatenate each
-// key directly with its value (no separator), join entries with '|'.
+// Billplz's actual construction (their published Ruby reference:
+// payload.map{|k,v| "#{k}#{v}"}.sort_by(&:downcase).join('|')):
+// CONCATENATE each key directly with its value FIRST, then sort the
+// concatenated strings case-insensitively, then join with '|'.
+//
+// This is NOT the same as sorting keys then concatenating — the value's first
+// characters participate in the sort. E.g. "paid_at2018..." sorts BEFORE
+// "paidtrue" ('_' 0x5F < 't' 0x74), so paid_at precedes paid, which no
+// key-only sort produces. Confirmed against Billplz's documented sample key +
+// expected signature (redirect example) and a real production payment.
 export function buildSignatureSourceString(params: Record<string, string>): string {
-  return Object.keys(params)
+  return Object.entries(params)
+    .map(([k, v]) => `${k}${v ?? ''}`)
     .sort(compareCaseInsensitive)
-    .map((k) => `${k}${params[k] ?? ''}`)
     .join('|')
 }
 
@@ -120,33 +128,13 @@ export function extractRedirectSignatureParams(
   return out
 }
 
-// CRITICAL: Billplz's REDIRECT (return_url) X-Signature uses a FIXED key order —
-// NOT an alphabetical sort like the callback/webhook signature. Empirically
-// confirmed against a real payment (bill 3bc6ba628d0ba087):
-//   billplzid{id}|billplzpaid_at{paid_at}|billplzpaid{paid}
-// Note paid_at precedes paid, which no lexicographic sort would produce. Keys
-// are billplz-prefixed and concatenated directly with their values (no key/value
-// separator); entries are joined by '|'. The optional transaction fields, when
-// the collection sends them, follow in this documented order.
-const REDIRECT_KEY_ORDER = [
-  'billplzid',
-  'billplzpaid_at',
-  'billplzpaid',
-  'billplztransaction_id',
-  'billplztransaction_status',
-]
-
+// The redirect signature uses the SAME concat-then-sort construction as the
+// callback, over the billplz-prefixed params (billplzid..., billplzpaid_at...,
+// billplzpaidtrue). Confirmed against Billplz's documented sample key +
+// expected redirect signature AND a real production payment
+// (bill 3bc6ba628d0ba087).
 export function buildRedirectSignatureSource(params: Record<string, string>): string {
-  return REDIRECT_KEY_ORDER
-    .filter((k) => k in params)
-    .map((k) => `${k}${params[k] ?? ''}`)
-    .join('|')
-}
-
-function computeRedirectSignature(params: Record<string, string>): string {
-  return createHmac('sha256', env.BILLPLZ_X_SIGNATURE_KEY!)
-    .update(buildRedirectSignatureSource(params))
-    .digest('hex')
+  return buildSignatureSourceString(params)
 }
 
 // Returns the verified param set (so the caller reads billplz[paid]/[id] only
@@ -160,5 +148,5 @@ export function verifyRedirectSignature(
   if (typeof rawSignature !== 'string') return null
   const params = extractRedirectSignatureParams(searchParams)
   if (!params) return null
-  return safeCompareSignature(computeRedirectSignature(params), rawSignature) ? params : null
+  return safeCompareSignature(computeSignature(params), rawSignature) ? params : null
 }

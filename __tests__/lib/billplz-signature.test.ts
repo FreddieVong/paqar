@@ -45,10 +45,32 @@ describe('Billplz Signature Functions', () => {
     })
   })
 
-  describe('buildRedirectSignatureSource (fixed Billplz order)', () => {
-    it('matches the real production payment ground-truth format', () => {
-      // Bill 3bc6ba628d0ba087 — verified against Billplz's actual signature.
-      // Order is id, paid_at, paid (NOT alphabetical — paid_at precedes paid).
+  describe('concat-then-sort construction (the Billplz rule)', () => {
+    it('sorts concatenated key+value strings, so paid_at precedes paid', () => {
+      // THE critical regression: '_' (0x5F) < 't' (0x74), so "paid_at2018..."
+      // sorts before "paidtrue". A key-only sort puts paid first — that bug
+      // rejected every real Billplz signature in production.
+      const result = buildSignatureSourceString({
+        paid: 'true',
+        paid_at: '2018-09-27 15:15:09 +0800',
+        paid_amount: '100',
+      })
+      expect(result).toBe('paid_amount100|paid_at2018-09-27 15:15:09 +0800|paidtrue')
+    })
+
+    it('reproduces Billplz\'s documented redirect signature with their sample key', () => {
+      // Verbatim from support.billplz.com/api — sample key + expected signature.
+      const source = buildRedirectSignatureSource({
+        billplzid: 'zq0tm2wc',
+        billplzpaid: 'true',
+        billplzpaid_at: '2018-09-27 15:15:09 +0800',
+      })
+      expect(source).toBe('billplzidzq0tm2wc|billplzpaid_at2018-09-27 15:15:09 +0800|billplzpaidtrue')
+      const sig = createHmac('sha256', 'S-s7b4yWpp9h7rrkNM1i3Z_g').update(source).digest('hex')
+      expect(sig).toBe('4aab095fe5a39b1d534500988f9a0cb085cd1b6d5bbb55dd4e02ea6fa102b47b')
+    })
+
+    it('matches the real production payment ground truth (bill 3bc6ba628d0ba087)', () => {
       const result = buildRedirectSignatureSource({
         billplzid: '3bc6ba628d0ba087',
         billplzpaid: 'true',
@@ -57,32 +79,18 @@ describe('Billplz Signature Functions', () => {
       expect(result).toBe('billplzid3bc6ba628d0ba087|billplzpaid_at2026-07-22 23:50:42 +0800|billplzpaidtrue')
     })
 
-    it('keeps fixed order regardless of input key order', () => {
-      const result = buildRedirectSignatureSource({
-        billplzpaid: 'true',
-        billplzpaid_at: '2026-01-01 00:00:00 +0800',
-        billplzid: 'abc',
+    it('orders the full 12-field callback payload exactly as the doc example', () => {
+      // Structure verbatim from Billplz's callback doc example — note
+      // paid_amount | paid_at | paid ordering mid-string.
+      const result = buildSignatureSourceString({
+        id: 'zq0tm2wc', collection_id: 'yhx5t1pp', paid: 'true', state: 'paid',
+        amount: '100', paid_amount: '100', due_at: '2018-9-27', email: 'api@billplz.com',
+        mobile: '', name: 'TESTER', url: 'http://www.billplz-sandbox.com/bills/zq0tm2wc',
+        paid_at: '2018-09-27 15:15:09 +0800',
       })
-      expect(result).toBe('billplzidabc|billplzpaid_at2026-01-01 00:00:00 +0800|billplzpaidtrue')
-    })
-
-    it('appends optional transaction fields in documented order', () => {
-      const result = buildRedirectSignatureSource({
-        billplzid: 'abc',
-        billplzpaid: 'true',
-        billplzpaid_at: '2026-01-01 00:00:00 +0800',
-        billplztransaction_id: 'tx1',
-        billplztransaction_status: 'completed',
-      })
-      expect(result).toBe('billplzidabc|billplzpaid_at2026-01-01 00:00:00 +0800|billplzpaidtrue|billplztransaction_idtx1|billplztransaction_statuscompleted')
-    })
-
-    it('omits absent fields', () => {
-      const result = buildRedirectSignatureSource({
-        billplzid: 'abc',
-        billplzpaid: 'true',
-      })
-      expect(result).toBe('billplzidabc|billplzpaidtrue')
+      expect(result).toBe(
+        'amount100|collection_idyhx5t1pp|due_at2018-9-27|emailapi@billplz.com|idzq0tm2wc|mobile|nameTESTER|paid_amount100|paid_at2018-09-27 15:15:09 +0800|paidtrue|statepaid|urlhttp://www.billplz-sandbox.com/bills/zq0tm2wc'
+      )
     })
   })
 
