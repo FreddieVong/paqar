@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { analytics } from '@/lib/analytics'
+import { trackValuationCompleted, getTrafficContext } from '@/lib/ga4-events'
 import type { PollCheckResponse, VehiclePreview } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
@@ -14,6 +16,8 @@ const MAX_POLLS        = 8
  * Renders nothing if no vehicle is found — the page looks unchanged.
  */
 export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string; claimToken: string }) {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [preview, setPreview] = useState<VehiclePreview | null>(null)
   const trackedRef = useRef(false)
 
@@ -33,6 +37,15 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
             if (!trackedRef.current) {
               trackedRef.current = true
               analytics.teaserShown({ has_vehicle: true })
+
+              // Fire GA4 valuation_completed event on successful vehicle lookup
+              const entryPageType = pathname.includes('/faq/') ? 'faq' : 'home'
+              const trafficContext = getTrafficContext(searchParams)
+              trackValuationCompleted({
+                entry_page_type: entryPageType,
+                traffic_context: trafficContext,
+                result_confidence: 'high',
+              })
             }
             return
           }
@@ -48,7 +61,7 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
 
     void poll()
     return () => { stopped = true }
-  }, [checkId, claimToken])
+  }, [checkId, claimToken, pathname, searchParams])
 
   if (!preview) return null
 

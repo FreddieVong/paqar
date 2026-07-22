@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
 import { analytics } from '@/lib/analytics'
+import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
 
 const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
   font-heading font-semibold text-[16px] text-[#111827]
@@ -15,6 +16,8 @@ const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.
 
 export function PlateCheckerForm() {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [plate, setPlate]             = useState('')
   const [askingPrice, setAskingPrice] = useState('')
   const [plateFocused, setPlateFocused] = useState(false)
@@ -26,6 +29,17 @@ export function PlateCheckerForm() {
     if (!plate.trim()) return
     setBusy(true)
     setError(null)
+
+    // Determine entry point (home or faq)
+    const entryPageType = pathname.includes('/faq/') ? 'faq' : 'home'
+    const trafficContext = getTrafficContext(searchParams)
+
+    // Fire GA4 valuation_started event
+    trackValuationStarted({
+      entry_page_type: entryPageType,
+      traffic_context: trafficContext,
+    })
+
     analytics.checkStarted({ country: 'MY', is_test: false })
     try {
       const res = await fetch('/api/checks', {
