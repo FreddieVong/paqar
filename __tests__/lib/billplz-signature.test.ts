@@ -14,7 +14,7 @@ vi.mock('@/lib/env', () => ({
 const TEST_KEY = 'test-x-signature-key'
 
 // Import after mocking env
-import { buildSignatureSourceString, verifyWebhookSignature, extractRedirectSignatureParams, verifyRedirectSignature } from '@/lib/billplz'
+import { buildSignatureSourceString, buildRedirectSignatureSource, verifyWebhookSignature, extractRedirectSignatureParams, verifyRedirectSignature } from '@/lib/billplz'
 
 describe('Billplz Signature Functions', () => {
   describe('buildSignatureSourceString', () => {
@@ -25,15 +25,6 @@ describe('Billplz Signature Functions', () => {
         due_at: '2018-9-27',
       })
       expect(result).toBe('amount100|collection_idyhx5t1pp|due_at2018-9-27')
-    })
-
-    it('redirect example: case-insensitive sort, no separator between key and value', () => {
-      const result = buildSignatureSourceString({
-        billplzid: 'zq0tm2wc',
-        billplzpaid: 'true',
-        billplzpaid_at: '2018-09-27 15:15:09 +0800',
-      })
-      expect(result).toBe('billplzidzq0tm2wc|billplzpaidtrue|billplzpaid_at2018-09-27 15:15:09 +0800')
     })
 
     it('handles empty values', () => {
@@ -51,6 +42,47 @@ describe('Billplz Signature Functions', () => {
         M: 'm',
       })
       expect(result).toBe('aa|Mm|Zz')
+    })
+  })
+
+  describe('buildRedirectSignatureSource (fixed Billplz order)', () => {
+    it('matches the real production payment ground-truth format', () => {
+      // Bill 3bc6ba628d0ba087 — verified against Billplz's actual signature.
+      // Order is id, paid_at, paid (NOT alphabetical — paid_at precedes paid).
+      const result = buildRedirectSignatureSource({
+        billplzid: '3bc6ba628d0ba087',
+        billplzpaid: 'true',
+        billplzpaid_at: '2026-07-22 23:50:42 +0800',
+      })
+      expect(result).toBe('billplzid3bc6ba628d0ba087|billplzpaid_at2026-07-22 23:50:42 +0800|billplzpaidtrue')
+    })
+
+    it('keeps fixed order regardless of input key order', () => {
+      const result = buildRedirectSignatureSource({
+        billplzpaid: 'true',
+        billplzpaid_at: '2026-01-01 00:00:00 +0800',
+        billplzid: 'abc',
+      })
+      expect(result).toBe('billplzidabc|billplzpaid_at2026-01-01 00:00:00 +0800|billplzpaidtrue')
+    })
+
+    it('appends optional transaction fields in documented order', () => {
+      const result = buildRedirectSignatureSource({
+        billplzid: 'abc',
+        billplzpaid: 'true',
+        billplzpaid_at: '2026-01-01 00:00:00 +0800',
+        billplztransaction_id: 'tx1',
+        billplztransaction_status: 'completed',
+      })
+      expect(result).toBe('billplzidabc|billplzpaid_at2026-01-01 00:00:00 +0800|billplzpaidtrue|billplztransaction_idtx1|billplztransaction_statuscompleted')
+    })
+
+    it('omits absent fields', () => {
+      const result = buildRedirectSignatureSource({
+        billplzid: 'abc',
+        billplzpaid: 'true',
+      })
+      expect(result).toBe('billplzidabc|billplzpaidtrue')
     })
   })
 
@@ -195,7 +227,7 @@ describe('Billplz Signature Functions', () => {
         billplzpaid: 'true',
         billplzpaid_at: '2018-09-27 15:15:09 +0800',
       }
-      const sig = createHmac('sha256', TEST_KEY).update(buildSignatureSourceString(sourceParams)).digest('hex')
+      const sig = createHmac('sha256', TEST_KEY).update(buildRedirectSignatureSource(sourceParams)).digest('hex')
       const fullParams = { ...params, 'billplz[x_signature]': sig }
       const result = verifyRedirectSignature(fullParams)
       expect(result).toEqual(sourceParams)
@@ -225,7 +257,7 @@ describe('Billplz Signature Functions', () => {
         billplzid: 'zq0tm2wc',
         billplzpaid: 'true',
       }
-      const sig = createHmac('sha256', TEST_KEY).update(buildSignatureSourceString(sourceParams)).digest('hex')
+      const sig = createHmac('sha256', TEST_KEY).update(buildRedirectSignatureSource(sourceParams)).digest('hex')
       const tamperedParams = {
         'billplz[id]': 'different_id',
         'billplz[paid]': 'true',
@@ -240,7 +272,7 @@ describe('Billplz Signature Functions', () => {
         billplzid: 'zq0tm2wc',
         billplzpaid: 'true',
       }
-      const sig = createHmac('sha256', TEST_KEY).update(buildSignatureSourceString(sourceParams)).digest('hex')
+      const sig = createHmac('sha256', TEST_KEY).update(buildRedirectSignatureSource(sourceParams)).digest('hex')
       const tamperedParams = {
         'billplz[id]': 'zq0tm2wc',
         'billplz[paid]': 'false',

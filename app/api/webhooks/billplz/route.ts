@@ -22,6 +22,11 @@ export async function POST(request: NextRequest) {
   const { x_signature: _sig, ...verifyParams } = params
 
   if (!verifyWebhookSignature(verifyParams, signature)) {
+    // TEMPORARY diagnostic — captures the real callback payload so we can derive
+    // Billplz's exact webhook signature format (the redirect used a non-standard
+    // fixed order; the callback may too). Remove once webhook verification is
+    // confirmed against a real payload.
+    console.error('[billplz-webhook-debug]', JSON.stringify({ params: verifyParams, signature }))
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 

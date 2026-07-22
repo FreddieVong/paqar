@@ -100,13 +100,8 @@ export function verifyWebhookSignature(
 // Redirect params arrive as billplz[id], billplz[paid], billplz[paid_at], and
 // optionally billplz[transaction_id]/billplz[transaction_status] (only when
 // "Extra Payment Completion Information" is enabled on the collection) plus
-// billplz[x_signature]. Per Billplz's docs the signed key is the bracket
-// stripped, "billplz"-prefixed field name (e.g. "billplz[id]" -> "billplzid" —
-// matches their literal example billplzidzq0tm2wc|...).
-//
-// This iterates over WHATEVER billplz[...] params are actually present rather
-// than a fixed allowlist, so any future optional field Billplz adds is
-// automatically included without a code change.
+// billplz[x_signature]. The signed key is the bracket-stripped, "billplz"-
+// prefixed field name (e.g. "billplz[id]" -> "billplzid").
 const BILLPLZ_PARAM_KEY = /^billplz(?:\[([^\]]*)\]|%5B([^%]*)%5D)$/i
 
 export function extractRedirectSignatureParams(
@@ -125,6 +120,35 @@ export function extractRedirectSignatureParams(
   return out
 }
 
+// CRITICAL: Billplz's REDIRECT (return_url) X-Signature uses a FIXED key order —
+// NOT an alphabetical sort like the callback/webhook signature. Empirically
+// confirmed against a real payment (bill 3bc6ba628d0ba087):
+//   billplzid{id}|billplzpaid_at{paid_at}|billplzpaid{paid}
+// Note paid_at precedes paid, which no lexicographic sort would produce. Keys
+// are billplz-prefixed and concatenated directly with their values (no key/value
+// separator); entries are joined by '|'. The optional transaction fields, when
+// the collection sends them, follow in this documented order.
+const REDIRECT_KEY_ORDER = [
+  'billplzid',
+  'billplzpaid_at',
+  'billplzpaid',
+  'billplztransaction_id',
+  'billplztransaction_status',
+]
+
+export function buildRedirectSignatureSource(params: Record<string, string>): string {
+  return REDIRECT_KEY_ORDER
+    .filter((k) => k in params)
+    .map((k) => `${k}${params[k] ?? ''}`)
+    .join('|')
+}
+
+function computeRedirectSignature(params: Record<string, string>): string {
+  return createHmac('sha256', env.BILLPLZ_X_SIGNATURE_KEY!)
+    .update(buildRedirectSignatureSource(params))
+    .digest('hex')
+}
+
 // Returns the verified param set (so the caller reads billplz[paid]/[id] only
 // from values that were actually part of the signed payload) or null if
 // verification fails for any reason.
@@ -136,5 +160,5 @@ export function verifyRedirectSignature(
   if (typeof rawSignature !== 'string') return null
   const params = extractRedirectSignatureParams(searchParams)
   if (!params) return null
-  return safeCompareSignature(computeSignature(params), rawSignature) ? params : null
+  return safeCompareSignature(computeRedirectSignature(params), rawSignature) ? params : null
 }
