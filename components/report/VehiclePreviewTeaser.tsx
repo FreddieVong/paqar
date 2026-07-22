@@ -39,12 +39,14 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
               analytics.teaserShown({ has_vehicle: true })
 
               // Fire GA4 valuation_completed event on successful vehicle lookup
-              const entryPageType = pathname.includes('/faq/') ? 'faq' : 'home'
+              // Determine entry point from entry_source parameter (set by FAQ CTA navigation)
+              const entrySource = searchParams.get('entry_source')
+              const entryPageType = entrySource === 'faq' ? 'faq' : 'home'
               const trafficContext = getTrafficContext(searchParams)
               trackValuationCompleted({
                 entry_page_type: entryPageType,
                 traffic_context: trafficContext,
-                result_confidence: 'high',
+                result_confidence: 'unknown',
               })
             }
             return

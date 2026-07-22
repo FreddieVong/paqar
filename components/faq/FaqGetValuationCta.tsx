@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { trackFaqGetValuationClick } from '@/lib/ga4-events'
@@ -11,6 +12,24 @@ export interface FaqGetValuationCtaProps {
 
 export function FaqGetValuationCta({ faqSlug }: FaqGetValuationCtaProps) {
   const pathname = usePathname()
+  const [homeUrl, setHomeUrl] = useState('/')
+
+  useEffect(() => {
+    // Build homepage URL with preserved parameters on client side only
+    // This avoids useSearchParams() during static generation
+    const params = new URLSearchParams(window.location.search)
+    const homepageParams = new URLSearchParams()
+    homepageParams.set('entry_source', 'faq')
+
+    // Preserve existing UTM parameters for traffic attribution
+    const utmParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid']
+    utmParams.forEach(param => {
+      const value = params.get(param)
+      if (value) homepageParams.set(param, value)
+    })
+
+    setHomeUrl(`/?${homepageParams.toString()}`)
+  }, [])
 
   const handleClick = () => {
     trackFaqGetValuationClick({
@@ -25,7 +44,7 @@ export function FaqGetValuationCta({ faqSlug }: FaqGetValuationCtaProps) {
       <h3 className="text-xl font-bold text-[#064E4A] mb-3">Ready to Find Your First Car?</h3>
       <p className="text-[#374151] mb-6">Enter a plate number to see its instant valuation, market price range, and whether it's a good deal.</p>
       <Link
-        href="/"
+        href={homeUrl}
         onClick={handleClick}
         className="inline-block bg-[#064E4A] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#053935]"
       >

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
 import { analytics } from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
@@ -16,7 +16,6 @@ const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.
 
 export function PlateCheckerForm() {
   const router = useRouter()
-  const pathname = usePathname()
   const searchParams = useSearchParams()
   const [plate, setPlate]             = useState('')
   const [askingPrice, setAskingPrice] = useState('')
@@ -30,8 +29,10 @@ export function PlateCheckerForm() {
     setBusy(true)
     setError(null)
 
-    // Determine entry point (home or faq)
-    const entryPageType = pathname.includes('/faq/') ? 'faq' : 'home'
+    // Determine entry point from entry_source parameter (set by FAQ CTA navigation)
+    // or fall back to current pathname if user navigated directly
+    const entrySource = searchParams.get('entry_source')
+    const entryPageType = entrySource === 'faq' ? 'faq' : 'home'
     const trafficContext = getTrafficContext(searchParams)
 
     // Fire GA4 valuation_started event

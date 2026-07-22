@@ -6,14 +6,48 @@ declare global {
   }
 }
 
-// Determine traffic context from URL parameters
-export function getTrafficContext(searchParams: URLSearchParams): 'organic' | 'paid' | 'direct' {
-  const source = searchParams.get('utm_source')
-  if (!source) return 'direct'
-  if (['google', 'facebook', 'tiktok', 'instagram', 'linkedin'].includes(source.toLowerCase())) {
+export type TrafficContext = 'paid' | 'organic_social' | 'email' | 'referral' | 'organic' | 'direct' | 'other'
+export type ResultConfidence = 'high' | 'medium' | 'low' | 'unknown'
+export type EntryPageType = 'home' | 'faq' | 'other'
+
+// Determine traffic context from UTM parameters per GA specification
+// Primary: utm_medium. Fallback: gclid, gbraid, wbraid for Google CPC
+export function getTrafficContext(searchParams: URLSearchParams): TrafficContext {
+  const medium = searchParams.get('utm_medium')?.toLowerCase()
+  const source = searchParams.get('utm_source')?.toLowerCase()
+
+  // Check for Google CPC signals (gclid, gbraid, wbraid indicate Google Ads conversion tracking)
+  if (searchParams.has('gclid') || searchParams.has('gbraid') || searchParams.has('wbraid')) {
     return 'paid'
   }
-  return 'organic'
+
+  if (medium) {
+    // Primary classification by utm_medium
+    if (['cpc', 'ppc', 'paid', 'paid_social', 'display', 'cpm', 'retargeting'].includes(medium)) {
+      return 'paid'
+    }
+    if (['social', 'organic_social'].includes(medium)) {
+      return 'organic_social'
+    }
+    if (medium === 'email') {
+      return 'email'
+    }
+    if (medium === 'referral') {
+      return 'referral'
+    }
+    if (medium === 'organic') {
+      return 'organic'
+    }
+    return 'other'
+  }
+
+  // No utm_medium: no UTM parameters at all = direct
+  if (!source && !searchParams.has('utm_campaign') && !searchParams.has('utm_content')) {
+    return 'direct'
+  }
+
+  // Has some UTM params but no utm_medium: classify as other
+  return 'other'
 }
 
 export function trackFaqGetValuationClick(props: {
@@ -31,8 +65,8 @@ export function trackFaqGetValuationClick(props: {
 }
 
 export function trackValuationStarted(props: {
-  entry_page_type: 'home' | 'faq' | 'other'
-  traffic_context: 'organic' | 'paid' | 'direct'
+  entry_page_type: EntryPageType
+  traffic_context: TrafficContext
 }): void {
   if (typeof window === 'undefined' || !window.gtag) return
 
@@ -43,15 +77,20 @@ export function trackValuationStarted(props: {
 }
 
 export function trackValuationCompleted(props: {
-  entry_page_type: 'home' | 'faq' | 'other'
-  traffic_context: 'organic' | 'paid' | 'direct'
-  result_confidence: 'low' | 'medium' | 'high'
+  entry_page_type: EntryPageType
+  traffic_context: TrafficContext
+  result_confidence?: ResultConfidence
 }): void {
   if (typeof window === 'undefined' || !window.gtag) return
 
-  window.gtag('event', 'valuation_completed', {
+  const eventData: Record<string, unknown> = {
     entry_page_type: props.entry_page_type,
     traffic_context: props.traffic_context,
-    result_confidence: props.result_confidence,
-  })
+  }
+
+  if (props.result_confidence) {
+    eventData.result_confidence = props.result_confidence
+  }
+
+  window.gtag('event', 'valuation_completed', eventData)
 }
