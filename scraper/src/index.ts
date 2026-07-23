@@ -26,7 +26,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.get('/health', (_req, res) => {
   // version: bump when scraping behavior changes — lets deploys be verified
   // from outside without Railway dashboard access
-  res.json({ ok: true, version: '2026-07-24-diag2', ts: new Date().toISOString() })
+  res.json({ ok: true, version: '2026-07-24-price-fix', ts: new Date().toISOString() })
 })
 
 // ── Saman endpoints ───────────────────────────────────────────────────────────
@@ -64,10 +64,9 @@ app.post('/check/local_councils', async (req, res) => {
 app.post('/check/mudah-market', async (req, res) => {
   const { make, model, year, debug } = req.body as { make?: string; model?: string; year?: string; debug?: boolean }
   if (!make || !model) { res.status(400).json({ error: 'make and model required' }); return }
-  const result = await scrapeMudahMarket(make, model, year ?? '')
+  const result = await scrapeMudahMarket(make, model, year ?? '', debug === true)
   console.log('[mudah-market]', JSON.stringify({ make, model, year, count: result.listings.length, error: result.error }))
-  // debug diagnostics are opt-in — strip them from normal responses
-  res.json(debug ? result : { ...result, debug: undefined })
+  res.json(result)
 })
 
 // ── Start ─────────────────────────────────────────────────────────────────────

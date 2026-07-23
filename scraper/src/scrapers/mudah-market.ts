@@ -14,16 +14,12 @@ export interface MudahMarketResult {
   searchUrl: string
   error?:    string
   debug?: {
-    pageTitle:    string
-    pageUrl:      string
-    priceCount:   number
-    jsonSeen:     number
-    domFound:     number
-    totalLinks:   number
-    withPriceCtx: number
-    withMake:     number
-    withModel:    number
-    bodyText:     string
+    pageTitle:  string
+    pageUrl:    string
+    priceCount: number
+    jsonSeen:   number
+    domFound:   number
+    bodyText:   string
   }
 }
 
@@ -38,11 +34,12 @@ export async function scrapeMudahMarket(
   make: string,
   model: string,
   year: string,
+  debug = false,
 ): Promise<MudahMarketResult> {
   const keyword   = [make, cleanKeyword(model), year].filter(Boolean).join(' ')
   const searchUrl = `https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(keyword)}`
   const listings: MarketListing[] = []
-  const diag = { pageTitle: '', pageUrl: '', priceCount: 0, jsonSeen: 0, domFound: 0, totalLinks: 0, withPriceCtx: 0, withMake: 0, withModel: 0, bodyText: '' }
+  const diag = { pageTitle: '', pageUrl: '', priceCount: 0, jsonSeen: 0, domFound: 0, bodyText: '' }
 
   try {
     await withPage(async (page) => {
@@ -100,7 +97,7 @@ export async function scrapeMudahMarket(
       diag.pageTitle  = pageTitle
       diag.pageUrl    = pageUrl
       diag.priceCount = priceCount
-      diag.bodyText   = await page.evaluate(() => document.body?.innerText?.slice(0, 600) ?? '').catch(() => '')
+      if (debug) diag.bodyText = await page.evaluate(() => document.body?.innerText?.slice(0, 600) ?? '').catch(() => '')
       console.log('[mudah-market] page:', pageTitle, pageUrl, 'rm-prices:', priceCount)
 
       if (captured.length > 0) {
@@ -135,7 +132,10 @@ export async function scrapeMudahMarket(
             }
             if (!context) return
 
-            const priceMatch = context.match(/RM\s*([\d,]+)/)
+            // Comma-grouped so a glued year ("RM 40,5002018") doesn't get
+            // swallowed into a 405002018 garbage price — mirrors parsePrice()
+            // in listing-utils.ts (tested; can't be imported into evaluate)
+            const priceMatch = context.match(/RM\s*(\d{1,3}(?:,\d{3})+)/)
             if (!priceMatch) return
             const price = parseInt((priceMatch[1] ?? '').replace(/,/g, ''), 10)
             if (!price || price < 5_000 || price > 2_000_000) return
@@ -154,37 +154,6 @@ export async function scrapeMudahMarket(
         [makeKw, modelKw] as [string, string]
       )
       diag.domFound = extracted.length
-
-      // Extraction funnel — where does the page's price count collapse to matches?
-      const funnel = await page.evaluate(
-        ([mkw, mdkw]: [string, string]) => {
-          let totalLinks = 0, withPriceCtx = 0, withMake = 0, withModel = 0
-          const seen = new Set<string>()
-          document.querySelectorAll('a[href]').forEach((el) => {
-            const href = (el as HTMLAnchorElement).href
-            if (!href || seen.has(href)) return
-            totalLinks++
-            let node: HTMLElement | null = el as HTMLElement, ctx = ''
-            for (let i = 0; i < 6 && node; i++) {
-              const t = node.textContent?.replace(/\s+/g, ' ').trim() ?? ''
-              if (/RM\s*[\d,]+/.test(t) && t.length < 500) { ctx = t; break }
-              node = node.parentElement
-            }
-            if (!ctx) return
-            withPriceCtx++
-            const up = ctx.toUpperCase()
-            if (up.includes(mkw)) withMake++
-            if (up.includes(mdkw)) withModel++
-            seen.add(href)
-          })
-          return { totalLinks, withPriceCtx, withMake, withModel }
-        },
-        [makeKw, modelKw] as [string, string]
-      )
-      diag.totalLinks   = funnel.totalLinks
-      diag.withPriceCtx = funnel.withPriceCtx
-      diag.withMake     = funnel.withMake
-      diag.withModel    = funnel.withModel
 
       // Also log raw HTML snippet for debugging if nothing found
       if (extracted.length === 0) {
@@ -209,8 +178,8 @@ export async function scrapeMudahMarket(
       }
     })
   } catch (err) {
-    return { listings: [], searchUrl, error: String(err), debug: diag }
+    return { listings: [], searchUrl, error: String(err), debug: debug ? diag : undefined }
   }
 
-  return { listings: dedupeAndCap(listings), searchUrl, debug: diag }
+  return { listings: dedupeAndCap(listings), searchUrl, debug: debug ? diag : undefined }
 }
