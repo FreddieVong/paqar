@@ -25,6 +25,11 @@ export function assessDepreciation(
   const ratio     = retention / expected
   const isPremium = newPriceRm >= 150_000
 
+  // Retention this far above what even an exceptional car would show means
+  // newPriceRm itself is very likely wrong (too low) — hide rather than
+  // praise bad data as "retains value well".
+  if (ratio > 2.5) return null
+
   if (ratio >= 1.4) {
     return { note: 'Model ni pegang nilai berbanding kereta lain seusia — biasanya senang jual balik nanti.' }
   }

@@ -21,9 +21,13 @@ export async function getValuationByNvic(
   if (!nvic && !fallback) return null
   const supabase = createServiceClient()
 
-  // 1. Exact NVIC match (most accurate). The table contains duplicate NVIC
-  // rows (~20%) — .single() errors on multiples, silently dropping the exact
-  // match and handing a GP3 the cheapest Clubman via the fallback below.
+  // 1. Exact NVIC match (most accurate). nvic is the table's primary key
+  // (supabase/migrations/008_vehicle_valuations.sql) so this can return at
+  // most one row — maybeSingle() is defensive, not a workaround for
+  // duplicates. Verified against a real corrupted-price case (Toyota Camry
+  // 2014 V, NVIC I6414A): the row itself was singular and correctly matched,
+  // the wm_new_pr value in the source data was simply wrong. See
+  // lib/depreciation.ts's implausible-retention guard for how that's caught.
   if (nvic) {
     const { data } = await supabase
       .from('vehicle_valuations')
