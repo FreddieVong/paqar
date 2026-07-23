@@ -1,4 +1,5 @@
-import { withPage } from '../browser.js'
+import { withPage }     from '../browser.js'
+import { dedupeAndCap } from './listing-utils.js'
 
 export interface MarketListing {
   price:   number
@@ -65,16 +66,24 @@ export async function scrapeMudahMarket(
       // 'load' fires once all resources are loaded; then wait for listings to render
       await page.goto(searchUrl, { waitUntil: 'load', timeout: 25_000 })
 
-      // Wait for listing cards or a fixed timeout, whichever comes first
-      await Promise.race([
-        page.waitForSelector('li, article, [class*="listing"], [class*="card"]', { timeout: 8_000 }).catch(() => {}),
-        new Promise(r => setTimeout(r, 8_000)),
-      ])
+      // Mudah hydrates result cards progressively, and on a slow container a
+      // fixed wait reads the DOM mid-render (Railway captured 2 cards where a
+      // local run captured 12). Poll the RM-price count until it stops growing
+      // for 2 consecutive polls, capped at 20s.
+      let priceCount = 0
+      for (let i = 0, prev = -1, stable = 0; i < 20 && stable < 2; i++) {
+        await new Promise(r => setTimeout(r, 1_000))
+        priceCount = await page.evaluate(
+          () => document.body?.innerText?.match(/RM\s?[\d,]{4,}/g)?.length ?? 0
+        ).catch(() => 0)
+        if (priceCount === prev && priceCount > 0) stable++
+        else { stable = 0; prev = priceCount }
+      }
 
       // Log what page we actually got — helps diagnose blocks/captchas
       const pageTitle = await page.title()
       const pageUrl   = page.url()
-      console.log('[mudah-market] page:', pageTitle, pageUrl)
+      console.log('[mudah-market] page:', pageTitle, pageUrl, 'rm-prices:', priceCount)
 
       if (captured.length > 0) {
         // Higher cap: consumption-side year/outlier filters discard non-matching
@@ -153,13 +162,5 @@ export async function scrapeMudahMarket(
     return { listings: [], searchUrl, error: String(err) }
   }
 
-  // Deduplicate by URL, keep cheapest first
-  const seen = new Set<string>()
-  const deduped = listings.filter(l => {
-    if (seen.has(l.url)) return false
-    seen.add(l.url)
-    return true
-  }).sort((a, b) => a.price - b.price).slice(0, 15)
-
-  return { listings: deduped, searchUrl }
+  return { listings: dedupeAndCap(listings), searchUrl }
 }

@@ -24,7 +24,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // ── Health ────────────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, ts: new Date().toISOString() })
+  // version: bump when scraping behavior changes — lets deploys be verified
+  // from outside without Railway dashboard access
+  res.json({ ok: true, version: '2026-07-24-stabilization-wait', ts: new Date().toISOString() })
 })
 
 // ── Saman endpoints ───────────────────────────────────────────────────────────
