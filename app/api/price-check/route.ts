@@ -52,7 +52,10 @@ export async function POST(request: NextRequest) {
   // DB layer uses 'make' — same value, different naming convention
   const cached = await getCachedMarketPrices(brand, model, year).catch(() => null)
 
-  if (!cached || cached.listings.length < 3) {
+  // 2 listings is enough for an honest low-confidence range: datacenter-IP
+  // throttling by Mudah often leaves popular models with only 2-3 captures,
+  // and the UI already labels <5 as "Data pasaran terhad"
+  if (!cached || cached.listings.length < 2) {
     waitUntil(fetchAndCacheMarketPrices(brand, model, year).catch(() => {}))
     return NextResponse.json({ hasData: false })
   }
@@ -64,6 +67,9 @@ export async function POST(request: NextRequest) {
   )
 
   if (validPrices.length < 2) {
+    // Cached row exists but is mostly wrong-year/invalid — refetch in the
+    // background so polluted rows self-heal before their TTL expires
+    waitUntil(fetchAndCacheMarketPrices(brand, model, year).catch(() => {}))
     return NextResponse.json({ hasData: false })
   }
 
