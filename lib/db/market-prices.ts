@@ -1,6 +1,7 @@
 import 'server-only'
-import { createServiceClient } from '@/lib/supabase/server'
-import { env }                 from '@/lib/env'
+import { createServiceClient }  from '@/lib/supabase/server'
+import { env }                  from '@/lib/env'
+import { extractYearFromTitle } from '@/lib/price-stats'
 
 export interface MarketListing {
   price:   number
@@ -83,8 +84,13 @@ export async function fetchAndCacheMarketPrices(
     const broad    = await scrapeMarketPrices(make, model, '')
     const targetYr = parseInt(year, 10)
     const filtered = broad.listings.filter(l => {
-      if (!l.year) return true
-      return Math.abs(parseInt(l.year, 10) - targetYr) <= 1
+      // Scraper often stores year: null (Mudah glues it into the title) —
+      // recover it from the title before trusting the listing, or wrong-year
+      // cars get cached for 7 days (2011-2014 Golfs polluted golf/2020)
+      const parsed = l.year ? parseInt(l.year, 10) : NaN
+      const y      = Number.isFinite(parsed) ? parsed : extractYearFromTitle(l.title)
+      if (!Number.isFinite(y)) return true
+      return Math.abs(y - targetYr) <= 1
     })
     if (filtered.length > listings.length) {
       listings  = filtered
