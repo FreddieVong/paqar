@@ -13,6 +13,14 @@ export interface MudahMarketResult {
   listings:  MarketListing[]
   searchUrl: string
   error?:    string
+  debug?: {
+    pageTitle:  string
+    pageUrl:    string
+    priceCount: number
+    jsonSeen:   number
+    domFound:   number
+    bodyText:   string
+  }
 }
 
 function cleanKeyword(model: string): string {
@@ -30,6 +38,7 @@ export async function scrapeMudahMarket(
   const keyword   = [make, cleanKeyword(model), year].filter(Boolean).join(' ')
   const searchUrl = `https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(keyword)}`
   const listings: MarketListing[] = []
+  const diag = { pageTitle: '', pageUrl: '', priceCount: 0, jsonSeen: 0, domFound: 0, bodyText: '' }
 
   try {
     await withPage(async (page) => {
@@ -46,6 +55,7 @@ export async function scrapeMudahMarket(
             (json?.data as Record<string,unknown>)?.listings as unknown[] ??
             json?.listings as unknown[] ??
             json?.results as unknown[] ?? []
+          if (items.length) diag.jsonSeen += items.length
           for (const item of items.slice(0, 30)) {
             const i     = item as Record<string, unknown>
             const price = Number(i?.price ?? i?.asking_price ?? 0)
@@ -83,6 +93,10 @@ export async function scrapeMudahMarket(
       // Log what page we actually got — helps diagnose blocks/captchas
       const pageTitle = await page.title()
       const pageUrl   = page.url()
+      diag.pageTitle  = pageTitle
+      diag.pageUrl    = pageUrl
+      diag.priceCount = priceCount
+      diag.bodyText   = await page.evaluate(() => document.body?.innerText?.slice(0, 600) ?? '').catch(() => '')
       console.log('[mudah-market] page:', pageTitle, pageUrl, 'rm-prices:', priceCount)
 
       if (captured.length > 0) {
@@ -135,6 +149,7 @@ export async function scrapeMudahMarket(
         },
         [makeKw, modelKw] as [string, string]
       )
+      diag.domFound = extracted.length
 
       // Also log raw HTML snippet for debugging if nothing found
       if (extracted.length === 0) {
@@ -159,8 +174,8 @@ export async function scrapeMudahMarket(
       }
     })
   } catch (err) {
-    return { listings: [], searchUrl, error: String(err) }
+    return { listings: [], searchUrl, error: String(err), debug: diag }
   }
 
-  return { listings: dedupeAndCap(listings), searchUrl }
+  return { listings: dedupeAndCap(listings), searchUrl, debug: diag }
 }
