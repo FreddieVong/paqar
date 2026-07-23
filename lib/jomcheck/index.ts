@@ -20,6 +20,31 @@ export function normalisePlate(raw: string): string {
   return raw.toUpperCase().replace(/\s/g, '')
 }
 
+// Manual fulfillment mode: the add-on stays sellable, but the API auto-lookup
+// is skipped — the owner keys results in via /admin/jomcheck instead.
+export function isJomCheckManual(): boolean {
+  return env.JOMCHECK_MODE === 'manual'
+}
+
+export type ManualClaimCounts = Record<JomCheckClaim['type'], number>
+
+const MANUAL_CLAIM_ORDER: JomCheckClaim['type'][] = ['accident', 'flood', 'windscreen', 'total_loss']
+
+// Builds the exact same JomCheckResult shape as parseResult below — counts only,
+// amount always null — so JomCheckSection renders identically to the API path.
+export function buildManualJomCheckResult(plate: string, counts: ManualClaimCounts): JomCheckResult {
+  const claims: JomCheckClaim[] = MANUAL_CLAIM_ORDER
+    .filter(type => counts[type] > 0)
+    .map(type => ({ type, count: counts[type], amount: null }))
+
+  return {
+    plate:       normalisePlate(plate),
+    totalClaims: claims.reduce((sum, c) => sum + c.count, 0),
+    claims,
+    checkedAt:   new Date().toISOString(),
+  }
+}
+
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
 const BASE = 'https://www.jomcheck.com.my'
@@ -82,6 +107,7 @@ function parseResult(plate: string, raw: unknown): JomCheckResult {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export async function lookupJomCheck(plate: string): Promise<JomCheckResult | null> {
+  if (isJomCheckManual()) return null // manual mode must never hit the API (paid searches)
   if (process.env.JOMCHECK_ENABLED !== 'true') return null
   if (!env.JOMCHECK_API_KEY || !env.JOMCHECK_USERNAME || !env.JOMCHECK_PASSWORD) return null
 

@@ -60,6 +60,18 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
       </div>
       `}
 
+      ${(params.amountCents === 10000 || params.amountCents === 8800) && env.JOMCHECK_MODE === 'manual' ? `
+      <div style="background:#F0FAFA;border:1px solid #99D4D1;border-radius:12px;padding:16px;margin:0 0 20px;">
+        <p style="color:#111827;font-size:14px;font-weight:700;margin:0 0 4px;">
+          Semakan Accident/Claim Insurans
+        </p>
+        <p style="color:#374151;font-size:13px;margin:0;line-height:1.6;">
+          Semakan anda sedang diproses — keputusan akan dikemaskini dalam laporan
+          anda dalam masa 24 jam. Kami akan e-mel anda bila ia siap.
+        </p>
+      </div>
+      ` : ''}
+
       ${params.amountCents === 1200 && process.env.JOMCHECK_ENABLED === 'true' && params.reportUrl ? `
       <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:16px;margin:0 0 20px;">
         <p style="color:#111827;font-size:14px;font-weight:700;margin:0 0 4px;">

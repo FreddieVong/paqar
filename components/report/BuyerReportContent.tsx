@@ -81,12 +81,13 @@ interface Props {
   addJomCheck?:      boolean
   jomcheckData?:     JomCheckResult | null
   jomcheckStatus?:   JomCheckStatus
+  jomcheckManualPending?: boolean
   generatedAt?:      string | null
   upsellJomCheck?:   { checkId: string; claimToken: string } | null
   claimedMileageKm?: number | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, generatedAt, upsellJomCheck, claimedMileageKm }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm }: Props) {
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
 
@@ -353,6 +354,21 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       {addJomCheck && (
         jomcheckStatus === 'success' && jomcheckData
           ? <JomCheckSection data={jomcheckData} />
+          : jomcheckManualPending
+          ? (
+            <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">
+              <p className="font-heading font-bold text-[15px] text-[#111827] mb-2">
+                Semakan Accident/Claim Insurans
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-[#99D4D1] border-t-[#064E4A] animate-spin flex-shrink-0" />
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                  Semakan sedang diproses — keputusan akan dikemaskini dalam laporan
+                  ini dalam masa 24 jam. Kami akan e-mel anda bila ia siap.
+                </p>
+              </div>
+            </div>
+          )
           : (
             <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">

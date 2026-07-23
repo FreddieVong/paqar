@@ -4,7 +4,7 @@ import { Nav }                  from '@/components/layout/Nav'
 import { Shell }                from '@/components/layout/Shell'
 import { getCheck }             from '@/lib/db/checks'
 import { getBuyerReport, setVehicleApiData } from '@/lib/db/buyer-reports'
-import { lookupJomCheck, normalisePlate, type JomCheckResult, type JomCheckStatus } from '@/lib/jomcheck'
+import { lookupJomCheck, normalisePlate, isJomCheckManual, type JomCheckResult, type JomCheckStatus } from '@/lib/jomcheck'
 import { setJomCheckStatus, setJomCheckSuccess, setJomCheckFailed } from '@/lib/jomcheck/db'
 import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
@@ -92,11 +92,19 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       }
     }
 
-    // JomCheck — lazy lookup, cached after first success, never retried after failure
+    // JomCheck — lazy lookup, cached after first success, never retried after failure.
+    // In manual mode the API is never called: the owner keys results in via
+    // /admin/jomcheck and the report shows a "sedang diproses" card until then.
     let jomcheckData:   JomCheckResult | null = null
     let jomcheckStatus: JomCheckStatus = (report.jomcheck_status ?? 'not_requested') as JomCheckStatus
+    const jomcheckManualPending =
+      isJomCheckManual() &&
+      report.add_jomcheck &&
+      jomcheckStatus !== 'success' &&
+      jomcheckStatus !== 'failed'
 
     if (
+      !isJomCheckManual() &&
       report.add_jomcheck &&
       jomcheckStatus !== 'success' &&
       jomcheckStatus !== 'failed'
@@ -165,6 +173,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               addJomCheck={report.add_jomcheck}
               jomcheckData={jomcheckData}
               jomcheckStatus={jomcheckStatus}
+              jomcheckManualPending={jomcheckManualPending}
               generatedAt={report.created_at}
               claimedMileageKm={report.claimed_mileage_km}
               upsellJomCheck={

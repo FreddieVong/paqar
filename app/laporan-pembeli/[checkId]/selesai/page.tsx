@@ -10,6 +10,7 @@ import { decrypt }                                   from '@/lib/crypto'
 import { sendReceiptEmail }                          from '@/lib/email/receipt'
 import { sendPurchaseEvent }                         from '@/lib/meta-capi'
 import { verifyRedirectSignature }                   from '@/lib/billplz'
+import { isJomCheckManual }                          from '@/lib/jomcheck'
 import { resolvePaymentDisplayState }                from '@/lib/payment-display-state'
 import { AnalyticsEvent }                            from '@/components/layout/AnalyticsEvent'
 import { GA4PurchaseEvent }                          from '@/components/layout/GA4PurchaseEvent'
@@ -132,6 +133,13 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
     paidReport?.status === 'paid' &&
     !paidReport.add_jomcheck
 
+  // Manual fulfillment: tell the buyer the claim check takes up to 24 hours
+  const showManualProcessingNote =
+    isJomCheckManual() &&
+    displayState.state === 'verified_paid' &&
+    paidReport?.add_jomcheck === true &&
+    paidReport.jomcheck_status !== 'success'
+
   return (
     <>
       <Nav />
@@ -177,6 +185,12 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
               <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
                 Laporan anda sedia untuk dilihat. Simpan link ini — anda boleh akses semula pada bila-bila masa.
               </p>
+              {showManualProcessingNote && (
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-3 bg-white/70 border border-[#99D4D1] rounded-[10px] px-3 py-2">
+                  Semakan Accident/Claim Insurans akan dikemaskini dalam laporan
+                  anda dalam masa 24 jam. Kami akan e-mel anda bila ia siap.
+                </p>
+              )}
             </div>
           )}
 
