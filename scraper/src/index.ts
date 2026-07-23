@@ -26,7 +26,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.get('/health', (_req, res) => {
   // version: bump when scraping behavior changes — lets deploys be verified
   // from outside without Railway dashboard access
-  res.json({ ok: true, version: '2026-07-24-diag', ts: new Date().toISOString() })
+  res.json({ ok: true, version: '2026-07-24-diag2', ts: new Date().toISOString() })
 })
 
 // ── Saman endpoints ───────────────────────────────────────────────────────────

@@ -14,12 +14,16 @@ export interface MudahMarketResult {
   searchUrl: string
   error?:    string
   debug?: {
-    pageTitle:  string
-    pageUrl:    string
-    priceCount: number
-    jsonSeen:   number
-    domFound:   number
-    bodyText:   string
+    pageTitle:    string
+    pageUrl:      string
+    priceCount:   number
+    jsonSeen:     number
+    domFound:     number
+    totalLinks:   number
+    withPriceCtx: number
+    withMake:     number
+    withModel:    number
+    bodyText:     string
   }
 }
 
@@ -38,7 +42,7 @@ export async function scrapeMudahMarket(
   const keyword   = [make, cleanKeyword(model), year].filter(Boolean).join(' ')
   const searchUrl = `https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(keyword)}`
   const listings: MarketListing[] = []
-  const diag = { pageTitle: '', pageUrl: '', priceCount: 0, jsonSeen: 0, domFound: 0, bodyText: '' }
+  const diag = { pageTitle: '', pageUrl: '', priceCount: 0, jsonSeen: 0, domFound: 0, totalLinks: 0, withPriceCtx: 0, withMake: 0, withModel: 0, bodyText: '' }
 
   try {
     await withPage(async (page) => {
@@ -150,6 +154,37 @@ export async function scrapeMudahMarket(
         [makeKw, modelKw] as [string, string]
       )
       diag.domFound = extracted.length
+
+      // Extraction funnel — where does the page's price count collapse to matches?
+      const funnel = await page.evaluate(
+        ([mkw, mdkw]: [string, string]) => {
+          let totalLinks = 0, withPriceCtx = 0, withMake = 0, withModel = 0
+          const seen = new Set<string>()
+          document.querySelectorAll('a[href]').forEach((el) => {
+            const href = (el as HTMLAnchorElement).href
+            if (!href || seen.has(href)) return
+            totalLinks++
+            let node: HTMLElement | null = el as HTMLElement, ctx = ''
+            for (let i = 0; i < 6 && node; i++) {
+              const t = node.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+              if (/RM\s*[\d,]+/.test(t) && t.length < 500) { ctx = t; break }
+              node = node.parentElement
+            }
+            if (!ctx) return
+            withPriceCtx++
+            const up = ctx.toUpperCase()
+            if (up.includes(mkw)) withMake++
+            if (up.includes(mdkw)) withModel++
+            seen.add(href)
+          })
+          return { totalLinks, withPriceCtx, withMake, withModel }
+        },
+        [makeKw, modelKw] as [string, string]
+      )
+      diag.totalLinks   = funnel.totalLinks
+      diag.withPriceCtx = funnel.withPriceCtx
+      diag.withMake     = funnel.withMake
+      diag.withModel    = funnel.withModel
 
       // Also log raw HTML snippet for debugging if nothing found
       if (extracted.length === 0) {
