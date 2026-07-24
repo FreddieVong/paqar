@@ -1,7 +1,7 @@
 import type { JomCheckResult, JomCheckClaim } from '@/lib/jomcheck'
 
 const CLAIM_LABELS: Record<JomCheckClaim['type'], string> = {
-  accident:   'Accident / Own Damage',
+  accident:   'Kemalangan / Own Damage',
   flood:      'Banjir',
   windscreen: 'Cermin / Windscreen',
   total_loss: 'Total Loss',
@@ -154,7 +154,7 @@ export function JomCheckSection({ data }: Props) {
         {!hasClaims ? (
           <>
             <p className="font-body text-[12px] text-[#4B5563] leading-relaxed">
-              Petanda yang baik: tiada rekod claim ditemui dalam empat kategori yang disemak.
+              Petanda yang baik berdasarkan rekod insurans yang disemak.
             </p>
             <p className="font-body font-semibold text-[12px] text-[#374151] leading-relaxed mt-1.5">
               Teruskan dengan pemeriksaan fizikal sebelum membayar deposit.
@@ -208,7 +208,7 @@ export function JomCheckSection({ data }: Props) {
           Disemak: {checkedAt}
         </p>
       )}
-      <p className="font-body text-[11px] text-[#6B7280] mt-2 leading-relaxed">
+      <p className="font-body text-[12px] text-[#6B7280] mt-2 leading-relaxed">
         {hasClaims
           ? 'Nilai atau kewujudan claim sahaja tidak menentukan tahap kerosakan sebenar. Sahkan dengan penjual dan pemeriksaan fizikal.'
           : 'Rekod insurans tidak merangkumi semua kemalangan atau pembaikan yang dibuat tanpa tuntutan.'}
