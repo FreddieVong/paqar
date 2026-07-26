@@ -84,6 +84,10 @@ export async function sendMetaEvent(params: SendMetaEventParams): Promise<boolea
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           access_token: token,
+          // Present only while validating: without it, server events never
+          // show in Events Manager → Test Events and pre-launch verification
+          // can only see half the funnel.
+          ...(env.META_TEST_EVENT_CODE ? { test_event_code: env.META_TEST_EVENT_CODE } : {}),
           data: [{
             event_name:       params.eventName,
             event_time:       Math.floor((params.eventTime ?? new Date()).getTime() / 1000),

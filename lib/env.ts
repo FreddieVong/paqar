@@ -46,6 +46,11 @@ const schema = z.object({
   META_GRAPH_API_VERSION:       z.string().regex(/^v\d+\.\d+$/).default('v25.0'),
   ADS_OPERATOR_CRON_SECRET:     z.string().min(16).optional(),
   ADS_ALERT_EMAIL:              z.string().email().optional(),
+  // Set temporarily during pre-launch validation so server-side Conversions
+  // API events appear in Events Manager → Test Events. REMOVE BEFORE SPENDING:
+  // events tagged with a test code are excluded from optimisation and
+  // reporting, so leaving it set would starve the campaign of conversions.
+  META_TEST_EVENT_CODE:         z.string().min(1).optional(),
 })
 
 /**
