@@ -352,3 +352,55 @@ describe('optimisation event configurations', () => {
     expect(check(r, 'optimisation_event')?.status).toBe('manual')
   })
 })
+
+describe('RM210 spending limit — campaign or account level', () => {
+  const noCampaignCap = () => mocks.getCampaign.mockResolvedValue({
+    id: 'camp_1', name: 'c', account_id: '123', status: 'PAUSED', effective_status: 'PAUSED',
+  })
+
+  it('accepts an account spending limit of RM210 when the campaign has none', async () => {
+    // MYR campaign limits have a RM500 minimum, so this is the only way to
+    // express RM210 on a Malaysian account.
+    noCampaignCap()
+    mocks.getAdAccount.mockResolvedValue({
+      id: 'act_123', currency: 'MYR', account_status: 1, spend_cap: '21000', amount_spent: '0',
+    })
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'spend_cap')?.status).toBe('pass')
+    expect(check(r, 'spend_cap')?.detail).toContain('Account spending limit')
+  })
+
+  it('measures REMAINING headroom, not the raw cap', async () => {
+    // RM210 cap with RM150 already spent protects only RM60.
+    noCampaignCap()
+    mocks.getAdAccount.mockResolvedValue({
+      id: 'act_123', currency: 'MYR', account_status: 1, spend_cap: '21000', amount_spent: '15000',
+    })
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'spend_cap')?.status).toBe('fail')
+    expect(check(r, 'spend_cap')?.detail).toContain('remaining')
+  })
+
+  it('accepts a cap that leaves exactly RM210 unspent', async () => {
+    noCampaignCap()
+    mocks.getAdAccount.mockResolvedValue({
+      id: 'act_123', currency: 'MYR', account_status: 1, spend_cap: '36000', amount_spent: '15000',
+    })
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'spend_cap')?.status).toBe('pass')
+  })
+
+  it('still fails when neither level has a limit', async () => {
+    noCampaignCap()
+    mocks.getAdAccount.mockResolvedValue({ id: 'act_123', currency: 'MYR', account_status: 1 })
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'spend_cap')?.status).toBe('fail')
+    expect(check(r, 'spend_cap')?.detail).toContain('RM500 minimum')
+  })
+
+  it('still accepts a campaign-level RM210 limit where the currency allows it', async () => {
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'spend_cap')?.status).toBe('pass')
+    expect(check(r, 'spend_cap')?.detail).toContain('Campaign spending limit')
+  })
+})

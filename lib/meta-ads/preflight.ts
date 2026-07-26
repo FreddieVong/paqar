@@ -115,9 +115,13 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
 
   // --- Ad account ----------------------------------------------------------
   let accountId: string | null = null
+  let accountSpendCap: number | null = null
+  let accountSpent = 0
   try {
     const account = await getAdAccount()
     accountId = account.id?.replace(/^act_/, '') ?? null
+    accountSpendCap = account.spend_cap != null ? Number(account.spend_cap) : null
+    accountSpent    = account.amount_spent != null ? Number(account.amount_spent) : 0
 
     checks.push(
       account.currency === REQUIRED_CURRENCY
@@ -153,13 +157,29 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
         : fail('campaign_paused', 'Campaign is paused', `status=${campaign.status}. Create it paused; activate it by hand only after preflight passes.`)
     )
 
-    const spendCap = campaign.spend_cap != null ? Number(campaign.spend_cap) : null
+    // The RM210 hard stop can live at either level, and Meta forces the
+    // choice: an MYR *campaign* spending limit has a RM500 minimum, so RM210
+    // is only expressible as an *account* spending limit. Either satisfies
+    // this check, because both are enforced by Meta's billing layer
+    // independently of whether the operator ever runs.
+    //
+    // For the account cap what matters is the REMAINING headroom
+    // (cap - amount_spent), not the cap itself — a RM210 cap on an account
+    // that has already spent RM150 protects only RM60.
+    const campaignCap  = campaign.spend_cap != null ? Number(campaign.spend_cap) : null
+    const accountRemaining = accountSpendCap != null ? accountSpendCap - accountSpent : null
+
     checks.push(
-      isSpendCapAllowed(spendCap)
-        ? pass('spend_cap', `RM${MAX_TOTAL_SPEND_MYR} campaign spending limit`, `Set to RM${(spendCap! / 100).toFixed(2)}`)
-        : fail('spend_cap', `RM${MAX_TOTAL_SPEND_MYR} campaign spending limit`, spendCap == null
-            ? `No campaign spending limit set. This is the PRIMARY protection — set it to exactly RM${MAX_TOTAL_SPEND_MYR} in Ads Manager.`
-            : `Campaign spending limit is RM${(spendCap / 100).toFixed(2)}, must be exactly RM${MAX_TOTAL_SPEND_MYR}.`)
+      isSpendCapAllowed(campaignCap)
+        ? pass('spend_cap', `RM${MAX_TOTAL_SPEND_MYR} spending limit`,
+            `Campaign spending limit RM${(campaignCap! / 100).toFixed(2)}`)
+        : isSpendCapAllowed(accountRemaining)
+          ? pass('spend_cap', `RM${MAX_TOTAL_SPEND_MYR} spending limit`,
+              `Account spending limit RM${(accountSpendCap! / 100).toFixed(2)} with RM${(accountRemaining! / 100).toFixed(2)} unspent — enforced at Meta's billing layer`)
+          : fail('spend_cap', `RM${MAX_TOTAL_SPEND_MYR} spending limit`,
+              accountSpendCap == null && campaignCap == null
+                ? `No spending limit at campaign or account level. This is the PRIMARY protection. MYR campaign limits have a RM500 minimum, so set an ACCOUNT spending limit of RM${MAX_TOTAL_SPEND_MYR} in Billing → Payment settings.`
+                : `Neither limit leaves exactly RM${MAX_TOTAL_SPEND_MYR}: campaign=${campaignCap == null ? 'none' : `RM${(campaignCap / 100).toFixed(2)}`}, account remaining=${accountRemaining == null ? 'none' : `RM${(accountRemaining / 100).toFixed(2)}`}.`)
     )
 
     campaignOk = true
