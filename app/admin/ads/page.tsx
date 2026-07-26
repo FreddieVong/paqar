@@ -22,10 +22,14 @@ export const metadata = {
 const rm = (cents: number | null | undefined) =>
   cents == null ? '—' : `RM${(cents / 100).toFixed(2)}`
 
+// Everything on this page is reported in MYT. Without an explicit timeZone
+// these would render in UTC on Vercel and disagree with the daily report,
+// which uses myatDate().
 function formatDateTime(iso: string | null): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleString('ms-MY', {
     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Kuala_Lumpur',
   })
 }
 

@@ -8,9 +8,12 @@ const DOC_LABELS_BM: Record<DocType, string> = {
   driving_licence: 'Lesen Memandu',
 }
 
+// Explicit timeZone — Vercel runs in UTC, so an expiry date would otherwise
+// render as the previous day for anything before 08:00 MYT.
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('ms-MY', {
     day: 'numeric', month: 'long', year: 'numeric',
+    timeZone: 'Asia/Kuala_Lumpur',
   })
 }
 

@@ -1,9 +1,13 @@
 import { Resend } from 'resend'
 import { env }    from '@/lib/env'
 
+// timeZone is explicit because Vercel runs in UTC: without it a payment made
+// between 00:00 and 08:00 MYT is dated to the previous day on the customer's
+// receipt.
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('ms-MY', {
     day: 'numeric', month: 'long', year: 'numeric',
+    timeZone: 'Asia/Kuala_Lumpur',
   })
 }
 
