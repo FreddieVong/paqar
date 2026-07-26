@@ -30,7 +30,13 @@ export const ALLOW_AUTOMATIC_RESTART = false
 export const MAX_DAILY_BUDGET_CENTS = MAX_DAILY_BUDGET_MYR * 100
 export const MAX_TOTAL_SPEND_CENTS  = MAX_TOTAL_SPEND_MYR * 100
 
-/** Consecutive failed spend reads before the operator fails closed. */
+/**
+ * Consecutive failed spend reads before the operator fails closed.
+ *
+ * With the daily Vercel cron this is two days of unverified spend — bounded
+ * by Meta's RM210 campaign spending limit, which does not depend on this
+ * endpoint running at all.
+ */
 export const SPEND_FAILURE_THRESHOLD = 2
 
 export const REQUIRED_UTM = {

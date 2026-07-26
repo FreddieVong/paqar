@@ -17,11 +17,18 @@ import {
 import { alertPauseFailed, alertPauseSucceeded } from '@/lib/meta-ads/alerts'
 
 /**
- * Scheduled operator. Runs every six hours.
+ * Scheduled operator. Runs daily at 01:00 UTC (09:00 MYT).
  *
- * It can do exactly two things to Meta: read, and pause the campaign. Meta's
- * RM210 campaign spending limit is the primary protection; this is the
- * secondary backstop and can only react as fast as its schedule.
+ * It can do exactly two things to Meta: read, and pause the campaign.
+ *
+ * Daily, not six-hourly: Vercel's Hobby plan rejects any cron that would run
+ * more than once per day. That is acceptable because Meta's RM210 campaign
+ * spending limit is the primary protection and is enforced at Meta's billing
+ * layer — this endpoint is a secondary backstop that can never react faster
+ * than its schedule regardless. To restore a tighter interval, call this
+ * endpoint from an external scheduler (GitHub Actions, cron-job.org) with the
+ * same bearer token; everything here is idempotent per six-hour bucket, so a
+ * faster caller needs no code change.
  */
 
 export const maxDuration = 60

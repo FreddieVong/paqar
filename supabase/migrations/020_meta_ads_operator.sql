@@ -146,9 +146,13 @@ CREATE TABLE IF NOT EXISTS meta_ads_experiment (
 );
 
 -- ---------------------------------------------------------------------------
--- meta_ads_snapshots — one row per six-hour cron bucket per Meta object.
--- Keyed on the BUCKET, not report_date: the cron runs 4x/day and all four
--- snapshots must survive. report_date (Asia/Kuala_Lumpur) is for reporting.
+-- meta_ads_snapshots — one row per six-hour bucket per Meta object.
+-- Keyed on the BUCKET rather than report_date so that multiple runs in one
+-- day each keep their own snapshot instead of overwriting each other, while
+-- a repeat run inside the same bucket cannot duplicate. The Vercel cron is
+-- daily (Hobby plan caps frequency), so this normally yields one row per day;
+-- the bucket key means pointing a faster external scheduler at the endpoint
+-- needs no schema change. report_date (Asia/Kuala_Lumpur) is for reporting.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS meta_ads_snapshots (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
