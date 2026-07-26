@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { analytics } from '@/lib/analytics'
 import { trackValuationCompleted, getTrafficContext } from '@/lib/ga4-events'
+import { trackAdEvent } from '@/lib/meta-events'
 import type { PollCheckResponse, VehiclePreview } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
@@ -48,6 +49,14 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
                 traffic_context: trafficContext,
                 result_confidence: 'unknown',
               })
+
+              // NOTE: getTrafficContext above reads the CURRENT url, which no
+              // longer carries UTMs — the navigation here drops them, so GA4
+              // records this as 'direct'. The server resolves the real
+              // attribution from ad_sessions via the paqar_sid cookie, which
+              // is why the Paqar database, not GA4, is the source of truth
+              // for this experiment.
+              trackAdEvent('valuation_completed', { checkId })
             }
             return
           }

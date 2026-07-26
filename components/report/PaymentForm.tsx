@@ -43,11 +43,18 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
     e.preventDefault()
     setError(null)
     analytics.paymentInitiated()
-    // Meta funnel signal — no-op unless the pixel is loaded
-    ;(window as { fbq?: (...a: unknown[]) => void }).fbq?.('track', 'InitiateCheckout', {
-      currency: 'MYR',
-      value:    addJomCheck ? 100 : 12,
-    })
+    // Meta funnel signal — no-op unless the pixel is loaded. The eventID is
+    // derived from (check, product) rather than generated per click, so a
+    // user who returns to this form and clicks again is deduplicated by Meta
+    // instead of counted twice. The server-side checkout_started event is
+    // keyed on the bill id, which does not exist until the action below
+    // returns — these are separate events and are not deduplicated together.
+    ;(window as { fbq?: (...a: unknown[]) => void }).fbq?.(
+      'track',
+      'InitiateCheckout',
+      { currency: 'MYR', value: addJomCheck ? 100 : 12 },
+      { eventID: `ic_${checkId}_${addJomCheck ? 'bundle' : 'base'}` }
+    )
     startTransition(async () => {
       const result = await initiateBuyerReport({
         checkId,

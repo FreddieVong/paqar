@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter }   from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import type { CreateCheckResponse, Verdict, PriceCheckResult } from '@/types/api'
 import { analytics }   from '@/lib/analytics'
+import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
+import { trackAdEvent } from '@/lib/meta-events'
 
 type FormState = 'idle' | 'loading' | 'result' | 'error'
 
@@ -120,6 +122,25 @@ type Props = {
 export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', initialYear = '', onStateChange }: Props) {
   const router = useRouter()
 
+  // Read the query string at submit time rather than via useSearchParams():
+  // this component renders on statically prerendered pages (/, /varian/[model]),
+  // and the hook would force a client-side bailout for the whole page.
+  function currentSearchParams(): URLSearchParams {
+    if (typeof window === 'undefined') return new URLSearchParams()
+    return new URLSearchParams(window.location.search)
+  }
+
+  // Same submission-attempt semantics as the plate tab: one id per distinct
+  // submission, reused across retries so a retry does not double-count.
+  const attemptRef = useRef<{ key: string; id: string } | null>(null)
+
+  function submissionAttemptId(key: string): string {
+    if (attemptRef.current?.key !== key) {
+      attemptRef.current = { key, id: crypto.randomUUID() }
+    }
+    return attemptRef.current.id
+  }
+
   const [brand,       setBrand]       = useState(initialBrand)
   const [model,       setModel]       = useState(initialModel)
   const [year,        setYear]        = useState(initialYear)
@@ -174,6 +195,18 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
     setCheckError(null)
     setFormState('loading')
     analytics.checkStarted({ country: 'MY', is_test: false })
+
+    // This tab previously fired no valuation_started at all — only the PostHog
+    // check_started. Ad traffic lands on the homepage and can pick either tab,
+    // so the optimisation event was undercounting roughly half of all starts.
+    const attemptId = submissionAttemptId(`${brand}|${model.trim()}|${year}|${askingPrice}`)
+    const params = currentSearchParams()
+    trackValuationStarted({
+      entry_page_type: params.get('entry_source') === 'faq' ? 'faq' : 'home',
+      traffic_context: getTrafficContext(params),
+    })
+    trackAdEvent('valuation_started', { attemptId })
+
     try {
       const res = await fetch('/api/price-check', {
         method:  'POST',

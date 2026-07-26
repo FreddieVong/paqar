@@ -1,0 +1,257 @@
+import 'server-only'
+import { createServiceClient } from '@/lib/supabase/server'
+import {
+  type Attribution,
+  type AdEventName,
+  EMPTY_ATTRIBUTION,
+  hasAttribution,
+} from '@/lib/attribution'
+import { redact } from '@/lib/meta-capi'
+
+/**
+ * Session-anchored attribution storage. Sessions, events and checkout records
+ * are one concern and always change together, so they live in one module.
+ */
+
+export interface AdSession extends Attribution {
+  session_id:    string
+  first_seen_at: string
+  landing_path:  string | null
+  referrer:      string | null
+}
+
+/** Backfillable later; everything else in Attribution is write-once. */
+const BACKFILLABLE = ['fbc', 'fbp'] as const
+
+/**
+ * Records first touch, then defends it.
+ *
+ * STRICT FIRST-TOUCH INVARIANT: utm_source, utm_medium, utm_campaign,
+ * utm_content, utm_term and fbclid are written exactly once and can never be
+ * changed. A visitor who arrives on creative_a stays creative_a — whether they
+ * later return via creative_b, via organic search, or by typing the URL.
+ * Nothing in this module issues an UPDATE touching those columns.
+ *
+ * fbc and fbp are the sole exception, and only from NULL. Meta's pixel writes
+ * _fbc/_fbp a moment after the landing request, so the first event usually
+ * arrives without them; the `.is(col, null)` guard means a value can fill a
+ * gap but can never replace one.
+ */
+export async function upsertAdSession(params: {
+  sessionId:    string
+  attribution:  Attribution
+  landingPath?: string | null
+  referrer?:    string | null
+}): Promise<void> {
+  const supabase = createServiceClient()
+  const a = params.attribution
+
+  const { data: inserted, error } = await supabase
+    .from('ad_sessions')
+    .upsert(
+      {
+        session_id:   params.sessionId,
+        utm_source:   a.utm_source,
+        utm_medium:   a.utm_medium,
+        utm_campaign: a.utm_campaign,
+        utm_content:  a.utm_content,
+        utm_term:     a.utm_term,
+        fbclid:       a.fbclid,
+        fbc:          a.fbc,
+        fbp:          a.fbp,
+        landing_path: params.landingPath ?? null,
+        referrer:     params.referrer ?? null,
+      },
+      { onConflict: 'session_id', ignoreDuplicates: true }
+    )
+    .select('session_id')
+
+  if (error) throw error
+  if (inserted && inserted.length > 0) return // first touch, nothing to backfill
+
+  // Session already existed. Only BACKFILLABLE columns are touched, and only
+  // where they are still NULL. utm_* and fbclid are never in this loop, which
+  // is what makes the first-touch invariant structural rather than a
+  // convention someone could later break.
+  for (const column of BACKFILLABLE) {
+    const value = a[column]
+    if (!value) continue
+    await supabase
+      .from('ad_sessions')
+      .update({ [column]: value })
+      .eq('session_id', params.sessionId)
+      .is(column, null)
+  }
+}
+
+/** The canonical first-touch attribution for a session. */
+export async function getSessionAttribution(sessionId: string): Promise<Attribution> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('ad_sessions')
+    .select('utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid, fbc, fbp')
+    .eq('session_id', sessionId)
+    .maybeSingle()
+
+  if (!data) return { ...EMPTY_ATTRIBUTION }
+  return data as Attribution
+}
+
+export interface RecordEventParams {
+  sessionId:     string
+  eventName:     AdEventName
+  eventId:       string
+  attribution?:  Attribution
+  checkId?:      string | null
+  buyerReportId?: string | null
+  billId?:       string | null
+  amountCents?:  number | null
+  path?:         string | null
+  occurredAt?:   Date
+}
+
+export type RecordAdEventResult =
+  | { status: 'inserted'; id: string }
+  | { status: 'duplicate' }
+  | { status: 'error'; error: Error }
+
+/**
+ * Inserts one funnel event, resolving attribution from ad_sessions when the
+ * caller has none (the usual case once query parameters are gone).
+ *
+ * The three outcomes are deliberately distinct:
+ *
+ *   inserted  — a genuinely new occurrence; the caller sends the CAPI event.
+ *   duplicate — UNIQUE(event_name, event_id) rejected it. A refresh, a
+ *               re-rendered /selesai or a webhook retry lands here. Success
+ *               for the caller, but nothing is sent to Meta.
+ *   error     — the request itself failed. NEVER conflated with duplicate:
+ *               a dropped connection returning an empty array must not be
+ *               read as "already recorded", or the event is lost silently.
+ */
+export async function recordAdEvent(params: RecordEventParams): Promise<RecordAdEventResult> {
+  const supabase = createServiceClient()
+
+  let attribution: Attribution
+  try {
+    attribution =
+      params.attribution && hasAttribution(params.attribution)
+        ? params.attribution
+        : await getSessionAttribution(params.sessionId)
+  } catch (err) {
+    return { status: 'error', error: err instanceof Error ? err : new Error(String(err)) }
+  }
+
+  const { data, error } = await supabase
+    .from('ad_events')
+    .upsert(
+      {
+        session_id:      params.sessionId,
+        event_name:      params.eventName,
+        event_id:        params.eventId,
+        occurred_at:     (params.occurredAt ?? new Date()).toISOString(),
+        utm_source:      attribution.utm_source,
+        utm_medium:      attribution.utm_medium,
+        utm_campaign:    attribution.utm_campaign,
+        utm_content:     attribution.utm_content,
+        utm_term:        attribution.utm_term,
+        fbclid:          attribution.fbclid,
+        fbc:             attribution.fbc,
+        fbp:             attribution.fbp,
+        check_id:        params.checkId       ?? null,
+        buyer_report_id: params.buyerReportId ?? null,
+        bill_id:         params.billId        ?? null,
+        amount_cents:    params.amountCents   ?? null,
+        path:            params.path          ?? null,
+      },
+      { onConflict: 'event_name,event_id', ignoreDuplicates: true }
+    )
+    .select('id')
+
+  // An empty array only means "ignored conflict" when the request itself
+  // succeeded. Check the error first, always.
+  if (error) {
+    console.error('[ad-attribution] recordAdEvent failed', redact(String(error.message)))
+    return { status: 'error', error: new Error(error.message) }
+  }
+  const row = data?.[0]
+  if (row) return { status: 'inserted', id: row.id as string }
+  return { status: 'duplicate' }
+}
+
+export async function markCapiSent(eventName: AdEventName, eventId: string): Promise<void> {
+  const supabase = createServiceClient()
+  await supabase
+    .from('ad_events')
+    .update({ capi_sent_at: new Date().toISOString() })
+    .eq('event_name', eventName)
+    .eq('event_id', eventId)
+}
+
+export type CheckoutProduct = 'buyer_report' | 'buyer_report_bundle' | 'claim_check_upgrade'
+
+export interface CheckoutAttribution extends Attribution {
+  billplz_bill_id:     string
+  buyer_report_id:     string | null
+  check_id:            string | null
+  paqar_sid:           string | null
+  product:             CheckoutProduct
+  amount_cents:        number
+  checkout_started_at: string
+}
+
+/**
+ * Persists attribution at bill creation. This is what makes purchases
+ * attributable from the Billplz webhook alone — the customer who pays and
+ * immediately closes the tab never reaches /selesai, and without this row
+ * that sale could only be attributed by guessing.
+ */
+export async function recordCheckoutAttribution(params: {
+  billId:         string
+  buyerReportId?: string | null
+  checkId?:       string | null
+  sessionId:      string | null
+  attribution:    Attribution
+  product:        CheckoutProduct
+  amountCents:    number
+}): Promise<void> {
+  const supabase = createServiceClient()
+  const a = params.attribution
+
+  const { error } = await supabase
+    .from('checkout_attributions')
+    .upsert(
+      {
+        billplz_bill_id: params.billId,
+        buyer_report_id: params.buyerReportId ?? null,
+        check_id:        params.checkId ?? null,
+        paqar_sid:       params.sessionId,
+        utm_source:      a.utm_source,
+        utm_medium:      a.utm_medium,
+        utm_campaign:    a.utm_campaign,
+        utm_content:     a.utm_content,
+        utm_term:        a.utm_term,
+        fbclid:          a.fbclid,
+        fbc:             a.fbc,
+        fbp:             a.fbp,
+        product:         params.product,
+        amount_cents:    params.amountCents,
+      },
+      { onConflict: 'billplz_bill_id', ignoreDuplicates: true }
+    )
+
+  if (error) throw error
+}
+
+export async function getCheckoutAttribution(
+  billId: string
+): Promise<CheckoutAttribution | null> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('checkout_attributions')
+    .select('*')
+    .eq('billplz_bill_id', billId)
+    .maybeSingle()
+
+  return (data as CheckoutAttribution | null) ?? null
+}

@@ -33,6 +33,19 @@ const schema = z.object({
   NEXT_PUBLIC_META_PIXEL_ID:    z.string().min(1).optional(),
   META_PIXEL_ID:                z.string().min(1).optional(),
   META_CAPI_TOKEN:              z.string().min(1).optional(),
+  // Meta Ads operator (read-only + pauseCampaign). All optional: absent
+  // credentials leave the operator dormant rather than breaking the app.
+  META_APP_ID:                  z.string().min(1).optional(),
+  META_APP_SECRET:              z.string().min(1).optional(),
+  META_SYSTEM_USER_ACCESS_TOKEN: z.string().min(1).optional(),
+  META_AD_ACCOUNT_ID:           z.string().min(1).optional(),
+  META_PAGE_ID:                 z.string().min(1).optional(),
+  META_INSTAGRAM_ACCOUNT_ID:    z.string().min(1).optional(),
+  META_PIXEL_OR_DATASET_ID:     z.string().min(1).optional(),
+  // Configurable so a Graph version bump is a config change, not a rewrite.
+  META_GRAPH_API_VERSION:       z.string().regex(/^v\d+\.\d+$/).default('v25.0'),
+  ADS_OPERATOR_CRON_SECRET:     z.string().min(16).optional(),
+  ADS_ALERT_EMAIL:              z.string().email().optional(),
 })
 
 const parsed = schema.safeParse(process.env)

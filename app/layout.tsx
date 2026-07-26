@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans, DM_Sans } from 'next/font/google'
 import './globals.css'
 import { AnalyticsProvider } from '@/components/layout/AnalyticsProvider'
 import { MetaPixelScript } from '@/components/layout/MetaPixelScript'
+import { AdLandingTracker } from '@/components/layout/AdLandingTracker'
 
 const GoogleTagScript = dynamic(() => import('@/components/layout/GoogleTagScript').then(mod => ({ default: mod.GoogleTagScript })), { ssr: false })
 
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-[#F8FAF7] font-body antialiased">
         <GoogleTagScript />
         <MetaPixelScript />
+        <AdLandingTracker />
         <AnalyticsProvider>{children}</AnalyticsProvider>
       </body>
     </html>

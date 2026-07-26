@@ -13,6 +13,51 @@ import { decrypt }                from '@/lib/crypto'
 import { buildMarketModelKeyword } from '@/lib/market-keyword'
 import { getOrFetchVehicleData }  from '@/lib/db/plate-lookups'
 import { createClient }           from '@/lib/supabase/server'
+import { currentAttribution }     from '@/lib/attribution-request'
+import { recordCheckoutAttribution, recordAdEvent } from '@/lib/db/ad-attribution'
+import { eventId }                from '@/lib/attribution'
+
+/**
+ * Persists attribution at BILL CREATION so a purchase can be attributed from
+ * the Billplz webhook alone. A customer who pays and immediately closes the
+ * tab never reaches /selesai; without this row that sale would be
+ * unattributable, and guessing by paid_at proximity is not acceptable.
+ *
+ * Best-effort by construction: attribution must never fail a payment.
+ */
+async function captureCheckout(params: {
+  billId:        string
+  checkId:       string
+  buyerReportId?: string | null
+  product:       'buyer_report' | 'buyer_report_bundle' | 'claim_check_upgrade'
+  amountCents:   number
+}): Promise<void> {
+  try {
+    const { sessionId, attribution } = await currentAttribution()
+    await recordCheckoutAttribution({
+      billId:        params.billId,
+      buyerReportId: params.buyerReportId ?? null,
+      checkId:       params.checkId,
+      sessionId,
+      attribution,
+      product:       params.product,
+      amountCents:   params.amountCents,
+    })
+    if (sessionId) {
+      await recordAdEvent({
+        sessionId,
+        eventName:   'checkout_started',
+        eventId:     eventId.checkoutStarted(params.billId),
+        attribution,
+        checkId:     params.checkId,
+        billId:      params.billId,
+        amountCents: params.amountCents,
+      })
+    }
+  } catch (err) {
+    console.error('[captureCheckout]', err)
+  }
+}
 
 export async function initiateBuyerReport(params: {
   checkId:           string
@@ -68,6 +113,14 @@ export async function initiateBuyerReport(params: {
       claimedMileageKm: params.claimedMileageKm,
     })
 
+    await captureCheckout({
+      billId:        bill.id,
+      checkId:       params.checkId,
+      buyerReportId: report.id,
+      product:       effectiveAddJomCheck ? 'buyer_report_bundle' : 'buyer_report',
+      amountCents,
+    })
+
     // Pre-warm vehicle data and market prices during the Billplz payment window (~30-60s).
     // By the time the user lands on the report page, the data is already cached.
     const plate = decrypt(row.check.plate_encrypted as string).toUpperCase()
@@ -117,6 +170,13 @@ export async function initiateJomCheckUpgrade(params: {
       collectionId: env.BILLPLZ_COLLECTION_ID_BUYER ?? env.BILLPLZ_COLLECTION_ID,
     })
     await setUpgradeBillId(report.id, bill.id)
+    await captureCheckout({
+      billId:        bill.id,
+      checkId:       params.checkId,
+      buyerReportId: report.id,
+      product:       'claim_check_upgrade',
+      amountCents:   8800,
+    })
     return { error: null, billUrl: bill.url }
   } catch (err) {
     console.error('[initiateJomCheckUpgrade]', err)

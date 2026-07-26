@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
 import { analytics } from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
+import { trackAdEvent } from '@/lib/meta-events'
 
 const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
   font-heading font-semibold text-[16px] text-[#111827]
@@ -23,11 +24,26 @@ export function PlateCheckerForm() {
   const [busy, setBusy]               = useState(false)
   const [error, setError]             = useState<string | null>(null)
 
+  // One id per submission attempt, held across retries. Retrying the same
+  // plate reuses it, so a failed-then-retried submit records one
+  // valuation_started rather than two; changing the plate starts a new
+  // attempt. It doubles as the /api/checks idempotency key.
+  const attemptRef = useRef<{ plate: string; id: string } | null>(null)
+
+  function submissionAttemptId(forPlate: string): string {
+    if (attemptRef.current?.plate !== forPlate) {
+      attemptRef.current = { plate: forPlate, id: crypto.randomUUID() }
+    }
+    return attemptRef.current.id
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!plate.trim()) return
     setBusy(true)
     setError(null)
+
+    const attemptId = submissionAttemptId(plate.trim())
 
     // Determine entry point from entry_source parameter (set by FAQ CTA navigation)
     // or fall back to current pathname if user navigated directly
@@ -42,11 +58,15 @@ export function PlateCheckerForm() {
     })
 
     analytics.checkStarted({ country: 'MY', is_test: false })
+    // Paqar-side funnel event — the campaign's optimisation event, and the
+    // only record that survives the navigation below (which drops the UTMs).
+    trackAdEvent('valuation_started', { attemptId })
+
     try {
       const res = await fetch('/api/checks', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: crypto.randomUUID() }),
+        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: attemptId }),
       })
       if (!res.ok) {
         const data = await res.json() as { error?: string }

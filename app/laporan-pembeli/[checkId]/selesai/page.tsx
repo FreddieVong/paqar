@@ -8,7 +8,7 @@ import { markReportPaid, getBuyerReportByBillId,
          getBuyerReport } from '@/lib/db/buyer-reports'
 import { decrypt }                                   from '@/lib/crypto'
 import { sendReceiptEmail }                          from '@/lib/email/receipt'
-import { sendPurchaseEvent }                         from '@/lib/meta-capi'
+import { recordPurchase }                            from '@/lib/purchase-attribution'
 import { verifyRedirectSignature }                   from '@/lib/billplz'
 import { isJomCheckManual }                          from '@/lib/jomcheck'
 import { resolvePaymentDisplayState }                from '@/lib/payment-display-state'
@@ -77,8 +77,18 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
               plate:       null,
               reportUrl,
             }).catch(() => {})
-            void sendPurchaseEvent({ email: report.buyer_email, amountCents: report.amount_cents, billId })
           }
+          // Called regardless of wasJustPaid. If the webhook won the race but
+          // its attribution write failed, this is the retry; if it succeeded,
+          // the derived event_id makes this a no-op. That is what makes
+          // /selesai a genuine fallback rather than a coin flip.
+          void recordPurchase({
+            billId,
+            email:         report.buyer_email,
+            amountCents:   report.amount_cents,
+            checkId:       report.check_id,
+            buyerReportId: report.id,
+          })
         }
 
         if (isUpgradeMatch && upgradeReport) {
@@ -92,8 +102,14 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
               plate:       null,
               reportUrl,
             }).catch(() => {})
-            void sendPurchaseEvent({ email: upgradeReport.buyer_email, amountCents: 8800, billId })
           }
+          void recordPurchase({
+            billId,
+            email:         upgradeReport.buyer_email,
+            amountCents:   8800,
+            checkId:       upgradeReport.check_id,
+            buyerReportId: upgradeReport.id,
+          })
         }
 
         // Determine final display state with mutation results

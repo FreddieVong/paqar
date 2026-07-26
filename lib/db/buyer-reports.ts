@@ -159,13 +159,19 @@ export async function getBuyerReportByUpgradeBillId(billId: string): Promise<Buy
 
 // Returns true if this call flipped add_jomcheck false→true (atomic — one winner
 // between the webhook and the redirect page, mirroring markReportPaid).
+// The +RM88 upgrade previously recorded only add_jomcheck=true — no amount and
+// no timestamp — so upgrade revenue had no row-level record and could not be
+// assigned to a reporting day. Both are now written atomically with the flag.
 export async function markUpgradePaid(billId: string): Promise<boolean> {
   const supabase = createServiceClient()
+  const now = new Date().toISOString()
   const { data, error } = await supabase
     .from('buyer_reports')
     .update({
-      add_jomcheck: true,
-      updated_at:   new Date().toISOString(),
+      add_jomcheck:         true,
+      upgrade_paid_at:      now,
+      upgrade_amount_cents: 8800,
+      updated_at:           now,
     })
     .eq('upgrade_bill_id', billId)
     .eq('add_jomcheck', false)

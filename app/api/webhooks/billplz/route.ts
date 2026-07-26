@@ -4,7 +4,7 @@ import { markReportPaid, getBuyerReportByBillId,
          markUpgradePaid, getBuyerReportByUpgradeBillId,
          setVehicleApiData } from '@/lib/db/buyer-reports'
 import { sendReceiptEmail }                       from '@/lib/email/receipt'
-import { sendPurchaseEvent }                      from '@/lib/meta-capi'
+import { recordPurchase }                         from '@/lib/purchase-attribution'
 import { getCheck }                              from '@/lib/db/checks'
 import { decrypt }                               from '@/lib/crypto'
 import { getOrFetchVehicleData }                 from '@/lib/db/plate-lookups'
@@ -50,7 +50,13 @@ export async function POST(request: NextRequest) {
             plate:       null,
             reportUrl:   `https://paqar.my/laporan-pembeli/${upgradeReport.check_id}`,
           }).catch(err => console.error('[receipt-email:jomcheck-upgrade]', err))
-          void sendPurchaseEvent({ email: upgradeReport.buyer_email, amountCents: 8800, billId })
+          void recordPurchase({
+            billId,
+            email:         upgradeReport.buyer_email,
+            amountCents:   8800,
+            checkId:       upgradeReport.check_id,
+            buyerReportId: upgradeReport.id,
+          })
         }
       }
       return NextResponse.json({ ok: true })
@@ -79,7 +85,13 @@ export async function POST(request: NextRequest) {
         plate,
         reportUrl,
       }).catch(err => console.error('[receipt-email:buyer_report]', err))
-      void sendPurchaseEvent({ email: buyerReport.buyer_email, amountCents: buyerReport.amount_cents, billId })
+      void recordPurchase({
+        billId,
+        email:         buyerReport.buyer_email,
+        amountCents:   buyerReport.amount_cents,
+        checkId:       buyerReport.check_id,
+        buyerReportId: buyerReport.id,
+      })
 
       // Pre-warm vehicle + market price caches so the report loads fully on first view
       if (plate) {
