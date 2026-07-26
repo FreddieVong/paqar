@@ -315,3 +315,40 @@ describe('unreadable configuration', () => {
     expect(result.passed).toBe(false)
   })
 })
+
+describe('optimisation event configurations', () => {
+  const withPromoted = (promoted: Record<string, unknown> | undefined) => {
+    mocks.getAdSet.mockResolvedValue({
+      id: 'set_1', campaign_id: 'camp_1', status: 'PAUSED', effective_status: 'PAUSED',
+      daily_budget: '3000', optimization_goal: 'OFFSITE_CONVERSIONS',
+      promoted_object: promoted,
+      targeting: { geo_locations: { countries: ['MY'] }, publisher_platforms: ['facebook', 'instagram'] },
+    })
+  }
+
+  it('accepts a Custom Conversion', async () => {
+    withPromoted({ pixel_id: 'pixel_1', custom_conversion_id: 'cc_1' })
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'optimisation_event')?.status).toBe('pass')
+    expect(check(r, 'optimisation_event')?.detail).toContain('paqar_step')
+  })
+
+  it('accepts the standard LEAD event — equivalent while valuation_started is its only source', async () => {
+    withPromoted({ pixel_id: 'pixel_1', custom_event_type: 'LEAD' })
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'optimisation_event')?.status).toBe('pass')
+    expect(check(r, 'optimisation_event')?.detail).toContain('Revisit if another Paqar flow')
+  })
+
+  it('does not accept an unrelated optimisation event', async () => {
+    withPromoted({ pixel_id: 'pixel_1', custom_event_type: 'PURCHASE' })
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'optimisation_event')?.status).toBe('manual')
+  })
+
+  it('does not silently pass when promoted_object is absent', async () => {
+    withPromoted(undefined)
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'optimisation_event')?.status).toBe('manual')
+  })
+})

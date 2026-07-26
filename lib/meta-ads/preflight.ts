@@ -221,16 +221,33 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
       )
     }
 
+    // Two valid configurations:
+    //
+    //   1. A Custom Conversion defined on Lead + paqar_step=valuation_started.
+    //      The precise option, and the one to move to if any other part of
+    //      Paqar ever starts sending Meta a Lead.
+    //   2. The standard LEAD event directly. Equivalent today, because
+    //      valuation_started is the ONLY thing that produces a Lead —
+    //      capture-email, capture-model-lead and capture-calculator-lead send
+    //      nothing to Meta. Simpler to configure, so it is a first-class
+    //      choice rather than a fallback.
     const promoted = adSet.promoted_object
-    const optimisesForEvent =
-      promoted?.custom_conversion_id != null ||
+    const viaCustomConversion = promoted?.custom_conversion_id != null
+    const viaStandardLead     = promoted?.custom_event_type === 'LEAD'
+    const optimisesForEvent   = viaCustomConversion || viaStandardLead ||
       promoted?.custom_event_type === OPTIMISATION_EVENT.toUpperCase()
+
     checks.push(
-      optimisesForEvent
-        ? pass('optimisation_event', `Optimises for ${OPTIMISATION_EVENT}`, promoted?.custom_conversion_id
-            ? `custom_conversion_id=${promoted.custom_conversion_id} — verify in Events Manager that this conversion is defined on ${OPTIMISATION_EVENT}`
-            : `custom_event_type=${promoted?.custom_event_type}`)
-        : manual('optimisation_event', `Optimises for ${OPTIMISATION_EVENT}`, `promoted_object does not name a custom conversion (optimization_goal=${adSet.optimization_goal ?? 'unknown'}). Confirm manually that the ad set optimises for the ${OPTIMISATION_EVENT} custom conversion.`)
+      viaCustomConversion
+        ? pass('optimisation_event', `Optimises for ${OPTIMISATION_EVENT}`,
+            `custom_conversion_id=${promoted!.custom_conversion_id} — confirm in Events Manager that it filters paqar_step=${OPTIMISATION_EVENT}`)
+        : viaStandardLead
+          ? pass('optimisation_event', `Optimises for ${OPTIMISATION_EVENT}`,
+              `custom_event_type=LEAD — equivalent while valuation_started is the only source of Lead. Revisit if another Paqar flow starts sending Lead to Meta.`)
+          : optimisesForEvent
+            ? pass('optimisation_event', `Optimises for ${OPTIMISATION_EVENT}`, `custom_event_type=${promoted?.custom_event_type}`)
+            : manual('optimisation_event', `Optimises for ${OPTIMISATION_EVENT}`,
+                `promoted_object names neither a custom conversion nor the LEAD event (optimization_goal=${adSet.optimization_goal ?? 'unknown'}). Confirm manually that the ad set optimises for ${OPTIMISATION_EVENT}.`)
     )
 
     if (env.META_PIXEL_OR_DATASET_ID && promoted?.pixel_id) {
