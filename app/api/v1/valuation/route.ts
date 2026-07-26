@@ -6,7 +6,7 @@ import { normalizePlate } from '@/lib/api/normalize'
 import { createJsonResponse, createErrorResponse } from '@/lib/api/response'
 import { handleApiError } from '@/lib/api/errors'
 import { apiRateLimiter } from '@/lib/api/rate-limit'
-import { filterListingsByYear, filterOutlierPrices } from '@/lib/price-stats'
+import { buildComparableCohort, type CohortMode } from '@/lib/comparables'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +19,10 @@ interface ValuationResponse {
   marketCount: number
   confidence: 'low' | 'medium' | 'high'
   isSpecialVariant: boolean
+  // Which comparable-listing cohort the stats describe. 'mixed_variants' means
+  // the market figures span multiple variants of the model — never read them as
+  // this exact variant's price.
+  marketCohort: CohortMode
 }
 
 /**
@@ -122,15 +126,14 @@ export async function GET(
       valuation.familyFloorNewPrice != null &&
       valuation.wmNewPrice >= valuation.familyFloorNewPrice * 1.3
 
-    // Fetch market prices (lazy, don't block)
-    const marketStats = await getMarketStats(
-      valuation.make,
-      valuation.variant,
-      valuation.year.toString()
-    )
+    // Fetch market prices (lazy, don't block). Variant-aware: a special variant
+    // with enough same-variant comps yields a specific cohort; otherwise falls
+    // back to a mixed-variant cohort (see lib/comparables.ts).
+    const marketStats = await getMarketStats(valuation, isSpecialVariant)
 
-    // Map confidence: limited if special variant, else based on market data
-    const confidence = mapConfidence(isSpecialVariant, marketStats.count)
+    // Confidence from cohort specificity + quantity (not forced low just for
+    // being a special variant when same-variant comps exist).
+    const confidence = mapConfidence(marketStats.mode, marketStats.count)
 
     // Build response
     const response: ValuationResponse = {
@@ -142,6 +145,7 @@ export async function GET(
       marketCount: marketStats.count,
       confidence,
       isSpecialVariant,
+      marketCohort: marketStats.mode,
     }
 
     return createJsonResponse(response, 200)
@@ -156,80 +160,57 @@ export async function GET(
  * Background refresh of cache doesn't block response.
  */
 async function getMarketStats(
-  make: string,
-  variant: string,
-  year: string
-): Promise<{ median: number | null; min: number | null; max: number | null; count: number }> {
+  valuation: VehicleValuation,
+  isSpecialVariant: boolean,
+): Promise<{ median: number | null; min: number | null; max: number | null; count: number; mode: CohortMode }> {
+  const make = valuation.make
+  const year = valuation.year.toString()
+  // Cache is keyed on (make, variant, year) here — pre-existing behavior, kept.
+  const cacheKey = valuation.variant
+  const empty = { median: null, min: null, max: null, count: 0, mode: 'normal' as CohortMode }
   try {
-    // Try to get cached market prices
-    const cached = await getCachedMarketPrices(make, variant, year)
-
+    const cached = await getCachedMarketPrices(make, cacheKey, year)
     if (!cached) {
-      // No cache: trigger async fetch in background, don't await
-      fetchAndCacheMarketPrices(make, variant, year).catch(() => {
-        // Silently fail background fetch; API doesn't block on it
-      })
-      return { median: null, min: null, max: null, count: 0 }
+      fetchAndCacheMarketPrices(make, cacheKey, year).catch(() => {})
+      return empty
     }
 
-    // Calculate stats from listings
-    const prices = cached.listings
-      .map(l => l.price)
-      .filter(p => typeof p === 'number' && p > 0)
+    // One cohort drives all stats + provenance (lib/comparables.ts). Variant
+    // matching may refine the figures; it never creates a verdict — this API
+    // returns no cheap/fair/expensive verdict, only stats + confidence.
+    const cohort = buildComparableCohort(cached.listings, {
+      year,
+      officialVariant: valuation.variant,
+      model:           valuation.family,
+      isSpecialVariant,
+    })
 
-    if (prices.length === 0) {
-      // Trigger async refresh if listings are empty
-      fetchAndCacheMarketPrices(make, variant, year).catch(() => {})
-      return { median: null, min: null, max: null, count: 0 }
+    if (cohort.count === 0) {
+      fetchAndCacheMarketPrices(make, cacheKey, year).catch(() => {})
+      return empty
     }
-
-    // Filter by year (to handle fuzzy scraper results)
-    const listingsWithPrice = cached.listings.filter(l => typeof l.price === 'number' && l.price > 0)
-    const filtered = filterListingsByYear(listingsWithPrice, year)
-    const filteredPrices = filtered.map(l => l.price)
-
-    // Remove outliers
-    const cleaned = filterOutlierPrices(filteredPrices)
-
-    // Calculate statistics
-    const sorted = [...cleaned].sort((a, b) => a - b)
-    const median =
-      sorted.length % 2 === 0
-        ? (sorted[sorted.length / 2 - 1]! + sorted[sorted.length / 2]!) / 2
-        : sorted[Math.floor(sorted.length / 2)]!
 
     return {
-      median: Math.round(median),
-      min: Math.min(...cleaned),
-      max: Math.max(...cleaned),
-      count: cleaned.length,
+      median: cohort.median,
+      min:    cohort.min,
+      max:    cohort.max,
+      count:  cohort.count,
+      mode:   cohort.mode,
     }
   } catch {
-    // On any error, return empty stats
-    return { median: null, min: null, max: null, count: 0 }
+    return empty
   }
 }
 
 /**
- * Map confidence level based on special variant status and market data availability.
- * Special variants always get "low" because generic market data doesn't apply.
- * Otherwise, confidence depends on market listing count.
+ * Confidence from cohort specificity AND quantity. A same-variant/normal cohort
+ * is scored by listing count; a mixed-variant fallback is capped at "medium"
+ * (never "high") so callers can't read multi-variant figures as high-confidence.
+ * The `marketCohort` field makes the mixed cohort explicit to consumers.
  */
-function mapConfidence(
-  isSpecialVariant: boolean,
-  marketCount: number
-): 'low' | 'medium' | 'high' {
-  if (isSpecialVariant) {
-    return 'low' // Special variants: market data isn't valid
-  }
-
-  if (marketCount < 3) {
-    return 'low' // Few listings = low confidence
-  }
-
-  if (marketCount < 10) {
-    return 'medium' // Moderate listings = medium confidence
-  }
-
-  return 'high' // Many listings = high confidence
+function mapConfidence(mode: CohortMode, marketCount: number): 'low' | 'medium' | 'high' {
+  if (marketCount < 3) return 'low'
+  if (mode === 'mixed_variants') return 'medium'
+  if (marketCount < 10) return 'medium'
+  return 'high'
 }

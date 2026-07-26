@@ -1,6 +1,6 @@
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
-import { filterOutlierPrices, filterListingsByYear } from '@/lib/price-stats'
+import { buildComparableCohort } from '@/lib/comparables'
 import { InspectionCTA }   from './InspectionCTA'
 import { InsuranceCTA }    from './InsuranceCTA'
 import { CopyButton }      from './CopyButton'
@@ -13,14 +13,6 @@ import { assessDepreciation } from '@/lib/depreciation'
 const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const floorClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.floor(n / u) * u }
 const roundClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.round(n / u) * u }
-
-function medianOf(prices: number[]): number {
-  const sorted = [...prices].sort((a, b) => a - b)
-  const mid    = Math.floor(sorted.length / 2)
-  return sorted.length % 2 === 0
-    ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
-    : sorted[mid]!
-}
 
 function dataConfidenceLevel(count: number): 'high' | 'medium' | 'limited' {
   if (count >= 10) return 'high'
@@ -91,18 +83,50 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
 
-  // Market price calculations — year-matched then outlier-trimmed (lib/price-stats.ts)
-  const relevantListings = vehicleData?.registrationYear
-    ? filterListingsByYear(marketPrices?.listings ?? [], vehicleData.registrationYear)
-    : (marketPrices?.listings ?? [])
-  const mPrices       = filterOutlierPrices(
-    relevantListings
-      .map(l => l.price)
-      .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
-  )
-  const marketMin     = mPrices.length ? Math.min(...mPrices) : null
-  const marketMax     = mPrices.length ? Math.max(...mPrices) : null
-  const marketMedian  = mPrices.length >= 2 ? medianOf(mPrices) : null
+  // ── Variant identity (must precede the cohort — it drives variant matching) ──
+  const wmNewPrice = vehicleData?.valuation?.wmNewPrice ?? null
+  const regYear    = vehicleData?.registrationYear ? parseInt(vehicleData.registrationYear) : null
+  // Special/top variant: record's new price far above the family's cheapest
+  // variant that year (JCW GP = 1.78× a Clubman). Model-level listings are then
+  // NOT valid comparables. (JSON round-trip stores prices as strings — coerce.)
+  const familyFloor      = vehicleData?.valuation?.familyFloorNewPrice != null
+    ? Number(vehicleData.valuation.familyFloorNewPrice) : null
+  const isSpecialVariant = wmNewPrice != null && familyFloor != null && familyFloor > 0
+    && Number(wmNewPrice) >= familyFloor * 1.3
+
+  // Official variant (from NVIC valuation) — shared by the cohort, the compact
+  // context line in Perbandingan Harga and the Semakan Varian card. Skip the
+  // family prefix when the variant already carries it ("COOPER" + "JOHN COOPER
+  // WORKS GP" must not render "Cooper John Cooper…").
+  const valFamily  = vehicleData?.valuation?.family
+  const valVarName = vehicleData?.valuation?.variant
+  const rawVariant = valFamily && valVarName
+    ? (new RegExp(`\\b${valFamily.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(valVarName)
+        ? valVarName
+        : `${valFamily} ${valVarName}`.trim())
+    : (valFamily ?? null)
+  // Title-case ALL-CAPS words, but keep grade tokens ("GP", "AV", "EZ")
+  // uppercase and leave words that already carry lowercase ("EZi") alone
+  const officialVariant = rawVariant
+    ? rawVariant.split(' ').map(w =>
+        (/[a-z]/.test(w) || w.length <= 2) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+      ).join(' ')
+    : null
+
+  // ── Market comparison — ONE cohort; median, range, chips, count, confidence,
+  // banner and methodology all derive from it, so math and copy can never
+  // describe different listing sets (lib/comparables.ts).
+  const cohort           = buildComparableCohort(marketPrices?.listings ?? [], {
+    year:             vehicleData?.registrationYear ?? null,
+    officialVariant,
+    model:            vehicleData?.model ?? null,
+    isSpecialVariant,
+  })
+  const relevantListings = cohort.listings
+  const mPrices          = cohort.prices
+  const marketMin        = cohort.min
+  const marketMax        = cohort.max
+  const marketMedian     = cohort.count >= 2 ? cohort.median : null
   const hasMarketData = askingPriceRm != null && marketMin != null && marketMax != null
   const priceVerdict  = !hasMarketData ? null
     : askingPriceRm! < marketMin! ? 'good_deal'    as const
@@ -119,8 +143,6 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
   // Depreciation-based verdict — fallback when no Mudah listings available.
   // Rates are tiered by brand segment; floored at 20% of new price.
-  const wmNewPrice       = vehicleData?.valuation?.wmNewPrice ?? null
-  const regYear          = vehicleData?.registrationYear ? parseInt(vehicleData.registrationYear) : null
   const hasDepreciation  = !hasMarketData && askingPriceRm != null && wmNewPrice != null && regYear != null
 
   const depreciationRate = (() => {
@@ -146,16 +168,6 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const effectiveVerdict = priceVerdict ?? depreciationVerdict
   const verdictSource    = priceVerdict ? 'market' : depreciationVerdict ? 'depreciation' : null
 
-  // Special/top variant: record's new price far above the family's cheapest
-  // variant that year (JCW GP = 1.78× a Clubman). Generic model-level
-  // listings are then NOT valid comparables — every number derived from them
-  // must warn or disappear, and the verdict must not pretend.
-  // (JSON round-trip stores prices as strings — coerce before comparing.)
-  const familyFloor      = vehicleData?.valuation?.familyFloorNewPrice != null
-    ? Number(vehicleData.valuation.familyFloorNewPrice) : null
-  const isSpecialVariant = wmNewPrice != null && familyFloor != null && familyFloor > 0
-    && Number(wmNewPrice) >= familyFloor * 1.3
-
   // New-price context — only shown WITH an interpretation (lib/depreciation.ts);
   // a bare new-price anchor next to market data is the dealer's pitch.
   // Suppressed for special variants: the median is other variants' prices.
@@ -163,25 +175,6 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
     ? assessDepreciation(Number(wmNewPrice), marketMedian, new Date().getFullYear() - regYear)
     : null
   const vehicleNotFound  = !vehicleData?.make
-
-  // Official variant (from NVIC valuation) — shared by the compact context
-  // line in Perbandingan Harga and the full Semakan Varian card below
-  // Skip the family prefix when the variant already carries it
-  // ("COOPER" + "JOHN COOPER WORKS GP" must not render "Cooper John Cooper…")
-  const valFamily  = vehicleData?.valuation?.family
-  const valVarName = vehicleData?.valuation?.variant
-  const rawVariant = valFamily && valVarName
-    ? (new RegExp(`\\b${valFamily.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(valVarName)
-        ? valVarName
-        : `${valFamily} ${valVarName}`.trim())
-    : (valFamily ?? null)
-  // Title-case ALL-CAPS words, but keep grade tokens ("GP", "AV", "EZ")
-  // uppercase and leave words that already carry lowercase ("EZi") alone
-  const officialVariant = rawVariant
-    ? rawVariant.split(' ').map(w =>
-        (/[a-z]/.test(w) || w.length <= 2) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-      ).join(' ')
-    : null
 
   // Short identity (make + model) — the full official variant string lives in
   // the JPJ card; repeating the all-caps wall here would duplicate it
@@ -421,9 +414,17 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               )
             })()}
 
-            {/* Special variant: the listings below are (mostly) other
-                variants' prices — say so before the buyer reads them */}
-            {isSpecialVariant && mPrices.length > 0 && (
+            {/* same_variant: comps are titled with the variant (a labelled
+                claim, not verified). mixed_variants: comps are model-level and
+                may be other variants — warn before the buyer reads them. */}
+            {cohort.mode === 'same_variant' && mPrices.length > 0 && (
+              <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-3 py-2.5 mb-3">
+                <p className="font-body text-[12px] text-[#064E4A] leading-relaxed">
+                  Perbandingan ini menggunakan listing yang menyebut “{cohort.variantToken}” sahaja.
+                </p>
+              </div>
+            )}
+            {cohort.mode === 'mixed_variants' && mPrices.length > 0 && (
               <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg px-3 py-2.5 mb-3">
                 <p className="font-body text-[12px] text-[#B45309] leading-relaxed">
                   ⚠️ Varian rekod ini jauh lebih mahal dari {vehicleData?.model ?? 'model'} biasa
@@ -436,15 +437,18 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             {mPrices.length > 0 && marketPrices && (() => {
               const median  = marketMedian!
               const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
-              // Special variant: listing count means nothing when the
-              // listings are other variants — never claim "Tinggi"
-              const conf    = CONFIDENCE_CONFIG[isSpecialVariant ? 'limited' : dataConfidenceLevel(mPrices.length)]
+              // Confidence reflects sample quantity AND cohort specificity.
+              // same_variant/normal → by count; mixed_variants → capped at
+              // "Sederhana" so high confidence can never sit over a mixed set
+              // (the banner + methodology always flag the mixed cohort).
+              const byCount   = dataConfidenceLevel(mPrices.length)
+              const confLevel = cohort.mode === 'mixed_variants' && byCount === 'high' ? 'medium' : byCount
+              const conf      = CONFIDENCE_CONFIG[confLevel]
 
               // Filtering is a feature — say it. A buyer who later browses the
               // marketplace sees MORE results than our chips (fuzzy search mixes
-              // other years in); without this line, our rigor reads as gaps.
-              const shownCount    = relevantListings.filter(l => mPrices.includes(l.price)).length
-              const excludedCount = (marketPrices.listings.length ?? 0) - shownCount
+              // other years/variants in); without this line, our rigor reads as gaps.
+              const excludedCount = (marketPrices.listings.length ?? 0) - relevantListings.length
 
               // Trade-in estimate (only when median is valid). Floor/ceil so
               // cheap cars can't collapse to "RM7,000 – RM7,000"
@@ -473,7 +477,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       : 'Harga listing dijumpai:'}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {relevantListings.filter(l => mPrices.includes(l.price)).map((l, i) => (
+                    {relevantListings.map((l, i) => (
                       <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
                         className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A] hover:bg-[#E0F2F1] transition-colors">
                         RM{fmt(l.price)}
@@ -481,10 +485,15 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                     ))}
                   </div>
 
-                  {/* Methodology + confidence */}
+                  {/* Methodology — states exactly which cohort was measured, so
+                      the copy never describes a different set than the numbers */}
                   <p className="font-body text-[11px] text-[#9CA3AF]">
-                    Berdasarkan {mPrices.length} listing serupa di pasaran
-                    {excludedCount > 0 ? ` · ${excludedCount} listing ditapis (tahun berbeza atau harga luar biasa)` : ''}
+                    {cohort.mode === 'same_variant'
+                      ? `Berdasarkan ${mPrices.length} listing yang dilabel “${cohort.variantToken}” di pasaran`
+                      : cohort.mode === 'mixed_variants'
+                        ? `Berdasarkan ${mPrices.length} listing ${vehicleData?.model ?? 'model'} ${vehicleData?.registrationYear ?? ''} di pasaran (pelbagai varian)`.replace(/\s+/g, ' ').trim()
+                        : `Berdasarkan ${mPrices.length} listing serupa di pasaran`}
+                    {excludedCount > 0 ? ` · ${excludedCount} listing ditapis (tahun/varian berbeza atau harga luar biasa)` : ''}
                   </p>
                   <div>
                     <div className="flex items-center gap-1.5">
@@ -795,7 +804,9 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           'Kereta masih ada loan bank?',
           'Geran atas nama siapa?',
           'Boleh buat inspection sebelum bayar deposit?',
-          ...(effectiveVerdict === 'overpriced' || effectiveVerdict === 'slightly_high'
+          // Skip for a mixed-variant cohort — "listing serupa" would overclaim
+          // when the comps span multiple variants of the model.
+          ...((effectiveVerdict === 'overpriced' || effectiveVerdict === 'slightly_high') && cohort.mode !== 'mixed_variants'
             ? ['Kenapa harga ni lebih tinggi dari listing serupa di pasaran?'] : []),
           ...(carAge != null && carAge >= 8
             ? ['Timing belt dan servis besar dah buat? Ada resit?'] : []),

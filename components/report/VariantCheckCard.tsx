@@ -137,7 +137,7 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
       {(!guide || !position) && officialVariant && (
         <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
           {isSpecialVariant
-            ? 'Ini antara varian paling tinggi untuk model ni — jangan bayar harga varian ini atas emblem sahaja. Sahkan varian dalam geran dan minta bukti sebelum bayar deposit.'
+            ? 'Ini varian premium atau berprestasi. Nilainya banyak bergantung pada varian tepat, spesifikasi dan kondisi. Maklumat varian dalam iklan mungkin tidak tepat, jadi sahkan nama varian pada geran sebelum membayar deposit.'
             : 'Pastikan iklan penjual sebutkan varian yang sama. Kalau iklan kata varian lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.'}
         </p>
       )}
