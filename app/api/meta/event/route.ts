@@ -48,7 +48,24 @@ const META_EVENT: Record<
   valuation_completed: 'ViewContent',
 }
 
+/**
+ * Crawlers that fetch the tagged ad URLs — link previews, Meta's ad review
+ * fetcher, uptime checks — would otherwise be recorded as landing-page views
+ * with full campaign attribution. That inflates the denominator of the
+ * valuation-start rate, which is the single number this experiment exists to
+ * measure, and makes a healthy landing page look broken.
+ *
+ * Conservative by design: only well-known bot signatures, so a real visitor
+ * is never dropped.
+ */
+const BOT_UA = /bot|crawler|spider|facebookexternalhit|facebookcatalog|WhatsApp|Slackbot|TelegramBot|Twitterbot|LinkedInBot|Discordbot|preview|monitor|pingdom|uptime|headless|lighthouse|gtmetrix|semrush|ahrefs|python-requests|curl\/|wget/i
+
 export async function POST(request: NextRequest) {
+  const userAgent = request.headers.get('user-agent') ?? ''
+  if (BOT_UA.test(userAgent)) {
+    return NextResponse.json({ ok: false, reason: 'bot' }, { status: 200 })
+  }
+
   const sessionId = request.cookies.get(SESSION_COOKIE)?.value
   if (!sessionId) {
     // No session cookie means middleware never ran for this visitor. Nothing
