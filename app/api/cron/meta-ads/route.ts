@@ -9,12 +9,14 @@ import {
 import {
   getExperiment, updateExperiment, recordAction, saveSnapshot,
   getFunnelCounts, countPaqarLandingViews, lastValuationStartedAt,
+  listSnapshots, type FunnelCounts,
 } from '@/lib/meta-ads/db'
+import { buildDailyReport, type CreativeResult } from '@/lib/meta-ads/report'
 import {
   checkMutationAllowed, isTotalSpendExceeded, SPEND_FAILURE_THRESHOLD,
   MAX_TOTAL_SPEND_MYR, CREATIVE_UTM_CONTENT,
 } from '@/lib/meta-ads/guards'
-import { alertPauseFailed, alertPauseSucceeded } from '@/lib/meta-ads/alerts'
+import { alertPauseFailed, alertPauseSucceeded, sendDailyReportEmail } from '@/lib/meta-ads/alerts'
 
 /**
  * Scheduled operator. Runs daily at 01:00 UTC (09:00 MYT).
@@ -118,6 +120,7 @@ export async function GET(request: NextRequest) {
   }
 
   const funnel = await getFunnelCounts().catch(() => null)
+  const creativeFunnels: Record<string, FunnelCounts | null> = {}
 
   if (funnel) {
     await saveSnapshot({
@@ -141,6 +144,7 @@ export async function GET(request: NextRequest) {
       if (!adId) continue
       const delivery = adDelivery[adId]
       const adFunnel = await getFunnelCounts({ utmContent: slot }).catch(() => null)
+      creativeFunnels[slot] = adFunnel
       if (!adFunnel) continue
       await saveSnapshot({
         experimentId:     experiment.id,
@@ -155,6 +159,60 @@ export async function GET(request: NextRequest) {
         landingPageViews: delivery?.landingPageViews ?? 0,
         funnel:           adFunnel,
       }).catch((err) => console.error('[cron/meta-ads] ad snapshot failed', err))
+    }
+  }
+
+  // ── 2b. Daily report ────────────────────────────────────────────────────
+  // Guarded by the same idempotency key mechanism as operator actions, keyed
+  // on the MYT report date — so a manual re-run cannot send a second copy.
+  if (funnel && experiment.launched_at) {
+    const reportDate = myatDate(now)
+    const isFirstRunToday = await recordAction({
+      experimentId:    experiment.id,
+      rule:            'daily_report',
+      action:          'email_sent',
+      success:         true,
+      responseSummary: `Daily report for ${reportDate}`,
+      idempotencyKey:  `daily_report:${experiment.id}:${reportDate}`,
+    }).catch(() => false)
+
+    if (isFirstRunToday) {
+      const previous = await previousCampaignSpend(experiment.id, campaignId, bucket)
+      const dayNumber = Math.floor(
+        (now.getTime() - new Date(experiment.launched_at).getTime()) / 86_400_000
+      ) + 1
+
+      const report = buildDailyReport({
+        dayNumber,
+        spendTodayCents: spendCents != null && previous != null
+          ? Math.max(0, spendCents - previous)
+          : spendCents ?? 0,
+        totalSpendCents: spendCents,
+        impressions:     campaignDelivery.impressions,
+        linkClicks:      campaignDelivery.linkClicks,
+        funnel,
+        creativeA: buildCreative('A', experiment.creative_a_ad_id, CREATIVE_UTM_CONTENT.a),
+        creativeB: buildCreative('B', experiment.creative_b_ad_id, CREATIVE_UTM_CONTENT.b),
+      })
+
+      await sendDailyReportEmail({
+        subject: `Paqar Meta Ads — Day ${dayNumber} (${reportDate})`,
+        report,
+      }).catch((err) => console.error('[cron/meta-ads] report email failed', err))
+    }
+  }
+
+  function buildCreative(label: string, adId: string | null, slot: string): CreativeResult {
+    const d = adId ? adDelivery[adId] : undefined
+    return {
+      label,
+      spendCents:  d?.spendCents ?? 0,
+      impressions: d?.impressions ?? 0,
+      linkClicks:  d?.linkClicks ?? 0,
+      funnel: creativeFunnels[slot] ?? {
+        landingViews: 0, valuationStarted: 0, valuationCompleted: 0,
+        purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0,
+      },
     }
   }
 
@@ -337,4 +395,23 @@ async function triggerHardStop(
 
     return { ok: false, rule: stop.rule, paused: false, critical: 'CRITICAL_PAUSE_FAILED' }
   }
+}
+
+/**
+ * Total campaign spend as of the most recent EARLIER bucket, so the report can
+ * show spend-today as a delta. Returns null when there is no prior snapshot
+ * (day one), in which case total spend is today's spend.
+ */
+async function previousCampaignSpend(
+  experimentId: string,
+  campaignId: string,
+  currentBucket: Date
+): Promise<number | null> {
+  const snaps = await listSnapshots(experimentId, 'campaign').catch(() => [])
+  const earlier = (snaps as Array<{ meta_object_id: string; captured_at_bucket: string; spend_cents: number | null }>)
+    .filter((s) => s.meta_object_id === campaignId
+                && new Date(s.captured_at_bucket).getTime() < currentBucket.getTime()
+                && s.spend_cents != null)
+  const last = earlier[earlier.length - 1]
+  return last?.spend_cents ?? null
 }

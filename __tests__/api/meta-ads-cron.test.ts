@@ -31,9 +31,11 @@ const store = vi.hoisted(() => ({
   lastValuationStartedAt: null as Date | null,
 }))
 
+// Async fns: the route chains .catch() on them, as the real ones return a Promise.
 const alerts = vi.hoisted(() => ({
-  alertPauseFailed:    vi.fn(),
-  alertPauseSucceeded: vi.fn(),
+  alertPauseFailed:     vi.fn(async () => {}),
+  alertPauseSucceeded:  vi.fn(async () => {}),
+  sendDailyReportEmail: vi.fn(async () => {}),
 }))
 
 vi.mock('@/lib/meta-ads/client', async () => {
@@ -57,6 +59,7 @@ vi.mock('@/lib/meta-ads/db', () => ({
     store.actions.push({ ...rec, idempotency_key: rec.idempotencyKey })
     return true
   },
+  listSnapshots: async () => store.snapshots,
   saveSnapshot: async (input: { bucket: Date; metaObjectId: string; level: string }) => {
     const key = `${input.bucket.toISOString()}|${input.metaObjectId}|${input.level}`
     if (store.snapshots.some((s) => s.key === key)) return false
@@ -255,10 +258,13 @@ describe('tracking-failure rule', () => {
 
     await call()
 
-    const evidence = store.actions[0]
-    expect(evidence.action).toBe('pause_campaign_attempt')
-    expect(String(evidence.responseSummary)).toContain('EVIDENCE')
-    expect(String(evidence.responseSummary)).toContain('45')
+    // Located by name rather than index: the daily-report action may also be
+    // recorded in the same run. What matters is that the evidence row exists
+    // and precedes the pause attempt itself.
+    const evidence = store.actions.find((a) => a.action === 'pause_campaign_attempt')
+    expect(evidence).toBeDefined()
+    expect(String(evidence!.responseSummary)).toContain('EVIDENCE')
+    expect(String(evidence!.responseSummary)).toContain('45')
   })
 
   it('pauses when events worked and then stopped', async () => {
@@ -365,5 +371,35 @@ describe('no experiment configured', () => {
     store.experiment = null
     const body = await (await call()).json()
     expect(body).toMatchObject({ skipped: 'no_experiment' })
+  })
+})
+
+describe('daily report email', () => {
+  beforeEach(() => {
+    seedExperiment({ launched_at: new Date(Date.now() - 2 * 86_400_000).toISOString() })
+  })
+
+  it('sends once per MYT day', async () => {
+    await call()
+    expect(alerts.sendDailyReportEmail).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not send a second copy on a re-run the same day', async () => {
+    await call()
+    await call()
+    expect(alerts.sendDailyReportEmail).toHaveBeenCalledTimes(1)
+  })
+
+  it('titles the email with the day number', async () => {
+    await call()
+    const arg = alerts.sendDailyReportEmail.mock.calls[0]![0] as { subject: string; report: string }
+    expect(arg.subject).toMatch(/Day 3/)
+    expect(arg.report).toContain('PAQAR META ADS — DAY 3')
+  })
+
+  it('does not send before the experiment has launched', async () => {
+    seedExperiment({ launched_at: null })
+    await call()
+    expect(alerts.sendDailyReportEmail).not.toHaveBeenCalled()
   })
 })
