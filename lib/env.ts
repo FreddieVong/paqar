@@ -48,12 +48,31 @@ const schema = z.object({
   ADS_ALERT_EMAIL:              z.string().email().optional(),
 })
 
-const parsed = schema.safeParse(process.env)
+/**
+ * A blank variable means "not set".
+ *
+ * Vercel (and most dashboards) store a cleared variable as an empty string
+ * rather than removing it, and `''` fails .min(1)/.email()/.url()/.regex()
+ * checks that an absent value would pass. Because this module throws at
+ * import, one blank optional variable takes down the entire production
+ * build — with an error pointing at whichever route Next happened to
+ * compile first, not at the variable.
+ */
+const rawEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([, value]) => value !== '')
+)
+
+const parsed = schema.safeParse(rawEnv)
 
 if (!parsed.success) {
-  console.error('❌ Invalid environment variables:')
-  console.error(JSON.stringify(parsed.error.flatten().fieldErrors, null, 2))
-  throw new Error('Invalid environment variables — check server logs')
+  const fieldErrors = parsed.error.flatten().fieldErrors
+  // The variable names go on one line, first: build logs truncate, and the
+  // pretty-printed JSON below is usually the part that gets cut off.
+  console.error(`❌ Invalid environment variables: ${Object.keys(fieldErrors).join(', ')}`)
+  console.error(JSON.stringify(fieldErrors, null, 2))
+  throw new Error(
+    `Invalid environment variables: ${Object.keys(fieldErrors).join(', ')} — check server logs`
+  )
 }
 
 export const env = parsed.data
