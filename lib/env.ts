@@ -29,6 +29,9 @@ const schema = z.object({
   JOMCHECK_PASSWORD:            z.string().min(1).optional(),
   JOMCHECK_COMPANY_NAME:        z.string().min(1).optional(),
   JOMCHECK_MODE:                z.enum(['auto', 'manual']).default('auto'),
+  // Vision extraction for manual JomCheck fulfilment (owner uploads a report
+  // screenshot in /admin/jomcheck). Absent = feature disabled, manual entry only.
+  ANTHROPIC_API_KEY:            z.string().min(1).optional(),
   ADMIN_SECRET:                 z.string().min(16).optional(),
   NEXT_PUBLIC_META_PIXEL_ID:    z.string().min(1).optional(),
   META_PIXEL_ID:                z.string().min(1).optional(),

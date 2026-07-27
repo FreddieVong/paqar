@@ -5,6 +5,7 @@ import { listManualPendingReports, listRecentlyFulfilledReports } from '@/lib/jo
 import { decrypt } from '@/lib/crypto'
 import type { JomCheckResult } from '@/lib/jomcheck'
 import { adminLogin, submitJomCheckResult, markJomCheckUncheckable } from './_actions'
+import { JomCheckExtractForm } from './JomCheckExtractForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -100,29 +101,11 @@ export default async function AdminJomCheckPage() {
                 </p>
               </div>
 
-              <form action={submitJomCheckResult} className="space-y-3">
+              {/* Primary: upload report screenshot → vision extract → review → save */}
+              <JomCheckExtractForm reportId={report.id} />
+
+              <form action={submitJomCheckResult}>
                 <input type="hidden" name="reportId" value={report.id} />
-                <div className="grid grid-cols-2 gap-3">
-                  {CLAIM_FIELDS.map(f => (
-                    <label key={f.name} className="block">
-                      <span className="font-body text-[12px] text-[#6B7280]">{f.label}</span>
-                      <input
-                        type="number"
-                        name={f.name}
-                        inputMode="numeric"
-                        min={0}
-                        defaultValue={0}
-                        className="w-full border border-[#D1D5DB] rounded-[10px] px-3 py-3 text-[16px] mt-1"
-                      />
-                    </label>
-                  ))}
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-[#064E4A] text-white font-heading font-bold text-[15px] rounded-[10px] py-3"
-                >
-                  Simpan &amp; Hantar E-mel
-                </button>
                 <button
                   type="submit"
                   name="clean"
@@ -132,6 +115,35 @@ export default async function AdminJomCheckPage() {
                   Tiada Claim (0) ✓
                 </button>
               </form>
+
+              {/* Fallback: manual counts (when vision is unavailable / no API key) */}
+              <details>
+                <summary className="font-body text-[12px] text-[#6B7280] cursor-pointer">Masukkan bilangan claim secara manual</summary>
+                <form action={submitJomCheckResult} className="space-y-3 mt-3">
+                  <input type="hidden" name="reportId" value={report.id} />
+                  <div className="grid grid-cols-2 gap-3">
+                    {CLAIM_FIELDS.map(f => (
+                      <label key={f.name} className="block">
+                        <span className="font-body text-[12px] text-[#6B7280]">{f.label}</span>
+                        <input
+                          type="number"
+                          name={f.name}
+                          inputMode="numeric"
+                          min={0}
+                          defaultValue={0}
+                          className="w-full border border-[#D1D5DB] rounded-[10px] px-3 py-3 text-[16px] mt-1"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-white border border-[#D1D5DB] text-[#111827] font-heading font-bold text-[15px] rounded-[10px] py-3"
+                  >
+                    Simpan (bilangan) &amp; Hantar E-mel
+                  </button>
+                </form>
+              </details>
 
               <form action={markJomCheckUncheckable} className="text-center">
                 <input type="hidden" name="reportId" value={report.id} />
