@@ -1,4 +1,4 @@
-import type { RawClaimRow } from './index'
+import type { RawClaimRow } from './core'
 
 // Pure parser for the vision model's extraction output. Kept free of
 // server-only / SDK imports so it can be unit-tested without the Anthropic

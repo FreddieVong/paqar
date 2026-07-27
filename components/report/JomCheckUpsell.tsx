@@ -39,8 +39,14 @@ export function JomCheckUpsell({ checkId, claimToken }: Props) {
       </div>
       <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
         Kereta ini pernah accident, banjir, atau total loss? Semak rekod claim insurans
-        yang direkodkan — sebelum anda bayar booking atau deposit.
+        yang direkodkan — termasuk <span className="font-semibold">meter (odometer) ketika claim</span> dan
+        tahap keseriousan setiap claim — sebelum anda bayar booking atau deposit.
       </p>
+      <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded-lg px-3 py-2 mb-3">
+        <p className="font-body text-[12px] text-[#991B1B] leading-relaxed">
+          ⚠️ Kami bandingkan meter ketika claim dengan odometer semasa — petanda kalau meter mungkin pernah dipusing balik.
+        </p>
+      </div>
       <div className="flex flex-wrap gap-1.5 mb-3">
         {['Own Damage', 'Banjir', 'Windscreen', 'Total Loss'].map(tag => (
           <span key={tag} className="font-body text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280]">

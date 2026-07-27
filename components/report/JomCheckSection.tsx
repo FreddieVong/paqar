@@ -1,5 +1,5 @@
-import type { JomCheckResult, JomCheckClaim, JomCheckIncident, Severity } from '@/lib/jomcheck'
-import { detectMileageRollback } from '@/lib/jomcheck'
+import type { JomCheckResult, JomCheckClaim, JomCheckIncident, Severity } from '@/lib/jomcheck/core'
+import { detectMileageRollback } from '@/lib/jomcheck/core'
 
 const CLAIM_LABELS: Record<JomCheckClaim['type'], string> = {
   accident:   'Kemalangan / Own Damage',
@@ -132,10 +132,10 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
                 {totalClaims} Rekod Claim Ditemui
               </p>
               <p className="font-body text-[12px] text-[#B45309] leading-relaxed mt-1">
-                Semak kategori yang terlibat dan tanya penjual tentang pembaikan yang pernah dibuat.
+                Semak butiran setiap rekod di bawah dan tanya penjual tentang pembaikan yang pernah dibuat.
               </p>
               <p className="font-body text-[11px] text-[#B45309]/80 leading-relaxed mt-1">
-                4 kategori rekod insurans telah disemak
+                Accident, banjir, windscreen dan total loss telah disemak
               </p>
             </div>
           </div>
@@ -149,7 +149,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
           <p className="font-body text-[12px] text-[#991B1B] leading-relaxed">
             Satu claim direkodkan pada <span className="font-bold">{rollback.claimMileage.toLocaleString()} km</span>
             {currentOdometerKm != null ? ` — tetapi odometer sekarang ${currentOdometerKm.toLocaleString()} km, lebih rendah.` : '.'}{' '}
-            Ini petanda kuat meter mungkin dipusing balik. Sahkan dengan penjual dan minta bukti servis.
+            Ini petanda meter mungkin dipusing balik. Sahkan dengan penjual, minta bukti servis, dan pastikan plat tidak pernah ditukar (rekod ikut nombor pendaftaran).
           </p>
         </div>
       )}
@@ -170,7 +170,10 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
                   )}
                 </div>
                 <p className="font-body text-[12px] text-[#6B7280] mt-0.5">
-                  {formatIncidentDate(inc.dateOfLoss)}{inc.accidentType ? ` · ${inc.accidentType}` : ''}
+                  {formatIncidentDate(inc.dateOfLoss)}
+                  {/* Show accident type only when it adds info (e.g. "Collision") —
+                      for windscreen/flood it just repeats the category label */}
+                  {(inc.type === 'accident' || inc.type === 'total_loss') && inc.accidentType ? ` · ${inc.accidentType}` : ''}
                 </p>
                 {inc.mileageAtClaim != null && (
                   <p className="font-body text-[12px] text-[#374151] mt-1">

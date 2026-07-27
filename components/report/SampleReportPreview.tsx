@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { CopyButton } from './CopyButton'
+import { JomCheckSection } from './JomCheckSection'
+import type { JomCheckResult } from '@/lib/jomcheck/core'
 
 const MARKET_PRICES = ['RM37,500', 'RM38,000', 'RM39,800', 'RM41,500', 'RM42,000', 'RM43,000', 'RM44,500', 'RM45,000', 'RM46,200', 'RM47,000']
 
@@ -30,13 +32,26 @@ const DEPOSIT_CHECKLIST = [
   'Confirm tarikh serah geran dan kunci',
 ]
 
-// Mirrors the real report: JomCheck gives severity (claim ÷ sum-insured band)
-// and mileage-at-claim — NOT a RM claim amount. Sample shows one severe
-// collision (with a rollback flag) + one windscreen record.
-const CLAIM_INCIDENTS = [
-  { date: '14 Apr 2024', type: 'Kemalangan / Own Damage', accidentType: 'Collision', mileage: '136,086 km', severity: 'Teruk', severityCls: 'bg-[#FEE2E2] text-[#991B1B]' },
-  { date: '29 Dis 2017', type: 'Cermin / Windscreen',     accidentType: null,        mileage: null,          severity: null,     severityCls: '' },
-]
+// The sample renders the REAL JomCheckSection with representative data, so the
+// preview is always pixel-identical to a paid report. Static checkedAt (no
+// new Date()) avoids an SSR/client hydration mismatch. One accident (High
+// severity, with a rollback flag) + one windscreen — enough to show severity,
+// mileage-at-claim, the odometer warning, and the interpretation.
+const SAMPLE_JOMCHECK: JomCheckResult = {
+  plate:          'WXY1234',
+  totalClaims:    2,
+  totalIncidents: 2,
+  checkedAt:      '2026-07-20T00:00:00.000Z',
+  claims: [
+    { type: 'accident',   count: 1, amount: null },
+    { type: 'windscreen', count: 1, amount: null },
+  ],
+  incidents: [
+    { dateOfLoss: '2022-03-14', type: 'accident',   accidentType: 'Collision',      mileageAtClaim: 95_000, severity: 'high', constructiveTotalLoss: false },
+    { dateOfLoss: '2020-08-02', type: 'windscreen', accidentType: 'Windscreen (WS)', mileageAtClaim: null,   severity: null,   constructiveTotalLoss: false },
+  ],
+}
+const SAMPLE_CURRENT_ODOMETER = 78_000  // below the 95,000 km claim → rollback flag fires
 
 export function SampleReportPreview() {
   const [tab, setTab] = useState<'asas' | 'premium'>('asas')
@@ -121,45 +136,11 @@ export function SampleReportPreview() {
           </div>
         </div>
 
-        {/* 2. Rekod Accident / Claim Insurans — Premium only */}
+        {/* 2. Rekod Accident / Claim Insurans — Premium only. Renders the REAL
+            JomCheckSection so the preview is always identical to a paid report. */}
         {tab === 'premium' && (
           <div className="px-5 py-4 border-b border-[#F3F4F6]">
-            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
-              Semakan Accident/Claim Insurans
-            </p>
-            <p className="font-body text-[12px] text-[#6B7280] mb-3 leading-relaxed">
-              Semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss untuk kenderaan ini.
-            </p>
-            <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded-lg px-3 py-2.5 mb-3">
-              <p className="font-heading font-bold text-[13px] text-[#991B1B]">2 rekod claim dijumpai</p>
-            </div>
-            {/* Odometer rollback flag — from mileage-at-claim vs current odometer */}
-            <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded-lg px-3 py-2.5 mb-3">
-              <p className="font-body text-[12px] text-[#991B1B] leading-relaxed">
-                ⚠️ Satu claim direkod pada <span className="font-bold">136,086 km</span> — tetapi odometer sekarang lebih rendah. Petanda meter mungkin dipusing balik.
-              </p>
-            </div>
-            <div className="space-y-2">
-              {CLAIM_INCIDENTS.map((c, i) => (
-                <div key={i} className="border border-[#E5E7EB] rounded-lg px-3 py-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-heading font-bold text-[12px] text-[#111827]">{c.type}</p>
-                    {c.severity && (
-                      <span className={`font-heading font-bold text-[10px] px-2 py-0.5 rounded-full ${c.severityCls}`}>{c.severity}</span>
-                    )}
-                  </div>
-                  <p className="font-body text-[11px] text-[#6B7280] mt-0.5">
-                    {c.date}{c.accidentType ? ` · ${c.accidentType}` : ''}
-                  </p>
-                  {c.mileage && (
-                    <p className="font-body text-[11px] text-[#374151] mt-1">Meter ketika claim: <span className="font-heading font-bold">{c.mileage}</span></p>
-                  )}
-                </div>
-              ))}
-            </div>
-            <p className="font-body text-[11px] text-[#9CA3AF] mt-3 leading-relaxed">
-              Severity ialah anggaran kos claim berbanding nilai insurans kereta — bukan jumlah RM. Rekod claim tidak semestinya bermaksud kemalangan besar; gunakannya untuk bertanya penjual dengan lebih tepat.
-            </p>
+            <JomCheckSection data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
           </div>
         )}
 
