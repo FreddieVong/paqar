@@ -24,7 +24,7 @@ async function notifyManualJomCheckOrder(o: {
 }): Promise<void> {
   if (!isJomCheckManual()) return
   await sendTelegramMessage(
-    `🔔 Order JomCheck baru\nPlat: ${o.plate}\nEmail: ${o.email}\nRM${(o.amountCents / 100).toFixed(0)}\nFulfil → https://paqar.my/admin/jomcheck`,
+    `Order JomCheck baru\nPlat: ${o.plate}\nEmail: ${o.email}\nRM${(o.amountCents / 100).toFixed(0)}\nFulfil → https://paqar.my/admin/jomcheck`,
   ).catch(() => {})
   await sendJomCheckPendingEmail({ toEmail: o.email, plate: o.plate, reportUrl: o.reportUrl })
     .catch(err => console.error('[jomcheck-pending-email]', err))
