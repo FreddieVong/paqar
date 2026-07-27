@@ -21,6 +21,7 @@ export function JomCheckExtractForm({ reportId }: { reportId: string }) {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
   const [rows, setRows]       = useState<EditRow[] | null>(null)
+  const [previews, setPreviews] = useState<string[]>([])
   const [error, setError]     = useState<string | null>(null)
   const [extracting, startExtract] = useTransition()
   const [submitting, startSubmit]  = useTransition()
@@ -29,6 +30,10 @@ export function JomCheckExtractForm({ reportId }: { reportId: string }) {
     setError(null)
     const files = fileRef.current?.files
     if (!files || files.length === 0) { setError('Pilih gambar laporan JomCheck dahulu.'); return }
+    // Keep the uploaded images on screen next to the read-back rows so the
+    // owner verifies every mileage/severity against the source (Opus vision is
+    // accurate, but a paid report must never email an unchecked machine read).
+    setPreviews(prev => { prev.forEach(URL.revokeObjectURL); return Array.from(files).map(f => URL.createObjectURL(f)) })
     const fd = new FormData()
     fd.set('reportId', reportId)
     for (const f of Array.from(files)) fd.append('images', f)
@@ -83,6 +88,26 @@ export function JomCheckExtractForm({ reportId }: { reportId: string }) {
 
       {rows != null && (
         <div className="space-y-3">
+          {previews.length > 0 && (
+            <div>
+              <p className="font-body text-[11px] text-[#6B7280] mb-1">
+                Gambar asal — banding setiap baris di bawah dengan gambar ini:
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {previews.map((src, i) => (
+                  <a key={i} href={src} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={src}
+                      alt={`Gambar laporan ${i + 1}`}
+                      className="h-44 w-auto rounded-lg border border-[#E5E7EB] object-contain bg-[#F9FAFB]"
+                    />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           <p className="font-body text-[12px] text-[#6B7280]">
             {rows.length === 0
               ? 'Tiada rekod dibaca. Tambah manual jika perlu, atau simpan sebagai "tiada claim".'

@@ -76,8 +76,8 @@ export default async function AdminJomCheckPage() {
             Semakan Accident/Claim — Queue
           </p>
           <p className="font-body text-[13px] text-[#6B7280]">
-            Beli semakan di jomcheck.com.my, kemudian masukkan bilangan claim di sini.
-            Pelanggan akan di-emel secara automatik.
+            Beli semakan di jomcheck.com.my, muat naik gambar laporan, semak baris yang dibaca,
+            kemudian hantar. Pelanggan akan di-emel secara automatik.
           </p>
         </div>
 
@@ -99,6 +99,14 @@ export default async function AdminJomCheckPage() {
                 <p className="font-body text-[12px] text-[#9CA3AF]">
                   RM{(report.amount_cents / 100).toFixed(0)} · dibayar {formatDateTime(report.paid_at)}
                 </p>
+                <a
+                  href="https://www.jomcheck.com.my"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-2 font-heading font-bold text-[13px] text-[#064E4A] underline underline-offset-2"
+                >
+                  Buka JomCheck untuk plat ini →
+                </a>
               </div>
 
               {/* Primary: upload report screenshot → vision extract → review → save */}

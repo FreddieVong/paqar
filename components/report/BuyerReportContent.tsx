@@ -6,6 +6,7 @@ import { InsuranceCTA }    from './InsuranceCTA'
 import { CopyButton }      from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
 import { JomCheckUpsell }  from './JomCheckUpsell'
+import { HistoryRiskBanner } from './HistoryRiskBanner'
 import { VariantCheckCard } from './VariantCheckCard'
 import { findGuideByMakeModel, findVariantPosition, VERDICT_LABELS } from '@/lib/variant-guides'
 import { assessDepreciation } from '@/lib/depreciation'
@@ -206,6 +207,13 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           <p className="font-body text-[13px] text-white/70">{carIdentity}</p>
         )}
       </div>
+
+      {/* History risk — a SEVERE / total-loss / rollback finding must lead the
+          5-second scan, ABOVE the price verdict. Only when JomCheck was bought
+          and succeeded; renders nothing for a clean or minor history. */}
+      {addJomCheck && jomcheckStatus === 'success' && jomcheckData && (
+        <HistoryRiskBanner data={jomcheckData} currentOdometerKm={claimedMileageKm ?? null} />
+      )}
 
       {/* Vehicle not found — shown when RegCheck returns null for this plate */}
       {vehicleNotFound && (

@@ -125,6 +125,23 @@ export default function SemakAccidentClaimInsuransPage() {
             </div>
           </div>
 
+          {/* Meter-at-claim / rollback — the highest-value signal, honest about limits */}
+          <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded-[14px] p-5">
+            <h2 className="font-heading font-bold text-[15px] text-[#991B1B] mb-2">
+              Meter pernah dipusing balik?
+            </h2>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
+              Setiap rekod claim menyimpan bacaan meter (odometer) pada masa itu. Kami banding
+              bacaan tertinggi dengan odometer yang penjual tunjuk sekarang — kalau meter sekarang
+              lebih rendah, itu petanda meter mungkin dipusing balik. Kami juga tunjuk tahap
+              keseriousan setiap claim (rendah hingga teruk).
+            </p>
+            <p className="font-body text-[11px] text-[#9CA3AF] leading-relaxed">
+              Paqar tidak mengesahkan bacaan odometer sebenar — kami tunjuk petanda supaya anda
+              boleh sahkan dengan penjual dan rekod servis sebelum bayar deposit.
+            </p>
+          </div>
+
           {/* Important limitations — honest and clear */}
           <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
             <h2 className="font-heading font-bold text-[15px] text-[#B45309] mb-3">
@@ -165,6 +182,8 @@ export default function SemakAccidentClaimInsuransPage() {
                 { title: 'Soalan penting untuk penjual', desc: 'Tanya soalan yang boleh dedahkan risiko tersembunyi.' },
                 { title: 'Checklist sebelum bayar deposit', desc: 'Senarai semak lengkap untuk pembeli.' },
                 { title: 'Semakan Accident/Claim Insurans', desc: 'Own damage, banjir, windscreen, total loss jika direkodkan.' },
+                { title: 'Meter ketika claim & amaran meter dipusing', desc: 'Kami banding meter ketika claim dengan odometer semasa — petanda kalau meter mungkin dipusing balik.' },
+                { title: 'Tahap keseriousan setiap claim', desc: 'Rendah hingga teruk — tahu mana claim kecil, mana yang serius.' },
               ].map((item, i, arr) => (
                 <div key={item.title} className={`flex gap-2.5 items-start py-2.5 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
                   <span className="w-[17px] h-[17px] rounded-full bg-[#14453d] flex items-center justify-center flex-shrink-0 mt-0.5">

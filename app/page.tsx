@@ -258,7 +258,7 @@ export default async function HomePage() {
                 <span className="font-heading font-bold text-[9px] px-2 py-0.5 rounded-full bg-[#F0FDF4] text-[#064E4A]">RM100</span>
               </div>
               <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
-                Semak sejarah kemalangan kenderaan — own damage, banjir, windscreen atau total loss jika direkodkan. Atau tambah +RM88 kepada Laporan Pembeli sedia ada.
+                Semak sejarah kemalangan kenderaan — own damage, banjir, windscreen atau total loss jika direkodkan, termasuk meter ketika claim dan amaran kalau meter mungkin dipusing balik. Atau tambah +RM88 kepada Laporan Pembeli sedia ada.
               </p>
             </div>
             <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 text-[18px]">→</span>
@@ -354,7 +354,7 @@ export default async function HomePage() {
             {[
               {
                 q: 'Apakah beza semakan percuma dan laporan RM12?',
-                a: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar booking atau deposit.',
+                a: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — termasuk meter ketika claim dan amaran kalau meter mungkin dipusing balik — sebelum bayar booking atau deposit.',
               },
               {
                 q: 'Adakah saya perlu daftar akaun?',

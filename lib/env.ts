@@ -33,6 +33,9 @@ const schema = z.object({
   // screenshot in /admin/jomcheck). Absent = feature disabled, manual entry only.
   ANTHROPIC_API_KEY:            z.string().min(1).optional(),
   ADMIN_SECRET:                 z.string().min(16).optional(),
+  // Owner ops alerts (new JomCheck order to fulfil). Both absent = no pings.
+  TELEGRAM_BOT_TOKEN:           z.string().min(1).optional(),
+  TELEGRAM_CHAT_ID:             z.string().min(1).optional(),
   NEXT_PUBLIC_META_PIXEL_ID:    z.string().min(1).optional(),
   META_PIXEL_ID:                z.string().min(1).optional(),
   META_CAPI_TOKEN:              z.string().min(1).optional(),

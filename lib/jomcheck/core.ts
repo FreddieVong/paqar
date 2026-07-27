@@ -178,6 +178,52 @@ export function detectMileageRollback(
   return { rolledBack, claimMileage }
 }
 
+export interface HistoryRisk {
+  severe:   boolean
+  headline: string
+  reasons:  string[]
+}
+
+// The single most important safety finding, elevated ABOVE the price verdict.
+// A constructive-total-loss / total-loss / "Teruk" severity, or a meter wound
+// back below a recorded claim mileage, must lead the buyer's 5-second scan — a
+// car that was nearly written off (or whose odometer was rolled) matters more
+// than whether it's RM3k over market. Returns severe:false for a clean or
+// minor history so the banner never steals the top slot without cause.
+export function assessHistoryRisk(
+  result: JomCheckResult | null | undefined,
+  currentOdometerKm: number | null | undefined,
+): HistoryRisk {
+  if (!result) return { severe: false, headline: '', reasons: [] }
+
+  const incidents    = result.incidents ?? []
+  const hasCTL       = incidents.some(i => i.constructiveTotalLoss)
+  const hasSevere    = incidents.some(i => i.severity === 'severe')
+  const hasTotalLoss = result.claims.some(c => c.type === 'total_loss' && c.count > 0)
+  const { rolledBack, claimMileage } = detectMileageRollback(incidents, currentOdometerKm)
+
+  const reasons: string[] = []
+  if (hasCTL || hasTotalLoss)
+    reasons.push('Rekod total loss / constructive total loss — insurans anggap kos baik-pulih hampir atau melebihi nilai kereta.')
+  if (hasSevere && !hasCTL && !hasTotalLoss)
+    reasons.push('Sekurang-kurangnya satu claim bertahap “Teruk” — kos claim tinggi berbanding nilai kereta ketika itu.')
+  if (rolledBack && claimMileage != null)
+    reasons.push(
+      currentOdometerKm != null
+        ? `Satu claim direkodkan pada ${claimMileage.toLocaleString()} km — lebih tinggi daripada odometer semasa (${currentOdometerKm.toLocaleString()} km). Petanda meter mungkin dipusing balik.`
+        : `Satu claim direkodkan pada ${claimMileage.toLocaleString()} km — lebih tinggi daripada odometer semasa. Petanda meter mungkin dipusing balik.`,
+    )
+
+  const severe = hasCTL || hasTotalLoss || hasSevere || rolledBack
+  const headline =
+    hasCTL || hasTotalLoss ? 'Kereta ini pernah rosak teruk'
+    : hasSevere            ? 'Kereta ini pernah accident teruk'
+    : rolledBack           ? 'Meter kereta ini mungkin dipusing balik'
+    : ''
+
+  return { severe, headline, reasons }
+}
+
 // Assemble a full result from deduped incidents — the single builder used by
 // both the auto parser and the manual vision path. Category counts and
 // totalClaims derive from INCIDENTS (deduped), so we never surface JomCheck's

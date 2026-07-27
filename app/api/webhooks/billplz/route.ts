@@ -4,7 +4,10 @@ import { markReportPaid, getBuyerReportByBillId,
          markUpgradePaid, getBuyerReportByUpgradeBillId,
          setVehicleApiData } from '@/lib/db/buyer-reports'
 import { sendReceiptEmail }                       from '@/lib/email/receipt'
+import { sendJomCheckPendingEmail }               from '@/lib/email/jomcheck-pending'
 import { recordPurchase }                         from '@/lib/purchase-attribution'
+import { isJomCheckManual }                       from '@/lib/jomcheck'
+import { sendTelegramMessage }                    from '@/lib/notify/telegram'
 import { getCheck }                              from '@/lib/db/checks'
 import { decrypt }                               from '@/lib/crypto'
 import { getOrFetchVehicleData }                 from '@/lib/db/plate-lookups'
@@ -12,6 +15,20 @@ import { getValuationByNvic }                    from '@/lib/db/vehicle-valuatio
 import { getCachedMarketPrices,
          fetchAndCacheMarketPrices }             from '@/lib/db/market-prices'
 import { buildMarketModelKeyword }               from '@/lib/market-keyword'
+
+// A paid JomCheck add-on in manual mode → alert the owner to fulfil it, and set
+// the buyer's expectation with an interim email. Best-effort: swallows its own
+// errors so a failed ping/email never breaks the payment webhook.
+async function notifyManualJomCheckOrder(o: {
+  plate: string; email: string; amountCents: number; reportUrl: string
+}): Promise<void> {
+  if (!isJomCheckManual()) return
+  await sendTelegramMessage(
+    `🔔 Order JomCheck baru\nPlat: ${o.plate}\nEmail: ${o.email}\nRM${(o.amountCents / 100).toFixed(0)}\nFulfil → https://paqar.my/admin/jomcheck`,
+  ).catch(() => {})
+  await sendJomCheckPendingEmail({ toEmail: o.email, plate: o.plate, reportUrl: o.reportUrl })
+    .catch(err => console.error('[jomcheck-pending-email]', err))
+}
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
@@ -57,6 +74,17 @@ export async function POST(request: NextRequest) {
             checkId:       upgradeReport.check_id,
             buyerReportId: upgradeReport.id,
           })
+
+          // Manual JomCheck fulfilment: alert the owner + set buyer expectation
+          try {
+            const checkRow = await getCheck(upgradeReport.check_id)
+            const plate = checkRow ? decrypt(checkRow.check.plate_encrypted as string).toUpperCase() : '(plat)'
+            const token = checkRow?.check.claim_token
+            const reportUrl = token
+              ? `https://paqar.my/laporan-pembeli/${upgradeReport.check_id}?claim_token=${token}`
+              : `https://paqar.my/laporan-pembeli/${upgradeReport.check_id}`
+            await notifyManualJomCheckOrder({ plate, email: upgradeReport.buyer_email, amountCents: 8800, reportUrl })
+          } catch (err) { console.error('[jomcheck-notify:upgrade]', err) }
         }
       }
       return NextResponse.json({ ok: true })
@@ -92,6 +120,16 @@ export async function POST(request: NextRequest) {
         checkId:       buyerReport.check_id,
         buyerReportId: buyerReport.id,
       })
+
+      // Combined RM100 purchase → same manual-fulfilment alert + interim email
+      if (buyerReport.add_jomcheck && plate) {
+        await notifyManualJomCheckOrder({
+          plate,
+          email:       buyerReport.buyer_email,
+          amountCents: buyerReport.amount_cents,
+          reportUrl:   reportUrl ?? `https://paqar.my/laporan-pembeli/${buyerReport.check_id}`,
+        }).catch(err => console.error('[jomcheck-notify:combined]', err))
+      }
 
       // Pre-warm vehicle + market price caches so the report loads fully on first view
       if (plate) {

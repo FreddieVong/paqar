@@ -183,14 +183,16 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
                 </div>
 
                 <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-2">
-                  Semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum anda bayar booking atau deposit.
+                  Semak kalau kereta ni pernah <span className="font-semibold text-[#374151]">accident teruk, total loss,
+                  atau meter pernah dipusing balik</span> — kami banding meter ketika claim dengan
+                  odometer semasa. Semak sebelum bayar booking atau deposit.
                 </p>
 
                 {/* Recommended badge */}
                 <span className={`inline-block font-heading font-bold text-[10px] px-2 py-0.5 rounded-full mb-2 ${
-                  addJomCheck ? 'bg-[#CCFBF1] text-[#047857]' : 'bg-[#F3F4F6] text-[#6B7280]'
+                  addJomCheck ? 'bg-[#CCFBF1] text-[#047857]' : 'bg-[#FEF2F2] text-[#B91C1C]'
                 }`}>
-                  Disyorkan sebelum bayar booking atau deposit
+                  Paling disyorkan — risiko paling mahal kalau terlepas
                 </span>
 
                 {/* Feature chips */}

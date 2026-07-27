@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { CopyButton } from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
+import { HistoryRiskBanner } from './HistoryRiskBanner'
 import type { JomCheckResult } from '@/lib/jomcheck/core'
 
 const MARKET_PRICES = ['RM37,500', 'RM38,000', 'RM39,800', 'RM41,500', 'RM42,000', 'RM43,000', 'RM44,500', 'RM45,000', 'RM46,200', 'RM47,000']
@@ -103,6 +104,15 @@ export function SampleReportPreview() {
           )}
         </div>
 
+        {/* History risk — leads the premium report, above the price verdict.
+            Renders the REAL HistoryRiskBanner so the sample can't drift. The
+            sample data triggers the odometer-rollback warning. */}
+        {tab === 'premium' && (
+          <div className="px-5 py-4 border-b border-[#F3F4F6]">
+            <HistoryRiskBanner data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
+          </div>
+        )}
+
         {/* 1. Keputusan Paqar */}
         <div className="px-5 py-4 border-b border-[#F3F4F6] bg-[#FEF2F2]">
           <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
@@ -140,6 +150,9 @@ export function SampleReportPreview() {
             JomCheckSection so the preview is always identical to a paid report. */}
         {tab === 'premium' && (
           <div className="px-5 py-4 border-b border-[#F3F4F6]">
+            <p className="font-body text-[10px] text-[#9CA3AF] mb-2 italic">
+              Data contoh — bukan kereta sebenar. Laporan anda gunakan rekod plat yang anda semak.
+            </p>
             <JomCheckSection data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
           </div>
         )}

@@ -163,7 +163,9 @@ export default function LaporanPembelihPage() {
               Tambah Semakan Accident/Claim Insurans — +RM88
             </p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
-              Semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan. Laporan + Semakan berharga RM100 keseluruhan.
+              Semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika
+              direkodkan — termasuk <span className="font-semibold">meter ketika claim</span> dan amaran
+              kalau meter mungkin pernah dipusing balik. Laporan + Semakan berharga RM100 keseluruhan.
             </p>
             <Link
               href="/semak-accident-claim-insurans-kereta"
