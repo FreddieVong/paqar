@@ -83,7 +83,7 @@ export default async function AdminJomCheckPage() {
 
         {pending.length === 0 && (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-            <p className="font-body text-[14px] text-[#6B7280]">Tiada order menunggu. 🎉</p>
+            <p className="font-body text-[14px] text-[#6B7280]">Tiada order menunggu.</p>
           </div>
         )}
 
