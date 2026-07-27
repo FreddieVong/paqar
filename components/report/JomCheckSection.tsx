@@ -1,4 +1,5 @@
-import type { JomCheckResult, JomCheckClaim } from '@/lib/jomcheck'
+import type { JomCheckResult, JomCheckClaim, JomCheckIncident, Severity } from '@/lib/jomcheck'
+import { detectMileageRollback } from '@/lib/jomcheck'
 
 const CLAIM_LABELS: Record<JomCheckClaim['type'], string> = {
   accident:   'Kemalangan / Own Damage',
@@ -8,6 +9,22 @@ const CLAIM_LABELS: Record<JomCheckClaim['type'], string> = {
 }
 
 const CLAIM_ORDER: JomCheckClaim['type'][] = ['accident', 'flood', 'windscreen', 'total_loss']
+
+// Severity is JomCheck's claim ÷ sum-insured band — the magnitude signal in
+// place of a raw RM amount. null (windscreen/no sum insured) shows no badge.
+const SEVERITY_BADGE: Record<Severity, { label: string; cls: string }> = {
+  severe: { label: 'Teruk',    cls: 'bg-[#FEE2E2] text-[#991B1B]' },
+  high:   { label: 'Tinggi',   cls: 'bg-[#FFEDD5] text-[#9A3412]' },
+  medium: { label: 'Sederhana', cls: 'bg-[#FEF3C7] text-[#92400E]' },
+  low:    { label: 'Rendah',   cls: 'bg-[#F3F4F6] text-[#4B5563]' },
+}
+
+function formatIncidentDate(iso: string | null): string {
+  if (!iso) return 'Tarikh tidak pasti'
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  return `${d.getDate()} ${MALAY_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+}
 
 const MALAY_MONTHS = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogos', 'Sep', 'Okt', 'Nov', 'Dis']
 
@@ -40,11 +57,19 @@ const GENERIC_FOUND =
 
 interface Props {
   data: JomCheckResult
+  currentOdometerKm?: number | null
 }
 
-export function JomCheckSection({ data }: Props) {
+export function JomCheckSection({ data, currentOdometerKm }: Props) {
   const claimMap  = new Map(data.claims.map(c => [c.type, c]))
   const getCount  = (type: JomCheckClaim['type']) => claimMap.get(type)?.count ?? 0
+
+  // Rich per-incident data when available (auto API / reviewed vision extract);
+  // legacy count-only results (older manual entries) fall back to the category
+  // table below. incidents is the deduped, honest incident list.
+  const incidents: JomCheckIncident[] = data.incidents ?? []
+  const hasIncidents = incidents.length > 0
+  const rollback     = detectMileageRollback(incidents, currentOdometerKm ?? null)
 
   const totalClaims = data.totalClaims
   const hasClaims   = totalClaims > 0
@@ -117,7 +142,57 @@ export function JomCheckSection({ data }: Props) {
         </div>
       )}
 
-      {/* Category breakdown — always shown, so the buyer sees everything we checked */}
+      {/* Odometer rollback — the highest-value signal derived from mileage-at-claim */}
+      {rollback.rolledBack && rollback.claimMileage != null && (
+        <div className="mt-3 bg-[#FEF2F2] border border-[#FCA5A5] rounded-[12px] p-4">
+          <p className="font-heading font-bold text-[13px] text-[#991B1B] mb-1">⚠️ Amaran meter (odometer)</p>
+          <p className="font-body text-[12px] text-[#991B1B] leading-relaxed">
+            Satu claim direkodkan pada <span className="font-bold">{rollback.claimMileage.toLocaleString()} km</span>
+            {currentOdometerKm != null ? ` — tetapi odometer sekarang ${currentOdometerKm.toLocaleString()} km, lebih rendah.` : '.'}{' '}
+            Ini petanda kuat meter mungkin dipusing balik. Sahkan dengan penjual dan minta bukti servis.
+          </p>
+        </div>
+      )}
+
+      {/* Per-incident detail — rich data (auto API / reviewed vision extract), deduped */}
+      {hasIncidents && (
+        <div className="mt-3 space-y-2">
+          {incidents.map((inc, i) => {
+            const badge = inc.severity ? SEVERITY_BADGE[inc.severity] : null
+            return (
+              <div key={i} className="border border-[#E5E7EB] rounded-[12px] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-heading font-bold text-[13px] text-[#111827]">{CLAIM_LABELS[inc.type]}</p>
+                  {badge && (
+                    <span className={`font-heading font-bold text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${badge.cls}`}>
+                      {badge.label}
+                    </span>
+                  )}
+                </div>
+                <p className="font-body text-[12px] text-[#6B7280] mt-0.5">
+                  {formatIncidentDate(inc.dateOfLoss)}{inc.accidentType ? ` · ${inc.accidentType}` : ''}
+                </p>
+                {inc.mileageAtClaim != null && (
+                  <p className="font-body text-[12px] text-[#374151] mt-1">
+                    Meter ketika claim: <span className="font-heading font-bold">{inc.mileageAtClaim.toLocaleString()} km</span>
+                  </p>
+                )}
+                {inc.constructiveTotalLoss && (
+                  <p className="font-body text-[12px] font-semibold text-[#991B1B] mt-1 leading-relaxed">
+                    Constructive Total Loss — insurans anggap kos baik-pulih hampir atau melebihi nilai kereta. Kereta pernah rosak teruk.
+                  </p>
+                )}
+              </div>
+            )
+          })}
+          <p className="font-body text-[11px] text-[#9CA3AF] leading-relaxed">
+            Severity ialah anggaran kos claim berbanding nilai insurans kereta pada masa itu — bukan jumlah RM sebenar.
+          </p>
+        </div>
+      )}
+
+      {/* Category breakdown — fallback for count-only results (no per-incident detail) */}
+      {!hasIncidents && (
       <div className="mt-3 border border-[#E5E7EB] rounded-[12px] overflow-hidden">
         {CLAIM_ORDER.map((type, i) => {
           const count   = getCount(type)
@@ -145,6 +220,7 @@ export function JomCheckSection({ data }: Props) {
           )
         })}
       </div>
+      )}
 
       {/* Buyer interpretation */}
       <div className="mt-4">

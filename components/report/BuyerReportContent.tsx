@@ -346,7 +346,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       {/* JomCheck — shown only if purchased; hidden for RM12 basic reports */}
       {addJomCheck && (
         jomcheckStatus === 'success' && jomcheckData
-          ? <JomCheckSection data={jomcheckData} />
+          ? <JomCheckSection data={jomcheckData} currentOdometerKm={claimedMileageKm ?? null} />
           : jomcheckManualPending
           ? (
             <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">
