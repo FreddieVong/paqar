@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
+import { CollectionSchema } from '@/components/layout/CollectionSchema'
 
 export const metadata: Metadata = {
   title: 'Bandingkan Kereta Terpakai Malaysia — Myvi vs Axia, Vios vs City | Paqar',
@@ -27,6 +28,13 @@ const COMPARISONS = [
 export default function BandingkanHub() {
   return (
     <>
+      <CollectionSchema
+        name="Bandingkan Kereta Terpakai Malaysia"
+        url="https://paqar.my/bandingkan"
+        description="Perbandingan model kereta terpakai popular di Malaysia — harga, kos, dan mana lebih berbaloi."
+        breadcrumbName="Bandingkan"
+        items={COMPARISONS.map(c => ({ name: `${c.titleA} vs ${c.titleB}`, url: `https://paqar.my/bandingkan/${c.slug}` }))}
+      />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-5">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
+import { CollectionSchema } from '@/components/layout/CollectionSchema'
 
 const YEAR = new Date().getFullYear()
 
@@ -36,6 +37,13 @@ const MODELS = [
 export default function HargaKeretaTerpakaiPage() {
   return (
     <>
+      <CollectionSchema
+        name={`Harga Kereta Terpakai Malaysia ${YEAR}`}
+        url="https://paqar.my/harga-kereta-terpakai"
+        description="Harga pasaran kereta terpakai Malaysia mengikut model dan tahun."
+        breadcrumbName="Harga Kereta Terpakai"
+        items={MODELS.map(m => ({ name: `${m.brand} ${m.model}`, url: `https://paqar.my/harga-kereta-terpakai/${m.slug}` }))}
+      />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">

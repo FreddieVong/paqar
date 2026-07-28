@@ -3,6 +3,7 @@ import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { CollectionSchema } from '@/components/layout/CollectionSchema'
 
 const YEAR = new Date().getFullYear()
 
@@ -25,6 +26,13 @@ const MODELS = [
 export default function HargaToyota() {
   return (
     <>
+      <CollectionSchema
+        name={`Harga Toyota Terpakai Malaysia ${YEAR}`}
+        url="https://paqar.my/harga-toyota-terpakai"
+        description="Harga pasaran kereta terpakai Toyota — Vios, Yaris mengikut tahun."
+        breadcrumbName="Harga Toyota Terpakai"
+        items={MODELS.map(m => ({ name: `Toyota ${m.model}`, url: `https://paqar.my/harga-kereta-terpakai/${m.slug}` }))}
+      />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">

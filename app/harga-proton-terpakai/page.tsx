@@ -3,6 +3,7 @@ import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { CollectionSchema } from '@/components/layout/CollectionSchema'
 
 const YEAR = new Date().getFullYear()
 
@@ -28,6 +29,13 @@ const MODELS = [
 export default function HargaProton() {
   return (
     <>
+      <CollectionSchema
+        name={`Harga Proton Terpakai Malaysia ${YEAR}`}
+        url="https://paqar.my/harga-proton-terpakai"
+        description="Harga pasaran kereta terpakai Proton — Saga, Persona, Iriz, X50 mengikut tahun."
+        breadcrumbName="Harga Proton Terpakai"
+        items={MODELS.map(m => ({ name: `Proton ${m.model}`, url: `https://paqar.my/harga-kereta-terpakai/${m.slug}` }))}
+      />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">
