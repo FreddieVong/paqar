@@ -1,0 +1,149 @@
+import type { Metadata } from 'next'
+import Link    from 'next/link'
+import { Nav }   from '@/components/layout/Nav'
+import { Shell } from '@/components/layout/Shell'
+
+const TITLE = 'Soalan Lazim & Panduan Pembeli Kereta Terpakai | Paqar'
+const DESC  = 'Panduan lengkap pembeli kereta terpakai Malaysia — cara pilih model, cara rundingan harga, cara kesan kereta banjir, checklist sebelum beli, dan kos roadtax mengikut negeri.'
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESC,
+  alternates: { canonical: 'https://paqar.my/faq' },
+  openGraph: { title: TITLE, description: DESC, url: 'https://paqar.my/faq' },
+}
+
+// Titles/descriptions mirror each guide's own metadata so this hub never
+// promises something the destination page does not deliver. The guides are
+// written in English while the rest of the site is Malay — kept as-is here
+// so the card matches what the reader actually lands on.
+const GROUPS = [
+  {
+    heading: 'Panduan model',
+    items: [
+      { slug: 'best-first-car-under-30k',   title: 'Best First Car Under RM30k in Malaysia',        desc: 'Pilihan kereta pertama bawah RM30,000 — banding Myvi, City dan Vios dengan harga pasaran sebenar.' },
+      { slug: 'honda-city-buying-guide',    title: 'Honda City Buying Guide',                       desc: 'Tahun mana patut beli, varian 1.5 S atau 1.5 H, harga pasaran sebenar, dan apa perlu disemak.' },
+      { slug: 'toyota-vios-buying-guide',   title: 'Toyota Vios Buying Guide',                      desc: 'Generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, serta tanda bahaya Vios.' },
+      { slug: 'honda-city-vs-toyota-vios',  title: 'Honda City vs Toyota Vios',                     desc: 'Perbandingan terus: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penjimatan minyak.' },
+    ],
+  },
+  {
+    heading: 'Sebelum bayar deposit',
+    items: [
+      { slug: 'what-to-check-buying-used-car', title: 'Complete Pre-Purchase Checklist',            desc: 'Senarai semak penuh — luaran, dalaman, enjin, elektrik, test drive, dan bila patut berundur.' },
+      { slug: 'how-to-negotiate-used-car',     title: 'How to Negotiate a Used Car Price',          desc: 'Rangka rundingan 5 langkah, berapa peratus diskaun realistik ikut kondisi, dan tanda perlu walk away.' },
+      { slug: 'how-to-spot-flood-cars',        title: 'How to Spot a Flooded Car',                  desc: 'Tanda fizikal kereta banjir — bau, karat, kesan air, masalah elektrik — dan cara sahkan rekodnya.' },
+    ],
+  },
+  {
+    heading: 'Kos & cukai',
+    items: [
+      { slug: 'roadtax-by-state', title: 'Roadtax by State in Malaysia', desc: 'Kadar roadtax mengikut negeri dan kapasiti enjin — Selangor, KL, Johor, Pulau Pinang dan lain-lain.' },
+    ],
+  },
+]
+
+export default function FaqHubPage() {
+  const allItems = GROUPS.flatMap(g => g.items)
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: TITLE,
+    url: 'https://paqar.my/faq',
+    description: DESC,
+    inLanguage: 'ms-MY',
+    isPartOf: { '@type': 'WebSite', name: 'Paqar', url: 'https://paqar.my' },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: allItems.length,
+      itemListElement: allItems.map((item, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: item.title,
+        url: `https://paqar.my/faq/${item.slug}`,
+      })),
+    },
+  }
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
+      { '@type': 'ListItem', position: 2, name: 'Soalan Lazim', item: 'https://paqar.my/faq' },
+    ],
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <Nav />
+      <Shell>
+        <div className="pt-6 pb-12 max-w-xl mx-auto space-y-7">
+
+          <div>
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
+              Soalan Lazim
+            </p>
+            <h1 className="font-heading font-extrabold text-[26px] text-[#111827] leading-tight mb-3">
+              Panduan pembeli kereta terpakai
+            </h1>
+            <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
+              Semua yang anda perlu tahu sebelum bayar booking atau deposit — cara pilih model,
+              cara rundingan, dan apa yang perlu disemak pada kereta.
+            </p>
+          </div>
+
+          {GROUPS.map(group => (
+            <div key={group.heading} className="space-y-2.5">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">
+                {group.heading}
+              </p>
+              <div className="flex flex-col gap-2.5">
+                {group.items.map(item => (
+                  <Link
+                    key={item.slug}
+                    href={`/faq/${item.slug}`}
+                    className="block bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group"
+                  >
+                    <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors mb-0.5">
+                      {item.title}
+                    </p>
+                    <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-5 space-y-2">
+            <p className="font-heading font-bold text-[14px] text-[#064E4A]">
+              Dah jumpa kereta yang berkenan?
+            </p>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+              Semak harga pasaran dan rekod kereta itu dahulu — percuma untuk semak harga.
+            </p>
+            <Link
+              href="/"
+              className="inline-block bg-[#064E4A] text-white font-heading font-extrabold text-[13px] rounded-[10px] px-4 py-2.5 hover:bg-[#053D3A] transition-colors mt-1"
+            >
+              Semak harga kereta →
+            </Link>
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Lagi</p>
+            <Link href="/panduan"              className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semua panduan pembeli →</Link>
+            <Link href="/harga-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga pasaran ikut model →</Link>
+            <Link href="/bandingkan"           className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Bandingkan model →</Link>
+          </div>
+
+        </div>
+      </Shell>
+    </>
+  )
+}

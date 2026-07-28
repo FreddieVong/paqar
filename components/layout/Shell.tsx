@@ -12,6 +12,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Link href="/panduan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Panduan Pembeli
             </Link>
+            <Link href="/faq" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+              Soalan Lazim
+            </Link>
             <Link href="/panduan-semak-saman" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Semak Saman
             </Link>

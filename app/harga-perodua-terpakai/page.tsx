@@ -3,6 +3,7 @@ import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { CollectionSchema } from '@/components/layout/CollectionSchema'
 
 const YEAR = new Date().getFullYear()
 
@@ -28,6 +29,13 @@ const MODELS = [
 export default function HargaPerodua() {
   return (
     <>
+      <CollectionSchema
+        name={`Harga Perodua Terpakai Malaysia ${YEAR}`}
+        url="https://paqar.my/harga-perodua-terpakai"
+        description="Harga pasaran kereta terpakai Perodua — Myvi, Axia, Bezza, Alza mengikut tahun."
+        breadcrumbName="Harga Perodua Terpakai"
+        items={MODELS.map(m => ({ name: `Perodua ${m.model}`, url: `https://paqar.my/harga-kereta-terpakai/${m.slug}` }))}
+      />
       <Nav />
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">

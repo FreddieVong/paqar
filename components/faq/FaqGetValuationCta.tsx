@@ -40,16 +40,29 @@ export function FaqGetValuationCta({ faqSlug }: FaqGetValuationCtaProps) {
   }
 
   return (
-    <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-8 text-center">
-      <h3 className="text-xl font-bold text-[#064E4A] mb-3">Ready to Find Your First Car?</h3>
-      <p className="text-[#374151] mb-6">Enter a plate number to see its instant valuation, market price range, and whether it's a good deal.</p>
-      <Link
-        href={homeUrl}
-        onClick={handleClick}
-        className="inline-block bg-[#064E4A] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#053935]"
-      >
-        Check a Car Now
-      </Link>
-    </div>
+    <>
+      <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-8 text-center">
+        <h3 className="text-xl font-bold text-[#064E4A] mb-3">Ready to Find Your First Car?</h3>
+        <p className="text-[#374151] mb-6">Enter a plate number to see its instant valuation, market price range, and whether it's a good deal.</p>
+        <Link
+          href={homeUrl}
+          onClick={handleClick}
+          className="inline-block bg-[#064E4A] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#053935]"
+        >
+          Check a Car Now
+        </Link>
+      </div>
+
+      {/* Every /faq/* guide renders this component, so the back-link lives here
+          rather than being repeated across eight pages. Before this, each guide
+          had exactly one outbound internal link (the CTA above) and no inbound
+          ones at all — crawlers reached them only via the sitemap. This closes
+          the loop: footer → /faq → guide → /faq. */}
+      <div className="mt-6 text-center">
+        <Link href="/faq" className="text-[#064E4A] underline underline-offset-2 text-sm">
+          ← Semua panduan pembeli
+        </Link>
+      </div>
+    </>
   )
 }

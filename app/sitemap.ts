@@ -30,6 +30,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/tentang`,                                            lastModified: now,                        changeFrequency: 'yearly',  priority: 0.6 },
     // Public API documentation (citable surface for AI assistants)
     { url: `${base}/api-docs`,                                           lastModified: now,                        changeFrequency: 'monthly', priority: 0.7 },
+    // FAQ hub — the only internal path into the /faq/* guides
+    { url: `${base}/faq`,                                                lastModified: now,                        changeFrequency: 'monthly', priority: 0.8 },
     // Legal
     { url: `${base}/privasi`,                                            lastModified: new Date('2025-01-01'),     changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${base}/terma`,                                              lastModified: new Date('2025-01-01'),     changeFrequency: 'yearly',  priority: 0.3 },
