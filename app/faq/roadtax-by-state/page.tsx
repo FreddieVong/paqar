@@ -3,8 +3,8 @@ import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Roadtax by State in Malaysia 2026 | How Much to Pay | Paqar',
-  description: 'Complete roadtax breakdown by state: Selangor, KL, Johor, Penang. How much roadtax for your car, engine size, vehicle type.',
+  title: 'Harga Roadtax Ikut Negeri Malaysia 2026 — Berapa Perlu Bayar? | Paqar',
+  description: 'Kadar roadtax mengikut negeri: Selangor, KL, Johor, Pulau Pinang, Kedah. Berapa roadtax untuk kereta anda ikut kapasiti enjin dan jenis kenderaan.',
   alternates: { canonical: 'https://paqar.my/faq/roadtax-by-state' },
 }
 
@@ -15,18 +15,18 @@ export default function RoadtaxByState() {
     mainEntity: [
       {
         '@type': 'Question',
-        name: 'How much is roadtax in Malaysia?',
+        name: 'Berapa harga roadtax di Malaysia?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Roadtax depends on state, engine capacity, and vehicle type. Peninsular Malaysia: RM20–RM500/year. Sabah/Sarawak: RM15–RM300/year. A 2020 Honda City 1.5cc costs RM100–120/year in most states.',
+          text: 'Roadtax bergantung pada negeri, kapasiti enjin dan jenis kenderaan. Semenanjung Malaysia: RM20–RM500 setahun. Sabah dan Sarawak: RM15–RM300 setahun. Honda City 1.5cc tahun 2020 biasanya sekitar RM100–120 setahun di kebanyakan negeri.',
         },
       },
       {
         '@type': 'Question',
-        name: 'Why is roadtax different by state?',
+        name: 'Kenapa harga roadtax berbeza ikut negeri?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Each state sets its own roadtax rates. Selangor and KL are pricier (higher revenue demand). Rural states are cheaper. It\'s a state tax, not federal.',
+          text: 'Setiap negeri tetapkan kadar roadtax sendiri. Selangor dan KL lebih mahal kerana keperluan hasil yang lebih tinggi. Negeri luar bandar lebih murah. Ia cukai negeri, bukan cukai persekutuan.',
         },
       },
     ],
@@ -35,30 +35,30 @@ export default function RoadtaxByState() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div lang="en">
-        <h1 className="text-4xl font-bold mb-6">Roadtax by State in Malaysia 2026</h1>
-        <p className="text-lg text-[#6B7280] mb-6">How much roadtax do you pay? State-by-state breakdown + how to calculate for your car.</p>
+      <div>
+        <h1 className="text-4xl font-bold mb-6">Harga Roadtax Ikut Negeri di Malaysia 2026</h1>
+        <p className="text-lg text-[#6B7280] mb-6">Berapa roadtax yang anda perlu bayar? Pecahan mengikut negeri dan cara kira untuk kereta anda.</p>
 
         <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-          <p className="font-semibold text-[#064E4A] mb-2">Quick Answer</p>
+          <p className="font-semibold text-[#064E4A] mb-2">Jawapan Ringkas</p>
           <p className="text-[#374151]">
-            A typical 2020 car with 1500cc engine costs <strong>RM100–120/year</strong> in most Peninsular states.
-            Selangor & KL: higher. Johor & Kedah: lower. Sabah/Sarawak: separate rates.
+            Kereta tahun 2020 dengan enjin 1500cc biasanya sekitar <strong>RM100–120 setahun</strong> di kebanyakan negeri Semenanjung.
+            Selangor &amp; KL: lebih tinggi. Johor &amp; Kedah: lebih rendah. Sabah &amp; Sarawak: kadar berasingan.
           </p>
         </div>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">Peninsular Malaysia Roadtax (2026)</h2>
-          <p className="text-[#374151] mb-4">Based on engine capacity (cc). Rates vary by state.</p>
+          <h2 className="text-2xl font-bold mb-4">Roadtax Semenanjung Malaysia (2026)</h2>
+          <p className="text-[#374151] mb-4">Berdasarkan kapasiti enjin (cc). Kadar berbeza mengikut negeri.</p>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="bg-[#F3F4F6]">
-                  <th className="border p-3 text-left">Engine (cc)</th>
+                  <th className="border p-3 text-left">Enjin (cc)</th>
                   <th className="border p-3 text-left">Selangor/KL</th>
                   <th className="border p-3 text-left">Johor</th>
-                  <th className="border p-3 text-left">Penang</th>
+                  <th className="border p-3 text-left">Pulau Pinang</th>
                   <th className="border p-3 text-left">Kedah</th>
                 </tr>
               </thead>
@@ -85,7 +85,7 @@ export default function RoadtaxByState() {
                   <td className="border p-3">RM130–170</td>
                 </tr>
                 <tr className="bg-[#F9FAFB]">
-                  <td className="border p-3 font-semibold">2001cc+</td>
+                  <td className="border p-3 font-semibold">2001cc ke atas</td>
                   <td className="border p-3">RM300–500</td>
                   <td className="border p-3">RM250–400</td>
                   <td className="border p-3">RM270–420</td>
@@ -94,16 +94,16 @@ export default function RoadtaxByState() {
               </tbody>
             </table>
           </div>
-          <p className="text-sm text-[#6B7280] mt-4">💡 Rates are annual. Paid once per year at your state's Road Transport Department (JPJ).</p>
+          <p className="text-sm text-[#6B7280] mt-4">💡 Kadar ini untuk setahun. Dibayar sekali setahun di JPJ negeri anda.</p>
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">Common Cars: Estimated Roadtax</h2>
+          <h2 className="text-2xl font-bold mb-4">Kereta Popular: Anggaran Roadtax</h2>
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-[#F3F4F6]">
-                <th className="border p-3 text-left">Car Model</th>
-                <th className="border p-3 text-left">Engine</th>
+                <th className="border p-3 text-left">Model Kereta</th>
+                <th className="border p-3 text-left">Enjin</th>
                 <th className="border p-3 text-left">Selangor</th>
                 <th className="border p-3 text-left">Johor</th>
               </tr>
@@ -132,12 +132,12 @@ export default function RoadtaxByState() {
         </section>
 
         <section className="mb-10 bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-6">
-          <h3 className="font-semibold text-[#991B1B] mb-3">⚠️ Roadtax Overdue = Fine</h3>
+          <h3 className="font-semibold text-[#991B1B] mb-3">⚠️ Roadtax Tamat Tempoh = Kena Saman</h3>
           <ul className="text-[#374151] space-y-2">
-            <li>❌ Expired roadtax: fine RM300–1000</li>
-            <li>❌ Driving without valid roadtax: can be towed</li>
-            <li>✅ Renew online: JPJ website (5 minutes)</li>
-            <li>✅ Or at any JPJ counter with your IC + vehicle registration</li>
+            <li>❌ Roadtax luput: denda RM300–1000</li>
+            <li>❌ Memandu tanpa roadtax sah: kereta boleh ditunda</li>
+            <li>✅ Renew online: laman web JPJ (5 minit)</li>
+            <li>✅ Atau di mana-mana kaunter JPJ dengan IC + geran kenderaan</li>
           </ul>
         </section>
 

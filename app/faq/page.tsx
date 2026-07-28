@@ -14,31 +14,31 @@ export const metadata: Metadata = {
 }
 
 // Titles/descriptions mirror each guide's own metadata so this hub never
-// promises something the destination page does not deliver. The guides are
-// written in English while the rest of the site is Malay — kept as-is here
-// so the card matches what the reader actually lands on.
+// promises something the destination page does not deliver. All eight guides
+// are now in Malay, matching the site and — per Search Console — the language
+// people actually search in.
 const GROUPS = [
   {
     heading: 'Panduan model',
     items: [
-      { slug: 'best-first-car-under-30k',   title: 'Best First Car Under RM30k in Malaysia',        desc: 'Pilihan kereta pertama bawah RM30,000 — banding Myvi, City dan Vios dengan harga pasaran sebenar.' },
-      { slug: 'honda-city-buying-guide',    title: 'Honda City Buying Guide',                       desc: 'Tahun mana patut beli, varian 1.5 S atau 1.5 H, harga pasaran sebenar, dan apa perlu disemak.' },
-      { slug: 'toyota-vios-buying-guide',   title: 'Toyota Vios Buying Guide',                      desc: 'Generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, serta tanda bahaya Vios.' },
+      { slug: 'best-first-car-under-30k',   title: 'Kereta pertama terbaik bawah RM30k',            desc: 'Pilihan kereta pertama bawah RM30,000 — banding Myvi, City dan Vios dengan harga pasaran sebenar.' },
+      { slug: 'honda-city-buying-guide',    title: 'Panduan beli Honda City terpakai',              desc: 'Tahun mana patut beli, varian 1.5 S atau 1.5 H, harga pasaran sebenar, dan apa perlu disemak.' },
+      { slug: 'toyota-vios-buying-guide',   title: 'Panduan beli Toyota Vios terpakai',             desc: 'Generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, serta tanda bahaya Vios.' },
       { slug: 'honda-city-vs-toyota-vios',  title: 'Honda City vs Toyota Vios — mana satu?',        desc: 'Perbandingan terus: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penggunaan minyak.' },
     ],
   },
   {
     heading: 'Sebelum bayar deposit',
     items: [
-      { slug: 'what-to-check-buying-used-car', title: 'Complete Pre-Purchase Checklist',            desc: 'Senarai semak penuh — luaran, dalaman, enjin, elektrik, test drive, dan bila patut berundur.' },
-      { slug: 'how-to-negotiate-used-car',     title: 'How to Negotiate a Used Car Price',          desc: 'Rangka rundingan 5 langkah, berapa peratus diskaun realistik ikut kondisi, dan tanda perlu walk away.' },
-      { slug: 'how-to-spot-flood-cars',        title: 'How to Spot a Flooded Car',                  desc: 'Tanda fizikal kereta banjir — bau, karat, kesan air, masalah elektrik — dan cara sahkan rekodnya.' },
+      { slug: 'what-to-check-buying-used-car', title: 'Senarai semak penuh sebelum beli',           desc: 'Senarai semak penuh — luaran, dalaman, enjin, elektrik, test drive, dan bila patut berundur.' },
+      { slug: 'how-to-negotiate-used-car',     title: 'Cara rundingkan harga kereta terpakai',      desc: 'Rangka rundingan 5 langkah, berapa peratus diskaun realistik ikut kondisi, dan bila patut berundur.' },
+      { slug: 'how-to-spot-flood-cars',        title: 'Cara kesan kereta banjir',                   desc: 'Tanda fizikal kereta banjir — bau, karat, kesan air, masalah elektrik — dan cara sahkan rekodnya.' },
     ],
   },
   {
     heading: 'Kos & cukai',
     items: [
-      { slug: 'roadtax-by-state', title: 'Roadtax by State in Malaysia', desc: 'Kadar roadtax mengikut negeri dan kapasiti enjin — Selangor, KL, Johor, Pulau Pinang dan lain-lain.' },
+      { slug: 'roadtax-by-state', title: 'Harga roadtax ikut negeri', desc: 'Kadar roadtax mengikut negeri dan kapasiti enjin — Selangor, KL, Johor, Pulau Pinang dan lain-lain.' },
     ],
   },
 ]

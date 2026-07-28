@@ -3,8 +3,8 @@ import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'How to Negotiate a Used Car Price | Paqar Guide',
-  description: 'Master negotiation tactics: use Paqar valuations as your anchor, know when to walk away, typical discounts, leverage inspection results.',
+  title: 'Cara Rundingkan Harga Kereta Terpakai | Panduan Paqar',
+  description: 'Teknik rundingan harga kereta terpakai: guna harga pasaran sebagai asas, berapa peratus diskaun realistik ikut kondisi, dan bila patut berundur.',
   alternates: { canonical: 'https://paqar.my/faq/how-to-negotiate-used-car' },
 }
 
@@ -17,34 +17,34 @@ export default function HowToNegotiate() {
     mainEntity: [
       {
         '@type': 'Question',
-        name: 'How much below asking price should I offer for a used car?',
+        name: 'Berapa patut saya tawar bawah harga yang penjual minta?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Open 10–15% below the asking price. On a RM32,000 listing an opening offer of RM27,000 is reasonable; after counteroffers this typically settles near RM29,000, a roughly RM3,000 discount.',
+          text: 'Buka tawaran 10–15% bawah harga yang diminta. Untuk listing RM32,000, tawaran pembukaan RM27,000 munasabah; selepas tawar-menawar biasanya berakhir sekitar RM29,000, iaitu diskaun lebih kurang RM3,000.',
         },
       },
       {
         '@type': 'Question',
-        name: 'What discount is realistic based on the car’s condition?',
+        name: 'Berapa diskaun yang realistik ikut kondisi kereta?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Excellent condition with a clean inspection: 2–3% off. Good condition with minor wear and clean history: 5–8%. Fair condition with cosmetic issues but no accidents: 8–12%. Poor condition needing repairs or with high mileage: 12–15%.',
+          text: 'Kondisi sangat baik dengan rekod bersih: diskaun 2–3%. Kondisi baik dengan haus kecil dan sejarah bersih: 5–8%. Kondisi sederhana dengan masalah kosmetik tapi tiada kemalangan: 8–12%. Kondisi kurang baik yang perlu baiki atau jarak tempuh tinggi: 12–15%.',
         },
       },
       {
         '@type': 'Question',
-        name: 'How do I prepare before negotiating a used car price?',
+        name: 'Apa perlu disediakan sebelum berunding harga kereta terpakai?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Get a market valuation on the plate before viewing so you know the real price range, then inspect thoroughly to find concrete issues — worn tyres, brake pads, filters, mileage discrepancies, or cosmetic damage. Specific, costed problems are what justify a lower offer.',
+          text: 'Semak harga pasaran guna nombor plat sebelum pergi tengok kereta supaya anda tahu julat harga sebenar, kemudian periksa kereta dengan teliti untuk cari isu konkrit — tayar haus, brake pad, penapis, jarak tempuh tak sepadan, atau kerosakan kosmetik. Masalah yang spesifik dan ada kos itulah yang jadi asas anda tawar lebih rendah.',
         },
       },
       {
         '@type': 'Question',
-        name: 'When should I walk away from a used car deal?',
+        name: 'Bila patut berundur daripada satu-satu deal kereta terpakai?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Walk away if the seller refuses an independent inspection, if they are selling because the transmission is acting up, if their own mechanic contradicts an independent inspection, or if the price sits RM5,000 or more below the market median — an unusually low price usually signals a hidden problem.',
+          text: 'Berundur kalau penjual enggan benarkan pemeriksaan bebas, kalau mereka jual sebab transmisi bermasalah, kalau mekanik mereka bercanggah dengan pemeriksaan bebas, atau kalau harganya RM5,000 atau lebih bawah harga tengah pasaran — harga yang terlalu murah selalunya menandakan masalah tersembunyi.',
         },
       },
     ],
@@ -53,120 +53,120 @@ export default function HowToNegotiate() {
   return (
     <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-    <div lang="en">
-      <h1 className="text-4xl font-bold mb-6">How to Negotiate a Used Car Price</h1>
-      <p className="text-lg text-[#6B7280] mb-6">Professional car buyers save RM2–5k per purchase. Here's their playbook.</p>
+    <div>
+      <h1 className="text-4xl font-bold mb-6">Cara Rundingkan Harga Kereta Terpakai</h1>
+      <p className="text-lg text-[#6B7280] mb-6">Pembeli berpengalaman jimat RM2–5k setiap pembelian. Ini caranya.</p>
 
       <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-        <p className="font-semibold text-[#064E4A] mb-2">The Golden Rule</p>
-        <p className="text-[#374151]"><strong>Always have a Paqar valuation on the plate before negotiating.</strong> Know the market price. Sellers can sense uncertainty. Confidence = leverage.</p>
+        <p className="font-semibold text-[#064E4A] mb-2">Peraturan Utama</p>
+        <p className="text-[#374151]"><strong>Semak harga pasaran pada nombor plat sebelum mula berunding.</strong> Tahu harga sebenar. Penjual boleh baca kalau anda teragak-agak. Keyakinan itulah kelebihan anda.</p>
       </div>
 
       <section className="mb-10">
-        <h2 className="text-2xl font-bold mb-4">5-Step Negotiation Framework</h2>
+        <h2 className="text-2xl font-bold mb-4">Rangka Rundingan 5 Langkah</h2>
 
         <div className="space-y-6">
           <div className="border-l-4 border-[#064E4A] pl-4">
-            <h3 className="text-lg font-semibold mb-2">Step 1: Get Your Anchor (Paqar Valuation)</h3>
-            <p className="text-[#374151] mb-2">Before viewing the car, check its plate on Paqar. Example:</p>
+            <h3 className="text-lg font-semibold mb-2">Langkah 1: Dapatkan Asas Harga</h3>
+            <p className="text-[#374151] mb-2">Sebelum pergi tengok kereta, semak nombor platnya. Contoh:</p>
             <ul className="bg-[#F9FAFB] p-4 rounded text-[#374151] space-y-1 text-sm">
-              <li>Listing price: RM32,000</li>
-              <li><strong>Paqar valuation: RM28,000–30,000</strong></li>
-              <li>Your target: RM27,000–29,000</li>
+              <li>Harga listing: RM32,000</li>
+              <li><strong>Harga pasaran: RM28,000–30,000</strong></li>
+              <li>Sasaran anda: RM27,000–29,000</li>
             </ul>
-            <p className="text-[#374151] mt-2"><strong>Why?</strong> Paqar is based on real Mudah sales data. Sellers know their asking price is often optimistic. You have leverage.</p>
+            <p className="text-[#374151] mt-2"><strong>Kenapa?</strong> Harga pasaran berdasarkan listing sebenar. Penjual pun sedar harga minta mereka selalunya tinggi sikit. Anda ada asas untuk berunding.</p>
           </div>
 
           <div className="border-l-4 border-[#064E4A] pl-4">
-            <h3 className="text-lg font-semibold mb-2">Step 2: Inspect Thoroughly (Find Ammunition)</h3>
+            <h3 className="text-lg font-semibold mb-2">Langkah 2: Periksa Teliti (Cari Bukti)</h3>
             <ul className="text-[#374151] space-y-2">
-              <li>✓ Get JomCheck inspection (RM99–150)</li>
-              <li>✓ Note any repairs needed: tyres, brake pads, filters</li>
-              <li>✓ Check for mileage concerns ("You said 80k but odometer says 85k?")</li>
-              <li>✓ Take photos of minor damage (dents, scratches)</li>
+              <li>✓ Buat semakan rekod accident &amp; claim insurans</li>
+              <li>✓ Catat apa yang perlu dibaiki: tayar, brake pad, penapis</li>
+              <li>✓ Semak jarak tempuh ("Tuan kata 80k, tapi odometer tunjuk 85k?")</li>
+              <li>✓ Ambil gambar kerosakan kecil (kemek, calar)</li>
             </ul>
-            <p className="text-[#374151] mt-2"><strong>Real example:</strong> "JomCheck found brake pads at 3mm (need replacement soon—RM400). That's RM400 I'll spend after buying. Your asking price needs to account for that."</p>
+            <p className="text-[#374151] mt-2"><strong>Contoh sebenar:</strong> "Brake pad tinggal 3mm, kena tukar tak lama lagi — dalam RM400. Itu RM400 yang saya kena keluar lepas beli. Harga tuan patut ambil kira benda tu."</p>
           </div>
 
           <div className="border-l-4 border-[#064E4A] pl-4">
-            <h3 className="text-lg font-semibold mb-2">Step 3: Make Your Opening Offer</h3>
-            <p className="text-[#374151] mb-2">Open 10–15% below asking price. Example:</p>
+            <h3 className="text-lg font-semibold mb-2">Langkah 3: Buat Tawaran Pembukaan</h3>
+            <p className="text-[#374151] mb-2">Buka 10–15% bawah harga minta. Contoh:</p>
             <ul className="bg-[#F9FAFB] p-4 rounded text-[#374151] space-y-1 text-sm">
-              <li>Asking: RM32,000</li>
-              <li>Your opening: RM27,000 (16% below)</li>
-              <li>Seller's counteroffer: RM30,000</li>
-              <li>Your reply: RM28,500</li>
-              <li>Final: RM29,000 (RM3k discount)</li>
+              <li>Harga minta: RM32,000</li>
+              <li>Tawaran anda: RM27,000 (16% bawah)</li>
+              <li>Balasan penjual: RM30,000</li>
+              <li>Jawapan anda: RM28,500</li>
+              <li>Muktamad: RM29,000 (diskaun RM3k)</li>
             </ul>
-            <p className="text-[#374151] mt-2"><strong>Script:</strong> "Your asking price is RM32k, but Paqar shows similar cars at RM28–30k. JomCheck found [list issues]. I'm offering RM27k based on market data."</p>
+            <p className="text-[#374151] mt-2"><strong>Skrip:</strong> "Harga tuan RM32k, tapi kereta serupa di pasaran RM28–30k. Ada juga beberapa benda kena baiki. Saya tawar RM27k berdasarkan harga pasaran."</p>
           </div>
 
           <div className="border-l-4 border-[#064E4A] pl-4">
-            <h3 className="text-lg font-semibold mb-2">Step 4: Use Leverage Points</h3>
+            <h3 className="text-lg font-semibold mb-2">Langkah 4: Guna Kelebihan Anda</h3>
             <ul className="text-[#374151] space-y-2">
-              <li>💰 <strong>Market data:</strong> "Paqar shows RM28–30k. You're asking RM32k—that's 10% above market."</li>
-              <li>🔧 <strong>Repairs needed:</strong> "JomCheck found brake pads, air filter. That's RM500–600 out of pocket."</li>
-              <li>⏰ <strong>Time pressure:</strong> "I have 2 other cars to view. I need to decide today. Discount gets you a quick sale."</li>
-              <li>💳 <strong>Cash buyer:</strong> "I'm paying cash today (no financing delay). That's worth RM1–2k to you."</li>
+              <li>💰 <strong>Data pasaran:</strong> "Pasaran tunjuk RM28–30k. Tuan minta RM32k — itu 10% atas pasaran."</li>
+              <li>🔧 <strong>Kos baiki:</strong> "Brake pad dan penapis kena tukar. Itu RM500–600 dari poket saya."</li>
+              <li>⏰ <strong>Tekanan masa:</strong> "Saya ada 2 kereta lagi nak tengok. Kena putus hari ni. Diskaun sikit, tuan dapat jual cepat."</li>
+              <li>💳 <strong>Bayar tunai:</strong> "Saya bayar tunai hari ni, tak payah tunggu loan lulus. Itu ada nilainya RM1–2k untuk tuan."</li>
             </ul>
           </div>
 
           <div className="border-l-4 border-[#064E4A] pl-4">
-            <h3 className="text-lg font-semibold mb-2">Step 5: Know When to Walk Away</h3>
-            <p className="text-[#374151]"><strong>Walk away if:</strong></p>
+            <h3 className="text-lg font-semibold mb-2">Langkah 5: Tahu Bila Nak Berundur</h3>
+            <p className="text-[#374151]"><strong>Berundur kalau:</strong></p>
             <ul className="text-[#374151] space-y-1 mt-2">
-              <li>❌ Seller won't budge below RM31k when market is RM28–30k (unrealistic)</li>
-              <li>❌ JomCheck finds major issues (flood, accident, engine problems) and seller refuses price cut</li>
-              <li>❌ Mileage or variant doesn't match what seller claimed (dishonesty = red flag)</li>
-              <li>❌ Gut feeling says "something's off" (trust your instinct)</li>
+              <li>❌ Penjual tak nak turun bawah RM31k sedangkan pasaran RM28–30k (tak realistik)</li>
+              <li>❌ Semakan jumpa masalah besar (banjir, accident, enjin) tapi penjual enggan kurangkan harga</li>
+              <li>❌ Jarak tempuh atau varian tak sama dengan apa yang penjual kata (tak jujur = tanda bahaya)</li>
+              <li>❌ Naluri anda kata "ada yang tak kena" (percaya gerak hati)</li>
             </ul>
-            <p className="text-[#374151] mt-4"><strong>Why?</strong> Another car will come along. You're not desperate. Desperation = overpaying.</p>
+            <p className="text-[#374151] mt-4"><strong>Kenapa?</strong> Kereta lain akan ada. Anda tak terdesak. Terdesak = bayar lebih.</p>
           </div>
         </div>
       </section>
 
       <section className="mb-10">
-        <h2 className="text-2xl font-bold mb-4">Typical Discounts by Condition</h2>
+        <h2 className="text-2xl font-bold mb-4">Diskaun Biasa Ikut Kondisi</h2>
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-[#F3F4F6]">
-              <th className="border p-3 text-left">Condition</th>
-              <th className="border p-3 text-left">Discount Off Asking Price</th>
-              <th className="border p-3 text-left">Example</th>
+              <th className="border p-3 text-left">Kondisi</th>
+              <th className="border p-3 text-left">Diskaun dari harga minta</th>
+              <th className="border p-3 text-left">Contoh</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="border p-3">Excellent (JomCheck clean)</td>
+              <td className="border p-3">Sangat baik (rekod bersih)</td>
               <td className="border p-3">2–3%</td>
-              <td className="border p-3">RM30k asking → RM29.1k</td>
+              <td className="border p-3">Minta RM30k → RM29.1k</td>
             </tr>
             <tr className="bg-[#F9FAFB]">
-              <td className="border p-3">Good (minor wear, clean history)</td>
+              <td className="border p-3">Baik (haus kecil, sejarah bersih)</td>
               <td className="border p-3">5–8%</td>
-              <td className="border p-3">RM30k asking → RM27.9k</td>
+              <td className="border p-3">Minta RM30k → RM27.9k</td>
             </tr>
             <tr>
-              <td className="border p-3">Fair (cosmetic issues, no accidents)</td>
+              <td className="border p-3">Sederhana (masalah kosmetik, tiada accident)</td>
               <td className="border p-3">8–12%</td>
-              <td className="border p-3">RM30k asking → RM26.4k</td>
+              <td className="border p-3">Minta RM30k → RM26.4k</td>
             </tr>
             <tr className="bg-[#F9FAFB]">
-              <td className="border p-3">Poor (repairs needed, high mileage)</td>
+              <td className="border p-3">Kurang baik (perlu baiki, jarak tempuh tinggi)</td>
               <td className="border p-3">12–15%</td>
-              <td className="border p-3">RM30k asking → RM25.5k</td>
+              <td className="border p-3">Minta RM30k → RM25.5k</td>
             </tr>
           </tbody>
         </table>
       </section>
 
       <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-6 mb-8">
-        <h3 className="font-semibold text-[#991B1B] mb-2">⚠️ Red Flags: Walk Away</h3>
+        <h3 className="font-semibold text-[#991B1B] mb-2">⚠️ Tanda Bahaya: Berundur</h3>
         <ul className="text-[#374151] space-y-2">
-          <li>❌ Seller refuses JomCheck inspection ("It's fine, trust me")</li>
-          <li>❌ Selling because transmission is "acting up" (major repair ahead)</li>
-          <li>❌ "My mechanic says it's good" but JomCheck finds problems (bias)</li>
-          <li>❌ Price is RM5k+ below Paqar median ("If it sounds too good, it is")</li>
+          <li>❌ Penjual enggan benarkan pemeriksaan ("Takpe, percaya saya")</li>
+          <li>❌ Jual sebab transmisi "ada bunyi sikit" (kos baiki besar menanti)</li>
+          <li>❌ "Mekanik saya kata elok" tapi semakan jumpa masalah (berat sebelah)</li>
+          <li>❌ Harga RM5k+ bawah harga tengah pasaran ("kalau bunyi terlalu bagus, memang ada sebabnya")</li>
         </ul>
       </div>
 

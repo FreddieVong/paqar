@@ -3,8 +3,8 @@ import { Metadata } from 'next'
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 
 export const metadata: Metadata = {
-  title: 'How to Spot a Flooded Car | Paqar Guide',
-  description: 'Complete guide: physical signs of a flooded car (rust, mold smell, electrical issues), how JomCheck reveals flood damage, what to check before buying.',
+  title: 'Cara Kesan Kereta Banjir Sebelum Beli | Panduan Paqar',
+  description: 'Panduan lengkap tanda kereta banjir: bau hapak, karat bawah kereta, masalah elektrik, minyak enjin berbuih. Apa perlu disemak sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/faq/how-to-spot-flood-cars' },
 }
 
@@ -15,18 +15,18 @@ export default function HowToSpotFloodedCars() {
     mainEntity: [
       {
         '@type': 'Question',
-        name: 'How can I tell if a used car has been flooded?',
+        name: 'Macam mana nak tahu kereta terpakai pernah kena banjir?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Signs of flood damage: musty/moldy smell in cabin, rust on undercarriage bolts, water stains on upholstery, electrical issues (windows/locks fail), foam in engine oil, discolored carpets. Best method: Get a JomCheck inspection (RM99–150) which reveals flood history definitively.',
+          text: 'Tanda kereta banjir: bau hapak atau berkulat dalam kabin, karat pada bolt bawah kereta, kesan air pada kusyen, masalah elektrik seperti cermin tingkap dan kunci pintu gagal, minyak enjin berbuih, dan karpet bertukar warna. Cara paling tepat: buat semakan rekod kereta yang boleh dedahkan sejarah banjir.',
         },
       },
       {
         '@type': 'Question',
-        name: 'Can a flooded car still be driven?',
+        name: 'Kereta banjir boleh dipandu lagi ke?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Yes, initially. But flooded cars develop electrical issues months later (door locks, power windows fail), rust spreads hidden, and engine reliability drops. Avoid buying flooded cars—the hidden repair costs are not worth the savings.',
+          text: 'Boleh pada mulanya. Tapi kereta banjir akan mula bermasalah elektrik beberapa bulan kemudian — kunci pintu dan cermin tingkap rosak, karat merebak secara tersembunyi, dan enjin jadi kurang boleh harap. Elak beli kereta banjir kerana kos baiki tersembunyi tidak berbaloi dengan harga murah yang ditawarkan.',
         },
       },
     ],
@@ -35,61 +35,61 @@ export default function HowToSpotFloodedCars() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div lang="en">
-        <h1 className="text-4xl font-bold mb-6">How to Spot a Flooded Car</h1>
-        <p className="text-lg text-[#6B7280] mb-6">Floods cost buyers thousands in hidden repairs. This guide teaches you the physical signs and how JomCheck catches what your eyes miss.</p>
+      <div>
+        <h1 className="text-4xl font-bold mb-6">Cara Kesan Kereta Banjir</h1>
+        <p className="text-lg text-[#6B7280] mb-6">Kereta banjir boleh makan ribuan ringgit dalam kos baiki tersembunyi. Panduan ini tunjuk tanda-tanda fizikal dan apa yang mata anda mungkin terlepas.</p>
 
         <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-6 mb-8">
-          <p className="font-semibold text-[#991B1B] mb-2">⚠️ Critical Rule</p>
-          <p className="text-[#374151]"><strong>Never buy a car from 2022 that was in a flood zone, even if it looks fine.</strong> Flood damage appears 6–12 months later (electrical failures, rust inside panels, mold in AC). Get JomCheck; if it shows flood, walk away.</p>
+          <p className="font-semibold text-[#991B1B] mb-2">⚠️ Peraturan Penting</p>
+          <p className="text-[#374151]"><strong>Jangan beli kereta dari kawasan banjir walaupun nampak elok.</strong> Kerosakan banjir biasanya muncul 6–12 bulan kemudian — elektrik rosak, karat dalam panel, kulat dalam sistem aircond. Buat semakan rekod dahulu; kalau ada rekod banjir, berundur.</p>
         </div>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">Physical Signs of Flood Damage</h2>
+          <h2 className="text-2xl font-bold mb-4">Tanda Fizikal Kereta Banjir</h2>
           <div className="space-y-4">
             <div className="border-l-4 border-red-500 pl-4">
-              <h3 className="font-semibold mb-2">1. Musty / Moldy Smell</h3>
-              <p className="text-[#374151]">The most obvious sign. If the car smells like wet carpet or old books, flood water got inside. Fresh air freshener can mask it—smell under the seats and trunk.</p>
+              <h3 className="font-semibold mb-2">1. Bau hapak atau berkulat</h3>
+              <p className="text-[#374151]">Tanda paling ketara. Kalau kereta berbau macam karpet basah atau buku lama, air banjir pernah masuk ke dalam. Pewangi kereta boleh tutup bau ini — hidu bawah tempat duduk dan dalam but.</p>
             </div>
             <div className="border-l-4 border-red-500 pl-4">
-              <h3 className="font-semibold mb-2">2. Rust on Bolts Under the Car</h3>
-              <p className="text-[#374151]">Get under the car (with seller's permission). Look at suspension bolts, exhaust hangers, undercarriage. If they're rusty but the car is only 5 years old = flood damage. Normal cars don't rust that fast underneath.</p>
+              <h3 className="font-semibold mb-2">2. Karat pada bolt bawah kereta</h3>
+              <p className="text-[#374151]">Tengok bawah kereta (dengan izin penjual). Periksa bolt suspensi, penyangkut ekzos dan bahagian bawah badan. Kalau berkarat tapi kereta baru 5 tahun, itu tanda banjir. Kereta biasa tak berkarat secepat itu di bawah.</p>
             </div>
             <div className="border-l-4 border-red-500 pl-4">
-              <h3 className="font-semibold mb-2">3. Water Stains on Seats/Carpet</h3>
-              <p className="text-[#374151]">Check bottom of seats, under floor mats. Brownish stains that won't come off = floodwater. Same for trunk.</p>
+              <h3 className="font-semibold mb-2">3. Kesan air pada kusyen dan karpet</h3>
+              <p className="text-[#374151]">Periksa bahagian bawah tempat duduk dan bawah alas kaki. Kesan kekuningan yang tak boleh dibersihkan menandakan air banjir. Periksa but juga.</p>
             </div>
             <div className="border-l-4 border-red-500 pl-4">
-              <h3 className="font-semibold mb-2">4. Electrical Issues</h3>
-              <p className="text-[#374151]">Test all electrical: power windows, locks, air con, lights, dashboard. Intermittent failures (works one day, not the next) = water in wiring. Flooded cars develop these weeks after drying out.</p>
+              <h3 className="font-semibold mb-2">4. Masalah elektrik</h3>
+              <p className="text-[#374151]">Uji semua elektrik: cermin tingkap, kunci pintu, aircond, lampu, papan pemuka. Kalau kadang berfungsi kadang tidak, itu tanda air masuk dalam pendawaian. Masalah ini biasanya muncul beberapa minggu selepas kereta kering.</p>
             </div>
             <div className="border-l-4 border-red-500 pl-4">
-              <h3 className="font-semibold mb-2">5. Foam in Engine Oil</h3>
-              <p className="text-[#374151]">Check dipstick. If oil looks foamy/milky instead of brown = water in engine. This is catastrophic damage. Engine will fail soon.</p>
+              <h3 className="font-semibold mb-2">5. Minyak enjin berbuih</h3>
+              <p className="text-[#374151]">Periksa dipstick. Kalau minyak nampak berbuih atau macam susu, bukan coklat, itu bermakna ada air dalam enjin. Ini kerosakan serius — enjin tak akan bertahan lama.</p>
             </div>
           </div>
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">JomCheck: The Definitive Test</h2>
+          <h2 className="text-2xl font-bold mb-4">Semakan Rekod: Cara Paling Tepat</h2>
           <p className="text-[#374151] mb-4">
-            JomCheck is a certified mechanic inspection (RM99–150, 1 hour). It includes accident history, flood damage check, service records, engine condition. <strong>Get this before buying any car, especially if you suspect flooding.</strong>
+            Semakan rekod accident dan claim insurans boleh dedahkan sejarah yang tak nampak dengan mata kasar. <strong>Buat semakan ini sebelum bayar deposit, terutama kalau anda syak kereta pernah kena banjir.</strong>
           </p>
           <p className="text-[#374151]">
-            <strong>What JomCheck reveals that your eyes can't:</strong>
+            <strong>Apa yang semakan rekod boleh dedahkan:</strong>
           </p>
           <ul className="list-disc list-inside text-[#374151] space-y-2 mt-2">
-            <li>Previous flood reports (if car was registered as damaged)</li>
-            <li>Hidden rust inside door panels & under insulation</li>
-            <li>Mold/moisture in AC system</li>
-            <li>Previous repairs (replaced carpets, interior work)</li>
-            <li>Engine compression (if flooding damaged internals)</li>
+            <li>Rekod claim banjir kalau kereta pernah didaftarkan sebagai rosak</li>
+            <li>Rekod claim accident yang penjual tak beritahu</li>
+            <li>Kereta pernah dituntut sebagai kerugian penuh (total loss)</li>
+            <li>Sejarah claim berulang yang menandakan masalah berterusan</li>
           </ul>
+          <p className="text-sm text-[#6B7280] mt-4">Nota: tidak semua kemalangan ada rekod claim insurans. Rekod bersih tidak menjamin kereta tiada masalah — gunakan ia bersama pemeriksaan fizikal.</p>
         </section>
 
         <section className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6">
-          <h3 className="font-semibold text-[#064E4A] mb-2">💡 Smart Buyer Tip</h3>
-          <p className="text-[#374151]">Use Paqar valuation on the plate. If the car is priced RM3–5k below market median, ask yourself why. Flood damage is often the reason.</p>
+          <h3 className="font-semibold text-[#064E4A] mb-2">💡 Tip Pembeli Bijak</h3>
+          <p className="text-[#374151]">Semak harga pasaran kereta itu guna nombor plat. Kalau harganya RM3–5k bawah harga tengah pasaran, tanya diri anda kenapa. Kerosakan banjir selalunya jadi sebabnya.</p>
         </section>
 
         <FaqGetValuationCta faqSlug="how-to-spot-flood-cars" />
