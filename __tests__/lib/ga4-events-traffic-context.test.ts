@@ -1,6 +1,5 @@
 // Unit tests for GA4 traffic context classification
-// Run with: npx tsx __tests__/lib/ga4-events-traffic-context.test.ts
-
+import { describe, it, expect } from 'vitest'
 import { getTrafficContext } from '@/lib/ga4-events'
 
 interface TestCase {
@@ -72,33 +71,17 @@ const testCases: TestCase[] = [
   },
 ]
 
-function runTests() {
-  let passed = 0
-  let failed = 0
-
-  console.log('Running traffic context classification tests...\n')
-
-  testCases.forEach(({ name, params, expected }) => {
+// The assertions below were originally driven by a hand-rolled runner that
+// ended in process.exit(), which vitest treats as the suite crashing — so this
+// file reported as FAILED on every run regardless of whether the assertions
+// passed. A suite with a permanently-red file is one people stop reading, so
+// the cases are unchanged and only the harness has been replaced.
+describe('getTrafficContext', () => {
+  it.each(testCases)('$name', ({ params, expected }) => {
     const searchParams = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
       searchParams.set(key, value)
     })
-
-    const result = getTrafficContext(searchParams)
-    const isPass = result === expected
-
-    if (isPass) {
-      passed++
-      console.log(`✓ ${name}`)
-    } else {
-      failed++
-      console.error(`✗ ${name}`)
-      console.error(`  Expected: ${expected}, Got: ${result}`)
-    }
+    expect(getTrafficContext(searchParams)).toBe(expected)
   })
-
-  console.log(`\n${passed} passed, ${failed} failed out of ${testCases.length} tests`)
-  process.exit(failed > 0 ? 1 : 0)
-}
-
-runTests()
+})
