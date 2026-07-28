@@ -32,7 +32,8 @@ export interface CreativeResult {
 
 export interface ReportInput {
   dayNumber:        number
-  spendTodayCents:  number
+  /** null when it cannot be derived — see computeSpendToday. */
+  spendTodayCents:  number | null
   totalSpendCents:  number | null
   impressions:      number | null
   linkClicks:       number | null
@@ -50,6 +51,31 @@ const num = (n: number | null | undefined) => n == null ? '—' : String(n)
 const pct = (a: number, b: number) => b === 0 ? '—' : `${((a / b) * 100).toFixed(1)}%`
 const per = (cents: number | null | undefined, count: number) =>
   cents == null || count === 0 ? '—' : rm(Math.round(cents / count))
+
+
+/**
+ * Spend since the previous snapshot.
+ *
+ * Daily spend is a DELTA between two cumulative readings, so it does not
+ * exist until two exist. Previously a single snapshot fell back to cumulative
+ * campaign spend, which reported the whole experiment's spend as "today" on
+ * day one.
+ *
+ * Returns null (→ rendered "—") rather than 0 whenever the answer is unknown:
+ * a missing or non-finite reading, or a cumulative total that has gone DOWN.
+ * A decrease means the snapshots reset or disagree; clamping it to 0 would
+ * present a data fault as a quiet day.
+ */
+export function computeSpendToday(
+  latestCents: number | null | undefined,
+  previousCents: number | null | undefined
+): number | null {
+  if (latestCents == null || previousCents == null) return null
+  if (!Number.isFinite(latestCents) || !Number.isFinite(previousCents)) return null
+  const delta = latestCents - previousCents
+  if (delta < 0) return null
+  return delta
+}
 
 export type Diagnosis =
   | 'Advertisement hook'
@@ -247,7 +273,8 @@ export function buildDailyReport(input: ReportInput): string {
   return `PAQAR META ADS — DAY ${input.dayNumber}
 
 Budget
-- Spend today: ${rm(input.spendTodayCents)}
+- Spend today: ${rm(input.spendTodayCents)}${input.spendTodayCents == null
+    ? '\n  Awaiting the next snapshot to calculate today\'s spend.' : ''}
 - Total spend: ${total == null ? 'UNVERIFIED — Meta spend could not be read' : rm(total)}
 - Remaining from RM${MAX_TOTAL_SPEND_MYR}: ${remaining == null ? 'unknown' : rm(remaining)}
 

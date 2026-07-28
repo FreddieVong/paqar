@@ -12,7 +12,7 @@ import {
   getFunnelCounts, countPaqarLandingViews, lastValuationStartedAt,
   listSnapshots, type FunnelCounts,
 } from '@/lib/meta-ads/db'
-import { buildDailyReport, type CreativeResult } from '@/lib/meta-ads/report'
+import { buildDailyReport, computeSpendToday, type CreativeResult } from '@/lib/meta-ads/report'
 import {
   checkMutationAllowed, isTotalSpendExceeded, SPEND_FAILURE_THRESHOLD,
   MAX_TOTAL_SPEND_MYR, CREATIVE_UTM_CONTENT,
@@ -190,9 +190,7 @@ export async function GET(request: NextRequest) {
 
       const report = buildDailyReport({
         dayNumber,
-        spendTodayCents: spendCents != null && previous != null
-          ? Math.max(0, spendCents - previous)
-          : spendCents ?? 0,
+        spendTodayCents: computeSpendToday(spendCents, previous),
         totalSpendCents: spendCents,
         impressions:     campaignDelivery?.impressions ?? null,
         linkClicks:      campaignDelivery?.linkClicks ?? null,
