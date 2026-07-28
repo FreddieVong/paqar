@@ -47,7 +47,8 @@ function triggerVehicleLookup(
       if (!success) return
       const outcome = await getOrFetchVehicleLookup(plate)
 
-      if (!ctx.sessionId || !isTerminalLookupStatus(outcome.status)) return
+      // A legacy/unknown (null) or pending status is deliberately silent.
+      if (!ctx.sessionId || !outcome.status || !isTerminalLookupStatus(outcome.status)) return
       const mapped = eventForLookupStatus(outcome.status)
       if (!mapped) return
 

@@ -16,7 +16,12 @@ interface CacheRow {
 }
 
 export interface LookupResult {
-  status:    LookupStatus
+  /**
+   * null = legacy row: the outcome was never recorded and cannot be known.
+   * Callers must not emit an event for it — guessing `not_found` would report
+   * a provider failure or an interrupted write as "no such vehicle".
+   */
+  status:    LookupStatus | null
   vehicle:   VehicleApiResult | null
   errorCode: ErrorCode | null
   /** True when served from cache — no paid API call was made. */
@@ -66,10 +71,15 @@ export async function getOrFetchVehicleLookup(plate: string): Promise<LookupResu
     }
     const age = Date.now() - new Date(cached.fetched_at).getTime()
     if (age < NULL_RETRY_MS) {
-      // Legacy rows predate lookup_status; report them as not_found only when
-      // the column says so, never by inferring from the null vehicle_data.
-      const status = cached.lookup_status ?? LOOKUP_STATUSES.notFound
-      return { status, vehicle: null, errorCode: cached.error_code ?? null, cached: true }
+      // Legacy rows predate lookup_status. Passing the NULL through keeps the
+      // "we don't know" honest; isTerminalLookupStatus(null) is false, so no
+      // event is emitted rather than a guessed not_found.
+      return {
+        status:    cached.lookup_status ?? null,
+        vehicle:   null,
+        errorCode: cached.error_code ?? null,
+        cached:    true,
+      }
     }
   }
 

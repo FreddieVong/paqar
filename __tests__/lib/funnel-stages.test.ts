@@ -95,3 +95,20 @@ describe('journey identity in event ids', () => {
       .not.toBe(eventId.plateLookup('plate_lookup_succeeded', 'j2', 'hash1'))
   })
 })
+
+describe('legacy rows are never guessed into an outcome', () => {
+  it('a null status is not terminal, so it emits nothing', () => {
+    // Pre-021 cache rows have no recorded outcome. Defaulting them to
+    // not_found would report a provider failure or an interrupted write as
+    // "no such vehicle".
+    expect(isTerminalLookupStatus(null)).toBe(false)
+    expect(isTerminalLookupStatus(undefined)).toBe(false)
+  })
+
+  it('pending is likewise silent', () => {
+    // ADD COLUMN ... DEFAULT stamped every historical row `pending`;
+    // migration 022 restored them to NULL. Either way: no event.
+    expect(isTerminalLookupStatus(LOOKUP_STATUSES.pending)).toBe(false)
+    expect(eventForLookupStatus(LOOKUP_STATUSES.pending)).toBeNull()
+  })
+})
