@@ -8,7 +8,51 @@ export const metadata: Metadata = {
 }
 
 export default function CityVsVios() {
+  // Answers are drawn from the Quick Verdict, "Which to Choose?" and
+  // "The Verdict" sections rendered below — schema must not answer anything
+  // the page itself does not.
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'Honda City or Toyota Vios — which should I buy used?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'If your budget is under RM28,000, the Honda City is the better pick — more features and stronger resale value. If you are budget-conscious and plan to keep the car 10 or more years, the Toyota Vios is the better pick for longevity. Both are solid choices.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'When should I choose the Honda City over the Vios?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Choose the Honda City if a touchscreen and CarPlay matter to you, you prioritise resale value, you plan to keep the car three to five years, and your budget allows RM26,000–28,000.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'When should I choose the Toyota Vios over the City?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Choose the Toyota Vios if you want Toyota reliability, plan to keep the car 10 or more years, have a tighter budget of RM24,000–26,000, and value simplicity — fewer electronics mean fewer things to break.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Which lasts longer, the Honda City or the Toyota Vios?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'The Toyota Vios wins on longevity and will typically outlast the City by over 100,000 km if properly maintained. The Honda City wins on features and holds its value better.',
+        },
+      },
+    ],
+  }
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-6">Honda City vs Toyota Vios: Which Should You Buy?</h1>
       <p className="text-lg text-[#6B7280] mb-6">Direct comparison: both popular, both reliable. But which is the better deal?</p>
@@ -129,5 +173,6 @@ export default function CityVsVios() {
 
         <FaqGetValuationCta faqSlug="honda-city-vs-toyota-vios" />
     </div>
+    </>
   )
 }

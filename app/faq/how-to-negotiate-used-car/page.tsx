@@ -8,7 +8,50 @@ export const metadata: Metadata = {
 }
 
 export default function HowToNegotiate() {
+  // Grounded in the 5-step framework, the discount table, and the red-flags
+  // box rendered below.
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'How much below asking price should I offer for a used car?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Open 10–15% below the asking price. On a RM32,000 listing an opening offer of RM27,000 is reasonable; after counteroffers this typically settles near RM29,000, a roughly RM3,000 discount.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What discount is realistic based on the car’s condition?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Excellent condition with a clean inspection: 2–3% off. Good condition with minor wear and clean history: 5–8%. Fair condition with cosmetic issues but no accidents: 8–12%. Poor condition needing repairs or with high mileage: 12–15%.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How do I prepare before negotiating a used car price?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Get a market valuation on the plate before viewing so you know the real price range, then inspect thoroughly to find concrete issues — worn tyres, brake pads, filters, mileage discrepancies, or cosmetic damage. Specific, costed problems are what justify a lower offer.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'When should I walk away from a used car deal?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Walk away if the seller refuses an independent inspection, if they are selling because the transmission is acting up, if their own mechanic contradicts an independent inspection, or if the price sits RM5,000 or more below the market median — an unusually low price usually signals a hidden problem.',
+        },
+      },
+    ],
+  }
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-6">How to Negotiate a Used Car Price</h1>
       <p className="text-lg text-[#6B7280] mb-6">Professional car buyers save RM2–5k per purchase. Here's their playbook.</p>
@@ -128,5 +171,6 @@ export default function HowToNegotiate() {
 
         <FaqGetValuationCta faqSlug="how-to-negotiate-used-car" />
     </div>
+    </>
   )
 }

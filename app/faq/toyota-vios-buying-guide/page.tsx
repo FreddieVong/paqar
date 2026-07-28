@@ -8,7 +8,51 @@ export const metadata: Metadata = {
 }
 
 export default function ViosBuyingGuide() {
+  // Every Q&A below must correspond to content visible on this page —
+  // structured data that answers something the page does not is a policy
+  // violation, not a shortcut.
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'Which Toyota Vios year should I buy used?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Gen 2 (2013–2018) is the best value — target a 2015–2017 Vios 1.5 with around 110,000 km for about RM24,000. Gen 1 (2007–2013) is worth avoiding unless your budget is under RM12,000. Gen 3 (2018–present) is currently overpriced.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How much does a used Toyota Vios cost in Malaysia?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Typical market prices: a 2014 Vios 1.5 at 120,000 km runs RM20,000–23,000; a 2016 at 110,000 km runs RM24,000–26,000; and a 2018 at 80,000 km runs RM27,000–30,000.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Why does the Toyota Vios depreciate faster than other cars?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'The interior feels plain compared to rivals, many Vios were used as taxis which affects perception, and buyers often prefer the cheaper Myvi or the more feature-rich Honda City. It remains a reliable car, but resale value moves slower.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What are the red flags when buying a used Toyota Vios?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Transmission clunking points to a costly CVT or automatic gearbox repair. Engine ticking is common at high mileage and is usually not critical. An unusually cheap asking price often signals taxi history or a hidden problem.',
+        },
+      },
+    ],
+  }
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-6">Toyota Vios Buying Guide: Best Year & Price</h1>
       <p className="text-lg text-[#6B7280] mb-6">Complete guide: which Vios year to buy, pricing, reliability, depreciation.</p>
@@ -106,5 +150,6 @@ export default function ViosBuyingGuide() {
 
         <FaqGetValuationCta faqSlug="toyota-vios-buying-guide" />
     </div>
+    </>
   )
 }

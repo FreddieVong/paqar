@@ -8,7 +8,50 @@ export const metadata: Metadata = {
 }
 
 export default function ChecklistBuyingUsedCar() {
+  // Grounded in the pre-viewing, at-the-viewing, red-flags and after-viewing
+  // sections rendered below.
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What should I ask before viewing a used car?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Ask how many previous owners there were — one or two is good — and whether the car has had any accident or flood damage, watching for hesitation. Get the plate number and check its market valuation so you know the real price, and request photos of the interior, engine bay and undercarriage. If the photos look questionable, do not waste a trip.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What should I inspect when viewing a used car?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Work through six checks: exterior (about 5 minutes), interior (10 minutes), engine bay (5 minutes), an electrical test (3 minutes), a test drive (15 minutes), and the undercarriage (5 minutes).',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What are the biggest red flags when buying a used car?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Walk away if you find a musty or mouldy smell (flood damage), foamy engine oil (water in the engine), an illuminated check engine light, transmission clunking, major undercarriage rust on a young car, a seller who will not allow a test drive, a price RM5,000 or more below market, or a seller who refuses an independent inspection.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What should I do after viewing a used car?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'If you are still interested, order an independent inspection and wait for the report before negotiating. Use the market valuation together with the inspection findings as your negotiating basis. Do not decide emotionally — sleep on it, and walk away if you are unsure.',
+        },
+      },
+    ],
+  }
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-6">Complete Checklist: What to Check When Buying a Used Car</h1>
       <p className="text-lg text-[#6B7280] mb-6">Professional buyer's checklist. Print and bring to every viewing.</p>
@@ -136,5 +179,6 @@ export default function ChecklistBuyingUsedCar() {
 
         <FaqGetValuationCta faqSlug="what-to-check-buying-used-car" />
     </div>
+    </>
   )
 }
