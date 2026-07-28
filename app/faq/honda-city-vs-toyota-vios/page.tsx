@@ -5,6 +5,7 @@ import { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Honda City vs Toyota Vios: Which Should You Buy? | Paqar',
   description: 'Detailed comparison: price, reliability, resale value, comfort, fuel efficiency. Which is the better buy?',
+  alternates: { canonical: 'https://paqar.my/faq/honda-city-vs-toyota-vios' },
 }
 
 export default function CityVsVios() {

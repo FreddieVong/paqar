@@ -5,6 +5,7 @@ import { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Roadtax by State in Malaysia 2026 | How Much to Pay | Paqar',
   description: 'Complete roadtax breakdown by state: Selangor, KL, Johor, Penang. How much roadtax for your car, engine size, vehicle type.',
+  alternates: { canonical: 'https://paqar.my/faq/roadtax-by-state' },
 }
 
 export default function RoadtaxByState() {

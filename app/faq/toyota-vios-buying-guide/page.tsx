@@ -5,6 +5,7 @@ import { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Toyota Vios Buying Guide 2026 | Best Year & Price | Paqar',
   description: 'Complete Vios buyer guide: which year to buy, price range, reliability, what to check. Real Paqar valuations.',
+  alternates: { canonical: 'https://paqar.my/faq/toyota-vios-buying-guide' },
 }
 
 export default function ViosBuyingGuide() {

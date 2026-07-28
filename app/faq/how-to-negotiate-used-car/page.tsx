@@ -5,6 +5,7 @@ import { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'How to Negotiate a Used Car Price | Paqar Guide',
   description: 'Master negotiation tactics: use Paqar valuations as your anchor, know when to walk away, typical discounts, leverage inspection results.',
+  alternates: { canonical: 'https://paqar.my/faq/how-to-negotiate-used-car' },
 }
 
 export default function HowToNegotiate() {

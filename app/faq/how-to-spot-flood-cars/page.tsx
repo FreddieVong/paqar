@@ -5,6 +5,7 @@ import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 export const metadata: Metadata = {
   title: 'How to Spot a Flooded Car | Paqar Guide',
   description: 'Complete guide: physical signs of a flooded car (rust, mold smell, electrical issues), how JomCheck reveals flood damage, what to check before buying.',
+  alternates: { canonical: 'https://paqar.my/faq/how-to-spot-flood-cars' },
 }
 
 export default function HowToSpotFloodedCars() {

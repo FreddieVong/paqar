@@ -5,6 +5,7 @@ import { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Complete Checklist: What to Check Before Buying a Used Car | Paqar',
   description: 'Step-by-step inspection guide: interior, exterior, engine, electrical, test drive. What to look for, what to walk away from.',
+  alternates: { canonical: 'https://paqar.my/faq/what-to-check-buying-used-car' },
 }
 
 export default function ChecklistBuyingUsedCar() {

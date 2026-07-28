@@ -6,6 +6,7 @@ import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 export const metadata: Metadata = {
   title: 'Best First Car Under RM30k in Malaysia | Paqar',
   description: 'Guide to choosing your first used car under RM30,000. Compare Perodua Myvi, Honda City, Toyota Vios with real Paqar valuations and buyer tips.',
+  alternates: { canonical: 'https://paqar.my/faq/best-first-car-under-30k' },
   openGraph: {
     title: 'Best First Car Under RM30k in Malaysia',
     description: 'Honest guide to affordable first cars: which model holds value, which to avoid, real market prices.',

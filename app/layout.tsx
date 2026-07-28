@@ -40,9 +40,12 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
   },
-  alternates: {
-    canonical: 'https://paqar.my',
-  },
+  // NO canonical here. Next.js metadata is inherited, so a canonical set in
+  // the root layout silently becomes the canonical of every page that does
+  // not override it — telling Google those pages are duplicates of the
+  // homepage. That is exactly what happened to all 8 /faq/* pages. Each page
+  // now declares its own canonical; a page that forgets simply emits none,
+  // and Google self-canonicalises, which fails safe instead of deindexing.
   verification: {
     google: 'Wr8qqynVahWvYrI7-01zcZTq9Lgsznw0ZpG8G6WLp00',
   },

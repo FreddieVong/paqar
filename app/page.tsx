@@ -1,8 +1,16 @@
+import type { Metadata } from 'next'
 import Link           from 'next/link'
 import { unstable_cache } from 'next/cache'
 import { Nav }           from '@/components/layout/Nav'
 import { HomeCheckerTabs } from '@/components/check/HomeCheckerTabs'
 import { getCheckCount } from '@/lib/db/checks'
+
+// Only the canonical is declared here — title/description/openGraph are
+// inherited from the root layout, which describes the homepage anyway.
+// This used to live in the layout, where it leaked onto every other page.
+export const metadata: Metadata = {
+  alternates: { canonical: 'https://paqar.my' },
+}
 
 // ISR: without this the page is fully static and the social-proof check count
 // freezes at build time. Hourly revalidation keeps it fresh, still CDN-served.

@@ -5,6 +5,7 @@ import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 export const metadata: Metadata = {
   title: 'Honda City Buying Guide 2026 | Which Year, Which Variant | Paqar',
   description: 'Complete Honda City buyer guide: best year to buy, which variant (1.5 S vs 1.5 H), real market prices, depreciation, what to check before buying.',
+  alternates: { canonical: 'https://paqar.my/faq/honda-city-buying-guide' },
 }
 
 export default function HondaCityGuide() {
