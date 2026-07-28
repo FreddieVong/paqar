@@ -391,6 +391,80 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── POPULAR COMPARISONS ──
+          Placed below the FAQ, after the conversion flow, so it does not
+          compete with the 5-second decision the hero is built for.
+
+          Search Console shows these are the pages that actually rank —
+          /varian/* and /bandingkan/* sit at positions 8.8–12.9 while every
+          year-page and brand hub sits at 27–55. They were also getting no
+          link equity from here: the homepage previously linked only to hubs,
+          never to an individual variant or comparison page. These are the
+          site's near-page-1 pages, and this is its strongest page.
+
+          They earn their place on merit too — "beza honda city e dan v",
+          "saga vs bezza" and "honda city e vs v" are real queries in the
+          data, so this answers something buyers are already asking. */}
+      <section className="bg-white px-5 py-12 md:py-16 border-t border-[#F3F4F6]">
+        <div className="max-w-xl mx-auto">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+            Panduan Pilihan
+          </p>
+          <h2 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827] mb-2">
+            Tak pasti varian mana?
+          </h2>
+          <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mb-6">
+            Beza antara varian selalunya beribu ringgit. Baca dulu sebelum tawar.
+          </p>
+
+          <div className="space-y-5">
+            <div>
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">
+                Beza varian
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { href: '/varian/honda-city',    label: 'Honda City' },
+                  { href: '/varian/perodua-myvi',  label: 'Perodua Myvi' },
+                  { href: '/varian/perodua-bezza', label: 'Perodua Bezza' },
+                  { href: '/varian/toyota-alphard', label: 'Toyota Alphard' },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="font-body text-[13px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[8px] px-3 py-1.5 hover:bg-[#DCFCE7] transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">
+                Bandingkan model
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { href: '/bandingkan/alza-vs-x50',  label: 'Alza vs X50' },
+                  { href: '/bandingkan/bezza-vs-saga', label: 'Bezza vs Saga' },
+                  { href: '/bandingkan/vios-vs-city',  label: 'Vios vs City' },
+                  { href: '/bandingkan/myvi-vs-axia',  label: 'Myvi vs Axia' },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="font-body text-[13px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[8px] px-3 py-1.5 hover:bg-[#DCFCE7] transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── FINAL CTA ── */}
       <section className="bg-[#14453d] px-5 py-14 text-center md:py-20">
         <div className="max-w-lg mx-auto">
