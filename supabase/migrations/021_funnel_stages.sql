@@ -45,14 +45,12 @@ CREATE INDEX IF NOT EXISTS idx_ad_events_error
 -- Finer distinctions (network_error, malformed_response, database_error) live
 -- in error_code rather than multiplying statuses.
 -- ---------------------------------------------------------------------------
--- Added WITHOUT a default first, then the default set separately.
--- `ADD COLUMN ... DEFAULT` applies the default to EXISTING rows too, which
--- would stamp every historical row `pending` — a status it was never measured
--- with, and worse than NULL because `pending` is non-terminal and suppresses
--- the event entirely. Splitting the statements leaves history NULL and applies
--- the default only to rows inserted from here on.
-ALTER TABLE plate_lookup_cache ADD COLUMN IF NOT EXISTS lookup_status TEXT;
-ALTER TABLE plate_lookup_cache ALTER COLUMN lookup_status SET DEFAULT 'pending';
+-- NOTE: `ADD COLUMN ... DEFAULT` applies the default to EXISTING rows, so this
+-- statement stamped every historical row `pending` — a status none of them
+-- were measured with. That is corrected forward by 022, which restores those
+-- rows to NULL. This file is left exactly as production executed it; applied
+-- migrations are not rewritten.
+ALTER TABLE plate_lookup_cache ADD COLUMN IF NOT EXISTS lookup_status TEXT DEFAULT 'pending';
 ALTER TABLE plate_lookup_cache ADD COLUMN IF NOT EXISTS error_code    TEXT;
 
 DO $$
