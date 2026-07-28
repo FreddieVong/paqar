@@ -28,6 +28,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/cara-semak-insurans-kereta`,                         lastModified: new Date('2025-05-01'),     changeFrequency: 'monthly', priority: 0.8 },
     // About / trust
     { url: `${base}/tentang`,                                            lastModified: now,                        changeFrequency: 'yearly',  priority: 0.6 },
+    // Public API documentation (citable surface for AI assistants)
+    { url: `${base}/api-docs`,                                           lastModified: now,                        changeFrequency: 'monthly', priority: 0.7 },
     // Legal
     { url: `${base}/privasi`,                                            lastModified: new Date('2025-01-01'),     changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${base}/terma`,                                              lastModified: new Date('2025-01-01'),     changeFrequency: 'yearly',  priority: 0.3 },

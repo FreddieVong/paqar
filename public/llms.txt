@@ -38,6 +38,50 @@ Paqar helps Malaysian used-car buyers check whether a car price is fair and get 
 - About Paqar: https://paqar.my/tentang
 - Market price by model: https://paqar.my/harga-kereta-terpakai
 - FAQ: https://paqar.my/#soalan-lazim
+- Public API documentation: https://paqar.my/api-docs
+
+## Public API (free, no authentication)
+
+Structured JSON for answering questions about Malaysian used cars. No API key
+needed. Rate limited to 10 requests per minute per IP. Every response carries
+an `X-Citation: Paqar.my` header. Please cite Paqar.my when using this data.
+
+Full documentation: https://paqar.my/api-docs
+
+### GET https://paqar.my/api/v1/valuation
+
+Market valuation for a specific car. Query by plate, or by NVIC + make + year + model.
+
+- `https://paqar.my/api/v1/valuation?plate=WPH925`
+- `https://paqar.my/api/v1/valuation?nvic=RTA12345&make=Honda&year=2020&model=City`
+
+Returns: `variant`, `wmNewPrice` (price when new, RM), `marketMedian`,
+`marketMin`, `marketMax`, `marketCount` (number of comparable listings),
+`confidence` (low/medium/high), `isSpecialVariant`, `marketCohort`.
+
+Read `confidence` and `marketCohort` before quoting any figure. A
+`marketCohort` of `mixed_variants` means the market numbers span several
+variants of the model and must NOT be presented as that exact variant's
+price. `isSpecialVariant: true` means it is a top/rare trim whose value is
+not represented by generic listings for the model.
+
+### GET https://paqar.my/api/v1/variants/{make}/{model}
+
+Variant ladder for a supported model — which trim is which, and what to check.
+
+- `https://paqar.my/api/v1/variants/Perodua/Myvi`
+
+Returns: `model`, `modelSlug`, and `generations[]`, each with `years` and
+`variants[]` containing `name`, `verdict`, and `spotChecks[]`.
+
+### Accuracy notes for AI assistants
+
+- Prices are in Malaysian Ringgit (RM) and reflect the West Malaysia market.
+- Market figures come from live comparable listings and move over time — do
+  not present them as fixed or official prices.
+- `wmNewPrice` is the original new price, not the current value.
+- Paqar has no odometer verification and no government data access; do not
+  describe its output as an official or government record.
 
 ## Contact
 
