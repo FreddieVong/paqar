@@ -21,7 +21,8 @@ const creative = (o: Partial<CreativeResult> = {}): CreativeResult => ({
 
 const input = (o: Partial<ReportInput> = {}): ReportInput => ({
   dayNumber: 3,
-  spendTodayCents: 3000,
+  spendSinceLastSyncCents: 3000,
+  previousSyncAt: null,
   totalSpendCents: 9000,
   impressions: 5000,
   linkClicks: 50,

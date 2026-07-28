@@ -12,7 +12,7 @@ import {
   getFunnelCounts, countPaqarLandingViews, lastValuationStartedAt,
   listSnapshots, type FunnelCounts,
 } from '@/lib/meta-ads/db'
-import { buildDailyReport, computeSpendToday, type CreativeResult } from '@/lib/meta-ads/report'
+import { buildDailyReport, computeSpendSinceLastSync, type CreativeResult } from '@/lib/meta-ads/report'
 import {
   checkMutationAllowed, isTotalSpendExceeded, SPEND_FAILURE_THRESHOLD,
   MAX_TOTAL_SPEND_MYR, CREATIVE_UTM_CONTENT,
@@ -190,7 +190,8 @@ export async function GET(request: NextRequest) {
 
       const report = buildDailyReport({
         dayNumber,
-        spendTodayCents: computeSpendToday(spendCents, previous),
+        spendSinceLastSyncCents: computeSpendSinceLastSync(spendCents, previous?.spendCents),
+        previousSyncAt:          previous?.capturedAt ?? null,
         totalSpendCents: spendCents,
         impressions:     campaignDelivery?.impressions ?? null,
         linkClicks:      campaignDelivery?.linkClicks ?? null,
@@ -409,20 +410,24 @@ async function triggerHardStop(
 }
 
 /**
- * Total campaign spend as of the most recent EARLIER bucket, so the report can
- * show spend-today as a delta. Returns null when there is no prior snapshot
- * (day one), in which case total spend is today's spend.
+ * Total campaign spend as of the most recent EARLIER bucket, with its
+ * timestamp, so the report can show spend since the last sync as a delta and
+ * name the period it covers. Returns null on day one — with a single reading
+ * the delta does not exist, and cumulative spend must NOT stand in for it.
  */
 async function previousCampaignSpend(
   experimentId: string,
   campaignId: string,
   currentBucket: Date
-): Promise<number | null> {
+): Promise<{ spendCents: number; capturedAt: string } | null> {
   const snaps = await listSnapshots(experimentId, 'campaign').catch(() => [])
-  const earlier = (snaps as Array<{ meta_object_id: string; captured_at_bucket: string; spend_cents: number | null }>)
+  const earlier = (snaps as Array<{
+    meta_object_id: string; captured_at_bucket: string; captured_at: string; spend_cents: number | null
+  }>)
     .filter((s) => s.meta_object_id === campaignId
                 && new Date(s.captured_at_bucket).getTime() < currentBucket.getTime()
                 && s.spend_cents != null)
   const last = earlier[earlier.length - 1]
-  return last?.spend_cents ?? null
+  if (!last) return null
+  return { spendCents: last.spend_cents!, capturedAt: last.captured_at ?? last.captured_at_bucket }
 }

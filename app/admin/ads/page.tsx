@@ -3,7 +3,7 @@ import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
 import { getExperiment, getFunnelCounts, latestAction, listSnapshots } from '@/lib/meta-ads/db'
 import { runPreflight, type PreflightResult } from '@/lib/meta-ads/preflight'
-import { buildDailyReport, computeSpendToday, type CreativeResult } from '@/lib/meta-ads/report'
+import { buildDailyReport, computeSpendSinceLastSync, type CreativeResult } from '@/lib/meta-ads/report'
 import {
   MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, CREATIVE_UTM_CONTENT,
 } from '@/lib/meta-ads/guards'
@@ -112,10 +112,13 @@ export default async function AdminAdsPage() {
   const totalSpend = latestSnap?.spend_cents ?? null
   const remaining  = totalSpend == null ? null : Math.max(0, MAX_TOTAL_SPEND_MYR * 100 - totalSpend)
 
-  // Today's spend is a DELTA, so it needs two readings. With one snapshot it
+  // A DELTA between two syncs, so it needs two readings. With one snapshot it
   // is unknown — not the cumulative total, which is what it used to report.
-  const prevSnap = snapshots[snapshots.length - 2] as { spend_cents: number | null } | undefined
-  const spendToday = computeSpendToday(totalSpend, prevSnap?.spend_cents)
+  const prevSnap = snapshots[snapshots.length - 2] as
+    | { spend_cents: number | null; captured_at?: string; captured_at_bucket?: string }
+    | undefined
+  const spendSinceLastSync = computeSpendSinceLastSync(totalSpend, prevSnap?.spend_cents)
+  const previousSyncAt = prevSnap?.captured_at ?? prevSnap?.captured_at_bucket ?? null
 
   const unallocated = totalSpend == null || matchedCount === 0 ? null : totalSpend - matchedSpend
   // 2% or RM1, whichever is larger — Meta rounds per-object spend independently.
@@ -371,7 +374,8 @@ export default async function AdminAdsPage() {
           <pre className="text-[12px] leading-relaxed text-[#111827] whitespace-pre-wrap font-mono">
             {buildDailyReport({
               dayNumber:       dayNumber(experiment?.launched_at ?? null),
-              spendTodayCents: spendToday,
+              spendSinceLastSyncCents: spendSinceLastSync,
+              previousSyncAt,
               totalSpendCents: totalSpend,
               impressions:     latestSnap?.impressions ?? 0,
               linkClicks:      latestSnap?.link_clicks ?? 0,

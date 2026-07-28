@@ -32,8 +32,10 @@ export interface CreativeResult {
 
 export interface ReportInput {
   dayNumber:        number
-  /** null when it cannot be derived — see computeSpendToday. */
-  spendTodayCents:  number | null
+  /** Spend between the previous sync and this one. Null when underivable. */
+  spendSinceLastSyncCents: number | null
+  /** ISO timestamp of the previous sync, for the period label. */
+  previousSyncAt:   string | null
   totalSpendCents:  number | null
   impressions:      number | null
   linkClicks:       number | null
@@ -54,19 +56,29 @@ const per = (cents: number | null | undefined, count: number) =>
 
 
 /**
- * Spend since the previous snapshot.
+ * Spend between the previous sync and the latest one.
  *
- * Daily spend is a DELTA between two cumulative readings, so it does not
- * exist until two exist. Previously a single snapshot fell back to cumulative
- * campaign spend, which reported the whole experiment's spend as "today" on
- * day one.
+ * NOT "spend today". The operator syncs once a day at ~09:00 MYT, so this
+ * delta covers roughly 09:00-to-09:00, straddling two calendar days. A true
+ * calendar-day figure would need a snapshot at local midnight, which the
+ * schedule does not produce — so the metric is named for what it actually
+ * measures rather than what would be convenient.
  *
  * Returns null (→ rendered "—") rather than 0 whenever the answer is unknown:
  * a missing or non-finite reading, or a cumulative total that has gone DOWN.
  * A decrease means the snapshots reset or disagree; clamping it to 0 would
- * present a data fault as a quiet day.
+ * present a data fault as a quiet period.
  */
-export function computeSpendToday(
+
+/** Previous sync time in MYT — the operator reports in Malaysian time. */
+function formatSyncTime(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Kuala_Lumpur',
+  })
+}
+
+export function computeSpendSinceLastSync(
   latestCents: number | null | undefined,
   previousCents: number | null | undefined
 ): number | null {
@@ -273,8 +285,10 @@ export function buildDailyReport(input: ReportInput): string {
   return `PAQAR META ADS — DAY ${input.dayNumber}
 
 Budget
-- Spend today: ${rm(input.spendTodayCents)}${input.spendTodayCents == null
-    ? '\n  Awaiting the next snapshot to calculate today\'s spend.' : ''}
+- Spend since last sync: ${rm(input.spendSinceLastSyncCents)}${
+  input.spendSinceLastSyncCents == null
+    ? '\n  Awaiting a second snapshot to calculate spend since the last sync.'
+    : input.previousSyncAt ? ` (since ${formatSyncTime(input.previousSyncAt)})` : ''}
 - Total spend: ${total == null ? 'UNVERIFIED — Meta spend could not be read' : rm(total)}
 - Remaining from RM${MAX_TOTAL_SPEND_MYR}: ${remaining == null ? 'unknown' : rm(remaining)}
 
