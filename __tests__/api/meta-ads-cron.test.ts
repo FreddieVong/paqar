@@ -110,10 +110,11 @@ beforeEach(() => {
   store.lastValuationStartedAt = null
 
   meta.getCampaignSpendCents.mockResolvedValue(5000)
-  meta.getDeliveryMetrics.mockResolvedValue([
-    { objectId: 'camp_1', spendCents: 5000, impressions: 1000, reach: 800,
-      linkClicks: 10, landingPageViews: 8, videoViews: 200 },
-  ])
+  meta.getDeliveryMetrics.mockResolvedValue({
+    rows: [{ objectId: 'camp_1', spendCents: 5000, impressions: 1000, reach: 800,
+             linkClicks: 10, landingPageViews: 8, videoViews: 200 }],
+    status: 'available', reason: null,
+  })
   meta.getCampaign.mockResolvedValue({ effective_status: 'PAUSED' })
   meta.pauseCampaign.mockResolvedValue({ ok: true })
 })
@@ -236,10 +237,11 @@ describe('tracking-failure rule', () => {
 
   it('pauses when Meta reports landing views and Paqar recorded none', async () => {
     seedExperiment()
-    meta.getDeliveryMetrics.mockResolvedValue([
-      { objectId: 'camp_1', spendCents: 5000, impressions: 5000, reach: 4000,
-        linkClicks: 60, landingPageViews: 45, videoViews: 900 },
-    ])
+    meta.getDeliveryMetrics.mockResolvedValue({
+      rows: [{ objectId: 'camp_1', spendCents: 5000, impressions: 5000, reach: 4000,
+               linkClicks: 60, landingPageViews: 45, videoViews: 900 }],
+      status: 'available', reason: null,
+    })
     store.paqarLandingViews = 0
 
     const body = await (await call()).json()
@@ -250,10 +252,11 @@ describe('tracking-failure rule', () => {
 
   it('records the evidence before attempting the pause', async () => {
     seedExperiment()
-    meta.getDeliveryMetrics.mockResolvedValue([
-      { objectId: 'camp_1', spendCents: 5000, impressions: 5000, reach: 4000,
-        linkClicks: 60, landingPageViews: 45, videoViews: 900 },
-    ])
+    meta.getDeliveryMetrics.mockResolvedValue({
+      rows: [{ objectId: 'camp_1', spendCents: 5000, impressions: 5000, reach: 4000,
+               linkClicks: 60, landingPageViews: 45, videoViews: 900 }],
+      status: 'available', reason: null,
+    })
     store.paqarLandingViews = 0
 
     await call()
@@ -269,10 +272,11 @@ describe('tracking-failure rule', () => {
 
   it('pauses when events worked and then stopped', async () => {
     seedExperiment()
-    meta.getDeliveryMetrics.mockResolvedValue([
-      { objectId: 'camp_1', spendCents: 5000, impressions: 3000, reach: 2000,
-        linkClicks: 40, landingPageViews: 30, videoViews: 500 },
-    ])
+    meta.getDeliveryMetrics.mockResolvedValue({
+      rows: [{ objectId: 'camp_1', spendCents: 5000, impressions: 3000, reach: 2000,
+               linkClicks: 40, landingPageViews: 30, videoViews: 500 }],
+      status: 'available', reason: null,
+    })
     store.paqarLandingViews = 30 // landing views fine...
     store.lastValuationStartedAt = new Date(Date.now() - 30 * 60 * 60 * 1000) // ...but starts died
 
@@ -401,5 +405,93 @@ describe('daily report email', () => {
     seedExperiment({ launched_at: null })
     await call()
     expect(alerts.sendDailyReportEmail).not.toHaveBeenCalled()
+  })
+})
+
+describe('ad-level delivery: unavailable is never zero', () => {
+  const AD_A = '120248030709080438'
+  const AD_B = '120248031421580438'
+
+  beforeEach(() => {
+    seedExperiment({ creative_a_ad_id: AD_A, creative_b_ad_id: AD_B })
+  })
+
+  function deliver(rows: unknown[], status = 'available', reason: string | null = null) {
+    meta.getDeliveryMetrics.mockImplementation(async (_id: string, level: string) =>
+      level === 'campaign'
+        ? { rows: [{ objectId: 'camp_1', spendCents: 5750, impressions: 2046, reach: 1800,
+                     linkClicks: 174, landingPageViews: 120, videoViews: 900 }],
+            status: 'available', reason: null }
+        : { rows, status, reason })
+  }
+
+  it('stores real per-ad numbers when Meta returns them', async () => {
+    deliver([
+      { objectId: AD_A, spendCents: 1459, impressions: 507,  reach: 400, linkClicks: 36,  landingPageViews: 20, videoViews: 100 },
+      { objectId: AD_B, spendCents: 4291, impressions: 1539, reach: 1200, linkClicks: 138, landingPageViews: 90, videoViews: 700 },
+    ])
+    await call()
+
+    const a = store.snapshots.find((s) => s.metaObjectId === AD_A)
+    const b = store.snapshots.find((s) => s.metaObjectId === AD_B)
+    expect(a?.spendCents).toBe(1459)
+    expect(b?.spendCents).toBe(4291)
+    expect(a?.impressions).toBe(507)
+  })
+
+  it('writes null — not 0 — for an ad Meta did not return', async () => {
+    deliver([
+      { objectId: AD_A, spendCents: 1459, impressions: 507, reach: 400, linkClicks: 36, landingPageViews: 20, videoViews: 100 },
+    ])
+    await call()
+
+    const b = store.snapshots.find((s) => s.metaObjectId === AD_B)
+    expect(b?.spendCents).toBeNull()
+    expect(b?.impressions).toBeNull()
+    expect(b?.linkClicks).toBeNull()
+  })
+
+  it('writes null for every ad when the ad-level read fails', async () => {
+    deliver([], 'unavailable', 'Missing permissions')
+    await call()
+
+    for (const id of [AD_A, AD_B]) {
+      const s = store.snapshots.find((s) => s.metaObjectId === id)
+      expect(s?.spendCents).toBeNull()
+      expect(s?.impressions).toBeNull()
+    }
+  })
+
+  it('preserves a genuine zero as zero', async () => {
+    deliver([
+      { objectId: AD_A, spendCents: 0, impressions: 0, reach: 0, linkClicks: 0, landingPageViews: 0, videoViews: 0 },
+      { objectId: AD_B, spendCents: 0, impressions: 0, reach: 0, linkClicks: 0, landingPageViews: 0, videoViews: 0 },
+    ])
+    await call()
+
+    const a = store.snapshots.find((s) => s.metaObjectId === AD_A)
+    expect(a?.spendCents).toBe(0)
+    expect(a?.impressions).toBe(0)
+  })
+
+  it('keeps campaign spend available even when ad-level data is not', async () => {
+    deliver([], 'unavailable', 'permission error')
+    await call()
+
+    const camp = store.snapshots.find((s) => s.level === 'campaign')
+    expect(camp?.spendCents).toBe(5000)   // campaign read still succeeded
+    expect(store.snapshots.filter((s) => s.level === 'ad')).toHaveLength(2)
+  })
+
+  it('matches ad ids as exact strings', async () => {
+    deliver([
+      { objectId: AD_A, spendCents: 1459, impressions: 507, reach: 400, linkClicks: 36, landingPageViews: 20, videoViews: 100 },
+    ])
+    await call()
+
+    const a = store.snapshots.find((s) => s.metaObjectId === AD_A)
+    expect(typeof a?.metaObjectId).toBe('string')
+    expect(a?.metaObjectId).toBe(AD_A)
+    expect(Number(AD_A).toString()).not.toBe(AD_A)
   })
 })

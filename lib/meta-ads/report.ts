@@ -16,28 +16,40 @@ import type { FunnelCounts } from '@/lib/meta-ads/db'
 const MIN_SPEND_CENTS_FOR_COMPARISON = 5000  // RM50 each
 const MIN_STARTS_FOR_COMPARISON      = 10
 
+export type CreativeDeliveryStatus = 'available' | 'unavailable' | 'unmatched'
+
 export interface CreativeResult {
-  label:      string
-  spendCents: number
-  funnel:     FunnelCounts
-  linkClicks: number
-  impressions: number
+  label:       string
+  adId:        string | null
+  /** available = Meta reported it. unmatched = Meta answered but not for this
+   *  ad id. unavailable = the read failed. Only `available` may render 0. */
+  deliveryStatus: CreativeDeliveryStatus
+  spendCents:  number | null
+  funnel:      FunnelCounts
+  linkClicks:  number | null
+  impressions: number | null
 }
 
 export interface ReportInput {
   dayNumber:        number
   spendTodayCents:  number
   totalSpendCents:  number | null
-  impressions:      number
-  linkClicks:       number
+  impressions:      number | null
+  linkClicks:       number | null
   funnel:           FunnelCounts
   creativeA:        CreativeResult
   creativeB:        CreativeResult
+  adDeliveryStatus?: 'available' | 'unavailable'
+  adDeliveryReason?: string | null
 }
 
-const rm = (cents: number) => `RM${(cents / 100).toFixed(2)}`
-const pct = (num: number, den: number) => den === 0 ? '—' : `${((num / den) * 100).toFixed(1)}%`
-const per = (cents: number, count: number) => count === 0 ? '—' : rm(Math.round(cents / count))
+// A missing number is an em dash, never 0. Rendering unknown delivery as zero
+// is how a reporting gap gets mistaken for a performance problem.
+const rm  = (cents: number | null | undefined) => cents == null ? '—' : `RM${(cents / 100).toFixed(2)}`
+const num = (n: number | null | undefined) => n == null ? '—' : String(n)
+const pct = (a: number, b: number) => b === 0 ? '—' : `${((a / b) * 100).toFixed(1)}%`
+const per = (cents: number | null | undefined, count: number) =>
+  cents == null || count === 0 ? '—' : rm(Math.round(cents / count))
 
 export type Diagnosis =
   | 'Advertisement hook'
@@ -57,6 +69,14 @@ export type Diagnosis =
 export function diagnose(input: ReportInput): { weakPoint: Diagnosis; reason: string } {
   const f = input.funnel
   const spend = input.totalSpendCents ?? 0
+
+  // Delivery numbers missing entirely — say so rather than blaming a step.
+  if (input.impressions == null || input.linkClicks == null) {
+    return {
+      weakPoint: 'Insufficient data',
+      reason: 'Meta delivery data could not be read, so no funnel step can be judged. Fix the reporting gap first.',
+    }
+  }
 
   if (spend < 3000 || input.impressions < 500) {
     return { weakPoint: 'Insufficient data', reason: 'Less than RM30 delivered — no step has enough volume to judge.' }
@@ -141,20 +161,55 @@ function recommendation(weakPoint: Diagnosis, input: ReportInput): string {
   }
 }
 
-function compareCreatives(a: CreativeResult, b: CreativeResult): string {
-  const bothFunded = a.spendCents >= MIN_SPEND_CENTS_FOR_COMPARISON &&
-                     b.spendCents >= MIN_SPEND_CENTS_FOR_COMPARISON
+/**
+ * Decision precedence. Data health is checked BEFORE sample size, because
+ * "not enough data" and "we could not read the data" are different problems
+ * with different fixes — and reporting the first when the second is true sends
+ * you looking at your creatives when the fault is in the pipeline.
+ *
+ *   1. delivery unavailable   2. ad matching incomplete
+ *   3. insufficient sample    4. no clear winner   5. provisional winner
+ */
+function compareCreatives(
+  a: CreativeResult,
+  b: CreativeResult,
+  adDeliveryStatus: 'available' | 'unavailable' = 'available',
+  adDeliveryReason: string | null = null
+): string {
+  // 1. Could not read ad-level delivery at all.
+  if (adDeliveryStatus === 'unavailable') {
+    return 'META DELIVERY DATA UNAVAILABLE — Paqar recorded attributed sessions for both creatives, '
+         + 'but Meta spend, impressions and clicks could not be retrieved at ad level'
+         + (adDeliveryReason ? ` (${adDeliveryReason})` : '') + '. '
+         + 'Creative efficiency cannot be compared. Do not pause either ad on this evidence.'
+  }
+
+  // 2. Meta answered, but not for these ad ids.
+  const unmatched = [a, b].filter((c) => c.deliveryStatus !== 'available')
+  if (unmatched.length > 0) {
+    return `AD MATCHING INCOMPLETE — Meta returned delivery data, but no row matched `
+         + unmatched.map((c) => `Creative ${c.label} (${c.adId ?? 'no id configured'})`).join(' and ')
+         + '. Spend cannot be assigned to that creative, so efficiency cannot be compared. '
+         + 'Check the configured ad IDs before drawing any conclusion.'
+  }
+
+  const aSpend = a.spendCents ?? 0
+  const bSpend = b.spendCents ?? 0
+
+  // 3. Data is healthy — only now does sample size apply.
+  const bothFunded = aSpend >= MIN_SPEND_CENTS_FOR_COMPARISON &&
+                     bSpend >= MIN_SPEND_CENTS_FOR_COMPARISON
   const enoughStarts = a.funnel.valuationStarted + b.funnel.valuationStarted >= MIN_STARTS_FOR_COMPARISON
 
   if (!bothFunded || !enoughStarts) {
-    return `INSUFFICIENT DATA — RM${MAX_TOTAL_SPEND_MYR} split across two creatives cannot produce a statistically valid winner. ` +
-           `Needs at least ${rm(MIN_SPEND_CENTS_FOR_COMPARISON)} each and ${MIN_STARTS_FOR_COMPARISON} combined valuation starts ` +
-           `(currently ${rm(a.spendCents)} / ${rm(b.spendCents)}, ${a.funnel.valuationStarted + b.funnel.valuationStarted} starts). ` +
-           `Do not pause either creative on this evidence.`
+    return `BELOW DECISION THRESHOLD — minimum for a call is ${rm(MIN_SPEND_CENTS_FOR_COMPARISON)} spend per creative `
+         + `and ${MIN_STARTS_FOR_COMPARISON} combined valuation starts `
+         + `(currently ${rm(aSpend)} / ${rm(bSpend)}, ${a.funnel.valuationStarted + b.funnel.valuationStarted} starts). `
+         + 'This is a practical threshold, not a significance test. Do not pause either creative yet.'
   }
 
-  const costA = a.funnel.valuationStarted === 0 ? Infinity : a.spendCents / a.funnel.valuationStarted
-  const costB = b.funnel.valuationStarted === 0 ? Infinity : b.spendCents / b.funnel.valuationStarted
+  const costA = a.funnel.valuationStarted === 0 ? Infinity : aSpend / a.funnel.valuationStarted
+  const costB = b.funnel.valuationStarted === 0 ? Infinity : bSpend / b.funnel.valuationStarted
 
   if (costA === Infinity && costB === Infinity) {
     return 'Neither creative has produced a valuation start yet.'
@@ -162,17 +217,21 @@ function compareCreatives(a: CreativeResult, b: CreativeResult): string {
 
   const margin = Math.abs(costA - costB) / Math.max(costA, costB)
   if (margin < 0.25) {
-    return `Too close to call — cost per valuation start differs by only ${(margin * 100).toFixed(0)}%. Treat them as equal.`
+    return `NO CLEAR WINNER — cost per valuation start differs by only ${(margin * 100).toFixed(0)}% `
+         + `(${rm(Math.round(costA))} vs ${rm(Math.round(costB))}). Treat them as equal.`
   }
 
   const winner = costA < costB ? 'A' : 'B'
-  return `Creative ${winner} currently looks stronger (${per(Math.min(costA, costB) * 1, 1)} vs ${per(Math.max(costA, costB) * 1, 1)} per valuation start). ` +
-         `This is directional only — recommend, do not auto-pause.`
+  return `PROVISIONAL WINNER — Creative ${winner} is cheaper per valuation start `
+       + `(${rm(Math.round(Math.min(costA, costB)))} vs ${rm(Math.round(Math.max(costA, costB)))}). `
+       + 'Directional only — recommend, do not auto-pause.'
 }
 
 function creativeBlock(label: string, c: CreativeResult): string {
+  const state = c.deliveryStatus === 'available' ? '' : `  [Meta delivery ${c.deliveryStatus}]`
   return [
-    `- Creative ${label} — spend ${rm(c.spendCents)}, ${c.impressions} impressions, ${c.linkClicks} link clicks`,
+    `- Creative ${label} (ad ${c.adId ?? 'not configured'})${state}`,
+    `    spend ${rm(c.spendCents)}, ${num(c.impressions)} impressions, ${num(c.linkClicks)} link clicks`,
     `    landing ${c.funnel.landingViews} → started ${c.funnel.valuationStarted} → completed ${c.funnel.valuationCompleted}`,
     `    RM12 ${c.funnel.purchasesRm12}, RM100 ${c.funnel.purchasesRm100}, revenue ${rm(c.funnel.revenueCents)}`,
   ].join('\n')
@@ -193,8 +252,8 @@ Budget
 - Remaining from RM${MAX_TOTAL_SPEND_MYR}: ${remaining == null ? 'unknown' : rm(remaining)}
 
 Traffic
-- Impressions: ${input.impressions}
-- Link clicks: ${input.linkClicks}
+- Impressions: ${num(input.impressions)}
+- Link clicks: ${num(input.linkClicks)}
 - Landing-page visits (Paqar): ${f.landingViews}
 - Cost per landing-page visit: ${total == null ? '—' : per(total, f.landingViews)}
 
@@ -216,7 +275,7 @@ Economics
 Creative comparison
 ${creativeBlock('A', input.creativeA)}
 ${creativeBlock('B', input.creativeB)}
-- ${compareCreatives(input.creativeA, input.creativeB)}
+- ${compareCreatives(input.creativeA, input.creativeB, input.adDeliveryStatus, input.adDeliveryReason)}
 
 Diagnosis
 - ${weakPoint}

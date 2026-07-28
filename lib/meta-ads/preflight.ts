@@ -96,14 +96,26 @@ function creativeParams(ad: AdInfo): { params: URLSearchParams; hosts: string[] 
   return { params, hosts }
 }
 
+/**
+ * `setup` runs before first activation and requires the campaign to be PAUSED.
+ * `live` runs afterwards and requires it to be ACTIVE.
+ *
+ * These are different questions. Running setup rules against a legitimately
+ * live campaign reports a healthy experiment as broken, which is exactly what
+ * happened once the campaign was switched on.
+ */
+export type PreflightMode = 'setup' | 'live'
+
 export interface PreflightInput {
   campaignId:    string
   adSetId:       string
   creativeAAdId: string
   creativeBAdId: string
+  mode?:         PreflightMode
 }
 
 export async function runPreflight(input: PreflightInput): Promise<PreflightResult> {
+  const mode: PreflightMode = input.mode ?? 'setup'
   const checks: PreflightCheck[] = []
 
   // --- Credentials ---------------------------------------------------------
@@ -151,11 +163,21 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
         : fail('campaign_owner', 'Campaign ownership', `Campaign account_id=${campaign.account_id}, expected ${accountId}`)
     )
 
-    checks.push(
-      campaign.status === 'PAUSED'
-        ? pass('campaign_paused', 'Campaign is paused', 'PAUSED — safe to enable the operator')
-        : fail('campaign_paused', 'Campaign is paused', `status=${campaign.status}. Create it paused; activate it by hand only after preflight passes.`)
-    )
+    if (mode === 'setup') {
+      checks.push(
+        campaign.status === 'PAUSED'
+          ? pass('campaign_state', 'Campaign is paused', 'PAUSED — safe to enable the operator')
+          : fail('campaign_state', 'Campaign is paused', `status=${campaign.status}. Create it paused; activate it by hand only after preflight passes.`)
+      )
+    } else {
+      checks.push(
+        campaign.status === 'ACTIVE'
+          ? pass('campaign_state', 'Campaign is live', `ACTIVE (effective ${campaign.effective_status})`)
+          : campaign.status === 'PAUSED'
+            ? manual('campaign_state', 'Campaign is live', 'PAUSED — delivery is stopped. Expected if you paused it deliberately or the operator hit a hard stop.')
+            : fail('campaign_state', 'Campaign is live', `status=${campaign.status}, effective=${campaign.effective_status}`)
+      )
+    }
 
     // The RM210 hard stop can live at either level, and Meta forces the
     // choice: an MYR *campaign* spending limit has a RM500 minimum, so RM210

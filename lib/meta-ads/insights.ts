@@ -152,27 +152,74 @@ export interface DeliveryMetrics {
   videoViews:        number
 }
 
-/** Per-ad delivery, used for the creative comparison in the daily report. */
+/**
+ * Why an ad has no delivery numbers. `available` with zeros means Meta really
+ * reported zero; anything else means we do not know, and the value must never
+ * be rendered as 0.
+ */
+export type DeliveryStatus = 'available' | 'unavailable'
+
+export interface DeliveryResult {
+  rows:   DeliveryMetrics[]
+  status: DeliveryStatus
+  reason: string | null
+}
+
+/**
+ * Per-ad delivery for the creative comparison.
+ *
+ * `ad_id` MUST be in `fields`. Meta only returns breakdown identifiers when
+ * they are explicitly requested — asking for `level=ad` alone returns rows
+ * with no ad_id, which previously fell back to the campaign id, collapsed both
+ * creatives onto one key, and surfaced as "0 impressions" for each ad. The
+ * data was there the whole time; the request just never asked which ad each
+ * row belonged to.
+ *
+ * Paginates, because a dropped page would silently understate spend.
+ */
 export async function getDeliveryMetrics(
   objectId: string,
   level: 'campaign' | 'ad'
-): Promise<DeliveryMetrics[]> {
-  const res = await metaGet<{ data: Array<InsightRow & { ad_id?: string }> }>(
-    `${objectId}/insights`,
-    {
-      fields:      'spend,impressions,reach,clicks,actions,video_play_actions',
-      date_preset: 'maximum',
-      level,
-    }
-  )
+): Promise<DeliveryResult> {
+  const fields = level === 'ad'
+    ? 'ad_id,ad_name,spend,impressions,reach,clicks,actions,video_play_actions'
+    : 'spend,impressions,reach,clicks,actions,video_play_actions'
 
-  return (res.data ?? []).map((row) => ({
-    objectId:         row.ad_id ?? objectId,
-    spendCents:       Math.round((Number(row.spend) || 0) * 100),
-    impressions:      Number(row.impressions) || 0,
-    reach:            Number(row.reach) || 0,
-    linkClicks:       actionValue(row.actions, 'link_click'),
-    landingPageViews: actionValue(row.actions, 'landing_page_view'),
-    videoViews:       actionValue(row.video_play_actions, 'video_view'),
-  }))
+  const rows: DeliveryMetrics[] = []
+  let res: { data?: Array<InsightRow & { ad_id?: string }>; paging?: { next?: string } }
+
+  try {
+    res = await metaGet(`${objectId}/insights`, {
+      fields, date_preset: 'maximum', level, limit: '100',
+    })
+  } catch (err) {
+    return { rows: [], status: 'unavailable', reason: err instanceof Error ? err.message : String(err) }
+  }
+
+  let page = res
+  let guard = 0
+  while (page && guard++ < 20) {
+    for (const row of page.data ?? []) {
+      // At ad level a row without ad_id cannot be attributed to a creative.
+      // Dropping it is correct: inventing an id would mislabel real spend.
+      if (level === 'ad' && !row.ad_id) continue
+      rows.push({
+        objectId:         level === 'ad' ? row.ad_id! : objectId,
+        spendCents:       Math.round((Number(row.spend) || 0) * 100),
+        impressions:      Number(row.impressions) || 0,
+        reach:            Number(row.reach) || 0,
+        linkClicks:       actionValue(row.actions, 'link_click'),
+        landingPageViews: actionValue(row.actions, 'landing_page_view'),
+        videoViews:       actionValue(row.video_play_actions, 'video_view'),
+      })
+    }
+    if (!page.paging?.next) break
+    try {
+      const nextRes = await fetch(page.paging.next, { cache: 'no-store', signal: AbortSignal.timeout(20_000) })
+      if (!nextRes.ok) break
+      page = await nextRes.json()
+    } catch { break }
+  }
+
+  return { rows, status: 'available', reason: null }
 }

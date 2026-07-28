@@ -113,12 +113,15 @@ export interface SnapshotInput {
   bucket:            Date
   level:             'campaign' | 'ad'
   metaObjectId:      string
+  // null means Meta did not report the number, NOT that it was zero. These
+  // stay nullable all the way to the screen so a failed read can never be
+  // rendered as genuine zero delivery.
   spendCents:        number | null
-  impressions:       number
-  reach:             number
-  videoViews:        number
-  linkClicks:        number
-  landingPageViews:  number
+  impressions:       number | null
+  reach:             number | null
+  videoViews:        number | null
+  linkClicks:        number | null
+  landingPageViews:  number | null
   funnel:            FunnelCounts
 }
 

@@ -122,7 +122,7 @@ describe('campaign', () => {
       effective_status: 'ACTIVE', spend_cap: '21000',
     })
     const result = await runPreflight(INPUT)
-    expect(check(result, 'campaign_paused')?.status).toBe('fail')
+    expect(check(result, 'campaign_state')?.status).toBe('fail')
   })
 
   it('rejects a missing RM210 campaign spending limit', async () => {
@@ -402,5 +402,93 @@ describe('RM210 spending limit — campaign or account level', () => {
     const r = await runPreflight(INPUT)
     expect(check(r, 'spend_cap')?.status).toBe('pass')
     expect(check(r, 'spend_cap')?.detail).toContain('Campaign spending limit')
+  })
+})
+
+describe('setup mode vs live mode', () => {
+  const activeCampaign = () => mocks.getCampaign.mockResolvedValue({
+    id: 'camp_1', name: 'c', account_id: '123', status: 'ACTIVE',
+    effective_status: 'ACTIVE', spend_cap: '21000',
+  })
+
+  it('setup mode fails a campaign that is already active', async () => {
+    activeCampaign()
+    const r = await runPreflight({ ...INPUT, mode: 'setup' })
+    expect(check(r, 'campaign_state')?.status).toBe('fail')
+  })
+
+  it('live mode passes a legitimately active campaign', async () => {
+    // The bug: setup rules were applied after launch, so a healthy live
+    // campaign was reported as broken.
+    activeCampaign()
+    const r = await runPreflight({ ...INPUT, mode: 'live' })
+    expect(check(r, 'campaign_state')?.status).toBe('pass')
+    expect(check(r, 'campaign_state')?.detail).toContain('ACTIVE')
+  })
+
+  it('setup mode passes a paused campaign', async () => {
+    const r = await runPreflight({ ...INPUT, mode: 'setup' })
+    expect(check(r, 'campaign_state')?.status).toBe('pass')
+  })
+
+  it('live mode flags a paused campaign as a manual item, not a failure', async () => {
+    // Deliberate pause or an operator hard stop — needs a human look, but the
+    // configuration itself is not broken.
+    const r = await runPreflight({ ...INPUT, mode: 'live' })
+    expect(check(r, 'campaign_state')?.status).toBe('manual')
+  })
+
+  it('defaults to setup mode when unspecified', async () => {
+    activeCampaign()
+    const r = await runPreflight(INPUT)
+    expect(check(r, 'campaign_state')?.status).toBe('fail')
+  })
+
+  it('applies every other check identically in both modes', async () => {
+    activeCampaign()
+    const setup = await runPreflight({ ...INPUT, mode: 'setup' })
+    const live  = await runPreflight({ ...INPUT, mode: 'live' })
+    const ids = (r: typeof setup) => r.checks.map((c) => c.id).sort()
+    expect(ids(setup)).toEqual(ids(live))
+  })
+})
+
+describe('Meta IDs are handled as exact strings', () => {
+  const REAL_IDS = {
+    campaignId:    '120248030709090438',
+    adSetId:       '120248030709110438',
+    creativeAAdId: '120248030709080438',
+    creativeBAdId: '120248031421580438',
+  }
+
+  it('passes the exact configured ids through to Meta unchanged', async () => {
+    mocks.getAdSet.mockResolvedValue({
+      id: REAL_IDS.adSetId, campaign_id: REAL_IDS.campaignId,
+      status: 'PAUSED', effective_status: 'PAUSED', daily_budget: '3000',
+      promoted_object: { pixel_id: 'pixel_1', custom_event_type: 'LEAD' },
+      targeting: { geo_locations: { countries: ['MY'] }, publisher_platforms: ['facebook', 'instagram'] },
+    })
+    mocks.listAdsInAdSet.mockResolvedValue([
+      { id: REAL_IDS.creativeAAdId, adset_id: REAL_IDS.adSetId, status: 'PAUSED', effective_status: 'PAUSED' },
+      { id: REAL_IDS.creativeBAdId, adset_id: REAL_IDS.adSetId, status: 'PAUSED', effective_status: 'PAUSED' },
+    ])
+    mocks.getAd.mockImplementation(async (id: string) => ({
+      ...goodAd(id, id === REAL_IDS.creativeAAdId ? 'creative_a' : 'creative_b'),
+      adset_id: REAL_IDS.adSetId,
+    }))
+    mocks.getCampaign.mockResolvedValue({
+      id: REAL_IDS.campaignId, name: 'c', account_id: '123',
+      status: 'PAUSED', effective_status: 'PAUSED', spend_cap: '21000',
+    })
+
+    await runPreflight(REAL_IDS)
+
+    for (const id of Object.values(REAL_IDS)) {
+      expect(Number(id).toString()).not.toBe(id) // these exceed MAX_SAFE_INTEGER
+    }
+    expect(mocks.getCampaign).toHaveBeenCalledWith(REAL_IDS.campaignId)
+    expect(mocks.getAdSet).toHaveBeenCalledWith(REAL_IDS.adSetId)
+    expect(mocks.getAd).toHaveBeenCalledWith(REAL_IDS.creativeAAdId)
+    expect(mocks.getAd).toHaveBeenCalledWith(REAL_IDS.creativeBAdId)
   })
 })

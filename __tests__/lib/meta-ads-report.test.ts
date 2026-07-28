@@ -15,7 +15,8 @@ function emptyFunnel() {
 }
 
 const creative = (o: Partial<CreativeResult> = {}): CreativeResult => ({
-  label: 'A', spendCents: 0, impressions: 0, linkClicks: 0, funnel: funnel(), ...o,
+  label: 'A', adId: 'ad_1', deliveryStatus: 'available',
+  spendCents: 0, impressions: 0, linkClicks: 0, funnel: funnel(), ...o,
 })
 
 const input = (o: Partial<ReportInput> = {}): ReportInput => ({
@@ -25,8 +26,8 @@ const input = (o: Partial<ReportInput> = {}): ReportInput => ({
   impressions: 5000,
   linkClicks: 50,
   funnel: funnel({ landingViews: 40, valuationStarted: 15, valuationCompleted: 12 }),
-  creativeA: creative({ label: 'A' }),
-  creativeB: creative({ label: 'B' }),
+  creativeA: creative({ label: 'A', adId: '120248030709080438' }),
+  creativeB: creative({ label: 'B', adId: '120248031421580438' }),
   ...o,
 })
 
@@ -60,7 +61,7 @@ describe('creative comparison honesty', () => {
       creativeB: creative({ label: 'B', spendCents: 2000, funnel: funnel({ valuationStarted: 1 }) }),
     }))
 
-    expect(report).toContain('INSUFFICIENT DATA')
+    expect(report).toContain('BELOW DECISION THRESHOLD')
     expect(report).toContain('Do not pause either creative')
   })
 
@@ -69,7 +70,7 @@ describe('creative comparison honesty', () => {
       creativeA: creative({ label: 'A', spendCents: 6000, funnel: funnel({ valuationStarted: 10 }) }),
       creativeB: creative({ label: 'B', spendCents: 6000, funnel: funnel({ valuationStarted: 9 }) }),
     }))
-    expect(report).toContain('Too close to call')
+    expect(report).toContain('NO CLEAR WINNER')
   })
 
   it('names a directional leader only with a clear margin, and still says recommend not auto-pause', () => {
@@ -77,7 +78,7 @@ describe('creative comparison honesty', () => {
       creativeA: creative({ label: 'A', spendCents: 6000, funnel: funnel({ valuationStarted: 20 }) }),
       creativeB: creative({ label: 'B', spendCents: 6000, funnel: funnel({ valuationStarted: 5 }) }),
     }))
-    expect(report).toContain('Creative A currently looks stronger')
+    expect(report).toContain('PROVISIONAL WINNER — Creative A')
     expect(report).toContain('recommend, do not auto-pause')
   })
 })
@@ -147,5 +148,104 @@ describe('recommendation', () => {
       impressions: 5000, linkClicks: 60, funnel: funnel({ landingViews: 2 }),
     }))
     expect(report).toContain('Stop and verify tracking')
+  })
+})
+
+describe('decision precedence — data health before sample size', () => {
+  it('1. reports delivery unavailable ahead of anything else', async () => {
+    const report = buildDailyReport(input({
+      adDeliveryStatus: 'unavailable',
+      adDeliveryReason: 'permission error',
+      creativeA: creative({ label: 'A', deliveryStatus: 'unavailable', spendCents: null,
+                            funnel: funnel({ valuationStarted: 6 }) }),
+      creativeB: creative({ label: 'B', deliveryStatus: 'unavailable', spendCents: null,
+                            funnel: funnel({ valuationStarted: 17 }) }),
+    }))
+    expect(report).toContain('META DELIVERY DATA UNAVAILABLE')
+    expect(report).toContain('permission error')
+    expect(report).toContain('Do not pause either ad')
+    // Must NOT blame sample size when the real problem is a reporting gap.
+    expect(report).not.toContain('BELOW DECISION THRESHOLD')
+  })
+
+  it('2. reports unmatched ads ahead of sample size', async () => {
+    const report = buildDailyReport(input({
+      creativeA: creative({ label: 'A', adId: '120248030709080438',
+                            deliveryStatus: 'unmatched', spendCents: null }),
+      creativeB: creative({ label: 'B', adId: '120248031421580438',
+                            deliveryStatus: 'available', spendCents: 6000 }),
+    }))
+    expect(report).toContain('AD MATCHING INCOMPLETE')
+    expect(report).toContain('120248030709080438')
+    expect(report).not.toContain('BELOW DECISION THRESHOLD')
+  })
+
+  it('3. only reaches sample-size messaging once data is healthy', async () => {
+    const report = buildDailyReport(input({
+      creativeA: creative({ label: 'A', spendCents: 2000, funnel: funnel({ valuationStarted: 3 }) }),
+      creativeB: creative({ label: 'B', spendCents: 2000, funnel: funnel({ valuationStarted: 1 }) }),
+    }))
+    expect(report).toContain('BELOW DECISION THRESHOLD')
+    expect(report).not.toContain('UNAVAILABLE')
+  })
+
+  it('never claims statistical validity', async () => {
+    const report = buildDailyReport(input())
+    expect(report.toLowerCase()).not.toContain('statistically valid')
+    expect(report).toContain('practical threshold, not a significance test')
+  })
+})
+
+describe('missing metrics render as em dash, never zero', () => {
+  it('renders unavailable spend and impressions as —', async () => {
+    const report = buildDailyReport(input({
+      totalSpendCents: null, impressions: null, linkClicks: null,
+      creativeA: creative({ label: 'A', deliveryStatus: 'unavailable',
+                            spendCents: null, impressions: null, linkClicks: null }),
+      creativeB: creative({ label: 'B', deliveryStatus: 'unavailable',
+                            spendCents: null, impressions: null, linkClicks: null }),
+    }))
+    expect(report).toContain('Impressions: —')
+    expect(report).toContain('Link clicks: —')
+    expect(report).toContain('spend —')
+    expect(report).not.toContain('spend RM0.00, 0 impressions')
+  })
+
+  it('still renders a genuine zero as zero', async () => {
+    const report = buildDailyReport(input({
+      creativeA: creative({ label: 'A', deliveryStatus: 'available',
+                            spendCents: 0, impressions: 0, linkClicks: 0 }),
+      creativeB: creative({ label: 'B', deliveryStatus: 'available',
+                            spendCents: 0, impressions: 0, linkClicks: 0 }),
+    }))
+    expect(report).toContain('spend RM0.00, 0 impressions, 0 link clicks')
+  })
+
+  it('does not compute cost per valuation when spend is unknown', async () => {
+    const report = buildDailyReport(input({
+      totalSpendCents: null,
+      funnel: funnel({ valuationCompleted: 12 }),
+    }))
+    expect(report).toContain('Cost per completed valuation: —')
+  })
+
+  it('diagnoses a reporting gap rather than blaming a funnel step', async () => {
+    const d = diagnose(input({ impressions: null, linkClicks: null }))
+    expect(d.weakPoint).toBe('Insufficient data')
+    expect(d.reason).toContain('could not be read')
+  })
+})
+
+describe('Meta IDs stay exact strings', () => {
+  const IDS = ['120248030709090438', '120248030709110438',
+               '120248030709080438', '120248031421580438']
+
+  it.each(IDS)('%s survives report rendering unchanged', (id) => {
+    const report = buildDailyReport(input({
+      creativeA: creative({ label: 'A', adId: id, deliveryStatus: 'unmatched', spendCents: null }),
+    }))
+    expect(report).toContain(id)
+    // Number() would round these to ...440 / ...0440 — the exact digits matter.
+    expect(Number(id).toString()).not.toBe(id)
   })
 })

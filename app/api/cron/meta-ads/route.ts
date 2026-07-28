@@ -5,6 +5,7 @@ import { sixHourBucket, myatDate } from '@/lib/attribution'
 import { pauseCampaign, MetaApiError, redactMeta } from '@/lib/meta-ads/client'
 import {
   getCampaignSpendCents, getDeliveryMetrics, getCampaign,
+  type DeliveryMetrics, type DeliveryStatus,
 } from '@/lib/meta-ads/insights'
 import {
   getExperiment, updateExperiment, recordAction, saveSnapshot,
@@ -107,16 +108,21 @@ export async function GET(request: NextRequest) {
   })
 
   // ── 2. Delivery + funnel, then snapshot ─────────────────────────────────
-  let campaignDelivery = { impressions: 0, reach: 0, linkClicks: 0, landingPageViews: 0, videoViews: 0 }
-  const adDelivery: Record<string, typeof campaignDelivery & { spendCents: number }> = {}
+  let campaignDelivery: DeliveryMetrics | null = null
+  const adDelivery: Record<string, DeliveryMetrics> = {}
+  let adDeliveryStatus: DeliveryStatus = 'unavailable'
+  let adDeliveryReason: string | null = 'not read'
   try {
-    const rows = await getDeliveryMetrics(campaignId, 'campaign')
-    if (rows[0]) campaignDelivery = rows[0]
-    for (const row of await getDeliveryMetrics(campaignId, 'ad')) {
-      adDelivery[row.objectId] = row
-    }
+    const camp = await getDeliveryMetrics(campaignId, 'campaign')
+    campaignDelivery = camp.rows[0] ?? null
+
+    const ads = await getDeliveryMetrics(campaignId, 'ad')
+    adDeliveryStatus = ads.status
+    adDeliveryReason = ads.reason
+    for (const row of ads.rows) adDelivery[row.objectId] = row
   } catch (err) {
-    console.error('[cron/meta-ads] delivery read failed', redactMeta(String(err)))
+    adDeliveryReason = redactMeta(String(err))
+    console.error('[cron/meta-ads] delivery read failed', adDeliveryReason)
   }
 
   const funnel = await getFunnelCounts().catch(() => null)
@@ -129,11 +135,11 @@ export async function GET(request: NextRequest) {
       level:            'campaign',
       metaObjectId:     campaignId,
       spendCents,
-      impressions:      campaignDelivery.impressions,
-      reach:            campaignDelivery.reach,
-      videoViews:       campaignDelivery.videoViews,
-      linkClicks:       campaignDelivery.linkClicks,
-      landingPageViews: campaignDelivery.landingPageViews,
+      impressions:      campaignDelivery?.impressions ?? null,
+      reach:            campaignDelivery?.reach ?? null,
+      videoViews:       campaignDelivery?.videoViews ?? null,
+      linkClicks:       campaignDelivery?.linkClicks ?? null,
+      landingPageViews: campaignDelivery?.landingPageViews ?? null,
       funnel,
     }).catch((err) => console.error('[cron/meta-ads] snapshot failed', err))
 
@@ -152,11 +158,11 @@ export async function GET(request: NextRequest) {
         level:            'ad',
         metaObjectId:     adId,
         spendCents:       delivery?.spendCents ?? null,
-        impressions:      delivery?.impressions ?? 0,
-        reach:            delivery?.reach ?? 0,
-        videoViews:       delivery?.videoViews ?? 0,
-        linkClicks:       delivery?.linkClicks ?? 0,
-        landingPageViews: delivery?.landingPageViews ?? 0,
+        impressions:      delivery?.impressions ?? null,
+        reach:            delivery?.reach ?? null,
+        videoViews:       delivery?.videoViews ?? null,
+        linkClicks:       delivery?.linkClicks ?? null,
+        landingPageViews: delivery?.landingPageViews ?? null,
         funnel:           adFunnel,
       }).catch((err) => console.error('[cron/meta-ads] ad snapshot failed', err))
     }
@@ -188,8 +194,10 @@ export async function GET(request: NextRequest) {
           ? Math.max(0, spendCents - previous)
           : spendCents ?? 0,
         totalSpendCents: spendCents,
-        impressions:     campaignDelivery.impressions,
-        linkClicks:      campaignDelivery.linkClicks,
+        impressions:     campaignDelivery?.impressions ?? null,
+        linkClicks:      campaignDelivery?.linkClicks ?? null,
+        adDeliveryStatus,
+        adDeliveryReason,
         funnel,
         creativeA: buildCreative('A', experiment.creative_a_ad_id, CREATIVE_UTM_CONTENT.a),
         creativeB: buildCreative('B', experiment.creative_b_ad_id, CREATIVE_UTM_CONTENT.b),
@@ -202,13 +210,16 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  function buildCreative(label: string, adId: string | null, slot: string): CreativeResult {
+  function buildCreative(label: string, adId: string | null | undefined, slot: string): CreativeResult {
     const d = adId ? adDelivery[adId] : undefined
     return {
       label,
-      spendCents:  d?.spendCents ?? 0,
-      impressions: d?.impressions ?? 0,
-      linkClicks:  d?.linkClicks ?? 0,
+      adId: adId ?? null,
+      // Matched only when Meta returned a row for this exact ad id.
+      deliveryStatus: d ? 'available' : (adDeliveryStatus === 'available' ? 'unmatched' : 'unavailable'),
+      spendCents:  d?.spendCents ?? null,
+      impressions: d?.impressions ?? null,
+      linkClicks:  d?.linkClicks ?? null,
       funnel: creativeFunnels[slot] ?? {
         landingViews: 0, valuationStarted: 0, valuationCompleted: 0,
         purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0,
@@ -230,7 +241,9 @@ export async function GET(request: NextRequest) {
       detail: `Spend could not be verified for ${failures} consecutive checks. Failing closed. Last error: ${spendError ?? 'unknown'}`,
     }
   } else {
-    const tracking = await detectTrackingFailure(campaignDelivery.landingPageViews, experiment.launched_at)
+    const tracking = campaignDelivery
+      ? await detectTrackingFailure(campaignDelivery.landingPageViews, experiment.launched_at)
+      : null
     if (tracking) hardStop = tracking
   }
 

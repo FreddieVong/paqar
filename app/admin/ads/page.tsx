@@ -80,6 +80,10 @@ export default async function AdminAdsPage() {
     experiment?.creative_a_ad_id && experiment?.creative_b_ad_id
   )
 
+  // One canonical server-side state drives both the mode and the controls.
+  const operatorEnabled = experiment?.operator_enabled === true
+  const mode: 'setup' | 'live' = operatorEnabled ? 'live' : 'setup'
+
   let preflight: PreflightResult | null = null
   if (configured && experiment) {
     preflight = await runPreflight({
@@ -87,14 +91,36 @@ export default async function AdminAdsPage() {
       adSetId:       experiment.meta_adset_id!,
       creativeAAdId: experiment.creative_a_ad_id!,
       creativeBAdId: experiment.creative_b_ad_id!,
+      mode,
     }).catch(() => null)
   }
+
+  // Spend reconciliation: campaign total vs the sum of matched ad spend.
+  // Unallocated spend is reported, never distributed between creatives.
+  const latestAdSnaps = new Map<string, number | null>()
+  for (const snap of adSnaps as Array<Record<string, unknown>>) {
+    latestAdSnaps.set(String(snap.meta_object_id), snap.spend_cents as number | null)
+  }
+  const matchedSpend = [...latestAdSnaps.values()]
+    .filter((v): v is number => typeof v === 'number')
+    .reduce((a, b) => a + b, 0)
+  const matchedCount = [...latestAdSnaps.values()].filter((v) => typeof v === 'number').length
 
   const latestSnap = snapshots[snapshots.length - 1] as
     | { spend_cents: number | null; impressions: number; link_clicks: number; captured_at_bucket: string }
     | undefined
   const totalSpend = latestSnap?.spend_cents ?? null
   const remaining  = totalSpend == null ? null : Math.max(0, MAX_TOTAL_SPEND_MYR * 100 - totalSpend)
+
+  const unallocated = totalSpend == null || matchedCount === 0 ? null : totalSpend - matchedSpend
+  // 2% or RM1, whichever is larger — Meta rounds per-object spend independently.
+  const tolerance = totalSpend == null ? 0 : Math.max(100, Math.round(totalSpend * 0.02))
+  const reconciliation =
+    totalSpend == null ? 'unavailable'
+    : matchedCount === 0 ? 'unavailable'
+    : matchedCount < 2 ? 'partial'
+    : Math.abs(unallocated ?? 0) <= tolerance ? 'complete'
+    : 'mismatch'
 
   const critical = experiment?.critical_alert_state === 'CRITICAL_PAUSE_FAILED'
 
@@ -114,7 +140,7 @@ export default async function AdminAdsPage() {
             <p className="text-[14px] text-[#7F1D1D] leading-relaxed">
               Meta delivery <strong>may still be active</strong>. Pause the campaign manually in
               Ads Manager now. The operator kill switch has been set and it will not retry.
-              Meta&rsquo;s RM{MAX_TOTAL_SPEND_MYR} campaign spending limit remains the primary protection.
+              Meta&rsquo;s RM{MAX_TOTAL_SPEND_MYR} account spending limit remains the primary protection.
             </p>
           </div>
         )}
@@ -126,10 +152,10 @@ export default async function AdminAdsPage() {
           <Row label="Kill switch" value={experiment?.kill_switch ? 'ACTIVE' : 'off'} strong={experiment?.kill_switch} />
           <Row label="Manual pause" value={experiment?.manual_pause ? 'YES (sticky)' : 'no'} />
           <Row label="Campaign status" value={experiment?.status ?? '—'} />
-          <Row label="Daily budget limit" value={`RM${MAX_DAILY_BUDGET_MYR}`} />
-          <Row label="Campaign spending limit" value={`RM${MAX_TOTAL_SPEND_MYR}`} />
-          <Row label="Total spend" value={rm(totalSpend)} strong />
-          <Row label="Remaining" value={rm(remaining)} strong />
+          <Row label="Daily budget" value={`RM${MAX_DAILY_BUDGET_MYR}`} />
+          <Row label="Meta account spending limit" value={`RM${MAX_TOTAL_SPEND_MYR}`} strong />
+          <Row label="Campaign spend (Meta)" value={rm(totalSpend)} strong />
+          <Row label="Remaining under the limit" value={rm(remaining)} strong />
           <Row label="Start date" value={formatDateTime(experiment?.launched_at ?? null)} />
           <Row label="Last successful sync" value={formatDateTime(experiment?.last_successful_sync_at ?? null)} />
           <Row label="Consecutive spend failures" value={String(experiment?.consecutive_spend_failures ?? 0)} />
@@ -176,9 +202,32 @@ export default async function AdminAdsPage() {
           ))}
         </div>
 
+        {/* ── Spend reconciliation ───────────────────────────────── */}
+        <div className={CARD}>
+          <p className={H2}>Spend reconciliation</p>
+          <Row label="Campaign spend (Meta)" value={rm(totalSpend)} />
+          <Row label="Matched ad spend" value={matchedCount === 0 ? '—' : rm(matchedSpend)} />
+          <Row label="Unallocated" value={rm(unallocated)} />
+          <Row label="Status" value={reconciliation} strong />
+          <p className="text-[12px] text-[#6B7280] mt-2 leading-snug">
+            {reconciliation === 'unavailable'
+              ? 'Meta has not returned ad-level spend yet, so campaign spend cannot be attributed to a creative.'
+              : reconciliation === 'complete'
+                ? 'Campaign spend matches the sum of both ads within rounding tolerance.'
+                : reconciliation === 'partial'
+                  ? 'Only some ads returned spend. The remainder is unattributed and is never split between creatives.'
+                  : 'Campaign spend and matched ad spend disagree beyond tolerance. Unallocated spend is shown as-is, not distributed.'}
+          </p>
+        </div>
+
         {/* ── Preflight ──────────────────────────────────────────── */}
         <div className={CARD}>
-          <p className={H2}>Preflight</p>
+          <p className={H2}>{mode === 'live' ? 'Live campaign health' : 'Setup preflight'}</p>
+          <p className="text-[12px] text-[#6B7280] mb-3 leading-snug">
+            {mode === 'live'
+              ? 'The operator is enabled, so these are live-state checks — an ACTIVE campaign is expected.'
+              : 'Pre-activation checks — a PAUSED campaign is expected.'}
+          </p>
           {!configured && (
             <p className="text-[13px] text-[#6B7280] mb-3">
               Enter the Meta object IDs below first.
@@ -252,15 +301,21 @@ export default async function AdminAdsPage() {
             activated and paused by hand in Ads Manager. The operator can only read, and pause.
           </p>
           <div className="space-y-2">
-            <form action={enableOperatorAfterPreflight}>
-              <button
-                type="submit"
-                disabled={!configured || experiment?.kill_switch}
-                className={`w-full bg-[#064E4A] text-white disabled:bg-[#D1D5DB] ${BTN}`}
-              >
-                Enable operator after preflight
-              </button>
-            </form>
+            {operatorEnabled ? (
+              <div className="w-full bg-[#ECFDF5] border border-[#059669] text-[#065F46] rounded-[10px] py-3 px-4 text-[14px] font-heading font-bold text-center">
+                Operator enabled
+              </div>
+            ) : (
+              <form action={enableOperatorAfterPreflight}>
+                <button
+                  type="submit"
+                  disabled={!configured || experiment?.kill_switch}
+                  className={`w-full bg-[#064E4A] text-white disabled:bg-[#D1D5DB] ${BTN}`}
+                >
+                  Enable operator after preflight
+                </button>
+              </form>
+            )}
             <form action={pauseEverything}>
               <button type="submit" className={`w-full bg-[#DC2626] text-white ${BTN}`}>
                 Pause everything
@@ -345,13 +400,17 @@ function creativeFrom(
   adId: string | null,
   label: string
 ): CreativeResult {
-  const rows = snaps.filter((s) => s.meta_object_id === adId)
+  // Ad IDs are compared as strings throughout — they exceed Number.MAX_SAFE_INTEGER.
+  const rows = snaps.filter((s) => String(s.meta_object_id) === String(adId))
   const last = rows[rows.length - 1]
+  const spend = (last?.spend_cents as number | null) ?? null
   return {
     label,
-    spendCents:  (last?.spend_cents as number | null) ?? 0,
-    impressions: (last?.impressions as number | null) ?? 0,
-    linkClicks:  (last?.link_clicks as number | null) ?? 0,
+    adId,
+    deliveryStatus: last && spend != null ? 'available' : 'unavailable',
+    spendCents:  spend,
+    impressions: (last?.impressions as number | null) ?? null,
+    linkClicks:  (last?.link_clicks as number | null) ?? null,
     funnel: {
       landingViews:       (last?.paqar_landing_views as number | null) ?? 0,
       valuationStarted:   (last?.valuation_started as number | null) ?? 0,
