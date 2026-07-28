@@ -7,6 +7,7 @@ import { Shell }          from '@/components/layout/Shell'
 import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
 import { filterOutlierPrices, filterListingsByYear } from '@/lib/price-stats'
 import { VARIANT_GUIDES } from '@/lib/variant-guides'
+import { parseSlug }      from '@/lib/year-model-slug'
 
 export const dynamic = 'force-dynamic'
 
@@ -194,13 +195,6 @@ const MODEL_MAP: Record<string, ModelInfo> = {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-
-function parseSlug(slug: string | undefined): { modelKey: string; year: string } | null {
-  if (!slug) return null
-  const m = slug.match(/^(.+)-(\d{4})$/)
-  if (!m) return null
-  return { modelKey: m[1]!, year: m[2]! }
-}
 
 function formatFetchedAt(iso: string): string {
   const d = new Date(iso)
