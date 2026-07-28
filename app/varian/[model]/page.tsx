@@ -5,6 +5,7 @@ import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
 import { VARIANT_GUIDES, type VariantVerdict } from '@/lib/variant-guides'
+import { variantLabelList } from '@/lib/variant-label'
 
 type Props = { params: { model: string } }
 
@@ -15,11 +16,17 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: Props): Metadata {
   const guide = VARIANT_GUIDES[params.model]
   if (!guide) return {}
-  // Newest generation — that's what most searchers are cross-shopping
+  // Newest generation — that's what most searchers are cross-shopping.
+  // Labels are the trim identifiers (G, X, H, AV), not the engine size: most
+  // variants in a generation share a displacement, so the old first-token
+  // extraction rendered "1.3 vs 1.3 vs 1.5 vs 1.5". See lib/variant-label.ts.
   const newestGen    = guide.generations[guide.generations.length - 1]
-  const variantNames = newestGen?.variants.map(v => v.name.split(' ')[0]).join(' vs ') ?? ''
+  const variantNames = variantLabelList(newestGen?.variants.map(v => v.name) ?? [])
   const title = `${guide.model} Varian Mana Patut Beli? ${variantNames} | Paqar`
-  const description = `${guide.answerLine} Panduan varian ${guide.brand} ${guide.model} terpakai — nilai terbaik, varian untuk elak, cara cam varian sebenar, dan harga berpatutan.`
+  // "Beza" is how the query data shows people actually phrase this ("beza
+  // honda city e dan v"), and the description has room for it that the title
+  // does not.
+  const description = `Beza varian ${guide.brand} ${guide.model} terpakai — ${variantNames}. ${guide.answerLine} Nilai terbaik, varian untuk elak, cara cam varian sebenar, dan harga berpatutan.`
   return {
     title,
     description,
