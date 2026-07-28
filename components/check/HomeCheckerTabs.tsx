@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { OverpricedCheckerForm } from './OverpricedCheckerForm'
 import { PlateCheckerForm }      from './PlateCheckerForm'
 import { analytics }             from '@/lib/analytics'
@@ -10,6 +10,18 @@ type FormState = 'idle' | 'loading' | 'result' | 'error'
 
 export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null }) {
   const [tab, setTab] = useState<Tab>('model')
+
+  // ?tab=plat preselects the plate form — used by the "Semak nombor plat"
+  // recovery action on a not-found report. Read after mount from
+  // window.location rather than useSearchParams(): this renders on the
+  // statically prerendered homepage, and the hook would force a client-side
+  // bailout for the whole page. Starting on 'model' and switching keeps
+  // server and first client render identical.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'plat') {
+      setTab('plate')
+    }
+  }, [])
   const [modelFormState, setModelFormState] = useState<FormState>('idle')
 
   // Hide the how-it-works strip once the user is past those steps

@@ -48,6 +48,24 @@ export async function getOrFetchVehicleData(plate: string): Promise<VehicleApiRe
 }
 
 /**
+ * Terminal lookup status from cache only — never an API call, so the poll
+ * endpoint can distinguish "still looking" from "no such vehicle" without
+ * ever costing money. null means legacy or not yet looked up.
+ */
+export async function getCachedLookupStatus(plate: string): Promise<LookupStatus | null> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('plate_lookup_cache')
+    .select('vehicle_data, fetched_at, lookup_status, error_code')
+    .eq('plate_hash', hash(plate))
+    .single<CacheRow>()
+  if (!data) return null
+  // A row holding a vehicle IS found, whatever a legacy status column says.
+  if (data.vehicle_data) return LOOKUP_STATUSES.found
+  return data.lookup_status ?? null
+}
+
+/**
  * Cache-first lookup returning the TERMINAL status, so callers can emit an
  * accurate funnel event instead of inferring one from a null.
  *

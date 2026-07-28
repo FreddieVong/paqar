@@ -4,7 +4,7 @@ import { Redis }     from '@upstash/redis'
 import { getCheck }  from '@/lib/db/checks'
 import { createClient } from '@/lib/supabase/server'
 import { decrypt } from '@/lib/crypto'
-import { getCachedVehicleData } from '@/lib/db/plate-lookups'
+import { getCachedVehicleData, getCachedLookupStatus } from '@/lib/db/plate-lookups'
 
 const ratelimit = new Ratelimit({
   redis:   Redis.fromEnv(),
@@ -59,9 +59,14 @@ export async function GET(
   // Free teaser — only identity fields; the full record (VIN, insurance,
   // valuation) stays behind the RM12 report. Cache read only, never an API call.
   let vehiclePreview: { description: string; make: string; model: string; registrationYear: string } | null = null
+  // Terminal status lets the client tell "still looking" from "no such
+  // vehicle" from "provider failed" — previously it could only tell whether a
+  // preview existed, so a not-found rendered as silence.
+  let lookupStatus: string | null = null
   if (row.check.plate_encrypted) {
     try {
       const plate = decrypt(row.check.plate_encrypted)
+      lookupStatus = await getCachedLookupStatus(plate)
       const data  = await getCachedVehicleData(plate)
       if (data?.make) {
         vehiclePreview = {
@@ -74,5 +79,5 @@ export async function GET(
     } catch { /* teaser is best-effort */ }
   }
 
-  return NextResponse.json({ ...row, vehiclePreview })
+  return NextResponse.json({ ...row, vehiclePreview, lookupStatus })
 }
