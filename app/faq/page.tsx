@@ -24,7 +24,7 @@ const GROUPS = [
       { slug: 'best-first-car-under-30k',   title: 'Best First Car Under RM30k in Malaysia',        desc: 'Pilihan kereta pertama bawah RM30,000 — banding Myvi, City dan Vios dengan harga pasaran sebenar.' },
       { slug: 'honda-city-buying-guide',    title: 'Honda City Buying Guide',                       desc: 'Tahun mana patut beli, varian 1.5 S atau 1.5 H, harga pasaran sebenar, dan apa perlu disemak.' },
       { slug: 'toyota-vios-buying-guide',   title: 'Toyota Vios Buying Guide',                      desc: 'Generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, serta tanda bahaya Vios.' },
-      { slug: 'honda-city-vs-toyota-vios',  title: 'Honda City vs Toyota Vios',                     desc: 'Perbandingan terus: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penjimatan minyak.' },
+      { slug: 'honda-city-vs-toyota-vios',  title: 'Honda City vs Toyota Vios — mana satu?',        desc: 'Perbandingan terus: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penggunaan minyak.' },
     ],
   },
   {
