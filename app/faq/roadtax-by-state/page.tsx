@@ -35,7 +35,7 @@ export default function RoadtaxByState() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      <div lang="en">
         <h1 className="text-4xl font-bold mb-6">Roadtax by State in Malaysia 2026</h1>
         <p className="text-lg text-[#6B7280] mb-6">How much roadtax do you pay? State-by-state breakdown + how to calculate for your car.</p>
 

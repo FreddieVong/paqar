@@ -1,9 +1,24 @@
 import Link from 'next/link'
 
-export function Shell({ children }: { children: React.ReactNode }) {
+export function Shell({
+  children,
+  width = 'default',
+}: {
+  children: React.ReactNode
+  /**
+   * 'default' (max-w-lg) suits the narrow, form-led product pages.
+   * 'wide' (max-w-3xl) is for long-form guides with tables — squeezing those
+   * into max-w-lg reflows multi-column tables into an unreadable mess, which
+   * is why the /faq/* guides previously opted out of Shell entirely and so
+   * shipped with no nav and no footer links.
+   * Both class strings appear literally so Tailwind's JIT keeps them.
+   */
+  width?: 'default' | 'wide'
+}) {
+  const maxWidth = width === 'wide' ? 'max-w-3xl' : 'max-w-lg'
   return (
     <>
-      <main className="max-w-lg mx-auto px-4 py-8">
+      <main className={`${maxWidth} mx-auto px-4 py-8`}>
         {children}
       </main>
       <footer className="border-t border-[#F3F4F6] mt-4">

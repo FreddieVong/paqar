@@ -53,7 +53,7 @@ export default function HowToNegotiate() {
   return (
     <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div lang="en">
       <h1 className="text-4xl font-bold mb-6">How to Negotiate a Used Car Price</h1>
       <p className="text-lg text-[#6B7280] mb-6">Professional car buyers save RM2–5k per purchase. Here's their playbook.</p>
 

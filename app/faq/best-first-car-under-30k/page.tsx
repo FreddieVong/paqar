@@ -67,7 +67,7 @@ export default function FirstCarUnder30k() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="min-h-screen bg-white">
-        <div className="max-w-3xl mx-auto px-4 py-12">
+        <div lang="en">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-[#111827] mb-3">Best First Car Under RM30k in Malaysia</h1>

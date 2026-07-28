@@ -54,7 +54,7 @@ export default function ViosBuyingGuide() {
   return (
     <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div lang="en">
       <h1 className="text-4xl font-bold mb-6">Toyota Vios Buying Guide: Best Year & Price</h1>
       <p className="text-lg text-[#6B7280] mb-6">Complete guide: which Vios year to buy, pricing, reliability, depreciation.</p>
 

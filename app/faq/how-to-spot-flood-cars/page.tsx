@@ -35,7 +35,7 @@ export default function HowToSpotFloodedCars() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      <div lang="en">
         <h1 className="text-4xl font-bold mb-6">How to Spot a Flooded Car</h1>
         <p className="text-lg text-[#6B7280] mb-6">Floods cost buyers thousands in hidden repairs. This guide teaches you the physical signs and how JomCheck catches what your eyes miss.</p>
 

@@ -53,7 +53,7 @@ export default function ChecklistBuyingUsedCar() {
   return (
     <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div lang="en">
       <h1 className="text-4xl font-bold mb-6">Complete Checklist: What to Check When Buying a Used Car</h1>
       <p className="text-lg text-[#6B7280] mb-6">Professional buyer's checklist. Print and bring to every viewing.</p>
 

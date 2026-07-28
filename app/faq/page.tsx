@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link    from 'next/link'
-import { Nav }   from '@/components/layout/Nav'
-import { Shell } from '@/components/layout/Shell'
+// Nav and Shell come from app/faq/layout.tsx, which wraps this page and every
+// /faq/* guide — rendering them here too would double the chrome.
 
 const TITLE = 'Soalan Lazim & Panduan Pembeli Kereta Terpakai | Paqar'
 const DESC  = 'Panduan lengkap pembeli kereta terpakai Malaysia — cara pilih model, cara rundingan harga, cara kesan kereta banjir, checklist sebelum beli, dan kos roadtax mengikut negeri.'
@@ -79,8 +79,6 @@ export default function FaqHubPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
-      <Nav />
-      <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-7">
 
           <div>
@@ -143,7 +141,6 @@ export default function FaqHubPage() {
           </div>
 
         </div>
-      </Shell>
     </>
   )
 }

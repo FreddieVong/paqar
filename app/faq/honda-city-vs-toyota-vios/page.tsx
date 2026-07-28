@@ -54,7 +54,7 @@ export default function CityVsVios() {
   return (
     <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div lang="en">
       <h1 className="text-4xl font-bold mb-6">Honda City vs Toyota Vios: Which Should You Buy?</h1>
       <p className="text-lg text-[#6B7280] mb-6">Direct comparison: both popular, both reliable. But which is the better deal?</p>
 

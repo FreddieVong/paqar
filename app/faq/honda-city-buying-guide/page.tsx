@@ -35,7 +35,7 @@ export default function HondaCityGuide() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      <div lang="en">
         <h1 className="text-4xl font-bold mb-6">Honda City Buying Guide: Best Year & Variant</h1>
         <p className="text-lg text-[#6B7280] mb-6">Complete guide to buying a used Honda City: which generation, which variant, real market prices, what to check.</p>
 
