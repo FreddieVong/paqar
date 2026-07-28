@@ -12,11 +12,23 @@
  * or a checkout.
  */
 
-type BrowserEvent = 'landing_page_view' | 'valuation_started' | 'valuation_completed'
+type BrowserEvent =
+  | 'landing_page_view'
+  | 'valuation_started'
+  | 'plate_submitted'
+  | 'valuation_completed'
+  | 'plate_result_poll_timed_out'
+
+export type ValuationPathKey = 'plate_report' | 'model_price' | 'plate_check'
 
 export function trackAdEvent(
   event: BrowserEvent,
-  opts: { attemptId?: string; checkId?: string } = {}
+  opts: {
+    /** Journey id — unique per SUBMISSION, reused across retries. */
+    attemptId?: string
+    checkId?: string
+    valuationPath?: ValuationPathKey
+  } = {}
 ): void {
   if (typeof window === 'undefined') return
 

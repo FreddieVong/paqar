@@ -205,7 +205,10 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
       entry_page_type: params.get('entry_source') === 'faq' ? 'faq' : 'home',
       traffic_context: getTrafficContext(params),
     })
-    trackAdEvent('valuation_started', { attemptId })
+    // model_price: no check is created and the teaser never renders, so this
+    // journey can never reach valuation_completed. Tagging the path stops it
+    // being counted against the report funnel's completion rate.
+    trackAdEvent('valuation_started', { attemptId, valuationPath: 'model_price' })
 
     try {
       const res = await fetch('/api/price-check', {
@@ -238,11 +241,19 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
     if (!plate.trim()) return
     setPlateBusy(true)
     setPlateError(null)
+
+    // plate_check: creates a check but lands on /check/[id], which does not
+    // render the teaser — so this journey can never reach valuation_completed
+    // either. Tagged so it is reported separately from the report funnel.
+    const attemptId = submissionAttemptId(`plate:${plate.trim()}`)
+    trackAdEvent('valuation_started', { attemptId, valuationPath: 'plate_check' })
+    trackAdEvent('plate_submitted',   { attemptId, valuationPath: 'plate_check' })
+
     try {
       const res = await fetch('/api/checks', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: crypto.randomUUID() }),
+        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: attemptId }),
       })
       if (!res.ok) {
         const data = await res.json() as { error?: string }

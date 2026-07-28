@@ -29,23 +29,29 @@ const limiter = new Ratelimit({
 })
 
 const schema = z.object({
-  event:  z.enum(['landing_page_view', 'valuation_started', 'valuation_completed']),
+  event: z.enum([
+    'landing_page_view', 'valuation_started', 'valuation_completed',
+    'plate_submitted', 'plate_result_poll_timed_out',
+  ]),
   url:    z.string().max(2000),
-  // Per-submit id held in a client ref so a retry reuses it.
+  // Per-submit id held in a client ref so a retry reuses it. Doubles as the
+  // journey id: unique per SUBMISSION, not per session.
   attemptId: z.string().max(100).optional(),
   checkId:   z.string().max(100).optional(),
+  valuationPath: z.enum(['plate_report', 'model_price', 'plate_check']).optional(),
 })
 
 // Paqar funnel step → Meta standard event. valuation_started is also tracked
 // as a Custom Conversion in Events Manager; that is what the campaign
 // optimises for.
-const META_EVENT: Record<
-  'landing_page_view' | 'valuation_started' | 'valuation_completed',
-  MetaEventName
-> = {
+const META_EVENT: Partial<Record<string, MetaEventName>> = {
   landing_page_view:   'PageView',
   valuation_started:   'Lead',
   valuation_completed: 'ViewContent',
+  // plate_submitted and plate_result_poll_timed_out are DIAGNOSTIC ONLY.
+  // They stay in Paqar's database and are never forwarded to Meta: they would
+  // add nothing to optimisation and plate-level activity is not Meta's
+  // business.
 }
 
 /**
@@ -104,11 +110,24 @@ export async function POST(request: NextRequest) {
   await upsertAdSession({ sessionId, attribution, landingPath: path })
 
   let id: string
+  let errorStage: 'plate_result_polling' | undefined
+  let errorCode:  'poll_timeout' | undefined
+
   if (event === 'landing_page_view') {
     id = derive.landingPageView(sessionId, path)
   } else if (event === 'valuation_started') {
     if (!attemptId) return NextResponse.json({ error: 'attemptId required' }, { status: 400 })
     id = derive.valuationStarted(sessionId, attemptId)
+  } else if (event === 'plate_submitted') {
+    if (!attemptId) return NextResponse.json({ error: 'attemptId required' }, { status: 400 })
+    id = derive.plateSubmitted(sessionId, attemptId)
+  } else if (event === 'plate_result_poll_timed_out') {
+    if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
+    // Keyed on the check alone, so a refresh that times out again is the same
+    // event. The journey stays on the same check — no second paid lookup.
+    id = derive.pollTimedOut(checkId)
+    errorStage = 'plate_result_polling'
+    errorCode  = 'poll_timeout'
   } else {
     if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
     id = derive.valuationCompleted(sessionId, checkId)
@@ -116,10 +135,14 @@ export async function POST(request: NextRequest) {
 
   const result = await recordAdEvent({
     sessionId,
-    eventName: event as AdEventName,
-    eventId:   id,
-    checkId:   checkId ?? null,
+    eventName:     event as AdEventName,
+    eventId:       id,
+    checkId:       checkId ?? null,
     path,
+    valuationPath: parsed.data.valuationPath ?? null,
+    journeyId:     attemptId ?? null,
+    errorStage:    errorStage ?? null,
+    errorCode:     errorCode  ?? null,
   })
 
   // A write failure must surface as a failure. Treating it as a duplicate
@@ -130,9 +153,10 @@ export async function POST(request: NextRequest) {
 
   // Only a genuinely new occurrence reaches Meta. A refresh returns ok with
   // duplicate:true and sends nothing.
-  if (result.status === 'inserted') {
+  const metaEvent = META_EVENT[event]
+  if (result.status === 'inserted' && metaEvent) {
     const sent = await sendMetaEvent({
-      eventName: META_EVENT[event],
+      eventName: metaEvent,
       eventId:   id,
       attribution,
       clientIp:  ip,

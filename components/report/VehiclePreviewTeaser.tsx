@@ -8,7 +8,11 @@ import { trackAdEvent } from '@/lib/meta-events'
 import type { PollCheckResponse, VehiclePreview } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
-const MAX_POLLS        = 8
+// 16 polls = ~24s. The provider alone is allowed 10s (lib/vehicleapi.ts) before
+// the cache write, and measured production latencies reach 11.3s — the old
+// 8-poll/12s budget could expire while the lookup was still in flight, leaving
+// the user with nothing and no record that it happened.
+const MAX_POLLS        = 16
 
 /**
  * Free "Kenderaan Dijumpai" teaser for the unpaid report page. The vehicle
@@ -67,6 +71,11 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
       } else if (!trackedRef.current) {
         trackedRef.current = true
         analytics.teaserShown({ has_vehicle: false })
+        // The client stopped waiting. This does NOT assert the backend lookup
+        // failed — results often land seconds after the poll window closes.
+        // Keyed on check_id, so a refresh that times out again is the same
+        // event and resumes the same check rather than creating another.
+        trackAdEvent('plate_result_poll_timed_out', { checkId })
       }
     }
 

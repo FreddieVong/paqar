@@ -223,3 +223,69 @@ describe('bot filtering', () => {
     expect(fake.rows('ad_events')).toHaveLength(1)
   })
 })
+
+describe('new funnel stages', () => {
+  it('records plate_submitted with its path and journey', async () => {
+    await post({ event: 'plate_submitted', url: LANDING_URL,
+                 attemptId: 'j1', valuationPath: 'plate_report' })
+    const [row] = fake.rows('ad_events')
+    expect(row.event_name).toBe('plate_submitted')
+    expect(row.valuation_path).toBe('plate_report')
+    expect(row.journey_id).toBe('j1')
+  })
+
+  it('tags a model-tab start as model_price so it never counts as a report journey', async () => {
+    await post({ event: 'valuation_started', url: LANDING_URL,
+                 attemptId: 'j1', valuationPath: 'model_price' })
+    expect(fake.rows('ad_events')[0]!.valuation_path).toBe('model_price')
+  })
+
+  it('records a poll timeout with its structured error fields', async () => {
+    await post({ event: 'plate_result_poll_timed_out', url: LANDING_URL, checkId: 'ch_1' })
+    const [row] = fake.rows('ad_events')
+    expect(row.error_stage).toBe('plate_result_polling')
+    expect(row.error_code).toBe('poll_timeout')
+    expect(row.check_id).toBe('ch_1')
+  })
+
+  it('emits the poll timeout only once per check, however many refreshes', async () => {
+    await post({ event: 'plate_result_poll_timed_out', url: LANDING_URL, checkId: 'ch_1' })
+    const again = await post({ event: 'plate_result_poll_timed_out', url: LANDING_URL, checkId: 'ch_1' })
+    expect(await again.json()).toMatchObject({ duplicate: true })
+    expect(fake.rows('ad_events')).toHaveLength(1)
+  })
+
+  it('three different cars in one session are three journeys', async () => {
+    for (const j of ['j1', 'j2', 'j3']) {
+      await post({ event: 'plate_submitted', url: LANDING_URL,
+                   attemptId: j, valuationPath: 'plate_report' })
+    }
+    expect(fake.rows('ad_events')).toHaveLength(3)
+  })
+
+  it('retries of ONE submission collapse to a single event', async () => {
+    for (let i = 0; i < 3; i++) {
+      await post({ event: 'plate_submitted', url: LANDING_URL,
+                   attemptId: 'j1', valuationPath: 'plate_report' })
+    }
+    expect(fake.rows('ad_events')).toHaveLength(1)
+  })
+
+  it('never forwards diagnostic stages to Meta', async () => {
+    // plate-level activity is not Meta's business and adds nothing to
+    // optimisation — these stay in Paqar's database only.
+    await post({ event: 'plate_submitted', url: LANDING_URL, attemptId: 'j1' })
+    await post({ event: 'plate_result_poll_timed_out', url: LANDING_URL, checkId: 'ch_1' })
+    expect(sendMetaEvent).not.toHaveBeenCalled()
+  })
+
+  it('still forwards the optimisation event', async () => {
+    await post({ event: 'valuation_started', url: LANDING_URL, attemptId: 'j1' })
+    expect(sendMetaEvent).toHaveBeenCalledTimes(1)
+  })
+
+  it('requires a checkId for a poll timeout', async () => {
+    const res = await post({ event: 'plate_result_poll_timed_out', url: LANDING_URL })
+    expect(res.status).toBe(400)
+  })
+})

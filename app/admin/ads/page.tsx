@@ -3,6 +3,7 @@ import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
 import { getExperiment, getFunnelCounts, latestAction, listSnapshots } from '@/lib/meta-ads/db'
 import { runPreflight, type PreflightResult } from '@/lib/meta-ads/preflight'
+import { VALUATION_PATHS } from '@/lib/funnel-stages'
 import { buildDailyReport, computeSpendSinceLastSync, type CreativeResult } from '@/lib/meta-ads/report'
 import {
   MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, CREATIVE_UTM_CONTENT,
@@ -70,7 +71,10 @@ export default async function AdminAdsPage() {
   }
 
   const experiment = await getExperiment()
-  const funnel     = await getFunnelCounts().catch(() => null)
+  // plate_report ONLY — see lib/funnel-stages.ts. Mixing entry points was the
+  // original cause of the misleading 8.7% completion rate.
+  const funnel     = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport }).catch(() => null)
+  const modelFunnel = await getFunnelCounts({ valuationPath: VALUATION_PATHS.modelPrice }).catch(() => null)
   const action     = experiment ? await latestAction(experiment.id).catch(() => null) : null
   const snapshots  = experiment ? await listSnapshots(experiment.id, 'campaign').catch(() => []) : []
   const adSnaps    = experiment ? await listSnapshots(experiment.id, 'ad').catch(() => []) : []
@@ -171,10 +175,21 @@ export default async function AdminAdsPage() {
 
         {/* ── Funnel ─────────────────────────────────────────────── */}
         <div className={CARD}>
-          <p className={H2}>Paqar funnel (source of truth)</p>
+          <p className={H2}>Paqar funnel — report path only</p>
+          <p className="text-[12px] text-[#6B7280] mb-2 leading-snug">
+            <code>plate_report</code> journeys, counted uniquely per submission.
+            The model tab ({modelFunnel?.valuationStarted ?? 0} starts) and the
+            overpriced plate tab never render the teaser, so they can never
+            complete and are excluded rather than counted as failures.
+          </p>
           <Row label="Landing-page visits" value={String(funnel?.landingViews ?? 0)} />
           <Row label="valuation_started" value={String(funnel?.valuationStarted ?? 0)} />
           <Row label="valuation_completed" value={String(funnel?.valuationCompleted ?? 0)} />
+          <Row label="  ├ plate submitted" value={String(funnel?.plateSubmitted ?? 0)} />
+          <Row label="  ├ lookup found" value={String(funnel?.lookupSucceeded ?? 0)} />
+          <Row label="  ├ lookup not found (valid)" value={String(funnel?.lookupNotFound ?? 0)} />
+          <Row label="  ├ lookup failed (technical)" value={String(funnel?.lookupFailed ?? 0)} strong={(funnel?.lookupFailed ?? 0) > 0} />
+          <Row label="  └ client poll timed out" value={String(funnel?.pollTimedOut ?? 0)} strong={(funnel?.pollTimedOut ?? 0) > 0} />
           <Row label="RM12 purchases" value={String(funnel?.purchasesRm12 ?? 0)} />
           <Row label="RM100 purchases" value={String(funnel?.purchasesRm100 ?? 0)} />
           <Row label="Revenue" value={rm(funnel?.revenueCents ?? 0)} strong />

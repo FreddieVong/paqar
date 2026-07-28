@@ -7,6 +7,7 @@ import {
   hasAttribution,
 } from '@/lib/attribution'
 import { redact } from '@/lib/meta-capi'
+import type { ValuationPath, ErrorStage, ErrorCode } from '@/lib/funnel-stages'
 
 /**
  * Session-anchored attribution storage. Sessions, events and checkout records
@@ -108,6 +109,12 @@ export interface RecordEventParams {
   amountCents?:  number | null
   path?:         string | null
   occurredAt?:   Date
+  /** Which entry point this journey began from. */
+  valuationPath?: ValuationPath | null
+  /** Unique per SUBMISSION, so retries collapse but a second car does not. */
+  journeyId?:    string | null
+  errorStage?:   ErrorStage | null
+  errorCode?:    ErrorCode | null
 }
 
 export type RecordAdEventResult =
@@ -163,6 +170,10 @@ export async function recordAdEvent(params: RecordEventParams): Promise<RecordAd
         bill_id:         params.billId        ?? null,
         amount_cents:    params.amountCents   ?? null,
         path:            params.path          ?? null,
+        valuation_path:  params.valuationPath ?? null,
+        journey_id:      params.journeyId     ?? null,
+        error_stage:     params.errorStage    ?? null,
+        error_code:      params.errorCode     ?? null,
       },
       { onConflict: 'event_name,event_id', ignoreDuplicates: true }
     )

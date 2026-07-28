@@ -61,17 +61,62 @@ function parseVehicleJson(xml: string): VehicleApiResult | null {
   }
 }
 
-export async function lookupVehicle(plate: string): Promise<VehicleApiResult | null> {
-  const username = env.VEHICLEAPI_USERNAME
-  if (!username) return null
+/**
+ * Outcome of a lookup, with the failure modes kept apart.
+ *
+ * Previously every path returned `null` — timeout, HTTP error, unparseable
+ * body and "no such vehicle" were indistinguishable, so a provider outage was
+ * recorded identically to a plate that simply is not registered. That made it
+ * impossible to tell a broken integration from normal user behaviour.
+ */
+export type VehicleLookupOutcome =
+  | { status: 'found';            vehicle: VehicleApiResult }
+  | { status: 'not_found' }
+  | { status: 'provider_timeout' }
+  | { status: 'provider_error';   errorCode: 'provider_error' | 'malformed_response' | 'network_error' }
 
+export async function lookupVehicleDetailed(plate: string): Promise<VehicleLookupOutcome> {
+  const username = env.VEHICLEAPI_USERNAME
+  // No credential is a configuration fault, not a missing vehicle.
+  if (!username) return { status: 'provider_error', errorCode: 'provider_error' }
+
+  let res: Response
   try {
     const url = `${ENDPOINT}?RegistrationNumber=${encodeURIComponent(plate.replace(/\s+/g, ''))}&username=${encodeURIComponent(username)}`
-    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
-    if (!res.ok) return null
-    const xml = await res.text()
-    return parseVehicleJson(xml)
-  } catch {
-    return null
+    res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
+  } catch (err) {
+    // AbortSignal.timeout raises TimeoutError; anything else is transport.
+    const isTimeout = err instanceof Error && err.name === 'TimeoutError'
+    return isTimeout
+      ? { status: 'provider_timeout' }
+      : { status: 'provider_error', errorCode: 'network_error' }
   }
+
+  if (!res.ok) return { status: 'provider_error', errorCode: 'provider_error' }
+
+  let body: string
+  try {
+    body = await res.text()
+  } catch {
+    return { status: 'provider_error', errorCode: 'network_error' }
+  }
+
+  const parsed = parseVehicleJson(body)
+  // parseVehicleJson returns null both for an unparseable body and for a
+  // well-formed "no vehicle" response. A body that is not JSON at all is a
+  // provider problem; valid JSON without a vehicle is a genuine not-found.
+  if (parsed) return { status: 'found', vehicle: parsed }
+
+  try {
+    JSON.parse(body)
+    return { status: 'not_found' }
+  } catch {
+    return { status: 'provider_error', errorCode: 'malformed_response' }
+  }
+}
+
+/** Back-compatible wrapper — existing callers keep their contract. */
+export async function lookupVehicle(plate: string): Promise<VehicleApiResult | null> {
+  const outcome = await lookupVehicleDetailed(plate)
+  return outcome.status === 'found' ? outcome.vehicle : null
 }

@@ -2,6 +2,7 @@ import 'server-only'
 import { createServiceClient } from '@/lib/supabase/server'
 import { myatDate } from '@/lib/attribution'
 import { REQUIRED_UTM } from '@/lib/meta-ads/guards'
+import type { ValuationPath } from '@/lib/funnel-stages'
 
 /**
  * Operator state, snapshots, actions, and the Paqar-side funnel join.
@@ -180,11 +181,37 @@ export interface FunnelCounts {
   purchasesRm12:       number
   purchasesRm100:      number
   revenueCents:        number
+  /** Diagnostic stages. Null-safe: absent on legacy rows. */
+  plateSubmitted?:     number
+  lookupSucceeded?:    number
+  lookupNotFound?:     number
+  lookupFailed?:       number
+  pollTimedOut?:       number
 }
 
 const EMPTY_FUNNEL: FunnelCounts = {
   landingViews: 0, valuationStarted: 0, valuationCompleted: 0,
   purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0,
+  plateSubmitted: 0, lookupSucceeded: 0, lookupNotFound: 0,
+  lookupFailed: 0, pollTimedOut: 0,
+}
+
+/**
+ * Identity of a single valuation journey.
+ *
+ * A journey is ONE submission, not one session: a user checking three cars
+ * creates three journeys and must count three times, while retries and
+ * re-renders of the same submission collapse to one.
+ *
+ * check_id is preferred once it exists (it survives navigation); journey_id
+ * covers the window before the check is created. Falling back to session id
+ * would merge genuinely separate journeys, so events with neither are counted
+ * individually rather than being wrongly merged.
+ */
+function journeyKey(row: {
+  check_id: string | null; journey_id: string | null; id?: string
+}): string {
+  return row.check_id ?? row.journey_id ?? `row:${row.id ?? Math.random()}`
 }
 
 /**
@@ -197,31 +224,55 @@ const EMPTY_FUNNEL: FunnelCounts = {
  * 8800 = the +RM88 upgrade, which also lands a customer at RM100 total.
  */
 export async function getFunnelCounts(opts: {
-  utmContent?: string
-  since?:      Date
+  utmContent?:    string
+  since?:         Date
+  /**
+   * Restrict to one entry point. Completion rates are only meaningful within
+   * a path — model_price and plate_check can never reach valuation_completed,
+   * so mixing them into one denominator understates the report funnel.
+   */
+  valuationPath?: ValuationPath
 } = {}): Promise<FunnelCounts> {
   const supabase = createServiceClient()
 
   let query = supabase
     .from('ad_events')
-    .select('event_name, amount_cents')
+    .select('id, event_name, amount_cents, check_id, journey_id, valuation_path')
     .eq('utm_source', REQUIRED_UTM.utm_source)
     .eq('utm_campaign', REQUIRED_UTM.utm_campaign)
 
-  if (opts.utmContent) query = query.eq('utm_content', opts.utmContent)
-  if (opts.since)      query = query.gte('occurred_at', opts.since.toISOString())
+  if (opts.utmContent)    query = query.eq('utm_content', opts.utmContent)
+  if (opts.since)         query = query.gte('occurred_at', opts.since.toISOString())
+  if (opts.valuationPath) query = query.eq('valuation_path', opts.valuationPath)
 
   const { data, error } = await query
   if (error) throw error
   if (!data) return { ...EMPTY_FUNNEL }
 
+  type Row = {
+    id: string; event_name: string; amount_cents: number | null
+    check_id: string | null; journey_id: string | null; valuation_path: string | null
+  }
+
+  // Unique JOURNEYS per stage, not raw events.
+  const seen: Record<string, Set<string>> = {}
+  const mark = (stage: string, row: Row) => {
+    (seen[stage] ??= new Set()).add(journeyKey(row))
+  }
+
   const counts: FunnelCounts = { ...EMPTY_FUNNEL }
-  for (const row of data as Array<{ event_name: string; amount_cents: number | null }>) {
+  for (const row of data as Row[]) {
     switch (row.event_name) {
-      case 'landing_page_view':   counts.landingViews += 1; break
-      case 'valuation_started':   counts.valuationStarted += 1; break
-      case 'valuation_completed': counts.valuationCompleted += 1; break
+      case 'landing_page_view':           mark('landing', row); break
+      case 'valuation_started':           mark('started', row); break
+      case 'plate_submitted':             mark('submitted', row); break
+      case 'plate_lookup_succeeded':      mark('lookupOk', row); break
+      case 'plate_lookup_not_found':      mark('lookupNotFound', row); break
+      case 'plate_lookup_failed':         mark('lookupFailed', row); break
+      case 'plate_result_poll_timed_out': mark('pollTimeout', row); break
+      case 'valuation_completed':         mark('completed', row); break
       case 'purchase': {
+        // Revenue is money, summed across every purchase — not deduplicated.
         const cents = row.amount_cents ?? 0
         counts.revenueCents += cents
         if (cents >= 10000 || cents === 8800) counts.purchasesRm100 += 1
@@ -230,6 +281,15 @@ export async function getFunnelCounts(opts: {
       }
     }
   }
+
+  counts.landingViews       = seen.landing?.size        ?? 0
+  counts.valuationStarted   = seen.started?.size        ?? 0
+  counts.valuationCompleted = seen.completed?.size      ?? 0
+  counts.plateSubmitted     = seen.submitted?.size      ?? 0
+  counts.lookupSucceeded    = seen.lookupOk?.size       ?? 0
+  counts.lookupNotFound     = seen.lookupNotFound?.size ?? 0
+  counts.lookupFailed       = seen.lookupFailed?.size   ?? 0
+  counts.pollTimedOut       = seen.pollTimeout?.size    ?? 0
   return counts
 }
 

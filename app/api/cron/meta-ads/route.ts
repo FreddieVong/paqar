@@ -13,6 +13,7 @@ import {
   listSnapshots, type FunnelCounts,
 } from '@/lib/meta-ads/db'
 import { buildDailyReport, computeSpendSinceLastSync, type CreativeResult } from '@/lib/meta-ads/report'
+import { VALUATION_PATHS } from '@/lib/funnel-stages'
 import {
   checkMutationAllowed, isTotalSpendExceeded, SPEND_FAILURE_THRESHOLD,
   MAX_TOTAL_SPEND_MYR, CREATIVE_UTM_CONTENT,
@@ -125,7 +126,10 @@ export async function GET(request: NextRequest) {
     console.error('[cron/meta-ads] delivery read failed', adDeliveryReason)
   }
 
-  const funnel = await getFunnelCounts().catch(() => null)
+  // plate_report ONLY. model_price and plate_check can never reach
+  // valuation_completed, so including them would understate the real funnel.
+  const funnel = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    .catch(() => null)
   const creativeFunnels: Record<string, FunnelCounts | null> = {}
 
   if (funnel) {
@@ -149,7 +153,7 @@ export async function GET(request: NextRequest) {
     ] as const) {
       if (!adId) continue
       const delivery = adDelivery[adId]
-      const adFunnel = await getFunnelCounts({ utmContent: slot }).catch(() => null)
+      const adFunnel = await getFunnelCounts({ utmContent: slot, valuationPath: VALUATION_PATHS.plateReport }).catch(() => null)
       creativeFunnels[slot] = adFunnel
       if (!adFunnel) continue
       await saveSnapshot({

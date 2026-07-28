@@ -24,6 +24,11 @@ export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 90
 export type AdEventName =
   | 'landing_page_view'
   | 'valuation_started'
+  | 'plate_submitted'
+  | 'plate_lookup_succeeded'
+  | 'plate_lookup_not_found'
+  | 'plate_lookup_failed'
+  | 'plate_result_poll_timed_out'
   | 'valuation_completed'
   | 'checkout_started'
   | 'purchase'
@@ -86,6 +91,22 @@ export const eventId = {
   // needing the session, and Billplz retries collapse onto one row.
   checkoutStarted: (billId: string) => digest(['checkout_started', billId]),
   purchase:        (billId: string) => digest(['purchase', billId]),
+
+  // Keyed on the JOURNEY, not the session: a user checking three cars creates
+  // three journeys and must count three times, while retries and re-renders
+  // of one submission collapse to a single event.
+  plateSubmitted: (sessionId: string, journeyId: string) =>
+    digest(['plate_submitted', sessionId, journeyId]),
+
+  // Keyed on the plate hash so the SAME lookup outcome recorded from two
+  // places is one event, and a re-check of the same plate in a new journey is
+  // still distinguishable by journey.
+  plateLookup: (stage: string, journeyId: string, plateHash: string) =>
+    digest([stage, journeyId, plateHash]),
+
+  // Once per check. A refresh that times out again must not emit a second
+  // event, and the journey stays alive on the same check.
+  pollTimedOut: (checkId: string) => digest(['plate_result_poll_timed_out', checkId]),
 }
 
 /** Meta's fbc format when only a raw fbclid is available: fb.1.<ms>.<fbclid> */

@@ -60,7 +60,11 @@ export function PlateCheckerForm() {
     analytics.checkStarted({ country: 'MY', is_test: false })
     // Paqar-side funnel event — the campaign's optimisation event, and the
     // only record that survives the navigation below (which drops the UTMs).
-    trackAdEvent('valuation_started', { attemptId })
+    // journey_id = attemptId: unique per submission, reused across retries,
+    // and carried into /api/checks as the idempotency key so pre-check events
+    // link to the check that follows.
+    trackAdEvent('valuation_started', { attemptId, valuationPath: 'plate_report' })
+    trackAdEvent('plate_submitted',   { attemptId, valuationPath: 'plate_report' })
 
     try {
       const res = await fetch('/api/checks', {
