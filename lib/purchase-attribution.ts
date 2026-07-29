@@ -78,6 +78,12 @@ export async function recordPurchase(params: {
     eventName:   'Purchase',
     eventId:     id,
     email:       params.email,
+    // The real captured session, never the `bill:` fallback. Purchase already
+    // carries `em`, so this is not about satisfying Meta's minimum — it is
+    // what ties the purchase to the same external_id as the funnel events
+    // from that visitor, so the click that paid for it can be credited. A
+    // synthetic per-purchase id would link to nothing.
+    externalId:  sessionId,
     attribution,
     sourceUrl:   params.sourceUrl ?? 'https://paqar.my/laporan-pembeli',
     valueMyr:    params.amountCents / 100,

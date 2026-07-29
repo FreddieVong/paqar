@@ -26,6 +26,13 @@ function sha256(value: string): string {
   return createHash('sha256').update(value.trim().toLowerCase()).digest('hex')
 }
 
+// external_id needs no normalisation per Meta's spec, and must NOT be
+// lowercased: paqar_sid is a nanoid over a case-sensitive alphabet, so
+// lowercasing would let two distinct sessions collide onto one identifier.
+function sha256Raw(value: string): string {
+  return createHash('sha256').update(value.trim()).digest('hex')
+}
+
 /** Strips access tokens from anything that might reach a log. */
 export function redact(value: string): string {
   const token = env.META_CAPI_TOKEN
@@ -41,6 +48,16 @@ export interface SendMetaEventParams {
   /** Derived id from lib/attribution.ts — never a fresh UUID. */
   eventId:      string
   email?:       string | null
+  /**
+   * First-party session id (paqar_sid). Sent as user_data.external_id.
+   *
+   * Without this, a funnel event from someone with no Facebook cookies and no
+   * email carried only client_ip_address and client_user_agent — which Meta
+   * does not count as identifying, so the event was unusable for attribution
+   * or optimisation. That is what Events Manager flags as "isn't sending any
+   * of the necessary user_data parameter keys".
+   */
+  externalId?:  string | null
   attribution?: Partial<Attribution> | null
   clientIp?:    string | null
   userAgent?:   string | null
@@ -64,11 +81,12 @@ export async function sendMetaEvent(params: SendMetaEventParams): Promise<boolea
   // Match quality: every identifier we hold, not just the email. fbc/fbp are
   // what let Meta tie a conversion back to the click that paid for it.
   const userData: Record<string, unknown> = {}
-  if (params.email)    userData.em  = [sha256(params.email)]
-  if (a.fbc)           userData.fbc = a.fbc
-  if (a.fbp)           userData.fbp = a.fbp
-  if (params.clientIp) userData.client_ip_address = params.clientIp
-  if (params.userAgent) userData.client_user_agent = params.userAgent
+  if (params.email)      userData.em          = [sha256(params.email)]
+  if (params.externalId) userData.external_id = [sha256Raw(params.externalId)]
+  if (a.fbc)             userData.fbc = a.fbc
+  if (a.fbp)             userData.fbp = a.fbp
+  if (params.clientIp)   userData.client_ip_address = params.clientIp
+  if (params.userAgent)  userData.client_user_agent = params.userAgent
 
   const customData: Record<string, unknown> = { ...params.customData }
   if (params.valueMyr != null) {

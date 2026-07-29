@@ -158,6 +158,10 @@ export async function POST(request: NextRequest) {
     const sent = await sendMetaEvent({
       eventName: metaEvent,
       eventId:   id,
+      // Without this these events carry no identifying key at all for anyone
+      // arriving without Facebook cookies — IP and user-agent alone do not
+      // count — leaving them unusable for attribution or optimisation.
+      externalId: sessionId,
       attribution,
       clientIp:  ip,
       userAgent: request.headers.get('user-agent'),
