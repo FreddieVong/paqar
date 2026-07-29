@@ -13,7 +13,9 @@ const BRANDS = [
   'Perodua', 'Proton', 'Toyota', 'Honda', 'Mazda',
   'BMW', 'Mercedes-Benz', 'Volkswagen', 'Mitsubishi', 'Nissan',
   'Hyundai', 'Kia', 'Suzuki', 'Subaru', 'Ford',
-  'Volvo', 'Audi', 'MINI', 'Lexus', 'Isuzu', 'Chery', 'BYD',
+  'Peugeot', 'Chevrolet', 'MG',
+  'Volvo', 'Audi', 'MINI', 'Lexus', 'Land Rover', 'Jaguar', 'Porsche',
+  'Isuzu', 'Chery', 'BYD', 'Tesla',
 ]
 
 // Known models per brand — shown as autocomplete suggestions. Consistent
@@ -34,9 +36,21 @@ const MODELS_BY_BRAND: Record<string, string[]> = {
   BMW:        ['3 Series', '5 Series', 'X1', 'X3', 'X5', '1 Series'],
   'Mercedes-Benz': ['C-Class', 'E-Class', 'A-Class', 'GLC', 'CLA'],
   Ford:       ['Ranger', 'Everest', 'Fiesta', 'Focus'],
+  Subaru:     ['Forester', 'XV', 'Impreza', 'WRX', 'Outback', 'BRZ'],
+  Volvo:      ['XC40', 'XC60', 'XC90', 'S60', 'V40', 'S90'],
+  Audi:       ['A3', 'A4', 'A5', 'A6', 'Q3', 'Q5', 'Q7'],
+  MINI:       ['Cooper', 'Countryman', 'Clubman', 'Cooper S'],
+  Lexus:      ['ES', 'NX', 'RX', 'IS', 'UX', 'LX'],
+  Peugeot:    ['3008', '5008', '2008', '208', '408', '508'],
+  Chevrolet:  ['Cruze', 'Colorado', 'Sonic', 'Captiva', 'Orlando', 'Trailblazer'],
+  MG:         ['ZS', 'HS', 'MG5', 'MG4'],
+  'Land Rover': ['Range Rover Evoque', 'Range Rover Sport', 'Range Rover Velar', 'Discovery Sport', 'Defender', 'Range Rover'],
+  Jaguar:     ['XE', 'XF', 'F-Pace', 'E-Pace', 'F-Type'],
+  Porsche:    ['Macan', 'Cayenne', '911', 'Panamera', 'Taycan', 'Boxster'],
   Isuzu:      ['D-Max', 'MU-X'],
   Chery:      ['Omoda 5', 'Tiggo 8 Pro', 'Tiggo 7 Pro'],
   BYD:        ['Atto 3', 'Dolphin', 'Seal'],
+  Tesla:      ['Model 3', 'Model Y', 'Model S', 'Model X'],
 }
 
 const VERDICT_CONFIG: Record<Verdict, {
