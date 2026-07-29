@@ -6,6 +6,8 @@ import { Shell } from '@/components/layout/Shell'
 import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
 import { VARIANT_GUIDES, type VariantVerdict } from '@/lib/variant-guides'
 import { variantLabelList } from '@/lib/variant-label'
+import { buildVariantLadder, ladderSpreadRm } from '@/lib/variant-ladder'
+import { getVariantLadderRows } from '@/lib/db/variant-ladder-query'
 
 type Props = { params: { model: string } }
 
@@ -42,9 +44,16 @@ const VERDICT_STYLE: Record<VariantVerdict, { label: string; cls: string }> = {
   'avoid':       { label: 'ELAK',          cls: 'bg-[#FEE2E2] text-[#DC2626]' },
 }
 
-export default function VariantGuidePage({ params }: Props) {
+export default async function VariantGuidePage({ params }: Props) {
   const guide = VARIANT_GUIDES[params.model]
   if (!guide) notFound()
+
+  // Real price ladder from vehicle_valuations. Supplementary — the page must
+  // still render if this fails, so failures degrade to hiding the block.
+  const { rows: ladderRows, year: ladderYear } =
+    await getVariantLadderRows(guide.brand, guide.model).catch(() => ({ rows: [], year: null }))
+  const ladder = buildVariantLadder(ladderRows)
+  const spread = ladderSpreadRm(ladder)
 
   const schema = {
     '@context': 'https://schema.org',
@@ -169,6 +178,43 @@ export default function VariantGuidePage({ params }: Props) {
               </p>
             )}
           </div>
+
+          {/* Price ladder — the arithmetic half of "beza varian X dan Y".
+              Real new prices from vehicle_valuations, not written prose, so
+              nothing here is a claim anyone had to make up. Hidden entirely
+              when the data is thin rather than shown half-empty. */}
+          {ladder.length >= 2 && (
+            <div className="space-y-3">
+              <div>
+                <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-1">
+                  Beza Harga Antara Varian
+                </p>
+                <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
+                  {spread != null && (
+                    <>Beza antara varian paling murah dan paling mahal: <strong className="text-[#111827]">RM{spread.toLocaleString()}</strong>. </>
+                  )}
+                  Ini harga baharu{ladderYear ? ` (model ${ladderYear})` : ''} — guna sebagai rujukan tangga varian, bukan harga terpakai hari ni.
+                </p>
+              </div>
+
+              <div className="border border-[#E5E7EB] rounded-[12px] overflow-hidden">
+                {ladder.map((rung, i) => (
+                  <div
+                    key={rung.variant}
+                    className={`flex items-center justify-between px-4 py-2.5 ${i > 0 ? 'border-t border-[#F3F4F6]' : ''}`}
+                  >
+                    <span className="font-heading font-bold text-[13px] text-[#111827]">{rung.variant}</span>
+                    <span className="flex items-baseline gap-2">
+                      {rung.stepUpRm != null && (
+                        <span className="font-body text-[11px] text-[#9CA3AF]">+RM{rung.stepUpRm.toLocaleString()}</span>
+                      )}
+                      <span className="font-body text-[13px] text-[#374151]">RM{rung.newPriceRm.toLocaleString()}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* CTA — into the existing free check */}
           <div className="space-y-3">
