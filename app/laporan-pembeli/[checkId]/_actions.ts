@@ -14,8 +14,9 @@ import { buildMarketModelKeyword } from '@/lib/market-keyword'
 import { getOrFetchVehicleData }  from '@/lib/db/plate-lookups'
 import { createClient }           from '@/lib/supabase/server'
 import { currentAttribution }     from '@/lib/attribution-request'
-import { recordCheckoutAttribution, recordAdEvent } from '@/lib/db/ad-attribution'
+import { recordCheckoutAttribution, recordAdEvent, markCapiSent } from '@/lib/db/ad-attribution'
 import { eventId }                from '@/lib/attribution'
+import { sendMetaEvent }          from '@/lib/meta-capi'
 
 /**
  * Persists attribution at BILL CREATION so a purchase can be attributed from
@@ -44,15 +45,40 @@ async function captureCheckout(params: {
       amountCents:   params.amountCents,
     })
     if (sessionId) {
-      await recordAdEvent({
+      const id = eventId.checkoutStarted(params.billId)
+      const result = await recordAdEvent({
         sessionId,
         eventName:   'checkout_started',
-        eventId:     eventId.checkoutStarted(params.billId),
+        eventId:     id,
         attribution,
         checkId:     params.checkId,
         billId:      params.billId,
         amountCents: params.amountCents,
       })
+
+      // Forward to Meta as InitiateCheckout. This event was already being
+      // recorded but never sent, leaving a gap in the funnel Meta can see:
+      // PageView -> Lead -> ViewContent -> (nothing) -> Purchase.
+      //
+      // It matters because Purchase alone is too sparse to optimise on —
+      // Meta wants roughly 50 conversions a week and there have been ~21
+      // purchases in total. InitiateCheckout is the highest-intent event
+      // with enough volume to actually drive delivery.
+      //
+      // Only a genuinely new occurrence is sent; a retry returns duplicate
+      // and sends nothing, so a re-submitted payment cannot double-count.
+      if (result.status === 'inserted') {
+        const sent = await sendMetaEvent({
+          eventName:  'InitiateCheckout',
+          eventId:    id,
+          externalId: sessionId,
+          attribution,
+          sourceUrl:  `https://paqar.my/laporan-pembeli/${params.checkId}`,
+          valueMyr:   params.amountCents / 100,
+          customData: { paqar_step: 'checkout_started' },
+        })
+        if (sent) await markCapiSent('checkout_started', id)
+      }
     }
   } catch (err) {
     console.error('[captureCheckout]', err)
