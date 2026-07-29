@@ -237,13 +237,14 @@ export async function getFunnelCounts(opts: {
 
   let query = supabase
     .from('ad_events')
-    .select('id, event_name, amount_cents, check_id, journey_id, valuation_path')
+    .select('id, event_name, amount_cents, check_id, journey_id, valuation_path, session_id')
     .eq('utm_source', REQUIRED_UTM.utm_source)
     .eq('utm_campaign', REQUIRED_UTM.utm_campaign)
 
-  if (opts.utmContent)    query = query.eq('utm_content', opts.utmContent)
-  if (opts.since)         query = query.gte('occurred_at', opts.since.toISOString())
-  if (opts.valuationPath) query = query.eq('valuation_path', opts.valuationPath)
+  if (opts.utmContent) query = query.eq('utm_content', opts.utmContent)
+  if (opts.since)      query = query.gte('occurred_at', opts.since.toISOString())
+  // valuation_path is NOT filtered in SQL. Applying it to the whole query
+  // dropped every stage that structurally has no path — see below.
 
   const { data, error } = await query
   if (error) throw error
@@ -252,6 +253,27 @@ export async function getFunnelCounts(opts: {
   type Row = {
     id: string; event_name: string; amount_cents: number | null
     check_id: string | null; journey_id: string | null; valuation_path: string | null
+    session_id: string | null
+  }
+
+  /**
+   * Only JOURNEY stages carry a valuation_path. A landing-page view happens
+   * before any journey exists and a purchase happens after it, so neither can
+   * have one — and filtering the whole query by path silently zeroed them.
+   *
+   * That is exactly what happened in production: 161 real Meta landing views
+   * and 6 completions were dropped because their path is NULL by design, and
+   * the dashboard reported a working campaign as zero traffic.
+   */
+  const PATHED_STAGES = new Set([
+    'valuation_started', 'plate_submitted', 'plate_lookup_succeeded',
+    'plate_lookup_not_found', 'plate_lookup_failed', 'plate_result_poll_timed_out',
+  ])
+  const inScope = (row: Row) => {
+    if (!opts.valuationPath) return true
+    if (!PATHED_STAGES.has(row.event_name)) return true       // pathless stage
+    if (row.valuation_path == null) return false              // legacy: excluded, not guessed
+    return row.valuation_path === opts.valuationPath
   }
 
   // Unique JOURNEYS per stage, not raw events.
@@ -262,8 +284,12 @@ export async function getFunnelCounts(opts: {
 
   const counts: FunnelCounts = { ...EMPTY_FUNNEL }
   for (const row of data as Row[]) {
+    if (!inScope(row)) continue
     switch (row.event_name) {
-      case 'landing_page_view':           mark('landing', row); break
+      // A landing is a VISIT, not a journey — keyed on session so a visitor
+      // browsing five pages counts once.
+      case 'landing_page_view':
+        (seen.landing ??= new Set()).add(row.session_id ?? `row:${row.id}`); break
       case 'valuation_started':           mark('started', row); break
       case 'plate_submitted':             mark('submitted', row); break
       case 'plate_lookup_succeeded':      mark('lookupOk', row); break

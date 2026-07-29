@@ -132,3 +132,87 @@ describe('revenue', () => {
     expect(f.purchasesRm100).toBe(1)
   })
 })
+
+describe('REGRESSION: the path filter must not zero pathless stages', () => {
+  /**
+   * Production failure, 29 July. The campaign spent RM63.13 for 62 link clicks
+   * and the dashboard reported 0 landing views and 0 completions. The events
+   * were all there — 161 landing views and 6 completions with utm_source=meta.
+   *
+   * getFunnelCounts applied `.eq('valuation_path', 'plate_report')` to the
+   * WHOLE query. landing_page_view happens before any journey exists and can
+   * never carry a path, so all 161 were filtered out. A working campaign was
+   * reported as zero traffic, and the campaign was paused because of it.
+   */
+  it('counts landing views even though they have no valuation_path', async () => {
+    rows.data = [
+      ...Array.from({ length: 5 }, (_, i) =>
+        ev({ event_name: 'landing_page_view', session_id: `s${i}`, valuation_path: null })),
+      ev({ event_name: 'valuation_started', journey_id: 'j1', valuation_path: VALUATION_PATHS.plateReport }),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.landingViews).toBe(5)
+    expect(f.valuationStarted).toBe(1)
+  })
+
+  it('counts completions carrying no path (pre-fix rows) rather than dropping them', async () => {
+    rows.data = [
+      ev({ event_name: 'valuation_completed', check_id: 'ch_1', valuation_path: null }),
+      ev({ event_name: 'valuation_completed', check_id: 'ch_2', valuation_path: VALUATION_PATHS.plateReport }),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.valuationCompleted).toBe(2)
+  })
+
+  it('counts a landing VISIT once even when the visitor browses many pages', async () => {
+    rows.data = Array.from({ length: 12 }, (_, i) =>
+      ev({ event_name: 'landing_page_view', session_id: 'one_visitor', path: `/p${i}`, valuation_path: null }))
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.landingViews).toBe(1)
+  })
+
+  it('still excludes a model_price START from the report funnel', async () => {
+    // The path filter must keep working where a path genuinely exists.
+    rows.data = [
+      ev({ event_name: 'valuation_started', journey_id: 'j1', valuation_path: VALUATION_PATHS.modelPrice }),
+      ev({ event_name: 'valuation_started', journey_id: 'j2', valuation_path: VALUATION_PATHS.plateReport }),
+      ev({ event_name: 'landing_page_view', session_id: 's1', valuation_path: null }),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.valuationStarted).toBe(1)
+    expect(f.landingViews).toBe(1)
+  })
+
+  it('still excludes a legacy NULL-path START rather than guessing it', async () => {
+    rows.data = [
+      ev({ event_name: 'valuation_started', journey_id: 'j1', valuation_path: null }),
+      ev({ event_name: 'valuation_started', journey_id: 'j2', valuation_path: VALUATION_PATHS.plateReport }),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.valuationStarted).toBe(1)
+  })
+
+  it('counts purchases and revenue regardless of path', async () => {
+    rows.data = [ev({ event_name: 'purchase', amount_cents: 1200, check_id: 'ch_1', valuation_path: null })]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.purchasesRm12).toBe(1)
+    expect(f.revenueCents).toBe(1200)
+  })
+
+  it('reproduces the exact production shape and no longer reports zero', async () => {
+    rows.data = [
+      ...Array.from({ length: 146 }, (_, i) =>
+        ev({ event_name: 'landing_page_view', session_id: `sess${i}`, valuation_path: null })),
+      ...Array.from({ length: 27 }, (_, i) =>
+        ev({ event_name: 'valuation_started', journey_id: `pre${i}`, valuation_path: null })),
+      ...Array.from({ length: 3 }, (_, i) =>
+        ev({ event_name: 'valuation_started', journey_id: `new${i}`, valuation_path: VALUATION_PATHS.plateReport })),
+      ...Array.from({ length: 6 }, (_, i) =>
+        ev({ event_name: 'valuation_completed', check_id: `ch${i}`, valuation_path: null })),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.landingViews).toBe(146)        // was 0
+    expect(f.valuationCompleted).toBe(6)    // was 0
+    expect(f.valuationStarted).toBe(3)      // legacy NULL starts stay excluded
+  })
+})

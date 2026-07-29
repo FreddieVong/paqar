@@ -73,7 +73,10 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
               // attribution from ad_sessions via the paqar_sid cookie, which
               // is why the Paqar database, not GA4, is the source of truth
               // for this experiment.
-              trackAdEvent('valuation_completed', { checkId })
+              // The teaser only ever renders on /laporan-pembeli, so a
+              // completion is always the report path. Without this the event
+              // carried a NULL path and was dropped by per-path reporting.
+              trackAdEvent('valuation_completed', { checkId, valuationPath: 'plate_report' })
             }
             return
           }
