@@ -12,7 +12,7 @@ type FormState = 'idle' | 'loading' | 'result' | 'error'
 const BRANDS = [
   'Perodua', 'Proton', 'Toyota', 'Honda', 'Mazda',
   'BMW', 'Mercedes-Benz', 'Volkswagen', 'Mitsubishi', 'Nissan',
-  'Hyundai', 'Kia', 'Suzuki', 'Subaru', 'Ford',
+  'Hyundai', 'Kia', 'Suzuki', 'Subaru', 'Daihatsu', 'Ford',
   'Peugeot', 'Chevrolet', 'MG',
   'Volvo', 'Audi', 'MINI', 'Lexus', 'Land Rover', 'Jaguar', 'Porsche',
   'Isuzu', 'Chery', 'BYD', 'Tesla',
@@ -37,6 +37,7 @@ const MODELS_BY_BRAND: Record<string, string[]> = {
   'Mercedes-Benz': ['C-Class', 'E-Class', 'A-Class', 'GLC', 'CLA'],
   Ford:       ['Ranger', 'Everest', 'Fiesta', 'Focus'],
   Subaru:     ['Forester', 'XV', 'Impreza', 'WRX', 'Outback', 'BRZ'],
+  Daihatsu:   ['Gran Max', 'Hijet', 'Terios', 'Materia'],
   Volvo:      ['XC40', 'XC60', 'XC90', 'S60', 'V40', 'S90'],
   Audi:       ['A3', 'A4', 'A5', 'A6', 'Q3', 'Q5', 'Q7'],
   MINI:       ['Cooper', 'Countryman', 'Clubman', 'Cooper S'],
