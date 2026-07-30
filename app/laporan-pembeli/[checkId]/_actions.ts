@@ -32,6 +32,17 @@ async function captureCheckout(params: {
   buyerReportId?: string | null
   product:       'buyer_report' | 'buyer_report_bundle' | 'claim_check_upgrade'
   amountCents:   number
+  /**
+   * Buyer email, hashed into user_data.em on the InitiateCheckout event.
+   *
+   * Meta's "send missing user data parameters" diagnostic accepts only
+   * PII-derived keys — email, phone, name, city, region, postcode — and
+   * explicitly not external_id. PageView, Lead and ViewContent fire before
+   * Paqar has ever asked for an email, so they cannot satisfy it. Checkout is
+   * the first point in the funnel where a real email exists, so it is the
+   * first event that can.
+   */
+  buyerEmail?:   string | null
 }): Promise<void> {
   try {
     const { sessionId, attribution } = await currentAttribution()
@@ -67,10 +78,20 @@ async function captureCheckout(params: {
       //
       // Only a genuinely new occurrence is sent; a retry returns duplicate
       // and sends nothing, so a re-submitted payment cannot double-count.
+      //
+      // The Meta event_id must match the BROWSER pixel's, which PaymentForm
+      // derives as `ic_<checkId>_<bundle|base>` — the bill id does not exist
+      // client-side, so a bill-derived id could never collide with it and Meta
+      // would count every checkout TWICE. The +RM88 upgrade has no browser
+      // counterpart, so it keeps the bill-derived id.
       if (result.status === 'inserted') {
+        const metaEventId = params.product === 'claim_check_upgrade'
+          ? id
+          : `ic_${params.checkId}_${params.product === 'buyer_report_bundle' ? 'bundle' : 'base'}`
         const sent = await sendMetaEvent({
           eventName:  'InitiateCheckout',
-          eventId:    id,
+          eventId:    metaEventId,
+          email:      params.buyerEmail ?? null,
           externalId: sessionId,
           attribution,
           sourceUrl:  `https://paqar.my/laporan-pembeli/${params.checkId}`,
@@ -145,6 +166,7 @@ export async function initiateBuyerReport(params: {
       buyerReportId: report.id,
       product:       effectiveAddJomCheck ? 'buyer_report_bundle' : 'buyer_report',
       amountCents,
+      buyerEmail:    params.buyerEmail,
     })
 
     // Pre-warm vehicle data and market prices during the Billplz payment window (~30-60s).
@@ -202,6 +224,7 @@ export async function initiateJomCheckUpgrade(params: {
       buyerReportId: report.id,
       product:       'claim_check_upgrade',
       amountCents:   8800,
+      buyerEmail:    report.buyer_email,
     })
     return { error: null, billUrl: bill.url }
   } catch (err) {

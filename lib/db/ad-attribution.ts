@@ -43,6 +43,25 @@ export async function upsertAdSession(params: {
   attribution:  Attribution
   landingPath?: string | null
   referrer?:    string | null
+  /**
+   * The raw _fbc cookie value, when the request actually carried one.
+   *
+   * This is the ONE value allowed to replace a non-NULL fbc, and it exists
+   * because of a real defect: Meta's pixel writes _fbc asynchronously, so the
+   * landing request almost never has it, and attributionFromRequest therefore
+   * fabricates `fb.1.<server_ms>.<fbclid>`. The `.is(col, null)` guard below
+   * then made that fabrication permanent — the genuine cookie could never
+   * replace it, so every later event, Purchase included, shipped a synthetic
+   * click timestamp for the rest of the session's life.
+   *
+   * Events Manager flags exactly that: "Do not modify the fbclid value
+   * retrieved from _fbc cookie or fbclid query parameter in the page URL when
+   * sending the fbc parameter." Meta's own cookie is authoritative; ours is a
+   * stand-in until it arrives.
+   *
+   * Only fbc is affected. utm_* and fbclid remain write-once.
+   */
+  authoritativeFbc?: string | null
 }): Promise<void> {
   const supabase = createServiceClient()
   const a = params.attribution
@@ -82,6 +101,18 @@ export async function upsertAdSession(params: {
       .update({ [column]: value })
       .eq('session_id', params.sessionId)
       .is(column, null)
+  }
+
+  // Meta's own _fbc, once it exists, replaces whatever we stood in for it —
+  // including a non-NULL fabricated value the loop above cannot touch. Without
+  // this the stand-in outlives the real cookie forever. Narrowly scoped: one
+  // column, and only when the request genuinely carried the cookie.
+  if (params.authoritativeFbc) {
+    await supabase
+      .from('ad_sessions')
+      .update({ fbc: params.authoritativeFbc })
+      .eq('session_id', params.sessionId)
+      .neq('fbc', params.authoritativeFbc)
   }
 }
 

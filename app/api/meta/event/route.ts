@@ -107,7 +107,15 @@ export async function POST(request: NextRequest) {
 
   // First touch wins and is never overwritten; later events resolve their
   // attribution from this row once the query parameters are gone.
-  await upsertAdSession({ sessionId, attribution, landingPath: path })
+  // The cookie is passed separately from `attribution` because attribution's
+  // fbc may be a fabricated stand-in; only the cookie is authoritative and
+  // allowed to replace a stored value.
+  await upsertAdSession({
+    sessionId,
+    attribution,
+    landingPath:      path,
+    authoritativeFbc: request.cookies.get('_fbc')?.value ?? null,
+  })
 
   let id: string
   let errorStage: 'plate_result_polling' | undefined
