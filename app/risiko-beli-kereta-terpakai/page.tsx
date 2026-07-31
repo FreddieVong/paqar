@@ -131,7 +131,7 @@ export default function RisikoBelihKeretaTerpakaiPage() {
               Risiko beli kereta terpakai — dan cara elaknya
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar membantu pembeli kereta terpakai semak harga pasaran dan dapatkan laporan pembeli sebelum bayar booking atau deposit. Kenali 7 risiko tersembunyi ini sebelum buat keputusan.
+              Paqar membantu pembeli kereta terpakai semak harga pasaran dan dapatkan laporan pembeli sebelum bayar deposit. Kenali 7 risiko tersembunyi ini sebelum buat keputusan.
             </p>
           </div>
 

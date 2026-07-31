@@ -38,7 +38,7 @@ const homeSchema = {
       name: 'Paqar',
       url: 'https://paqar.my',
       logo: 'https://paqar.my/paqar-logo.png',
-      description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan Laporan Pembeli, dan semak rekod claim insurans sebelum bayar booking atau deposit.',
+      description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan Laporan Pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
       contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'hello@paqar.my' },
     },
     {
@@ -52,7 +52,7 @@ const homeSchema = {
     {
       '@type': 'Service',
       name: 'Semakan Accident/Claim Insurans Kereta',
-      description: 'Semakan Accident/Claim Insurans RM100 merangkumi semua dalam Laporan Pembeli RM12 ditambah semakan rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum bayar booking atau deposit.',
+      description: 'Semakan Accident/Claim Insurans RM100 merangkumi semua dalam Laporan Pembeli RM12 ditambah semakan rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum bayar deposit.',
       provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
       areaServed: { '@type': 'Country', name: 'Malaysia' },
       offers: { '@type': 'Offer', price: '100', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
@@ -63,7 +63,7 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Apakah beza semakan percuma dan laporan RM12?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar booking atau deposit.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar deposit.' },
         },
         {
           '@type': 'Question',
@@ -88,7 +88,7 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Boleh guna sebelum tengok kereta?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar booking atau deposit.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar deposit.' },
         },
         {
           '@type': 'Question',
@@ -128,18 +128,30 @@ export default async function HomePage() {
             <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.5">
               <span className="w-2 h-2 bg-[#16A34A] rounded-full" />
               <span className="font-heading font-bold text-[12px] text-[#15803D]">
-                Percuma · Tanpa daftar akaun
+                Semakan harga percuma · Tanpa daftar
               </span>
             </div>
           </div>
 
+          {/* Two block spans rather than a <br />: keeps "Semak dulu." on its own
+              green line at every width, and lets text-balance split the first
+              sentence evenly on narrow screens instead of stranding "kereta."
+              on a line by itself. */}
           <h1 className="font-heading font-extrabold text-[30px] md:text-[36px] leading-[1.1] tracking-[-0.03em] text-[#111827] mb-3">
-            Penjual tahu harga dan cerita sebenar.<br />
-            <span className="text-[#064E4A]">Sekarang anda pun tahu.</span>
+            <span className="block text-balance">Jangan tersalah beli kereta.</span>
+            <span className="block text-[#064E4A]">Semak dulu.</span>
           </h1>
 
-          <p className="font-body text-[14px] text-[#6B7280] mb-7 leading-relaxed">
-            Semak harga pasaran dan sejarah kemalangan kenderaan sebelum bayar booking atau deposit.
+          {/* text-balance on both: without it 375px strands "deposit." and
+              "odometer." alone on a final line — the two words carrying the message. */}
+          <p className="font-body text-[15px] text-[#374151] mb-2 leading-relaxed text-balance">
+            Ketahui risiko tersembunyi sebelum anda bayar deposit.
+          </p>
+
+          {/* #6B7280 not #9CA3AF: gray-400 on white is 2.5:1 and fails WCAG AA.
+              Size (13 vs 15px) and weight keep it subordinate to the subheadline. */}
+          <p className="font-body text-[13px] text-[#6B7280] mb-7 leading-relaxed text-balance">
+            Harga pasaran percuma. Laporan bermula RM12, dengan pilihan semakan rekod kemalangan dan odometer.
           </p>
 
           <HomeCheckerTabs countDisplay={countDisplay} />
@@ -194,7 +206,7 @@ export default async function HomePage() {
                   Masuk rundingan dengan data.<br />Bukan agak-agak.
                 </p>
                 <p className="font-body text-[11px] text-white/55 leading-relaxed">
-                  Guna skrip siap untuk tanya soalan penting dan runding harga sebelum bayar booking atau deposit.
+                  Guna skrip siap untuk tanya soalan penting dan runding harga sebelum bayar deposit.
                 </p>
               </div>
 
@@ -362,7 +374,7 @@ export default async function HomePage() {
             {[
               {
                 q: 'Apakah beza semakan percuma dan laporan RM12?',
-                a: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — termasuk meter ketika claim dan amaran kalau meter mungkin dipusing balik — sebelum bayar booking atau deposit.',
+                a: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — termasuk meter ketika claim dan amaran kalau meter mungkin dipusing balik — sebelum bayar deposit.',
               },
               {
                 q: 'Adakah saya perlu daftar akaun?',
@@ -370,7 +382,7 @@ export default async function HomePage() {
               },
               {
                 q: 'Boleh guna sebelum tengok kereta?',
-                a: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar booking atau deposit.',
+                a: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar deposit.',
               },
               {
                 q: 'Adakah Paqar dari JPJ atau PDRM?',
@@ -469,7 +481,7 @@ export default async function HomePage() {
       <section className="bg-[#14453d] px-5 py-14 text-center md:py-20">
         <div className="max-w-lg mx-auto">
           <h2 className="font-heading font-extrabold text-[24px] md:text-[30px] leading-tight tracking-tight text-white mb-3">
-            Semak sebelum<br />bayar booking atau deposit
+            Semak sebelum<br />bayar deposit
           </h2>
           <p className="font-body text-[14px] text-white/70 mb-7">
             Keputusan harga percuma.

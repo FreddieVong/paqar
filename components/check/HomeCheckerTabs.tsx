@@ -48,7 +48,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
           <p className={`font-body text-[11px] ${
             tab === 'model' ? 'text-white/70' : 'text-[#9CA3AF]'
           }`}>
-            Semak harga — percuma
+            Semak sama ada harganya berpatutan — percuma
           </p>
         </button>
 
@@ -69,7 +69,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
           <p className={`font-body text-[11px] ${
             tab === 'plate' ? 'text-white/70' : 'text-[#9CA3AF]'
           }`}>
-            Cari kereta — percuma · Laporan penuh RM12
+            Semak maklumat kereta sebelum bayar deposit · Laporan dari RM12
           </p>
         </button>
       </div>
@@ -91,7 +91,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
           {[
             'Masukkan kereta & harga seller',
             'Dapat keputusan harga serta-merta',
-            'Nak skrip rundingan & data penuh? RM12',
+            'Nak skrip rundingan & data penuh? Dari RM12',
           ].map((step, i) => (
             <div key={i} className="flex items-center gap-2.5">
               <span className="w-[18px] h-[18px] rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-[#15803D] font-heading font-bold text-[10px] flex items-center justify-center flex-shrink-0">

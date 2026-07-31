@@ -191,7 +191,7 @@ export default function CaraSemakInsuransPage() {
               Cara semak insurans di atas sahkan sama ada polisi masih aktif. Ini berbeza daripada semakan rekod claim insurans — iaitu sama ada kereta pernah ada tuntutan seperti own damage, banjir, windscreen atau total loss.
             </p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-4">
-              Paqar menyediakan Semakan Accident/Claim Insurans (RM100) untuk semak rekod ini sebelum anda bayar booking atau deposit. Penting: tidak semua kemalangan ada rekod claim, dan rekod bersih tidak bermakna kereta tiada isu.
+              Paqar menyediakan Semakan Accident/Claim Insurans (RM100) untuk semak rekod ini sebelum anda bayar deposit. Penting: tidak semua kemalangan ada rekod claim, dan rekod bersih tidak bermakna kereta tiada isu.
             </p>
             <Link
               href="/semak-accident-claim-insurans-kereta"

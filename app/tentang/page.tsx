@@ -5,11 +5,11 @@ import { Shell } from '@/components/layout/Shell'
 
 export const metadata: Metadata = {
   title: 'Tentang Paqar — Semak Harga Kereta Terpakai Malaysia',
-  description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar booking atau deposit.',
+  description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/tentang' },
   openGraph: {
     title: 'Tentang Paqar — Semak Harga Kereta Terpakai Malaysia',
-    description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar booking atau deposit.',
+    description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
     url: 'https://paqar.my/tentang',
   },
 }
@@ -20,13 +20,13 @@ export default function TentangPage() {
     '@type': 'AboutPage',
     name: 'Tentang Paqar',
     url: 'https://paqar.my/tentang',
-    description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar booking atau deposit.',
+    description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
     mainEntity: {
       '@type': 'Organization',
       name: 'Paqar',
       url: 'https://paqar.my',
       logo: 'https://paqar.my/paqar-logo.png',
-      description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan Laporan Pembeli, dan semak rekod claim insurans sebelum bayar booking atau deposit.',
+      description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan Laporan Pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
       contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'hello@paqar.my' },
       areaServed: { '@type': 'Country', name: 'Malaysia' },
     },
@@ -47,7 +47,7 @@ export default function TentangPage() {
               Apa itu Paqar?
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar adalah alat untuk pembeli kereta terpakai Malaysia — untuk semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar booking atau deposit.
+              Paqar adalah alat untuk pembeli kereta terpakai Malaysia — untuk semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.
             </p>
           </div>
 
@@ -72,7 +72,7 @@ export default function TentangPage() {
             <div>
               <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semakan Accident/Claim Insurans — RM100</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Semakan rekod claim insurans untuk kereta yang anda minat — own damage, banjir, windscreen atau total loss jika direkodkan. Sesuai digunakan sebelum bayar booking atau deposit.
+                Semakan rekod claim insurans untuk kereta yang anda minat — own damage, banjir, windscreen atau total loss jika direkodkan. Sesuai digunakan sebelum bayar deposit.
               </p>
             </div>
           </div>

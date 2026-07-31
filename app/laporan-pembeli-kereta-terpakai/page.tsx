@@ -88,7 +88,7 @@ export default function LaporanPembelihPage() {
               Laporan Pembeli kereta terpakai — RM12
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar membantu pembeli kereta terpakai Malaysia masuk rundingan dengan data — bukan agak-agak. Laporan Pembeli RM12 memberi anda semua yang perlu tahu sebelum bayar booking atau deposit.
+              Paqar membantu pembeli kereta terpakai Malaysia masuk rundingan dengan data — bukan agak-agak. Laporan Pembeli RM12 memberi anda semua yang perlu tahu sebelum bayar deposit.
             </p>
           </div>
 

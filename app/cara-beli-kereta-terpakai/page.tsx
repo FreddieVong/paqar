@@ -96,7 +96,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
               Cara beli kereta terpakai Malaysia dengan selamat
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar membantu pembeli kereta terpakai semak harga pasaran dan dapatkan laporan pembeli sebelum bayar booking atau deposit. Panduan ini merangkumi 6 langkah penting dari semak saman hingga tukar milik dengan selamat.
+              Paqar membantu pembeli kereta terpakai semak harga pasaran dan dapatkan laporan pembeli sebelum bayar deposit. Panduan ini merangkumi 6 langkah penting dari semak saman hingga tukar milik dengan selamat.
             </p>
           </div>
 

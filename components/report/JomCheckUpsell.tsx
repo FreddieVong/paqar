@@ -43,7 +43,7 @@ export function JomCheckUpsell({ checkId, claimToken }: Props) {
       <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
         Semak rekod claim insurans sebenar — termasuk <span className="font-semibold">meter
         (odometer) ketika claim</span>, tahap keseriousan setiap claim, dan rekod total loss —
-        sebelum anda bayar booking atau deposit.
+        sebelum anda bayar deposit.
       </p>
       <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded-lg px-3 py-2 mb-3">
         <p className="font-body text-[12px] text-[#991B1B] leading-relaxed">

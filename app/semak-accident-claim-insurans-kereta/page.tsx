@@ -6,13 +6,13 @@ import { DualCheckForm } from '@/components/check/DualCheckForm'
 
 export const metadata: Metadata = {
   title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia | Paqar',
-  description: 'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan. Paqar Semakan Accident/Claim Insurans RM100 sebelum bayar booking atau deposit.',
+  description: 'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan. Paqar Semakan Accident/Claim Insurans RM100 sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/semak-accident-claim-insurans-kereta' },
   openGraph: {
     title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia',
-    description: 'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan. RM100 sebelum bayar booking atau deposit.',
+    description: 'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan. RM100 sebelum bayar deposit.',
     url: 'https://paqar.my/semak-accident-claim-insurans-kereta',
-    images: [{ url: '/api/og?title=Semak%20Rekod%20Claim%20Insurans%20Kereta&subtitle=Sebelum%20bayar%20booking%20atau%20deposit', width: 1200, height: 630 }],
+    images: [{ url: '/api/og?title=Semak%20Rekod%20Claim%20Insurans%20Kereta&subtitle=Sebelum%20bayar%20deposit', width: 1200, height: 630 }],
   },
 }
 
@@ -30,7 +30,7 @@ export default function SemakAccidentClaimInsuransPage() {
       {
         '@type': 'Article',
         headline: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia',
-        description: 'Apa itu Semakan Accident/Claim Insurans, apa yang disemak, had data, dan kenapa ia penting sebelum bayar booking atau deposit.',
+        description: 'Apa itu Semakan Accident/Claim Insurans, apa yang disemak, had data, dan kenapa ia penting sebelum bayar deposit.',
         author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
         publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
         datePublished: '2026-06-23',
@@ -39,7 +39,7 @@ export default function SemakAccidentClaimInsuransPage() {
       {
         '@type': 'Service',
         name: 'Semakan Accident/Claim Insurans Kereta',
-        description: 'Semak rekod claim insurans kereta terpakai seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum bayar booking atau deposit.',
+        description: 'Semak rekod claim insurans kereta terpakai seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum bayar deposit.',
         provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
         areaServed: { '@type': 'Country', name: 'Malaysia' },
         offers: { '@type': 'Offer', price: '100', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
@@ -98,7 +98,7 @@ export default function SemakAccidentClaimInsuransPage() {
               Semak rekod claim insurans kereta terpakai
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar menyediakan Semakan Accident/Claim Insurans — untuk semak sama ada kenderaan pernah ada rekod tuntutan insurans seperti own damage, banjir, windscreen atau total loss. Sebelum anda bayar booking atau deposit.
+              Paqar menyediakan Semakan Accident/Claim Insurans — untuk semak sama ada kenderaan pernah ada rekod tuntutan insurans seperti own damage, banjir, windscreen atau total loss. Sebelum anda bayar deposit.
             </p>
           </div>
 
@@ -228,7 +228,7 @@ export default function SemakAccidentClaimInsuransPage() {
             {[
               { q: 'Adakah semua kemalangan ada rekod?', a: 'Tidak. Pemilik yang membaiki sendiri tanpa buat tuntutan tidak akan ada rekod. Ini adalah had sistem — bukan kegagalan semakan.' },
               { q: 'Rekod claim banyak bermakna apa?', a: 'Rekod ada tidak semestinya buruk. Sebuah tuntutan windscreen RM800 berbeza dengan own damage RM30,000. Guna maklumat ini untuk bertanya soalan lebih tepat kepada penjual.' },
-              { q: 'Boleh semak tanpa pergi tengok kereta?', a: 'Ya. Anda hanya perlukan nombor plat. Sesuai digunakan sebelum pergi tengok kereta atau sebelum bayar booking.' },
+              { q: 'Boleh semak tanpa pergi tengok kereta?', a: 'Ya. Anda hanya perlukan nombor plat. Sesuai digunakan sebelum pergi tengok kereta atau sebelum bayar deposit.' },
             ].map(faq => (
               <details key={faq.q} className="group bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
                 <summary className="flex items-center justify-between p-4 cursor-pointer list-none">

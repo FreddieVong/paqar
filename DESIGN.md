@@ -300,8 +300,10 @@ All badges: Plus Jakarta Sans 700, 11px, 100px border-radius, 4px/10px padding.
 - Mobile: no inline nav links — hamburger deferred to later wave
 
 ### Status Eyebrow (hero)
-- Green pill: "Percuma · Tanpa daftar akaun"
+- Green pill: "Semakan harga percuma · Tanpa daftar"
 - Success green — signals "this is safe to start"
+- Scoped to *harga* deliberately: accident and odometer checks are paid, so an
+  unqualified "Percuma" would imply they are included
 
 ---
 

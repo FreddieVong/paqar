@@ -145,7 +145,7 @@ export default function ChecklistBeliKeretaTerpakaiPage() {
               Checklist beli kereta terpakai Malaysia
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar membantu pembeli kereta terpakai semak harga pasaran dan dapatkan laporan pembeli sebelum bayar booking atau deposit. Tandakan setiap item dalam checklist ini sebelum commit — terlepas satu boleh menyebabkan masalah besar selepas bayar.
+              Paqar membantu pembeli kereta terpakai semak harga pasaran dan dapatkan laporan pembeli sebelum bayar deposit. Tandakan setiap item dalam checklist ini sebelum commit — terlepas satu boleh menyebabkan masalah besar selepas bayar.
             </p>
           </div>
 
