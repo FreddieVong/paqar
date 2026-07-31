@@ -182,8 +182,17 @@ export default async function AdminAdsPage() {
             overpriced plate tab never render the teaser, so they can never
             complete and are excluded rather than counted as failures.
           </p>
+          {/* Landing visits are NOT report-path-only — they are every session.
+              Pairing them with the report-path start count below reads as a
+              ~4x worse landing page than reality; that exact division is what
+              made the daily email recommend rewriting a headline that was
+              converting fine. The all-paths row is what belongs next to it. */}
           <Row label="Landing-page visits" value={String(funnel?.landingViews ?? 0)} />
-          <Row label="valuation_started" value={String(funnel?.valuationStarted ?? 0)} />
+          <Row
+            label="valuation_started (any path)"
+            value={String(funnel?.valuationStartedAnyPath ?? 0)}
+          />
+          <Row label="valuation_started (report path)" value={String(funnel?.valuationStarted ?? 0)} />
           <Row label="valuation_completed" value={String(funnel?.valuationCompleted ?? 0)} />
           <Row label="  ├ plate submitted" value={String(funnel?.plateSubmitted ?? 0)} />
           <Row label="  ├ lookup found" value={String(funnel?.lookupSucceeded ?? 0)} />
@@ -414,7 +423,7 @@ function dayNumber(launchedAt: string | null): number {
 
 function emptyFunnel() {
   return {
-    landingViews: 0, valuationStarted: 0, valuationCompleted: 0,
+    landingViews: 0, valuationStarted: 0, valuationStartedAnyPath: 0, valuationCompleted: 0,
     purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0,
   }
 }
@@ -438,6 +447,13 @@ function creativeFrom(
     funnel: {
       landingViews:       (last?.paqar_landing_views as number | null) ?? 0,
       valuationStarted:   (last?.valuation_started as number | null) ?? 0,
+      // Legacy snapshots (pre-023) have no all-paths count. Falling back to the
+      // report-path number understates it, but inventing one would be worse —
+      // and the fallback is never larger than the truth, so it cannot turn a
+      // healthy landing page into a false alarm the way the reverse did.
+      valuationStartedAnyPath:
+        (last?.valuation_started_any_path as number | null)
+        ?? (last?.valuation_started as number | null) ?? 0,
       valuationCompleted: (last?.valuation_completed as number | null) ?? 0,
       purchasesRm12:      (last?.purchases_rm12 as number | null) ?? 0,
       purchasesRm100:     (last?.purchases_rm100 as number | null) ?? 0,

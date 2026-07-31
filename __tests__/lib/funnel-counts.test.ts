@@ -216,3 +216,72 @@ describe('REGRESSION: the path filter must not zero pathless stages', () => {
     expect(f.valuationStarted).toBe(3)      // legacy NULL starts stay excluded
   })
 })
+
+describe('REGRESSION: landing-page rates must not mix cohorts', () => {
+  /**
+   * Production failure, 31 July. The daily report said "Completion rate 120.0%"
+   * and "Only 4.6% of visitors start a valuation — the page is not delivering
+   * what the ad promised", and recommended rewriting the landing headline.
+   *
+   * Both numbers were cohort mismatches. valuationStarted is filtered to
+   * plate_report; landingViews and valuationCompleted are not. Production had
+   * 10 report-path starts against 218 landing sessions (10/218 = 4.6%) and 12
+   * completions against those same 10 starts (120%). Measured like with like,
+   * the landing page was converting at 41.7%.
+   */
+  it('counts starts on EVERY path for the landing-page rate', async () => {
+    rows.data = [
+      ev({ journey_id: 'j1', valuation_path: VALUATION_PATHS.plateReport }),
+      ev({ journey_id: 'j2', valuation_path: VALUATION_PATHS.modelPrice }),
+      ev({ journey_id: 'j3', valuation_path: VALUATION_PATHS.modelPrice }),
+      ev({ journey_id: 'j4', valuation_path: VALUATION_PATHS.plateCheck }),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    // The completion denominator stays report-only...
+    expect(f.valuationStarted).toBe(1)
+    // ...but the landing page converted four visitors, not one.
+    expect(f.valuationStartedAnyPath).toBe(4)
+  })
+
+  it('includes legacy NULL-path starts in the all-paths count', async () => {
+    // These are excluded from the report funnel (we cannot know their path),
+    // but they are unambiguously starts and the landing page earned them.
+    rows.data = [
+      ev({ journey_id: 'j1', valuation_path: null }),
+      ev({ journey_id: 'j2', valuation_path: VALUATION_PATHS.plateReport }),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.valuationStarted).toBe(1)
+    expect(f.valuationStartedAnyPath).toBe(2)
+  })
+
+  it('still collapses retries of one submission in the all-paths count', async () => {
+    rows.data = Array.from({ length: 6 }, () =>
+      ev({ journey_id: 'j1', valuation_path: VALUATION_PATHS.modelPrice }))
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.valuationStartedAnyPath).toBe(1)
+  })
+
+  it('reproduces the exact production shape that produced 4.6% and 120%', async () => {
+    rows.data = [
+      ...Array.from({ length: 20 }, (_, i) =>
+        ev({ event_name: 'landing_page_view', session_id: `s${i}`, valuation_path: null })),
+      ...Array.from({ length: 2 }, (_, i) =>
+        ev({ journey_id: `r${i}`, valuation_path: VALUATION_PATHS.plateReport })),
+      ...Array.from({ length: 6 }, (_, i) =>
+        ev({ journey_id: `m${i}`, valuation_path: VALUATION_PATHS.modelPrice })),
+      ...Array.from({ length: 3 }, (_, i) =>
+        ev({ event_name: 'valuation_completed', check_id: `c${i}`, valuation_path: null })),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.landingViews).toBe(20)
+    expect(f.valuationStarted).toBe(2)          // report path only
+    expect(f.valuationStartedAnyPath).toBe(8)   // what the page actually earned
+    expect(f.valuationCompleted).toBe(3)
+    // The old maths: 2/20 = 10% "broken page". The honest maths: 8/20 = 40%.
+    expect(f.valuationStarted / f.landingViews).toBeLessThan(0.15)
+    expect(f.valuationStartedAnyPath / f.landingViews).toBeGreaterThan(0.30)
+    // And completions still exceed report-path starts — the data-health signal.
+    expect(f.valuationCompleted).toBeGreaterThan(f.valuationStarted)
+  })
+})

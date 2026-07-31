@@ -6,10 +6,20 @@ vi.mock('@/lib/env', () => ({ env: { META_GRAPH_API_VERSION: 'v25.0' } }))
 
 import { buildDailyReport, diagnose, type ReportInput, type CreativeResult } from '@/lib/meta-ads/report'
 
-const funnel = (o: Partial<ReturnType<typeof emptyFunnel>> = {}) => ({ ...emptyFunnel(), ...o })
+// valuationStartedAnyPath defaults to valuationStarted unless a case sets it
+// explicitly — i.e. "every start was on the report path", which keeps existing
+// expectations meaningful. Cases about cohort mixing override it.
+const funnel = (o: Partial<ReturnType<typeof emptyFunnel>> = {}) => {
+  const merged = { ...emptyFunnel(), ...o }
+  if (o.valuationStartedAnyPath === undefined) {
+    merged.valuationStartedAnyPath = merged.valuationStarted
+  }
+  return merged
+}
 function emptyFunnel() {
   return {
-    landingViews: 0, valuationStarted: 0, valuationCompleted: 0,
+    landingViews: 0, valuationStarted: 0, valuationStartedAnyPath: 0,
+    valuationCompleted: 0,
     purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0,
   }
 }
@@ -248,5 +258,66 @@ describe('Meta IDs stay exact strings', () => {
     expect(report).toContain(id)
     // Number() would round these to ...440 / ...0440 — the exact digits matter.
     expect(Number(id).toString()).not.toBe(id)
+  })
+})
+
+describe('REGRESSION: the report must not diagnose from mixed cohorts', () => {
+  it('does not blame the landing page when the model tab is carrying the traffic', () => {
+    // Production, 31 July: 2 report-path starts and 6 model-tab starts against
+    // 20 landing sessions. The old maths saw 10% and told the founder to
+    // rewrite a headline that was converting 40% of visitors.
+    const d = diagnose(input({
+      linkClicks: 25,
+      funnel: funnel({
+        landingViews: 20, valuationStarted: 2,
+        valuationStartedAnyPath: 8, valuationCompleted: 1,
+      }),
+    }))
+    expect(d.weakPoint).not.toBe('Landing-page message match')
+  })
+
+  it('still flags a genuinely bad landing page', () => {
+    const d = diagnose(input({
+      linkClicks: 25,
+      funnel: funnel({
+        landingViews: 40, valuationStarted: 1,
+        valuationStartedAnyPath: 2, valuationCompleted: 0,
+      }),
+    }))
+    expect(d.weakPoint).toBe('Landing-page message match')
+  })
+
+  it('reports an impossible completion rate as a data fault, not a finding', () => {
+    const d = diagnose(input({
+      linkClicks: 25,
+      funnel: funnel({
+        landingViews: 20, valuationStarted: 10,
+        valuationStartedAnyPath: 12, valuationCompleted: 12,
+      }),
+    }))
+    expect(d.weakPoint).toBe('Funnel data health')
+    expect(d.reason).toContain('impossible')
+  })
+
+  it('never prints a completion rate above 100%', () => {
+    const body = buildDailyReport(input({
+      funnel: funnel({
+        landingViews: 218, valuationStarted: 10,
+        valuationStartedAnyPath: 71, valuationCompleted: 12,
+      }),
+    }))
+    expect(body).not.toMatch(/Completion rate: 1[2-9]\d(\.\d)?%/)
+    expect(body).toContain('unavailable')
+  })
+
+  it('shows both cohorts so neither number can be mistaken for the other', () => {
+    const body = buildDailyReport(input({
+      funnel: funnel({
+        landingViews: 218, valuationStarted: 10,
+        valuationStartedAnyPath: 71, valuationCompleted: 6,
+      }),
+    }))
+    expect(body).toContain('valuation_started (all paths): 71')
+    expect(body).toContain('valuation_started (report path): 10')
   })
 })

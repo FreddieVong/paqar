@@ -90,6 +90,7 @@ export function computeSpendSinceLastSync(
 }
 
 export type Diagnosis =
+  | 'Funnel data health'
   | 'Advertisement hook'
   | 'Click-to-landing-page tracking'
   | 'Landing-page message match'
@@ -134,17 +135,34 @@ export function diagnose(input: ReportInput): { weakPoint: Diagnosis; reason: st
     }
   }
 
-  if (f.landingViews >= 20 && f.valuationStarted / f.landingViews < 0.15) {
+  // A completion rate above 100% is arithmetically impossible and means the
+  // two numbers were drawn from different cohorts. Say so instead of printing
+  // it: an impossible figure next to a confident recommendation is worse than
+  // no figure, because it gets acted on.
+  if (f.valuationCompleted > f.valuationStarted && f.valuationStarted > 0) {
     return {
-      weakPoint: 'Landing-page message match',
-      reason: `Only ${pct(f.valuationStarted, f.landingViews)} of visitors start a valuation — the page is not delivering what the ad promised.`,
+      weakPoint: 'Funnel data health',
+      reason: `${f.valuationCompleted} completions against ${f.valuationStarted} starts is impossible — the two are being counted over different cohorts (usually events predating an instrumentation change). Fix the measurement before reading anything else here.`,
     }
   }
 
-  if (f.landingViews >= 20 && f.valuationStarted / f.landingViews < 0.30) {
+  // These rates measure the LANDING PAGE, so they use starts on every path.
+  // Scoring the page against report-path starts alone divides a filtered
+  // numerator by an unfiltered denominator and reports a healthy page as
+  // broken — which is exactly what produced a bogus "4.6% start rate" and a
+  // recommendation to rewrite a headline that was converting at 42%.
+  const started = f.valuationStartedAnyPath
+  if (f.landingViews >= 20 && started / f.landingViews < 0.15) {
+    return {
+      weakPoint: 'Landing-page message match',
+      reason: `Only ${pct(started, f.landingViews)} of visitors start a valuation — the page is not delivering what the ad promised.`,
+    }
+  }
+
+  if (f.landingViews >= 20 && started / f.landingViews < 0.30) {
     return {
       weakPoint: 'Valuation-start rate',
-      reason: `${pct(f.valuationStarted, f.landingViews)} start rate — visitors are interested but the form is not compelling enough.`,
+      reason: `${pct(started, f.landingViews)} start rate — visitors are interested but the form is not compelling enough.`,
     }
   }
 
@@ -182,6 +200,11 @@ function recommendation(weakPoint: Diagnosis, input: ReportInput): string {
       return 'Replace the first 3 seconds of both videos. Nothing downstream matters while the hook is failing.'
     case 'Click-to-landing-page tracking':
       return 'Stop and verify tracking before spending further — check /api/meta/event responses and confirm the paqar_sid cookie survives the ad click.'
+    case 'Funnel data health':
+      return 'Do not change the ads or the landing page on this report. The funnel numbers '
+           + 'contradict each other, so any conclusion drawn from them is unsafe. Recompute '
+           + 'over a window where every stage carries the same instrumentation, then re-read.'
+
     case 'Landing-page message match':
       return 'Make the landing headline repeat the ad\'s exact promise, word for word.'
     case 'Valuation-start rate':
@@ -237,17 +260,22 @@ function compareCreatives(
   // 3. Data is healthy — only now does sample size apply.
   const bothFunded = aSpend >= MIN_SPEND_CENTS_FOR_COMPARISON &&
                      bSpend >= MIN_SPEND_CENTS_FOR_COMPARISON
-  const enoughStarts = a.funnel.valuationStarted + b.funnel.valuationStarted >= MIN_STARTS_FOR_COMPARISON
+  // All paths: the spend being divided bought every visit, so restricting the
+  // numerator to report-path starts discards roughly three quarters of the
+  // signal and delays the decision for no reason.
+  const aStarts = a.funnel.valuationStartedAnyPath
+  const bStarts = b.funnel.valuationStartedAnyPath
+  const enoughStarts = aStarts + bStarts >= MIN_STARTS_FOR_COMPARISON
 
   if (!bothFunded || !enoughStarts) {
     return `BELOW DECISION THRESHOLD — minimum for a call is ${rm(MIN_SPEND_CENTS_FOR_COMPARISON)} spend per creative `
          + `and ${MIN_STARTS_FOR_COMPARISON} combined valuation starts `
-         + `(currently ${rm(aSpend)} / ${rm(bSpend)}, ${a.funnel.valuationStarted + b.funnel.valuationStarted} starts). `
+         + `(currently ${rm(aSpend)} / ${rm(bSpend)}, ${aStarts + bStarts} starts). `
          + 'This is a practical threshold, not a significance test. Do not pause either creative yet.'
   }
 
-  const costA = a.funnel.valuationStarted === 0 ? Infinity : aSpend / a.funnel.valuationStarted
-  const costB = b.funnel.valuationStarted === 0 ? Infinity : bSpend / b.funnel.valuationStarted
+  const costA = aStarts === 0 ? Infinity : aSpend / aStarts
+  const costB = bStarts === 0 ? Infinity : bSpend / bStarts
 
   if (costA === Infinity && costB === Infinity) {
     return 'Neither creative has produced a valuation start yet.'
@@ -270,7 +298,8 @@ function creativeBlock(label: string, c: CreativeResult): string {
   return [
     `- Creative ${label} (ad ${c.adId ?? 'not configured'})${state}`,
     `    spend ${rm(c.spendCents)}, ${num(c.impressions)} impressions, ${num(c.linkClicks)} link clicks`,
-    `    landing ${c.funnel.landingViews} → started ${c.funnel.valuationStarted} → completed ${c.funnel.valuationCompleted}`,
+    `    landing ${c.funnel.landingViews} → started ${c.funnel.valuationStartedAnyPath}`
+      + ` (report path ${c.funnel.valuationStarted}) → completed ${c.funnel.valuationCompleted}`,
     `    RM12 ${c.funnel.purchasesRm12}, RM100 ${c.funnel.purchasesRm100}, revenue ${rm(c.funnel.revenueCents)}`,
   ].join('\n')
 }
@@ -299,9 +328,12 @@ Traffic
 - Cost per landing-page visit: ${total == null ? '—' : per(total, f.landingViews)}
 
 Paqar funnel
-- valuation_started: ${f.valuationStarted}
+- valuation_started (all paths): ${f.valuationStartedAnyPath}
+- valuation_started (report path): ${f.valuationStarted}
 - valuation_completed: ${f.valuationCompleted}
-- Completion rate: ${pct(f.valuationCompleted, f.valuationStarted)}
+- Completion rate: ${f.valuationCompleted > f.valuationStarted
+    ? 'unavailable — more completions than starts, see Diagnosis'
+    : pct(f.valuationCompleted, f.valuationStarted)}
 - RM12 purchases: ${f.purchasesRm12}
 - RM100 purchases: ${f.purchasesRm100}
 - Total purchases: ${purchases}

@@ -150,6 +150,7 @@ export async function saveSnapshot(input: SnapshotInput): Promise<boolean> {
         landing_page_views:  input.landingPageViews,
         paqar_landing_views: input.funnel.landingViews,
         valuation_started:   input.funnel.valuationStarted,
+        valuation_started_any_path: input.funnel.valuationStartedAnyPath,
         valuation_completed: input.funnel.valuationCompleted,
         purchases_rm12:      input.funnel.purchasesRm12,
         purchases_rm100:     input.funnel.purchasesRm100,
@@ -176,7 +177,18 @@ export async function listSnapshots(experimentId: string, level: 'campaign' | 'a
 
 export interface FunnelCounts {
   landingViews:        number
+  /**
+   * Starts on the REPORT path only — the denominator for completion rate,
+   * because only this path can produce a valuation_completed.
+   */
   valuationStarted:    number
+  /**
+   * Starts on EVERY path. This is what pairs with landingViews: a visitor who
+   * uses the model tab did engage with the page, so scoring the landing page
+   * against report-path starts alone understates it by roughly 4x and reads as
+   * a broken landing page when the page is fine.
+   */
+  valuationStartedAnyPath: number
   valuationCompleted:  number
   purchasesRm12:       number
   purchasesRm100:      number
@@ -190,7 +202,8 @@ export interface FunnelCounts {
 }
 
 const EMPTY_FUNNEL: FunnelCounts = {
-  landingViews: 0, valuationStarted: 0, valuationCompleted: 0,
+  landingViews: 0, valuationStarted: 0, valuationStartedAnyPath: 0,
+  valuationCompleted: 0,
   purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0,
   plateSubmitted: 0, lookupSucceeded: 0, lookupNotFound: 0,
   lookupFailed: 0, pollTimedOut: 0,
@@ -284,6 +297,9 @@ export async function getFunnelCounts(opts: {
 
   const counts: FunnelCounts = { ...EMPTY_FUNNEL }
   for (const row of data as Row[]) {
+    // Counted BEFORE the path filter, and deliberately so: this is the
+    // landing page's own conversion rate, and every path is a real start.
+    if (row.event_name === 'valuation_started') mark('startedAny', row)
     if (!inScope(row)) continue
     switch (row.event_name) {
       // A landing is a VISIT, not a journey — keyed on session so a visitor
@@ -308,9 +324,10 @@ export async function getFunnelCounts(opts: {
     }
   }
 
-  counts.landingViews       = seen.landing?.size        ?? 0
-  counts.valuationStarted   = seen.started?.size        ?? 0
-  counts.valuationCompleted = seen.completed?.size      ?? 0
+  counts.landingViews            = seen.landing?.size    ?? 0
+  counts.valuationStarted        = seen.started?.size    ?? 0
+  counts.valuationStartedAnyPath = seen.startedAny?.size ?? 0
+  counts.valuationCompleted      = seen.completed?.size  ?? 0
   counts.plateSubmitted     = seen.submitted?.size      ?? 0
   counts.lookupSucceeded    = seen.lookupOk?.size       ?? 0
   counts.lookupNotFound     = seen.lookupNotFound?.size ?? 0

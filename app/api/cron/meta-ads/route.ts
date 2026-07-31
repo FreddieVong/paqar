@@ -224,7 +224,7 @@ export async function GET(request: NextRequest) {
       impressions: d?.impressions ?? null,
       linkClicks:  d?.linkClicks ?? null,
       funnel: creativeFunnels[slot] ?? {
-        landingViews: 0, valuationStarted: 0, valuationCompleted: 0,
+        landingViews: 0, valuationStarted: 0, valuationStartedAnyPath: 0, valuationCompleted: 0,
         purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0,
       },
     }
