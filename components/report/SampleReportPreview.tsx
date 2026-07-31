@@ -226,7 +226,7 @@ export function SampleReportPreview() {
                 Risau kereta pernah accident?
               </p>
               <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-3">
-                Tambah Semakan Accident/Claim Insurans untuk semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum anda bayar booking atau deposit.
+                Tambah Semakan Accident/Claim Insurans untuk semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum anda bayar deposit.
               </p>
               <button
                 onClick={switchToPremium}

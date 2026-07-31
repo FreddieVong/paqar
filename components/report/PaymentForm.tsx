@@ -215,7 +215,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
                 <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-2">
                   Semak kalau kereta ni pernah <span className="font-semibold text-[#374151]">accident teruk, total loss,
                   atau meter pernah dipusing balik</span> — kami banding meter ketika claim dengan
-                  odometer semasa. Semak sebelum bayar booking atau deposit.
+                  odometer semasa. Semak sebelum bayar deposit.
                 </p>
 
                 {/* Recommended badge */}

@@ -21,7 +21,7 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
           Masuk rundingan dengan data.<br />Bukan agak-agak.
         </p>
         <p className="font-body text-[11px] text-white/55 leading-relaxed">
-          Guna skrip siap untuk tanya soalan penting dan runding harga sebelum bayar booking atau deposit.
+          Guna skrip siap untuk tanya soalan penting dan runding harga sebelum bayar deposit.
         </p>
         {plate && (
           <div className="mt-3">

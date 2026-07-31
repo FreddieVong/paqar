@@ -152,7 +152,7 @@ export function PlateCheckerForm() {
           {busy ? 'Memproses…' : 'Semak Plat Percuma →'}
         </button>
         <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-          Percuma untuk semak · Laporan penuh RM12 — bayar hanya jika mahu
+          Percuma untuk semak · Laporan dari RM12 — bayar hanya jika mahu
         </p>
       </form>
     </div>

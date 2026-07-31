@@ -89,7 +89,7 @@ export default function FaqHubPage() {
               Panduan pembeli kereta terpakai
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Semua yang anda perlu tahu sebelum bayar booking atau deposit — cara pilih model,
+              Semua yang anda perlu tahu sebelum bayar deposit — cara pilih model,
               cara rundingan, dan apa yang perlu disemak pada kereta.
             </p>
           </div>

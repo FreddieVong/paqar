@@ -81,7 +81,7 @@ export function DualCheckForm() {
         </button>
 
         <p className="font-body text-[11px] text-[#9CA3AF] text-center">
-          Percuma · Laporan Pembeli RM12 · Tanpa daftar akaun
+          Percuma untuk semak · Laporan dari RM12 · Tanpa daftar akaun
         </p>
       </form>
     </div>

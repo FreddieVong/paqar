@@ -91,7 +91,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     badgeCls:   'bg-[#0891B2] text-white',
     cardBg:     'bg-[#F0FAFA]',
     cardBorder: 'border-[#99D4D1]',
-    copy:       () => 'Tapi kenapa murah? Semak sejarah kemalangan sebelum bayar booking atau deposit.',
+    copy:       () => 'Tapi kenapa murah? Semak sejarah kemalangan sebelum bayar deposit.',
     ctaSub:     'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
   },
 }
@@ -382,7 +382,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             Semak Harga Percuma →
           </button>
           <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-            Percuma untuk semak harga · RM12 untuk Laporan Pembeli dengan bukti harga &amp; skrip rundingan
+            Percuma untuk semak harga · Dari RM12 untuk Laporan Pembeli dengan bukti harga &amp; skrip rundingan
           </p>
         </form>
       </div>
