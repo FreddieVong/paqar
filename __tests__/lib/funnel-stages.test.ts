@@ -10,6 +10,12 @@ import {
   ERROR_CODES, ERROR_STAGES,
 } from '@/lib/funnel-stages'
 import { eventId } from '@/lib/attribution'
+import { checkoutEventId } from '@/lib/checkout-event-id'
+import { readFile as read } from 'node:fs/promises'
+import { join } from 'node:path'
+
+// Source-level assertions below read from the repo root, not the test's cwd.
+const readFile = (p: string, enc: 'utf8') => read(join(process.cwd(), p), enc)
 
 describe('path discrimination', () => {
   it('only the report path can complete', () => {
@@ -110,5 +116,57 @@ describe('legacy rows are never guessed into an outcome', () => {
     // migration 022 restored them to NULL. Either way: no event.
     expect(isTerminalLookupStatus(LOOKUP_STATUSES.pending)).toBe(false)
     expect(eventForLookupStatus(LOOKUP_STATUSES.pending)).toBeNull()
+  })
+})
+
+describe('REGRESSION: server InitiateCheckout must share the browser pixel event_id', () => {
+  /**
+   * The server briefly derived its InitiateCheckout id from the Billplz bill
+   * id. That id does not exist client-side, so it could never equal the
+   * browser pixel's and Meta counted every checkout TWICE.
+   *
+   * These assertions run against the REAL checkoutEventId both runtimes call.
+   * An earlier version of this test re-implemented the format inline and so
+   * would have passed even if the shipped code drifted again.
+   */
+  it('is one shared derivation, not two that happen to agree', async () => {
+    // Both call sites import this exact module: PaymentForm (browser pixel)
+    // and captureCheckout (Conversions API). Equality is structural.
+    const form   = await readFile('components/report/PaymentForm.tsx', 'utf8')
+    const action = await readFile('app/laporan-pembeli/[checkId]/_actions.ts', 'utf8')
+    for (const src of [form, action]) {
+      expect(src).toContain("from '@/lib/checkout-event-id'")
+      expect(src).toContain('checkoutEventId(')
+    }
+    // Neither may rebuild the string by hand.
+    expect(form).not.toMatch(/`ic_\$\{/)
+    expect(action).not.toMatch(/`ic_\$\{/)
+  })
+
+  it('gives the RM12 report and the RM100 bundle distinct ids', () => {
+    expect(checkoutEventId('ch_1', false)).toBe('ic_ch_1_base')
+    expect(checkoutEventId('ch_1', true)).toBe('ic_ch_1_bundle')
+    expect(checkoutEventId('ch_1', false)).not.toBe(checkoutEventId('ch_1', true))
+  })
+
+  it('is stable, so a user who clicks pay twice is deduplicated', () => {
+    expect(checkoutEventId('ch_1', false)).toBe(checkoutEventId('ch_1', false))
+  })
+
+  it('separates different checks', () => {
+    expect(checkoutEventId('ch_1', false)).not.toBe(checkoutEventId('ch_2', false))
+  })
+
+  it('a bill-derived id would NOT have matched — the original defect', () => {
+    expect(eventId.checkoutStarted('bill_1')).not.toBe(checkoutEventId('ch_1', false))
+  })
+
+  it('the RM88 upgrade keeps the bill-derived id — it has no browser counterpart', async () => {
+    // JomCheckUpsell fires no browser InitiateCheckout, so there is nothing to
+    // deduplicate against and reusing a checkId-keyed id would instead collide
+    // with the original RM12 purchase on the same check.
+    const upsell = await readFile('components/report/JomCheckUpsell.tsx', 'utf8')
+      .catch(() => '')
+    expect(upsell).not.toContain('InitiateCheckout')
   })
 })

@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { initiateBuyerReport }     from '@/app/laporan-pembeli/[checkId]/_actions'
 import { analytics }               from '@/lib/analytics'
+import { checkoutEventId }        from '@/lib/checkout-event-id'
 
 const JOMCHECK_ENABLED = process.env.NEXT_PUBLIC_JOMCHECK_ENABLED === 'true'
 
@@ -46,14 +47,17 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
     // Meta funnel signal — no-op unless the pixel is loaded. The eventID is
     // derived from (check, product) rather than generated per click, so a
     // user who returns to this form and clicks again is deduplicated by Meta
-    // instead of counted twice. The server-side checkout_started event is
-    // keyed on the bill id, which does not exist until the action below
-    // returns — these are separate events and are not deduplicated together.
+    // instead of counted twice.
+    //
+    // captureCheckout sends the SAME id from the server, so Meta collapses the
+    // browser/server pair into one InitiateCheckout. Both sides call
+    // checkoutEventId for exactly that reason — deriving it separately is what
+    // caused every checkout to be counted twice.
     ;(window as { fbq?: (...a: unknown[]) => void }).fbq?.(
       'track',
       'InitiateCheckout',
       { currency: 'MYR', value: addJomCheck ? 100 : 12 },
-      { eventID: `ic_${checkId}_${addJomCheck ? 'bundle' : 'base'}` }
+      { eventID: checkoutEventId(checkId, addJomCheck) }
     )
     startTransition(async () => {
       const result = await initiateBuyerReport({

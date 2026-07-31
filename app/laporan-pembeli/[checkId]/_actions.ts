@@ -16,6 +16,7 @@ import { createClient }           from '@/lib/supabase/server'
 import { currentAttribution }     from '@/lib/attribution-request'
 import { recordCheckoutAttribution, recordAdEvent, markCapiSent } from '@/lib/db/ad-attribution'
 import { eventId }                from '@/lib/attribution'
+import { checkoutEventId }        from '@/lib/checkout-event-id'
 import { sendMetaEvent }          from '@/lib/meta-capi'
 
 /**
@@ -79,15 +80,18 @@ async function captureCheckout(params: {
       // Only a genuinely new occurrence is sent; a retry returns duplicate
       // and sends nothing, so a re-submitted payment cannot double-count.
       //
-      // The Meta event_id must match the BROWSER pixel's, which PaymentForm
-      // derives as `ic_<checkId>_<bundle|base>` — the bill id does not exist
-      // client-side, so a bill-derived id could never collide with it and Meta
-      // would count every checkout TWICE. The +RM88 upgrade has no browser
-      // counterpart, so it keeps the bill-derived id.
+      // The Meta event_id must match the BROWSER pixel's. Both sides call
+      // checkoutEventId so they cannot drift: the bill id does not exist
+      // client-side, so a bill-derived id could never collide with the
+      // browser's and Meta would count every checkout TWICE.
+      //
+      // The +RM88 upgrade is the exception — JomCheckUpsell fires no browser
+      // InitiateCheckout, so there is nothing to deduplicate against and it
+      // keeps the bill-derived id.
       if (result.status === 'inserted') {
         const metaEventId = params.product === 'claim_check_upgrade'
           ? id
-          : `ic_${params.checkId}_${params.product === 'buyer_report_bundle' ? 'bundle' : 'base'}`
+          : checkoutEventId(params.checkId, params.product === 'buyer_report_bundle')
         const sent = await sendMetaEvent({
           eventName:  'InitiateCheckout',
           eventId:    metaEventId,
