@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { initiateBuyerReport }     from '@/app/laporan-pembeli/[checkId]/_actions'
 import { analytics }               from '@/lib/analytics'
 import { checkoutEventId }        from '@/lib/checkout-event-id'
+import { trackAdEvent, type ValuationPathKey } from '@/lib/meta-events'
 
 const JOMCHECK_ENABLED = process.env.NEXT_PUBLIC_JOMCHECK_ENABLED === 'true'
 
@@ -11,9 +12,17 @@ interface Props {
   checkId:             string
   claimToken:          string
   defaultAskingPrice?: number
+  /**
+   * Which journey this paywall belongs to. Required because this form is a
+   * paywall on TWO routes — /laporan-pembeli (plate_report) and /check/[id]
+   * (plate_check) — and only the first can ever reach valuation_completed.
+   * Left pathless, plate_check paywalls would be counted inside the report
+   * funnel and the paywall step would exceed the completions above it.
+   */
+  valuationPath:       ValuationPathKey
 }
 
-export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) {
+export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuationPath }: Props) {
   const [email,        setEmail]        = useState('')
   const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
   const [mileage,      setMileage]      = useState('')
@@ -21,7 +30,23 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
   const [error,        setError]        = useState<string | null>(null)
   const [isPending,    startTransition] = useTransition()
 
-  useEffect(() => { analytics.paymentFormViewed() }, [])
+  const focusTrackedRef = useRef(false)
+
+  useEffect(() => {
+    analytics.paymentFormViewed()
+    // The offer is now on screen. Server-derived id is keyed on
+    // (session, check), so a refresh or a return visit is the same viewing —
+    // seeing the same paywall twice is not a second chance to convert.
+    trackAdEvent('paywall_viewed', { checkId, valuationPath })
+  }, [checkId, valuationPath])
+
+  // Fired once per paywall: distinguishes "saw the offer and left" from
+  // "engaged with it and still left" — different problems, different fixes.
+  function trackFirstFocus() {
+    if (focusTrackedRef.current) return
+    focusTrackedRef.current = true
+    trackAdEvent('payment_form_focused', { checkId, valuationPath })
+  }
 
   // Silent abandonment capture: the moment a valid email is typed, save it as
   // a retarget lead — if they never complete payment, the retarget cron can
@@ -142,6 +167,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice }: Props) 
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onFocus={trackFirstFocus}
             onBlur={captureLeadOnBlur}
             placeholder="anda@email.com"
             required

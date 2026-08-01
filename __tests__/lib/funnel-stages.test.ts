@@ -7,7 +7,7 @@ vi.mock('@/lib/env', () => ({ env: { META_GRAPH_API_VERSION: 'v25.0' } }))
 import {
   VALUATION_PATHS, COMPLETABLE_PATHS, canComplete,
   LOOKUP_STATUSES, isTerminalLookupStatus, eventForLookupStatus,
-  ERROR_CODES, ERROR_STAGES,
+  ERROR_CODES, ERROR_STAGES, FUNNEL_STAGES,
 } from '@/lib/funnel-stages'
 import { eventId } from '@/lib/attribution'
 import { checkoutEventId } from '@/lib/checkout-event-id'
@@ -168,5 +168,31 @@ describe('REGRESSION: server InitiateCheckout must share the browser pixel event
     const upsell = await readFile('components/report/JomCheckUpsell.tsx', 'utf8')
       .catch(() => '')
     expect(upsell).not.toContain('InitiateCheckout')
+  })
+})
+
+describe('paywall instrumentation', () => {
+  it('is stable per (session, check), so a refresh is the same viewing', () => {
+    // Unlike a landing page, seeing the same paywall twice is not a second
+    // chance to convert — it is the same one. Deliberately NOT keyed on day.
+    expect(eventId.paywallViewed('s1', 'ch_1')).toBe(eventId.paywallViewed('s1', 'ch_1'))
+    expect(eventId.paymentFormFocused('s1', 'ch_1'))
+      .toBe(eventId.paymentFormFocused('s1', 'ch_1'))
+  })
+
+  it('separates the two stages, so viewing is never mistaken for engaging', () => {
+    expect(eventId.paywallViewed('s1', 'ch_1'))
+      .not.toBe(eventId.paymentFormFocused('s1', 'ch_1'))
+  })
+
+  it('counts a second car as a second paywall', () => {
+    expect(eventId.paywallViewed('s1', 'ch_1')).not.toBe(eventId.paywallViewed('s1', 'ch_2'))
+  })
+
+  it('sits between completion and checkout in the funnel order', () => {
+    const i = (s: string) => FUNNEL_STAGES.indexOf(s as never)
+    expect(i('valuation_completed')).toBeLessThan(i('paywall_viewed'))
+    expect(i('paywall_viewed')).toBeLessThan(i('payment_form_focused'))
+    expect(i('payment_form_focused')).toBeLessThan(i('checkout_started'))
   })
 })

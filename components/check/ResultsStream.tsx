@@ -128,6 +128,7 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
 
       <BuyerReportPitch plate={plate ?? ''} />
       <PaymentForm
+        valuationPath="plate_check"
         checkId={checkId}
         claimToken={claimToken}
         defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}

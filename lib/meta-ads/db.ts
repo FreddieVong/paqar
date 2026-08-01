@@ -195,6 +195,9 @@ export interface FunnelCounts {
   revenueCents:        number
   /** Diagnostic stages. Null-safe: absent on legacy rows. */
   plateSubmitted?:     number
+  /** The blind spot between completion and checkout. */
+  paywallViewed?:      number
+  paymentFormFocused?: number
   lookupSucceeded?:    number
   lookupNotFound?:     number
   lookupFailed?:       number
@@ -206,7 +209,7 @@ const EMPTY_FUNNEL: FunnelCounts = {
   valuationCompleted: 0,
   purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0,
   plateSubmitted: 0, lookupSucceeded: 0, lookupNotFound: 0,
-  lookupFailed: 0, pollTimedOut: 0,
+  lookupFailed: 0, pollTimedOut: 0, paywallViewed: 0, paymentFormFocused: 0,
 }
 
 /**
@@ -281,6 +284,12 @@ export async function getFunnelCounts(opts: {
   const PATHED_STAGES = new Set([
     'valuation_started', 'plate_submitted', 'plate_lookup_succeeded',
     'plate_lookup_not_found', 'plate_lookup_failed', 'plate_result_poll_timed_out',
+    // PaymentForm is a paywall on two routes — /laporan-pembeli (plate_report)
+    // and /check/[id] (plate_check). Only the first can reach
+    // valuation_completed, so counting these pathless would fold plate_check
+    // paywalls into the report funnel and make the paywall step exceed the
+    // completions above it.
+    'paywall_viewed', 'payment_form_focused',
   ])
   const inScope = (row: Row) => {
     if (!opts.valuationPath) return true
@@ -312,6 +321,8 @@ export async function getFunnelCounts(opts: {
       case 'plate_lookup_not_found':      mark('lookupNotFound', row); break
       case 'plate_lookup_failed':         mark('lookupFailed', row); break
       case 'plate_result_poll_timed_out': mark('pollTimeout', row); break
+      case 'paywall_viewed':              mark('paywallViewed', row); break
+      case 'payment_form_focused':        mark('paymentFormFocused', row); break
       case 'valuation_completed':         mark('completed', row); break
       case 'purchase': {
         // Revenue is money, summed across every purchase — not deduplicated.
@@ -333,6 +344,8 @@ export async function getFunnelCounts(opts: {
   counts.lookupNotFound     = seen.lookupNotFound?.size ?? 0
   counts.lookupFailed       = seen.lookupFailed?.size   ?? 0
   counts.pollTimedOut       = seen.pollTimeout?.size    ?? 0
+  counts.paywallViewed      = seen.paywallViewed?.size  ?? 0
+  counts.paymentFormFocused = seen.paymentFormFocused?.size ?? 0
   return counts
 }
 
