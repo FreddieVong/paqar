@@ -18,6 +18,8 @@ type BrowserEvent =
   | 'plate_submitted'
   | 'valuation_completed'
   | 'plate_result_poll_timed_out'
+  | 'paywall_viewed'
+  | 'payment_form_focused'
 
 export type ValuationPathKey = 'plate_report' | 'model_price' | 'plate_check'
 

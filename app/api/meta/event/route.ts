@@ -32,6 +32,7 @@ const schema = z.object({
   event: z.enum([
     'landing_page_view', 'valuation_started', 'valuation_completed',
     'plate_submitted', 'plate_result_poll_timed_out',
+    'paywall_viewed', 'payment_form_focused',
   ]),
   url:    z.string().max(2000),
   // Per-submit id held in a client ref so a retry reuses it. Doubles as the
@@ -52,6 +53,11 @@ const META_EVENT: Partial<Record<string, MetaEventName>> = {
   // They stay in Paqar's database and are never forwarded to Meta: they would
   // add nothing to optimisation and plate-level activity is not Meta's
   // business.
+  //
+  // paywall_viewed and payment_form_focused are likewise diagnostic. They
+  // exist to locate the drop between valuation_completed and checkout_started,
+  // and sending them would give Meta two more mid-funnel events to optimise
+  // toward — cheapening the signal from the events that represent real intent.
 }
 
 /**
@@ -129,6 +135,12 @@ export async function POST(request: NextRequest) {
   } else if (event === 'plate_submitted') {
     if (!attemptId) return NextResponse.json({ error: 'attemptId required' }, { status: 400 })
     id = derive.plateSubmitted(sessionId, attemptId)
+  } else if (event === 'paywall_viewed') {
+    if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
+    id = derive.paywallViewed(sessionId, checkId)
+  } else if (event === 'payment_form_focused') {
+    if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
+    id = derive.paymentFormFocused(sessionId, checkId)
   } else if (event === 'plate_result_poll_timed_out') {
     if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
     // Keyed on the check alone, so a refresh that times out again is the same

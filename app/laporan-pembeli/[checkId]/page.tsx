@@ -221,6 +221,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               <PaymentForm
                 checkId={params.checkId}
                 claimToken={claimToken}
+                valuationPath="plate_report"
                 defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
               />
               <CollapsibleSampleReport />
@@ -231,6 +232,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               <PaymentForm
                 checkId={params.checkId}
                 claimToken={claimToken}
+                valuationPath="plate_report"
                 defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
               />
             </>

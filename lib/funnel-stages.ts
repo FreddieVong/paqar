@@ -42,6 +42,13 @@ export const FUNNEL_STAGES = [
   'plate_lookup_failed',
   'plate_result_poll_timed_out',
   'valuation_completed',
+  // Between completion and checkout sat a blind spot. 14 Meta visitors
+  // completed a valuation and 1 reached the payment form, but nothing recorded
+  // WHERE the other 13 went — never saw the offer, saw it and left, or engaged
+  // and balked are three different problems with three different fixes.
+  // Diagnostic only: neither is forwarded to Meta.
+  'paywall_viewed',
+  'payment_form_focused',
   'checkout_started',
   'purchase',
 ] as const

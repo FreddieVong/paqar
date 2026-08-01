@@ -30,6 +30,8 @@ export type AdEventName =
   | 'plate_lookup_failed'
   | 'plate_result_poll_timed_out'
   | 'valuation_completed'
+  | 'paywall_viewed'
+  | 'payment_form_focused'
   | 'checkout_started'
   | 'purchase'
 
@@ -86,6 +88,16 @@ export const eventId = {
 
   valuationCompleted: (sessionId: string, checkId: string) =>
     digest(['valuation_completed', sessionId, checkId]),
+
+  // Keyed on (session, check): the paywall is one offer for one check, so a
+  // refresh or a return visit within the same session is the same viewing.
+  // Not keyed on the day — unlike a landing page, seeing the same paywall
+  // twice is not a second opportunity to convert, it is the same one.
+  paywallViewed: (sessionId: string, checkId: string) =>
+    digest(['paywall_viewed', sessionId, checkId]),
+
+  paymentFormFocused: (sessionId: string, checkId: string) =>
+    digest(['payment_form_focused', sessionId, checkId]),
 
   // Keyed on the bill alone: the webhook and /selesai both derive it without
   // needing the session, and Billplz retries collapse onto one row.

@@ -194,6 +194,11 @@ export default async function AdminAdsPage() {
           />
           <Row label="valuation_started (report path)" value={String(funnel?.valuationStarted ?? 0)} />
           <Row label="valuation_completed" value={String(funnel?.valuationCompleted ?? 0)} />
+          {/* The step that actually fails: 14 completions produced 1 payment
+              form and 0 sales. These two separate "never saw the offer" from
+              "saw it and left" from "engaged and balked". */}
+          <Row label="  ├ paywall viewed"       value={String(funnel?.paywallViewed ?? 0)} />
+          <Row label="  └ payment form focused" value={String(funnel?.paymentFormFocused ?? 0)} />
           <Row label="  ├ plate submitted" value={String(funnel?.plateSubmitted ?? 0)} />
           <Row label="  ├ lookup found" value={String(funnel?.lookupSucceeded ?? 0)} />
           <Row label="  ├ lookup not found (valid)" value={String(funnel?.lookupNotFound ?? 0)} />

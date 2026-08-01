@@ -285,3 +285,70 @@ describe('REGRESSION: landing-page rates must not mix cohorts', () => {
     expect(f.valuationCompleted).toBeGreaterThan(f.valuationStarted)
   })
 })
+
+describe('paywall stages are path-scoped, not pathless', () => {
+  /**
+   * PaymentForm is a paywall on TWO routes: /laporan-pembeli (plate_report)
+   * and /check/[id] (plate_check). Only the first can reach
+   * valuation_completed. If these stages were treated as pathless — the way
+   * landing_page_view legitimately is — plate_check paywalls would be counted
+   * inside the report funnel and the paywall step would exceed the completions
+   * directly above it, which is impossible.
+   */
+  it('excludes a plate_check paywall from the report funnel', async () => {
+    rows.data = [
+      ev({ event_name: 'valuation_completed', check_id: 'ch_1',
+           valuation_path: VALUATION_PATHS.plateReport }),
+      ev({ event_name: 'paywall_viewed', check_id: 'ch_1',
+           valuation_path: VALUATION_PATHS.plateReport }),
+      ev({ event_name: 'paywall_viewed', check_id: 'ch_9',
+           valuation_path: VALUATION_PATHS.plateCheck }),
+      ev({ event_name: 'payment_form_focused', check_id: 'ch_9',
+           valuation_path: VALUATION_PATHS.plateCheck }),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.paywallViewed).toBe(1)
+    expect(f.paymentFormFocused).toBe(0)
+    // The invariant that would have caught this: the paywall cannot outnumber
+    // the completions that precede it on the same path.
+    expect(f.paywallViewed!).toBeLessThanOrEqual(f.valuationCompleted)
+  })
+
+  it('counts one paywall per check even when the page is refreshed', async () => {
+    rows.data = Array.from({ length: 7 }, () =>
+      ev({ event_name: 'paywall_viewed', check_id: 'ch_1',
+           valuation_path: VALUATION_PATHS.plateReport }))
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.paywallViewed).toBe(1)
+  })
+
+  it('counts two different cars as two paywalls', async () => {
+    rows.data = [
+      ev({ event_name: 'paywall_viewed', check_id: 'ch_1',
+           valuation_path: VALUATION_PATHS.plateReport }),
+      ev({ event_name: 'paywall_viewed', check_id: 'ch_2',
+           valuation_path: VALUATION_PATHS.plateReport }),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.paywallViewed).toBe(2)
+  })
+
+  it('reproduces the production shape it exists to explain', async () => {
+    // 14 completions, 1 payment form reached, 0 sales. The new stages say
+    // WHERE the other 13 went — here, they saw the offer and left.
+    rows.data = [
+      ...Array.from({ length: 14 }, (_, i) =>
+        ev({ event_name: 'valuation_completed', check_id: `c${i}`,
+             valuation_path: VALUATION_PATHS.plateReport })),
+      ...Array.from({ length: 12 }, (_, i) =>
+        ev({ event_name: 'paywall_viewed', check_id: `c${i}`,
+             valuation_path: VALUATION_PATHS.plateReport })),
+      ev({ event_name: 'payment_form_focused', check_id: 'c0',
+           valuation_path: VALUATION_PATHS.plateReport }),
+    ]
+    const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
+    expect(f.valuationCompleted).toBe(14)
+    expect(f.paywallViewed).toBe(12)      // 2 never reached the offer at all
+    expect(f.paymentFormFocused).toBe(1)  // 11 saw it and did not engage
+  })
+})

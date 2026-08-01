@@ -289,3 +289,47 @@ describe('new funnel stages', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('paywall diagnostics never reach Meta', () => {
+  const PAYWALL_URL = 'https://paqar.my/laporan-pembeli/ch_1'
+
+  for (const event of ['paywall_viewed', 'payment_form_focused'] as const) {
+    it(`records ${event} but sends nothing to Meta`, async () => {
+      // Diagnostic only. Forwarding these would hand Meta two more mid-funnel
+      // events to optimise toward, diluting the signal from the events that
+      // represent real intent.
+      const res = await post({ event, url: PAYWALL_URL, checkId: 'ch_1',
+                               valuationPath: 'plate_report' })
+      expect(res.status).toBe(200)
+      expect(fake.tables.get('ad_events')?.length).toBe(1)
+      expect(sendMetaEvent).not.toHaveBeenCalled()
+    })
+
+    it(`${event} requires a checkId`, async () => {
+      const res = await post({ event, url: PAYWALL_URL })
+      expect(res.status).toBe(400)
+    })
+
+    it(`${event} is idempotent across a refresh`, async () => {
+      await post({ event, url: PAYWALL_URL, checkId: 'ch_1', valuationPath: 'plate_report' })
+      const res = await post({ event, url: PAYWALL_URL, checkId: 'ch_1', valuationPath: 'plate_report' })
+      expect(await res.json()).toMatchObject({ duplicate: true })
+      expect(fake.tables.get('ad_events')?.length).toBe(1)
+    })
+  }
+
+  it('stores the valuation_path so plate_check paywalls stay out of the report funnel', async () => {
+    await post({ event: 'paywall_viewed', url: 'https://paqar.my/check/ch_9',
+                 checkId: 'ch_9', valuationPath: 'plate_check' })
+    const row = fake.tables.get('ad_events')?.[0] as Record<string, unknown>
+    expect(row.valuation_path).toBe('plate_check')
+  })
+
+  it('viewing and focusing are two distinct rows, not one', async () => {
+    await post({ event: 'paywall_viewed', url: PAYWALL_URL, checkId: 'ch_1',
+                 valuationPath: 'plate_report' })
+    await post({ event: 'payment_form_focused', url: PAYWALL_URL, checkId: 'ch_1',
+                 valuationPath: 'plate_report' })
+    expect(fake.tables.get('ad_events')?.length).toBe(2)
+  })
+})
