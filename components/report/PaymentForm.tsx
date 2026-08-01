@@ -252,8 +252,22 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
           {isPending ? 'Memproses…' : ctaText}
         </button>
 
-        <p className="font-body text-[11px] text-[#9CA3AF] text-center">
-          FPX · Kad Kredit/Debit · Bayar sekali · Tiada langganan
+        {/*
+          Two fixes at the exact point where every real buyer has been lost.
+
+          1. This line used to promise "Kad Kredit/Debit". The Billplz
+             collection (dptd0er6) offers FPX online banking ONLY — no cards,
+             no e-wallets. Anyone who arrived intending to pay by card found
+             no way to do it, after committing an email and generating a bill.
+
+          2. Clicking pay leaves paqar.my for a Billplz page headed TENTEC SDN
+             BHD, with no logo, asking for bank credentials. An unfamiliar
+             company name at the moment money is due reads as a scam. Naming
+             it HERE turns that surprise into a confirmation.
+        */}
+        <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
+          Bayar sekali · Tiada langganan<br />
+          Pembayaran diproses oleh Billplz (TENTEC SDN BHD) melalui perbankan online FPX.
         </p>
       </form>
     </div>
