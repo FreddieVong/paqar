@@ -1,228 +1,280 @@
 /**
- * Paqar retargeting e-mail — "a private vehicle dossier delivered to the buyer".
+ * Paqar retargeting e-mail — the buyer report, in the brand's own voice.
  *
- * Dark-native, table-based, Gmail/Outlook safe. Pure function, no env access,
- * so it can be rendered to disk for visual review.
+ * Light-native and on-brand, matching paqar.my rather than inventing a palette.
+ * Table-based, Gmail/Outlook safe. Pure function, no env access, so it can be
+ * rendered to disk for visual review.
  *
- * Design tokens (kept local — e-mail cannot read the Tailwind theme):
- *   bg #0A0D0C · surface #0E1211 · hairline #1E2523 · text #ECF0EE
- *   muted #939E9A · mint #6FDFCF · coral #F05A50 · warm caution #C8A96A
- * Radius scale: 8 / 12 / 16.  Spacing: multiples of 8.
+ * Why light and not dark: the brand is light (DESIGN.md §3.1), the logo is a
+ * JPEG with a hard white background so it can only sit on white, and the
+ * primary #064E4A is a dark teal meant to sit ON light. A dark treatment forced
+ * an off-brand mint/coral palette. Clients that impose their own dark mode will
+ * darken this, which is the ordinary thing readers already expect from mail.
+ *
+ * Design tokens mirror tailwind.config.ts `brand.*` — e-mail cannot read the
+ * Tailwind theme, so they are restated here and must be kept in step:
+ *   primary #064E4A · deep #14453d · accent #FACC15 · page #F8FAF7
+ *   surface #FFFFFF · text #111827 · muted #6B7280 · border #E5E7EB
+ * Radius scale: 10 / 14 / 16.  Spacing: multiples of 4.
  */
 
 const C = {
-  bg:       '#0A0D0C',
-  surface:  '#0E1211',
-  caution:  '#15120C',
-  line:     '#1E2523',
-  linePlate:'#242D2A',
-  lineWarm: '#2C2619',
-  text:     '#ECF0EE',
-  textSoft: '#C7CFCC',
-  muted:    '#939E9A',
-  mutedDim: '#6E7876',
-  mint:     '#6FDFCF',
-  coral:    '#F05A50',
-  amber:    '#C8A96A',
+  page:     '#F8FAF7',
+  surface:  '#FFFFFF',
+  deep:     '#14453d',
+  primary:  '#064E4A',
+  accent:   '#FACC15',
+  text:     '#111827',
+  body:     '#374151',
+  muted:    '#6B7280',
+  dim:      '#9CA3AF',
+  border:   '#E5E7EB',
+  hair:     '#F3F4F6',
+  warnBg:   '#FFFBEB',
+  warnLine: '#FDE68A',
+  warnText: '#B45309',
+  warnBody: '#78350F',
+  warnPill: '#92400E',
 } as const
 
-const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+// Plus Jakarta Sans / DM Sans are webfonts; Gmail strips @font-face, so the
+// system stack is what actually renders for most readers. Naming the brand
+// faces first still picks them up in Apple Mail, where they do load.
+const HEAD = "'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+const BODY = "'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+
+/**
+ * public/paqar-logo.png is a 1024x1024 JPEG whose wordmark occupies a 813x210
+ * band — 79% of the file is white padding. paqar-logo-email.png is that band
+ * trimmed to 383x120 and served at 160px, a 2.4x retina factor.
+ *
+ * Its background is deliberately OPAQUE white, not transparent. A probe send
+ * showed this reader's client applies a full lightness inversion (L -> 100-L,
+ * hue kept) to the whole message, and transforms of that kind skip images. A
+ * transparent logo would keep its dark teal and vanish against the inverted
+ * near-black background; an opaque plate carries its own white with it and
+ * stays legible whichever way the message is rendered.
+ */
+const LOGO_URL = 'https://paqar.my/paqar-logo-email.png'
+const LOGO_W   = 160
+const LOGO_H   = 50
 
 export interface RetargetEmailContent {
   plate?:     string
   reportUrl:  string
 }
 
+/** Teal check disc + label, the same pairing the homepage value stack uses. */
 function benefit(label: string): string {
   return `
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-                    <td valign="middle" width="14" style="padding-top:1px;">
-                      <div class="s-dot" style="width:5px;height:5px;background:${C.mint};border-radius:50%;font-size:0;line-height:0;">&nbsp;</div>
-                    </td>
-                    <td valign="middle" class="t-hi" style="font-family:${FONT};font-size:15px;font-weight:600;color:${C.text};line-height:1.3;">${label}</td>
-                  </tr></table>`
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+                      <td valign="top" width="24" style="padding:0 0 10px;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                          <td class="s-disc" width="16" height="16" align="center" valign="middle" bgcolor="${C.deep}" style="width:16px;height:16px;background:${C.deep};border-radius:8px;font-family:${HEAD};font-size:10px;font-weight:700;color:#FFFFFF;line-height:16px;">&#10003;</td>
+                        </tr></table>
+                      </td>
+                      <td valign="top" class="t-body" style="padding:0 0 10px;font-family:${BODY};font-size:14px;font-weight:500;color:${C.body};line-height:1.45;">${label}</td>
+                    </tr></table>`
 }
 
-/**
- * Quiet 2x2 record of what the claim check covers. A single wrapping row was
- * tried first and broke 3+1 at 375px, leaving a dangling separator — the fixed
- * grid wraps identically at every width.
- */
-function historyLabels(labels: [string, string, string, string]): string {
-  const cell = (label: string, pb: number) => `
-                        <td width="50%" valign="top" class="t-soft" style="padding-bottom:${pb}px;font-family:${FONT};font-size:13px;font-weight:600;letter-spacing:0.005em;color:${C.textSoft};line-height:1.3;">
-                          <span class="t-amber" style="color:${C.amber};padding-right:7px;">&middot;</span>${label}</td>`
-  return `
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <tr>${cell(labels[0], 12)}${cell(labels[1], 12)}</tr>
-                      <tr>${cell(labels[2], 0)}${cell(labels[3], 0)}</tr>
-                    </table>`
+/** White pill on the amber panel — mirrors BuyerReportPitch's add-on badges. */
+function pill(label: string): string {
+  return `<td style="padding:0 6px 6px 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                          <td class="s-pill" bgcolor="${C.surface}" style="background:${C.surface};border:1px solid ${C.warnLine};border-radius:999px;padding:4px 10px;font-family:${HEAD};font-size:11px;font-weight:700;color:${C.warnPill};line-height:1.2;white-space:nowrap;">${label}</td>
+                        </tr></table></td>`
 }
 
 export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
   const plate      = content.plate?.trim().toUpperCase() || ''
   const hasPlate   = plate.length > 0
   const subjectRef = hasPlate ? plate : 'kereta ini'
-  const ctaLabel   = hasPlate ? `Semak ${plate} &mdash; RM12` : 'Semak laporan &mdash; RM12'
+  // "dari RM12", not "RM12": RM12 is the floor and the claim check adds RM88.
+  // The flat-price exception belongs to the checkout button that charges exactly
+  // RM12 — this one only opens a page.
+  const ctaLabel   = hasPlate ? `Semak ${plate} &mdash; dari RM12` : 'Semak laporan &mdash; dari RM12'
   const url        = content.reportUrl
 
   return `<!DOCTYPE html>
-<html lang="ms" style="background:${C.bg};">
+<html lang="ms" style="background:${C.page};">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="x-apple-disable-message-reformatting">
-<meta name="color-scheme" content="dark">
-<meta name="supported-color-schemes" content="dark">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>Laporan Pembeli Paqar</title>
 <!--[if mso]><style>body,table,td,a{font-family:Arial,Helvetica,sans-serif !important}</style><![endif]-->
 <style>
-  /* "This message is already dark — do not re-theme it." Apple Mail and
-     several webmail clients honour this and skip their own colour transform. */
-  :root { color-scheme: dark; supported-color-schemes: dark; }
+  :root { color-scheme: light; supported-color-schemes: light; }
   a { text-decoration:none; }
   body { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  img { border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
 
   /* Outlook mobile rewrites colours it dislikes and tags what it touched with
-     data-ogsc (text) / data-ogsb (background). These put the palette back. */
+     data-ogsc (text) / data-ogsb (background). These put the palette back so a
+     forced dark theme cannot land white text on a white pill, or drop the teal. */
   [data-ogsc] .t-hi    { color:${C.text} !important; }
-  [data-ogsc] .t-soft  { color:${C.textSoft} !important; }
+  [data-ogsc] .t-body  { color:${C.body} !important; }
   [data-ogsc] .t-mute  { color:${C.muted} !important; }
-  [data-ogsc] .t-dim   { color:${C.mutedDim} !important; }
-  [data-ogsc] .t-mint  { color:${C.mint} !important; }
-  [data-ogsc] .t-amber { color:${C.amber} !important; }
+  [data-ogsc] .t-dim   { color:${C.dim} !important; }
+  [data-ogsc] .t-teal  { color:${C.primary} !important; }
   [data-ogsc] .t-inv   { color:#FFFFFF !important; }
-  [data-ogsb] .s-page  { background:${C.bg} !important; }
+  [data-ogsc] .t-warn  { color:${C.warnText} !important; }
+  [data-ogsc] .t-warnb { color:${C.warnBody} !important; }
+  [data-ogsc] .t-pill  { color:${C.warnPill} !important; }
+  [data-ogsb] .s-page  { background:${C.page} !important; }
   [data-ogsb] .s-card  { background:${C.surface} !important; }
-  [data-ogsb] .s-warn  { background:${C.caution} !important; }
-  [data-ogsb] .s-cta   { background:${C.coral} !important; }
-  [data-ogsb] .s-dot   { background:${C.mint} !important; }
+  [data-ogsb] .s-deep  { background:${C.deep} !important; }
+  [data-ogsb] .s-cta   { background:${C.primary} !important; }
+  [data-ogsb] .s-warn  { background:${C.warnBg} !important; }
+  [data-ogsb] .s-pill  { background:${C.surface} !important; }
+  [data-ogsb] .s-disc  { background:${C.deep} !important; }
+  [data-ogsb] .s-dot   { background:${C.accent} !important; }
+
   @media only screen and (max-width:600px) {
-    .gutter   { padding-left:24px !important; padding-right:24px !important; }
-    .hero     { font-size:26px !important; line-height:1.24 !important; }
-    .plate-no { font-size:31px !important; }
-    .pad-lg   { padding:24px !important; }
+    .page-pad { padding:16px 10px !important; }
+    .gutter   { padding-left:20px !important; padding-right:20px !important; }
+    .hero     { font-size:24px !important; line-height:1.2 !important; }
+    .plate-no { font-size:30px !important; }
+    .pad-lg   { padding:18px !important; }
   }
 </style>
 </head>
-<body style="margin:0;padding:0;background:${C.bg};">
+<body style="margin:0;padding:0;background:${C.page};">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">Sebelum bayar deposit &mdash; semak sama ada harga ${subjectRef} berbaloi.</div>
 
-  <table role="presentation" class="s-page" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.bg}" style="background:${C.bg};">
+  <table role="presentation" class="s-page" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.page}" style="background:${C.page};">
     <tr>
-      <td align="center" style="padding:0;">
-        <table role="presentation" class="s-page" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.bg}" style="width:100%;max-width:600px;background:${C.bg};">
+      <td align="center" class="page-pad" style="padding:28px 16px;">
+        <table role="presentation" class="s-card" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.surface}" style="width:100%;max-width:600px;background:${C.surface};border:1px solid ${C.border};border-radius:16px;overflow:hidden;">
 
-          <!-- ── identity ─────────────────────────────────────────── -->
+          <!-- ── identity ─────────────────────────────────────────────
+               alt text is styled so the clients that block images by default
+               still render the brand name in the brand colour. -->
           <tr>
-            <td class="gutter" style="padding:40px 24px 0;">
+            <td class="gutter" style="padding:24px 24px 0;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-                <td align="left" class="t-mint" style="font-family:${FONT};font-size:17px;font-weight:800;letter-spacing:-0.01em;color:${C.mint};line-height:1;">Paqar</td>
-                <td align="right" class="t-dim" style="font-family:${FONT};font-size:10px;font-weight:700;letter-spacing:0.16em;color:${C.mutedDim};line-height:1;">LAPORAN PEMBELI</td>
+                <td align="left" valign="middle" style="line-height:0;font-size:0;">
+                  <img src="${LOGO_URL}" width="${LOGO_W}" height="${LOGO_H}" alt="Paqar"
+                       style="display:block;width:${LOGO_W}px;height:${LOGO_H}px;border:0;font-family:${HEAD};font-size:19px;font-weight:800;color:${C.primary};" />
+                </td>
+                <td align="right" valign="middle" class="t-dim" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.14em;color:${C.dim};line-height:1;">LAPORAN PEMBELI</td>
               </tr></table>
             </td>
           </tr>
 
-          <!-- ── registration plate ───────────────────────────────── -->
+          <!-- ── registration plate ───────────────────────────────────
+               The one deep-teal block, mirroring the homepage RM12 card so the
+               e-mail is recognisably the same product. -->
           ${hasPlate ? `
           <tr>
-            <td class="gutter" style="padding:32px 24px 0;">
-              <table role="presentation" class="s-card" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.surface}" style="background:${C.surface};border:1px solid ${C.linePlate};border-radius:12px;">
+            <td class="gutter" style="padding:20px 24px 0;">
+              <table role="presentation" class="s-deep" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.deep}" style="background:${C.deep};border-radius:14px;">
                 <tr>
-                  <td style="padding:16px 20px 18px;">
+                  <td class="pad-lg" style="padding:18px 20px 20px;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-                      <td align="left" class="t-mint" style="font-family:${FONT};font-size:9px;font-weight:700;letter-spacing:0.18em;color:${C.mint};line-height:1;">NO.&nbsp;PENDAFTARAN</td>
-                      <td align="right" class="t-dim" style="font-family:${FONT};font-size:9px;font-weight:700;letter-spacing:0.18em;color:${C.mutedDim};line-height:1;">MALAYSIA</td>
+                      <td align="left" valign="middle">
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                          <td valign="middle" width="12" style="padding-right:7px;">
+                            <div class="s-dot" style="width:6px;height:6px;background:${C.accent};border-radius:3px;font-size:0;line-height:0;">&nbsp;</div>
+                          </td>
+                          <td valign="middle" class="t-inv" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.14em;color:#FFFFFF;opacity:0.55;line-height:1;">NO.&nbsp;PENDAFTARAN</td>
+                        </tr></table>
+                      </td>
+                      <td align="right" valign="middle" class="t-inv" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.14em;color:#FFFFFF;opacity:0.4;line-height:1;">MALAYSIA</td>
                     </tr></table>
-                    <div class="plate-no t-hi" style="font-family:${FONT};font-size:34px;font-weight:800;letter-spacing:0.13em;color:${C.text};line-height:1.1;padding-top:12px;">${plate}</div>
+                    <div class="plate-no t-inv" style="font-family:${HEAD};font-size:33px;font-weight:800;letter-spacing:0.12em;color:#FFFFFF;line-height:1.15;padding-top:10px;">${plate}</div>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>` : ''}
 
-          <!-- ── hero ─────────────────────────────────────────────── -->
+          <!-- ── hero ─────────────────────────────────────────────────── -->
           <tr>
-            <td class="gutter" style="padding:32px 24px 0;">
-              <div class="hero t-hi" style="font-family:${FONT};font-size:28px;font-weight:800;letter-spacing:-0.022em;color:${C.text};line-height:1.22;">Belum buat keputusan<br>tentang ${subjectRef}?</div>
+            <td class="gutter" style="padding:26px 24px 0;">
+              <div class="hero t-hi" style="font-family:${HEAD};font-size:26px;font-weight:800;letter-spacing:-0.02em;color:${C.text};line-height:1.18;">Belum buat keputusan<br>tentang ${subjectRef}?</div>
             </td>
           </tr>
           <tr>
-            <td class="gutter" style="padding:16px 24px 0;">
-              <div class="t-mute" style="font-family:${FONT};font-size:16px;font-weight:400;color:${C.muted};line-height:1.62;">Sebelum bayar deposit, semak sama ada harganya berbaloi dan perkara penting yang mungkin tidak diberitahu oleh penjual.</div>
+            <td class="gutter" style="padding:12px 24px 0;">
+              <div class="t-mute" style="font-family:${BODY};font-size:15px;font-weight:400;color:${C.muted};line-height:1.6;">Sebelum bayar deposit, semak sama ada harganya berbaloi dan perkara penting yang mungkin tidak diberitahu oleh penjual.</div>
             </td>
           </tr>
 
-          <!-- ── primary CTA ──────────────────────────────────────── -->
+          <!-- ── primary CTA ──────────────────────────────────────────── -->
           <tr>
-            <td class="gutter" style="padding:32px 24px 0;">
-              <table role="presentation" class="s-cta" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.coral}" style="background:${C.coral};border-radius:12px;">
+            <td class="gutter" style="padding:22px 24px 0;">
+              <table role="presentation" class="s-cta" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.primary}" style="background:${C.primary};border-radius:12px;">
                 <tr>
-                  <td align="center" style="padding:17px 16px;">
-                    <a href="${url}" class="t-inv" style="display:block;font-family:${FONT};font-size:17px;font-weight:800;letter-spacing:-0.01em;color:#FFFFFF;line-height:22px;text-decoration:none;">${ctaLabel}</a>
+                  <td align="center" style="padding:16px;">
+                    <a href="${url}" class="t-inv" style="display:block;font-family:${HEAD};font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#FFFFFF;line-height:21px;text-decoration:none;">${ctaLabel}</a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
           <tr>
-            <td class="gutter" align="center" style="padding:14px 24px 0;">
-              <div class="t-dim" style="font-family:${FONT};font-size:12px;font-weight:400;color:${C.mutedDim};line-height:1.6;">Laporan harga dan panduan pembeli.<br>Semakan sejarah claim tersedia sebagai tambahan.</div>
+            <td class="gutter" align="center" style="padding:11px 24px 0;">
+              <div class="t-dim" style="font-family:${BODY};font-size:12px;font-weight:400;color:${C.dim};line-height:1.55;">Laporan harga dan panduan pembeli.<br>Semakan sejarah claim tersedia sebagai tambahan.</div>
             </td>
           </tr>
 
-          <!-- ── what's inside ────────────────────────────────────── -->
+          <!-- ── what's inside ────────────────────────────────────────── -->
           <tr>
-            <td class="gutter" style="padding:40px 24px 0;">
-              <table role="presentation" class="s-card" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.surface}" style="background:${C.surface};border:1px solid ${C.line};border-radius:16px;">
+            <td class="gutter" style="padding:26px 24px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${C.border};border-radius:14px;">
                 <tr>
-                  <td class="pad-lg" style="padding:24px;">
-                    <div class="t-dim" style="font-family:${FONT};font-size:9px;font-weight:700;letter-spacing:0.18em;color:${C.mutedDim};line-height:1;padding-bottom:20px;">DALAM LAPORAN</div>
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td width="50%" valign="top" style="padding-bottom:16px;">${benefit('Verdict harga')}</td>
-                        <td width="50%" valign="top" style="padding-bottom:16px;">${benefit('Julat pasaran')}</td>
-                      </tr>
-                      <tr>
-                        <td width="50%" valign="top">${benefit('Skrip rundingan')}</td>
-                        <td width="50%" valign="top">${benefit('Checklist deposit')}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- ── caution panel ────────────────────────────────────── -->
-          <tr>
-            <td class="gutter" style="padding:16px 24px 0;">
-              <table role="presentation" class="s-warn" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.caution}" style="background:${C.caution};border:1px solid ${C.lineWarm};border-left:2px solid ${C.amber};border-radius:0 16px 16px 0;">
-                <tr>
-                  <td class="pad-lg" style="padding:24px;">
-                    <div class="t-hi" style="font-family:${FONT};font-size:17px;font-weight:700;letter-spacing:-0.015em;color:${C.text};line-height:1.32;">Keadaan luaran tidak<br>menceritakan semuanya.</div>
-                    <div class="t-mute" style="font-family:${FONT};font-size:14px;font-weight:400;color:${C.muted};line-height:1.62;padding-top:10px;">Kereta yang kelihatan cantik atau dijual murah masih boleh mempunyai sejarah claim yang tidak diterangkan oleh penjual.</div>
-                    <div style="padding-top:18px;">
-                      <div style="height:1px;background:${C.lineWarm};font-size:0;line-height:0;">&nbsp;</div>
+                  <td class="pad-lg" style="padding:20px;">
+                    <div class="t-dim" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.14em;color:${C.dim};line-height:1;padding-bottom:14px;">DALAM LAPORAN</div>
+                    ${benefit('Verdict harga &mdash; murah, wajar atau mahal')}
+                    ${benefit('Julat dan harga tengah pasaran semasa')}
+                    ${benefit('Skrip rundingan siap pakai')}
+                    ${benefit('Checklist sebelum bayar deposit')}
+                    <!-- Text link, not an embedded screenshot: images are blocked
+                         by default in Gmail/Outlook/Yahoo, so a sample image would
+                         render as an empty box for much of the list. -->
+                    <div style="padding-top:6px;">
+                      <div style="height:1px;background:${C.hair};font-size:0;line-height:0;">&nbsp;</div>
                       <div style="height:14px;font-size:0;line-height:0;">&nbsp;</div>
-                      ${historyLabels(['Own Damage', 'Banjir', 'Total Loss', 'Windscreen'])}
+                      <a href="https://paqar.my/contoh-laporan" class="t-teal" style="font-family:${HEAD};font-size:14px;font-weight:700;color:${C.primary};line-height:1.4;text-decoration:none;">Lihat contoh laporan penuh &rarr;</a>
                     </div>
-                    <div class="t-dim" style="font-family:${FONT};font-size:11.5px;font-weight:400;color:${C.mutedDim};line-height:1.65;padding-top:16px;">Tarikh dan jumlah claim dipaparkan apabila tersedia. Rekod insurans mungkin tidak merangkumi pembaikan tanpa tuntutan.</div>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- ── footer ───────────────────────────────────────────── -->
+          <!-- ── paid add-on ──────────────────────────────────────────────
+               Same amber treatment and the same four words as the on-site
+               add-on block, so a visitor who saw the ad recognises them here. -->
           <tr>
-            <td class="gutter" style="padding:48px 24px 0;">
-              <div style="height:1px;background:${C.line};font-size:0;line-height:0;">&nbsp;</div>
+            <td class="gutter" style="padding:12px 24px 0;">
+              <table role="presentation" class="s-warn" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.warnBg}" style="background:${C.warnBg};border:1px solid ${C.warnLine};border-radius:14px;">
+                <tr>
+                  <td class="pad-lg" style="padding:18px 20px;">
+                    <div class="t-warn" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.12em;color:${C.warnText};line-height:1;padding-bottom:11px;">TAMBAHAN &mdash; SEMAKAN ACCIDENT/CLAIM</div>
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      ${pill('Rekod kemalangan')}${pill('Tuntutan insurans')}
+                    </tr><tr>
+                      ${pill('Risiko banjir')}${pill('Total loss')}
+                    </tr></table>
+                    <div class="t-warnb" style="font-family:${BODY};font-size:12px;font-weight:400;color:${C.warnBody};line-height:1.55;padding-top:10px;"><strong>Tidak termasuk</strong> dalam Laporan Pembeli RM12 &mdash; boleh ditambah selepas anda buka laporan.</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ── footer ───────────────────────────────────────────────── -->
+          <tr>
+            <td class="gutter" style="padding:26px 24px 0;">
+              <div style="height:1px;background:${C.hair};font-size:0;line-height:0;">&nbsp;</div>
             </td>
           </tr>
           <tr>
-            <td class="gutter" style="padding:20px 24px 48px;">
-              <div class="t-dim" style="font-family:${FONT};font-size:11px;font-weight:400;color:${C.mutedDim};line-height:1.75;">
+            <td class="gutter" style="padding:16px 24px 26px;">
+              <div class="t-dim" style="font-family:${BODY};font-size:11px;font-weight:400;color:${C.dim};line-height:1.7;">
                 Anda menerima emel ini kerana mendaftar minat di Paqar.<br>
                 <a href="https://paqar.my" class="t-mute" style="color:${C.muted};text-decoration:none;">paqar.my</a>
                 &nbsp;&middot;&nbsp;Bukan platform rasmi kerajaan
