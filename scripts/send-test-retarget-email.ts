@@ -52,12 +52,20 @@ async function main() {
         reportUrl: 'https://paqar.my',
       })
 
+  // Repeated test sends share a subject and a near-identical body, so Gmail
+  // threads them and hides the repeats behind "show trimmed content" — which
+  // makes the header, the thing usually under test, impossible to look at. A
+  // per-send stamp keeps every test in its own thread. Test-only; the real
+  // subject the cron sends is built in lib/email/retarget.ts.
+  const stamp = new Date().toLocaleTimeString('en-GB', { hour12: false })
+  const baseSubject = isProbe
+    ? 'Paqar colour probe — screenshot this'
+    : (plate ? `${plate} — berbaloi atau tidak?` : 'Laporan Paqar — masih tersedia')
+
   const { data, error } = await new Resend(apiKey).emails.send({
     from:    'Paqar <noreply@paqar.my>',
     to:      recipient,
-    subject: isProbe
-      ? 'Paqar colour probe — screenshot this'
-      : (plate ? `${plate} — berbaloi atau tidak?` : 'Laporan Paqar — masih tersedia'),
+    subject: `${baseSubject} [test ${stamp}]`,
     html,
   })
 

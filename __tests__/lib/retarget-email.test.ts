@@ -141,6 +141,69 @@ describe('retarget email rendering', () => {
     })
   })
 
+  // The lead gave us an asking price when they ran the free check. Leading with
+  // what that price means beats a feature list, so long as every number shown
+  // comes from the one cohort and the e-mail stays silent when it cannot.
+  describe('personalised price block', () => {
+    const priced = buildRetargetEmailHtml({
+      plate:     'JUF222',
+      reportUrl: 'https://paqar.my/laporan-pembeli/abc123',
+      insight:   { askingRm: 60000, medianRm: 45000, count: 5, verdict: 'overpriced' },
+    })
+
+    it('leads with what the price means instead of a generic question', () => {
+      expect(priced).toContain('lebih tinggi')
+      expect(priced).not.toContain('Belum buat keputusan')
+    })
+
+    it('shows the seller price against the market middle', () => {
+      expect(priced).toContain('RM60,000')
+      expect(priced).toContain('RM45,000')
+      expect(priced).toContain('SELLER MINTA')
+      // Label carries an explicit break so both columns reserve the same label
+      // height and the two figures sit on one baseline.
+      expect(priced).toContain('HARGA TENGAH<br>PASARAN')
+    })
+
+    it('states the evidence the comparison rests on', () => {
+      expect(priced).toContain('Berdasarkan 5 iklan')
+    })
+
+    // The dealer/repost de-dupe is still outstanding, so listings cannot be
+    // described as sellers without overstating the sample.
+    it('counts listings, not sellers', () => {
+      expect(priced).toContain('iklan')
+      expect(priced).not.toMatch(/\d+\s+penjual/)
+    })
+
+    it('falls back to the generic opener with no insight', () => {
+      expect(html).toContain('Belum buat keputusan')
+      expect(html).not.toContain('SELLER MINTA')
+    })
+
+    it('never personalises without a plate to anchor the claim to', () => {
+      const bare = buildRetargetEmailHtml({
+        plate:     '',
+        reportUrl: 'https://paqar.my/laporan-pembeli/abc123',
+        insight:   { askingRm: 60000, medianRm: 45000, count: 5, verdict: 'overpriced' },
+      })
+      expect(bare).not.toContain('SELLER MINTA')
+      expect(bare).toContain('kereta ini')
+    })
+
+    it('adapts the opener to each verdict', () => {
+      const render = (verdict: 'good_deal' | 'fair_price' | 'slightly_high') =>
+        buildRetargetEmailHtml({
+          plate:     'JUF222',
+          reportUrl: 'https://paqar.my/x',
+          insight:   { askingRm: 40000, medianRm: 45000, count: 5, verdict },
+        })
+      expect(render('good_deal')).toContain('di bawah')
+      expect(render('fair_price')).toContain('wajar')
+      expect(render('slightly_high')).toContain('sedikit')
+    })
+  })
+
   describe('no-plate fallback', () => {
     const bare = buildRetargetEmailHtml({
       plate:     '',

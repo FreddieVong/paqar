@@ -12,9 +12,12 @@ interface ModelRetargetParams {
 function verdictLine(verdict?: string): string {
   if (!verdict || verdict === 'no_data') return ''
   const labels: Record<string, string> = {
-    good_deal:     'Semakan anda tunjukkan harga ini MURAH dari pasaran.',
-    fair_price:    'Semakan anda tunjukkan harga ini BERPATUTAN.',
-    slightly_high: 'Semakan anda tunjukkan harga ini SEDIKIT TINGGI.',
+    // Labels must match what the report actually renders (BuyerReportContent's
+    // verdict map) — an e-mail promising "MURAH" and a report showing
+    // "BERBALOI" reads as two different products.
+    good_deal:     'Semakan anda tunjukkan harga ini BERBALOI.',
+    fair_price:    'Semakan anda tunjukkan harga ini WAJAR.',
+    slightly_high: 'Semakan anda tunjukkan harga ini AGAK MAHAL.',
     overpriced:    'Semakan anda tunjukkan harga ini MAHAL.',
   }
   return labels[verdict] ? `<p style="color:#374151;font-size:14px;margin:0 0 8px;font-weight:700;">${labels[verdict]}</p>` : ''
@@ -37,12 +40,12 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
       </p>
       ${verdictLine(params.verdict)}
       <p style="color:#374151;font-size:14px;margin:0 0 20px;line-height:1.6;">
-        Sebelum bayar deposit, semak nombor plat kereta tersebut untuk dapatkan data JPJ rasmi, rekod saman, dan panduan rundingan harga yang khusus untuk kereta itu.
+        Sebelum bayar deposit, semak nombor plat kereta tersebut untuk dapatkan data JPJ rasmi, harga pasaran semasa, dan panduan rundingan harga yang khusus untuk kereta itu.
       </p>
 
       <a href="https://paqar.my"
          style="display:block;background:#064E4A;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin-bottom:16px;">
-        Semak Nombor Plat — RM12 →
+        Semak Nombor Plat — dari RM12 →
       </a>
 
       <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin-bottom:20px;">
@@ -53,7 +56,7 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
           <li>Harga pasaran semasa (verdict)</li>
           <li>Soalan untuk tanya penjual</li>
           <li>Skrip rundingan harga</li>
-          <li>Panduan inspection fizikal</li>
+          <li>Checklist sebelum bayar deposit</li>
         </ul>
       </div>
 
