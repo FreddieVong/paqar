@@ -5,6 +5,7 @@ vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({ env: { META_GRAPH_API_VERSION: 'v25.0' } }))
 
 import { computeSpendSinceLastSync, buildDailyReport, type ReportInput, type CreativeResult } from '@/lib/meta-ads/report'
+import { MAX_TOTAL_SPEND_MYR } from '@/lib/meta-ads/guards'
 
 /**
  * The operator syncs once a day at ~09:00 MYT, so this delta covers roughly
@@ -76,7 +77,7 @@ describe('report rendering of spend since last sync', () => {
   it('5. total campaign spend stays correct and separate', () => {
     const report = buildDailyReport(input({ spendSinceLastSyncCents: null, totalSpendCents: 5955 }))
     expect(report).toContain('Total spend: RM59.55')
-    expect(report).toContain('Remaining from RM210: RM150.45')
+    expect(report).toContain(`Remaining from RM${MAX_TOTAL_SPEND_MYR}: RM${((MAX_TOTAL_SPEND_MYR * 100 - 5955) / 100).toFixed(2)}`)
   })
 
   it('renders the delta once two snapshots exist, with no helper text', () => {

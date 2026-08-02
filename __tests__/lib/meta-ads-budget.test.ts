@@ -5,6 +5,11 @@ vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({ env: { META_GRAPH_API_VERSION: 'v25.0' } }))
 
 import { reconcileBudget, describeBudget } from '@/lib/meta-ads/budget'
+import { MAX_TOTAL_SPEND_CENTS } from '@/lib/meta-ads/guards'
+
+// Spend that exceeds whatever the allowance currently is. The allowance moves
+// by deliberate decision; the reset arithmetic below does not.
+const OVER = MAX_TOTAL_SPEND_CENTS + 403
 
 describe('a reset Meta counter can never reduce cumulative spend', () => {
   it('reproduces the 2026-08-02 production reset exactly', () => {
@@ -15,20 +20,21 @@ describe('a reset Meta counter can never reduce cumulative spend', () => {
     })
     if (r.status !== 'verified') throw new Error('expected verified')
     expect(r.resetDetected).toBe(true)
-    expect(r.cumulativeCents).toBe(21403)      // 18680 + 2723
-    expect(r.remainingCents).toBe(21000 - 21403)
-    expect(r.overspentCents).toBe(403)
+    expect(r.cumulativeCents).toBe(21403)      // 18680 + 2723 — fixed history
+    expect(r.remainingCents).toBe(MAX_TOTAL_SPEND_CENTS - 21403)
     expect(r.source).toBe('counter_plus_snapshot_floor')
   })
 
   it('never reports remaining budget while over the allowance', () => {
+    // Whatever the allowance is, exceeding it must read as OVER BUDGET and
+    // never as a comforting RM0.00 remaining.
     const r = reconcileBudget({
-      liveCounterCents: 2723, snapshotMaxCents: 18680, openingSpendCents: null,
+      liveCounterCents: OVER, snapshotMaxCents: 1, openingSpendCents: null,
     })
     if (r.status !== 'verified') throw new Error('expected verified')
     expect(r.remainingCents).toBeLessThan(0)
+    expect(r.overspentCents).toBe(403)
     expect(describeBudget(r)).toContain('OVER BUDGET')
-    expect(describeBudget(r)).not.toMatch(/RM18[0-9]\.\d\d remaining/)
   })
 
   it('does not double-count when the counter is still cumulative', () => {
@@ -57,8 +63,8 @@ describe('a reset Meta counter can never reduce cumulative spend', () => {
         liveCounterCents: live, snapshotMaxCents: snap, openingSpendCents: open,
       })
       if (r.status !== 'verified') continue
-      expect(r.remainingCents).toBeLessThanOrEqual(21000 - r.cumulativeCents)
-      expect(r.cumulativeCents + r.remainingCents).toBe(21000)
+      expect(r.remainingCents).toBeLessThanOrEqual(MAX_TOTAL_SPEND_CENTS - r.cumulativeCents)
+      expect(r.cumulativeCents + r.remainingCents).toBe(MAX_TOTAL_SPEND_CENTS)
     }
   })
 })
@@ -102,6 +108,6 @@ describe('unverifiable budgets show a reconciliation warning, not a number', () 
       liveCounterCents: 999_999, snapshotMaxCents: 1, openingSpendCents: 0,
     })
     if (huge.status !== 'verified') throw new Error('expected verified')
-    expect(huge.cumulativeCents + huge.remainingCents).toBe(21000)
+    expect(huge.cumulativeCents + huge.remainingCents).toBe(MAX_TOTAL_SPEND_CENTS)
   })
 })

@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest'
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({ env: { META_GRAPH_API_VERSION: 'v25.0' } }))
 
+import { MAX_TOTAL_SPEND_MYR } from '@/lib/meta-ads/guards'
 import { buildDailyReport, diagnose, type ReportInput, type CreativeResult } from '@/lib/meta-ads/report'
 
 // valuationStartedAnyPath defaults to valuationStarted unless a case sets it
@@ -61,7 +62,7 @@ describe('report structure', () => {
 
   it('shows remaining budget against RM210', () => {
     const report = buildDailyReport(input({ totalSpendCents: 9000 }))
-    expect(report).toContain('Remaining from RM210: RM120.00')
+    expect(report).toContain(`Remaining from RM${MAX_TOTAL_SPEND_MYR}: RM${((MAX_TOTAL_SPEND_MYR * 100 - 9000) / 100).toFixed(2)}`)
   })
 })
 

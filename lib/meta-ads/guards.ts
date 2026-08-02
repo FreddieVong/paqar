@@ -15,7 +15,25 @@ import { env } from '@/lib/env'
  */
 
 export const MAX_DAILY_BUDGET_MYR  = 30
-export const MAX_TOTAL_SPEND_MYR   = 210
+/**
+ * Total experiment allowance.
+ *
+ * Raised 210 → 265 on 2026-08-02 for a deliberately small mechanical test of
+ * the graphic creatives. RM215.73 was already spent (RM186.80 recorded in
+ * snapshots plus RM28.93 after Meta's counter reset), leaving RM49.27 of
+ * headroom — enough to prove creative_c/creative_d tagging, the swap cutoff
+ * and Carlist targeting work on real traffic, and not enough to re-buy an
+ * answer already in hand.
+ *
+ * This is NOT a renegotiation of the budget because a counter reset made spend
+ * look lower than it was; reconcileBudget() exists precisely to prevent that.
+ * It is an explicit, recorded decision to fund one more bounded test.
+ *
+ * Meta's ACCOUNT spending limit must be set to the same figure — preflight's
+ * isSpendCapAllowed() requires an exact match, and Meta's own limit is the
+ * primary protection.
+ */
+export const MAX_TOTAL_SPEND_MYR   = 265
 export const MAX_CAMPAIGNS         = 1
 export const MAX_ADSETS            = 1
 export const MAX_ACTIVE_ADS        = 2

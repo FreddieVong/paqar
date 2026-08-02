@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock('@/lib/meta-ads/insights', () => mocks)
 
+import { MAX_TOTAL_SPEND_MYR } from '@/lib/meta-ads/guards'
 import { runPreflight } from '@/lib/meta-ads/preflight'
 import { MetaApiError } from '@/lib/meta-ads/client'
 
@@ -52,7 +53,7 @@ function setHappyPath() {
   mocks.getAdAccount.mockResolvedValue({ id: 'act_123', currency: 'MYR', account_status: 1 })
   mocks.getCampaign.mockResolvedValue({
     id: 'camp_1', name: 'c', account_id: '123', status: 'PAUSED',
-    effective_status: 'PAUSED', spend_cap: '21000',
+    effective_status: 'PAUSED', spend_cap: String(MAX_TOTAL_SPEND_MYR * 100),
   })
   mocks.getAdSet.mockResolvedValue({
     id: 'set_1', campaign_id: 'camp_1', status: 'PAUSED', effective_status: 'PAUSED',
@@ -110,7 +111,7 @@ describe('campaign', () => {
   it('rejects a campaign owned by another ad account', async () => {
     mocks.getCampaign.mockResolvedValue({
       id: 'camp_1', name: 'c', account_id: '999', status: 'PAUSED',
-      effective_status: 'PAUSED', spend_cap: '21000',
+      effective_status: 'PAUSED', spend_cap: String(MAX_TOTAL_SPEND_MYR * 100),
     })
     const result = await runPreflight(INPUT)
     expect(check(result, 'campaign_owner')?.status).toBe('fail')
@@ -119,7 +120,7 @@ describe('campaign', () => {
   it('rejects a campaign that is already active', async () => {
     mocks.getCampaign.mockResolvedValue({
       id: 'camp_1', name: 'c', account_id: '123', status: 'ACTIVE',
-      effective_status: 'ACTIVE', spend_cap: '21000',
+      effective_status: 'ACTIVE', spend_cap: String(MAX_TOTAL_SPEND_MYR * 100),
     })
     const result = await runPreflight(INPUT)
     expect(check(result, 'campaign_state')?.status).toBe('fail')
@@ -363,7 +364,7 @@ describe('RM210 spending limit — campaign or account level', () => {
     // express RM210 on a Malaysian account.
     noCampaignCap()
     mocks.getAdAccount.mockResolvedValue({
-      id: 'act_123', currency: 'MYR', account_status: 1, spend_cap: '21000', amount_spent: '0',
+      id: 'act_123', currency: 'MYR', account_status: 1, spend_cap: String(MAX_TOTAL_SPEND_MYR * 100), amount_spent: '0',
     })
     const r = await runPreflight(INPUT)
     expect(check(r, 'spend_cap')?.status).toBe('pass')
@@ -374,17 +375,19 @@ describe('RM210 spending limit — campaign or account level', () => {
     // RM210 cap with RM150 already spent protects only RM60.
     noCampaignCap()
     mocks.getAdAccount.mockResolvedValue({
-      id: 'act_123', currency: 'MYR', account_status: 1, spend_cap: '21000', amount_spent: '15000',
+      id: 'act_123', currency: 'MYR', account_status: 1, spend_cap: String(MAX_TOTAL_SPEND_MYR * 100), amount_spent: '15000',
     })
     const r = await runPreflight(INPUT)
     expect(check(r, 'spend_cap')?.status).toBe('fail')
     expect(check(r, 'spend_cap')?.detail).toContain('remaining')
   })
 
-  it('accepts a cap that leaves exactly RM210 unspent', async () => {
+  it('accepts a cap that leaves exactly the allowance unspent', async () => {
     noCampaignCap()
+    // cap - already spent must equal the allowance exactly.
     mocks.getAdAccount.mockResolvedValue({
-      id: 'act_123', currency: 'MYR', account_status: 1, spend_cap: '36000', amount_spent: '15000',
+      id: 'act_123', currency: 'MYR', account_status: 1,
+      spend_cap: String(MAX_TOTAL_SPEND_MYR * 100 + 15000), amount_spent: '15000',
     })
     const r = await runPreflight(INPUT)
     expect(check(r, 'spend_cap')?.status).toBe('pass')
@@ -408,7 +411,7 @@ describe('RM210 spending limit — campaign or account level', () => {
 describe('setup mode vs live mode', () => {
   const activeCampaign = () => mocks.getCampaign.mockResolvedValue({
     id: 'camp_1', name: 'c', account_id: '123', status: 'ACTIVE',
-    effective_status: 'ACTIVE', spend_cap: '21000',
+    effective_status: 'ACTIVE', spend_cap: String(MAX_TOTAL_SPEND_MYR * 100),
   })
 
   it('setup mode fails a campaign that is already active', async () => {
@@ -478,7 +481,7 @@ describe('Meta IDs are handled as exact strings', () => {
     }))
     mocks.getCampaign.mockResolvedValue({
       id: REAL_IDS.campaignId, name: 'c', account_id: '123',
-      status: 'PAUSED', effective_status: 'PAUSED', spend_cap: '21000',
+      status: 'PAUSED', effective_status: 'PAUSED', spend_cap: String(MAX_TOTAL_SPEND_MYR * 100),
     })
 
     await runPreflight(REAL_IDS)

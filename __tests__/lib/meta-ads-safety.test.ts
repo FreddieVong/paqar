@@ -94,16 +94,16 @@ describe('budget guards', () => {
   })
 
   it(`requires the campaign spending limit to be exactly RM${MAX_TOTAL_SPEND_MYR}`, () => {
-    expect(isSpendCapAllowed(21000)).toBe(true)
+    expect(isSpendCapAllowed(MAX_TOTAL_SPEND_MYR * 100)).toBe(true)
     expect(isSpendCapAllowed(21001)).toBe(false)
     expect(isSpendCapAllowed(20000)).toBe(false)
     expect(isSpendCapAllowed(null)).toBe(false)
   })
 
   it(`stops at or above RM${MAX_TOTAL_SPEND_MYR}`, () => {
-    expect(isTotalSpendExceeded(20999)).toBe(false)
-    expect(isTotalSpendExceeded(21000)).toBe(true)
-    expect(isTotalSpendExceeded(25000)).toBe(true)
+    expect(isTotalSpendExceeded(MAX_TOTAL_SPEND_MYR * 100 - 1)).toBe(false)
+    expect(isTotalSpendExceeded(MAX_TOTAL_SPEND_MYR * 100)).toBe(true)
+    expect(isTotalSpendExceeded(MAX_TOTAL_SPEND_MYR * 100 + 4000)).toBe(true)
   })
 })
 
@@ -147,7 +147,9 @@ describe('operator gate', () => {
 describe('declared limits match the brief', () => {
   it('holds the agreed constants', () => {
     expect(MAX_DAILY_BUDGET_MYR).toBe(30)
-    expect(MAX_TOTAL_SPEND_MYR).toBe(210)
+    // Pinned so the allowance can only move as a deliberate, reviewed edit.
+    // Raised 210 -> 265 on 2026-08-02 for a bounded RM50 creative test.
+    expect(MAX_TOTAL_SPEND_MYR).toBe(265)
     expect(MAX_CAMPAIGNS).toBe(1)
     expect(MAX_ADSETS).toBe(1)
     expect(MAX_ACTIVE_ADS).toBe(2)

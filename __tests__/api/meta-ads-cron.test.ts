@@ -85,6 +85,7 @@ vi.mock('@/lib/meta-ads/db', () => ({
 
 import { GET } from '@/app/api/cron/meta-ads/route'
 import { MetaApiError } from '@/lib/meta-ads/client'
+import { MAX_TOTAL_SPEND_MYR } from '@/lib/meta-ads/guards'
 
 function call(auth: string | null = `Bearer ${SECRET}`) {
   const headers = new Headers()
@@ -156,10 +157,10 @@ describe('kill switch', () => {
   })
 })
 
-describe('RM210 total spend limit', () => {
-  it('pauses at exactly RM210', async () => {
+describe('total spend limit', () => {
+  it('pauses at exactly the allowance', async () => {
     seedExperiment()
-    meta.getCampaignSpendCents.mockResolvedValue(21000)
+    meta.getCampaignSpendCents.mockResolvedValue(MAX_TOTAL_SPEND_MYR * 100)
 
     const body = await (await call()).json()
 
@@ -168,14 +169,14 @@ describe('RM210 total spend limit', () => {
     expect(alerts.alertPauseSucceeded).toHaveBeenCalled()
   })
 
-  it('pauses above RM210', async () => {
+  it('pauses above the allowance', async () => {
     seedExperiment()
-    meta.getCampaignSpendCents.mockResolvedValue(25000)
+    meta.getCampaignSpendCents.mockResolvedValue(MAX_TOTAL_SPEND_MYR * 100 + 4000)
     await call()
     expect(meta.pauseCampaign).toHaveBeenCalled()
   })
 
-  it('does not pause below RM210', async () => {
+  it('does not pause below the allowance', async () => {
     seedExperiment()
     meta.getCampaignSpendCents.mockResolvedValue(20999)
     await call()
@@ -305,7 +306,7 @@ describe('tracking-failure rule', () => {
 describe('idempotency', () => {
   it('a duplicate cron call in the same bucket does not act twice', async () => {
     seedExperiment()
-    meta.getCampaignSpendCents.mockResolvedValue(21000)
+    meta.getCampaignSpendCents.mockResolvedValue(MAX_TOTAL_SPEND_MYR * 100)
 
     await call()
     const second = await (await call()).json()
@@ -326,7 +327,7 @@ describe('idempotency', () => {
 describe('failed pause', () => {
   beforeEach(() => {
     seedExperiment()
-    meta.getCampaignSpendCents.mockResolvedValue(21000)
+    meta.getCampaignSpendCents.mockResolvedValue(MAX_TOTAL_SPEND_MYR * 100)
     meta.pauseCampaign.mockRejectedValue(new MetaApiError('rate limited', 429, 4))
   })
 
@@ -356,7 +357,7 @@ describe('failed pause', () => {
 describe('manual pause is never undone', () => {
   it('has no code path that clears manual_pause', async () => {
     seedExperiment({ manual_pause: true })
-    meta.getCampaignSpendCents.mockResolvedValue(21000)
+    meta.getCampaignSpendCents.mockResolvedValue(MAX_TOTAL_SPEND_MYR * 100)
 
     await call()
 
@@ -370,7 +371,7 @@ describe('manual pause is never undone', () => {
 describe('operator not enabled', () => {
   it('does not mutate when the operator is disabled', async () => {
     seedExperiment({ operator_enabled: false })
-    meta.getCampaignSpendCents.mockResolvedValue(21000)
+    meta.getCampaignSpendCents.mockResolvedValue(MAX_TOTAL_SPEND_MYR * 100)
 
     const body = await (await call()).json()
 
@@ -505,14 +506,16 @@ describe('ad-level delivery: unavailable is never zero', () => {
   })
 })
 
-describe('the RM210 stop enforces on reconciled spend, not the reset counter', () => {
+describe('the total-spend stop enforces on reconciled spend, not the reset counter', () => {
   it('pauses when snapshots prove the cap is passed even though Meta reads low', async () => {
     // The 2026-08-02 production shape: counter reset to RM27.23 while
     // RM186.80 was already recorded. Enforcing on the counter would have
     // authorised another RM182 against an exhausted allowance.
     seedExperiment()
-    store.snapshots = [{ spend_cents: 18680, captured_at_bucket: '2026-08-01T22:00:00Z', level: 'campaign' }]
-    meta.getCampaignSpendCents.mockResolvedValue(2723)
+    // Snapshot floor + post-reset counter must exceed the CURRENT allowance,
+    // which moves by decision; the reset mechanic is what is under test.
+    store.snapshots = [{ spend_cents: MAX_TOTAL_SPEND_MYR * 100 - 100, captured_at_bucket: '2026-08-01T22:00:00Z', level: 'campaign' }]
+    meta.getCampaignSpendCents.mockResolvedValue(500)
     const res = await call()
     expect(res.status).toBe(200)
     const paused = store.actions.some((a) =>
@@ -522,11 +525,11 @@ describe('the RM210 stop enforces on reconciled spend, not the reset counter', (
 
   it('names the reset in the evidence so the pause is explicable', async () => {
     seedExperiment()
-    store.snapshots = [{ spend_cents: 18680, captured_at_bucket: '2026-08-01T22:00:00Z', level: 'campaign' }]
-    meta.getCampaignSpendCents.mockResolvedValue(2723)
+    store.snapshots = [{ spend_cents: MAX_TOTAL_SPEND_MYR * 100 - 100, captured_at_bucket: '2026-08-01T22:00:00Z', level: 'campaign' }]
+    meta.getCampaignSpendCents.mockResolvedValue(500)
     await call()
     const rec = store.actions.find((a) => a.rule === 'total_spend_limit')
-    expect(rec?.responseSummary ?? '').toMatch(/reset|21403|214\.03/)
+    expect(rec?.responseSummary ?? '').toMatch(/reset|Cumulative/)
   })
 
   it('does not pause when the counter is genuinely low and no reset occurred', async () => {
