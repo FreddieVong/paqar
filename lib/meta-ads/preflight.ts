@@ -7,7 +7,8 @@ import {
 import { MetaApiError, redactMeta } from '@/lib/meta-ads/client'
 import {
   MAX_ACTIVE_ADS, MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR,
-  REQUIRED_CURRENCY, REQUIRED_UTM, CREATIVE_UTM_CONTENT,
+  REQUIRED_CURRENCY, REQUIRED_UTM, ACTIVE_CREATIVE_TAGS, isRetiredCreativeTag,
+  CARLIST_INTEREST,
   ALLOWED_DESTINATION_HOST, ALLOWED_COUNTRY, OPTIMISATION_EVENT,
   isDailyBudgetAllowed, isSpendCapAllowed, isCountryAllowed,
 } from '@/lib/meta-ads/guards'
@@ -250,6 +251,40 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
           : fail('targeting_country', 'Malaysia-only targeting', `countries=[${countries.join(', ')}], must be exactly [${ALLOWED_COUNTRY}]`)
     )
 
+    // --- Audience: three states, never two --------------------------------
+    // Meta omits `interests` entirely when none are set, so "not found" cannot
+    // be distinguished from "not returned". Reporting that as a confident "no"
+    // would be a fabricated verification, so an absent field is UNVERIFIABLE
+    // and becomes a manual acknowledgement.
+    const t = adSet.targeting
+    const interestIds = [
+      ...(t?.interests ?? []),
+      ...(t?.flexible_spec ?? []).flatMap((f) => f.interests ?? []),
+    ].map((i) => i?.id).filter(Boolean) as string[]
+
+    const interestsReadable = t?.interests !== undefined || t?.flexible_spec !== undefined
+    checks.push(
+      !interestsReadable
+        ? manual('audience_carlist', `${CARLIST_INTEREST.name} interest suggestion`,
+            `UNVERIFIABLE — Meta returned no interest field, which does not prove the suggestion is absent. Confirm manually in Ads Manager. Note ${CARLIST_INTEREST.name} is an audience SUGGESTION (affinity), not evidence of a recent Carlist visit.`)
+        : interestIds.includes(CARLIST_INTEREST.id)
+          ? pass('audience_carlist', `${CARLIST_INTEREST.name} interest suggestion`,
+              `Detected (id ${CARLIST_INTEREST.id}). This is an affinity suggestion, NOT proof of a recent Carlist visit.`)
+          : manual('audience_carlist', `${CARLIST_INTEREST.name} interest suggestion`,
+              `Not detected among interests [${interestIds.join(', ') || 'none'}]. Confirm manually — Advantage+ may store suggestions where the API does not expose them.`)
+    )
+
+    const advantage = t?.targeting_automation?.advantage_audience
+    checks.push(
+      advantage === undefined
+        ? manual('audience_advantage', 'Advantage+ Audience enabled',
+            'UNVERIFIABLE — targeting_automation not returned. Confirm manually in Ads Manager.')
+        : advantage === 1
+          ? pass('audience_advantage', 'Advantage+ Audience enabled', 'advantage_audience=1')
+          : manual('audience_advantage', 'Advantage+ Audience enabled',
+              `advantage_audience=${advantage}. The plan expects Advantage+ ON with Carlist.my as a suggestion — confirm this is intended.`)
+    )
+
     const platforms = adSet.targeting?.publisher_platforms
     if (platforms == null) {
       checks.push(manual('placements', 'Facebook + Instagram placements', 'Placements not readable (likely Advantage+ automatic placements) — confirm manually that Facebook and Instagram are both included.'))
@@ -326,8 +361,8 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
 
   // --- Per-creative URL and identity checks --------------------------------
   for (const [slot, adId, expectedContent] of [
-    ['A', input.creativeAAdId, CREATIVE_UTM_CONTENT.a],
-    ['B', input.creativeBAdId, CREATIVE_UTM_CONTENT.b],
+    ['1', input.creativeAAdId, ACTIVE_CREATIVE_TAGS[0]],
+    ['2', input.creativeBAdId, ACTIVE_CREATIVE_TAGS[1]],
   ] as const) {
     try {
       const ad = await getAd(adId)
@@ -336,6 +371,22 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
         ad.adset_id === input.adSetId
           ? pass(`ad_${slot}_parent`, `Creative ${slot} belongs to ad set`, `adset_id=${ad.adset_id}`)
           : fail(`ad_${slot}_parent`, `Creative ${slot} belongs to ad set`, `Ad ${adId} is in ad set ${ad.adset_id}, expected ${input.adSetId}`)
+      )
+
+      // Emitted in BOTH modes so the check set stays identical and reports
+      // remain comparable; only the verdict differs. Setup runs before first
+      // activation, so a live ad is already spending against a configuration
+      // nobody has approved. In live mode ACTIVE is the expected state.
+      checks.push(
+        input.mode === 'setup'
+          ? (ad.status === 'PAUSED'
+              ? pass(`ad_${slot}_paused`, `Creative ${slot} paused for preflight`, 'PAUSED')
+              : fail(`ad_${slot}_paused`, `Creative ${slot} paused for preflight`,
+                  `Ad ${adId} is ${ad.status} (effective ${ad.effective_status}). Both ads must be paused until preflight is approved.`))
+          : (ad.status === 'ACTIVE'
+              ? pass(`ad_${slot}_paused`, `Creative ${slot} delivery state`, 'ACTIVE — expected while live')
+              : manual(`ad_${slot}_paused`, `Creative ${slot} delivery state`,
+                  `Ad ${adId} is ${ad.status}. Expected if paused deliberately or by a hard stop.`))
       )
 
       const { params, hosts } = creativeParams(ad)
@@ -359,6 +410,23 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
       const content = params.get('utm_content')
       if (content !== expectedContent) {
         utmProblems.push(`utm_content=${content ?? 'missing'} (expected ${expectedContent})`)
+      }
+
+      // A live ad still carrying creative_a/creative_b would append graphic
+      // results onto retired video history. Called out separately so the
+      // operator sees the cause, not just "UTM mismatch".
+      if (isRetiredCreativeTag(content)) {
+        checks.push(fail(
+          `ad_${slot}_retired_tag`,
+          `Creative ${slot} does not reuse a retired tag`,
+          `utm_content=${content} is a RETIRED video tag. Reusing it would merge graphic-ad results into retired video data. Use ${expectedContent}.`
+        ))
+      } else {
+        checks.push(pass(
+          `ad_${slot}_retired_tag`,
+          `Creative ${slot} does not reuse a retired tag`,
+          `utm_content=${content ?? 'unreadable'} is not a retired tag`
+        ))
       }
 
       checks.push(

@@ -321,3 +321,51 @@ describe('REGRESSION: the report must not diagnose from mixed cohorts', () => {
     expect(body).toContain('valuation_started (report path): 10')
   })
 })
+
+describe('active and retired creatives are never blended', () => {
+  const reconciled = {
+    status: 'verified' as const, cumulativeCents: 21403, remainingCents: -403,
+    overspentCents: 403, resetDetected: true, source: 'counter_plus_snapshot_floor' as const,
+  }
+
+  it('reports OVER BUDGET rather than a comforting RM0.00 remaining', () => {
+    const body = buildDailyReport(input({ budget: reconciled }))
+    expect(body).toContain('OVER BUDGET')
+    expect(body).toContain('RM214.03')
+    expect(body).not.toContain('Remaining from RM210: RM0.00')
+  })
+
+  it('says the allowance is not raised because a counter reset', () => {
+    const body = buildDailyReport(input({ budget: reconciled }))
+    expect(body).toContain('counter reset')
+    expect(body).toContain('not raised')
+  })
+
+  it('shows a reconciliation warning instead of a number when unverified', () => {
+    const body = buildDailyReport(input({
+      budget: { status: 'unverified', reason: 'No stored snapshots.' },
+    }))
+    expect(body).toContain('BUDGET RECONCILIATION REQUIRED')
+    expect(body).not.toMatch(/Remaining from RM210: RM\d/)
+  })
+
+  it('labels the comparison with the ACTIVE tags only', () => {
+    const body = buildDailyReport(input())
+    expect(body).toContain('Creative comparison (active: creative_c, creative_d)')
+  })
+
+  it('prints retired creatives in their own section, marked excluded', () => {
+    const body = buildDailyReport(input({
+      retiredCreatives: [creative({ label: 'creative_a', spendCents: 1547 })],
+    }))
+    expect(body).toContain('Retired creative baseline')
+    expect(body).toContain('EXCLUDED from decisions')
+    // The retired block must sit AFTER the active comparison, never inside it.
+    expect(body.indexOf('Retired creative baseline'))
+      .toBeGreaterThan(body.indexOf('Creative comparison'))
+  })
+
+  it('omits the retired section entirely when there is no history', () => {
+    expect(buildDailyReport(input())).not.toContain('Retired creative baseline')
+  })
+})

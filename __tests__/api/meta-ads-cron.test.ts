@@ -60,6 +60,15 @@ vi.mock('@/lib/meta-ads/db', () => ({
     return true
   },
   listSnapshots: async () => store.snapshots,
+  // Cumulative spend floor. Returning the stored maximum keeps the cron's
+  // budget reconciliation honest in tests too: a reset Meta counter must not
+  // be able to reduce it.
+  maxSnapshotSpend: async () => {
+    const vals = (store.snapshots as Array<{ spend_cents?: number | null }>)
+      .map((x) => x.spend_cents)
+      .filter((n): n is number => typeof n === 'number')
+    return vals.length ? Math.max(...vals) : null
+  },
   saveSnapshot: async (input: { bucket: Date; metaObjectId: string; level: string }) => {
     const key = `${input.bucket.toISOString()}|${input.metaObjectId}|${input.level}`
     if (store.snapshots.some((s) => s.key === key)) return false
@@ -493,5 +502,38 @@ describe('ad-level delivery: unavailable is never zero', () => {
     expect(typeof a?.metaObjectId).toBe('string')
     expect(a?.metaObjectId).toBe(AD_A)
     expect(Number(AD_A).toString()).not.toBe(AD_A)
+  })
+})
+
+describe('the RM210 stop enforces on reconciled spend, not the reset counter', () => {
+  it('pauses when snapshots prove the cap is passed even though Meta reads low', async () => {
+    // The 2026-08-02 production shape: counter reset to RM27.23 while
+    // RM186.80 was already recorded. Enforcing on the counter would have
+    // authorised another RM182 against an exhausted allowance.
+    seedExperiment()
+    store.snapshots = [{ spend_cents: 18680, captured_at_bucket: '2026-08-01T22:00:00Z', level: 'campaign' }]
+    meta.getCampaignSpendCents.mockResolvedValue(2723)
+    const res = await call()
+    expect(res.status).toBe(200)
+    const paused = store.actions.some((a) =>
+      a.rule === 'total_spend_limit' && a.action.includes('pause'))
+    expect(paused).toBe(true)
+  })
+
+  it('names the reset in the evidence so the pause is explicable', async () => {
+    seedExperiment()
+    store.snapshots = [{ spend_cents: 18680, captured_at_bucket: '2026-08-01T22:00:00Z', level: 'campaign' }]
+    meta.getCampaignSpendCents.mockResolvedValue(2723)
+    await call()
+    const rec = store.actions.find((a) => a.rule === 'total_spend_limit')
+    expect(rec?.responseSummary ?? '').toMatch(/reset|21403|214\.03/)
+  })
+
+  it('does not pause when the counter is genuinely low and no reset occurred', async () => {
+    seedExperiment()
+    store.snapshots = [{ spend_cents: 1000, captured_at_bucket: '2026-07-27T22:00:00Z', level: 'campaign' }]
+    meta.getCampaignSpendCents.mockResolvedValue(5000)
+    await call()
+    expect(store.actions.some((a) => a.rule === 'total_spend_limit')).toBe(false)
   })
 })

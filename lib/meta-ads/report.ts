@@ -1,5 +1,6 @@
 import 'server-only'
-import { MAX_TOTAL_SPEND_MYR, CREATIVE_UTM_CONTENT } from '@/lib/meta-ads/guards'
+import { MAX_TOTAL_SPEND_MYR, ACTIVE_CREATIVE_TAGS, RETIRED_CREATIVE_TAGS } from '@/lib/meta-ads/guards'
+import { describeBudget, type BudgetReconciliation } from '@/lib/meta-ads/budget'
 import type { FunnelCounts } from '@/lib/meta-ads/db'
 
 /**
@@ -37,6 +38,14 @@ export interface ReportInput {
   /** ISO timestamp of the previous sync, for the period label. */
   previousSyncAt:   string | null
   totalSpendCents:  number | null
+  /**
+   * Reconciled cumulative spend. Preferred over totalSpendCents, which is
+   * Meta's live counter and RESETS when the spending limit changes — it read
+   * RM27.23 on 2026-08-02 while RM214.03 had actually been spent.
+   */
+  budget?:          BudgetReconciliation
+  /** Retired video creatives, shown as historical context only. */
+  retiredCreatives?: CreativeResult[]
   impressions:      number | null
   linkClicks:       number | null
   funnel:           FunnelCounts
@@ -304,12 +313,36 @@ function creativeBlock(label: string, c: CreativeResult): string {
   ].join('\n')
 }
 
+/**
+ * Retired video creatives, printed for context and excluded from every
+ * decision. Never summed with the active creatives: creative_b alone carried
+ * 192 events as a video, so blending it into a graphic's numbers would make
+ * the comparison meaningless.
+ */
+function retiredBlock(retired: CreativeResult[] | undefined): string {
+  if (!retired || retired.length === 0) return ''
+  return [
+    '',
+    `Retired creative baseline (${RETIRED_CREATIVE_TAGS.join(', ')} — historical, EXCLUDED from decisions)`,
+    ...retired.map((c) => creativeBlock(c.label, c)),
+    '- Shown for context only. These ran different creatives and are never compared against the active ads.',
+  ].join('\n')
+}
+
 export function buildDailyReport(input: ReportInput): string {
   const f = input.funnel
   const purchases = f.purchasesRm12 + f.purchasesRm100
   const total = input.totalSpendCents
-  const remaining = total == null ? null : Math.max(0, MAX_TOTAL_SPEND_MYR * 100 - total)
   const { weakPoint, reason } = diagnose(input)
+
+  // The reconciled figure is authoritative when present. Math.max(0, ...) on
+  // the raw counter used to render an exhausted budget as "RM0.00 remaining",
+  // which reads as "spend more" rather than "stop".
+  const budgetLines = input.budget
+    ? `- ${describeBudget(input.budget)}`
+    : `- Total spend: ${total == null ? 'UNVERIFIED — Meta spend could not be read' : rm(total)}\n`
+      + `- Remaining from RM${MAX_TOTAL_SPEND_MYR}: ${
+          total == null ? 'unknown' : rm(MAX_TOTAL_SPEND_MYR * 100 - total)}`
 
   return `PAQAR META ADS — DAY ${input.dayNumber}
 
@@ -318,8 +351,7 @@ Budget
   input.spendSinceLastSyncCents == null
     ? '\n  Awaiting a second snapshot to calculate spend since the last sync.'
     : input.previousSyncAt ? ` (since ${formatSyncTime(input.previousSyncAt)})` : ''}
-- Total spend: ${total == null ? 'UNVERIFIED — Meta spend could not be read' : rm(total)}
-- Remaining from RM${MAX_TOTAL_SPEND_MYR}: ${remaining == null ? 'unknown' : rm(remaining)}
+${budgetLines}
 
 Traffic
 - Impressions: ${num(input.impressions)}
@@ -345,11 +377,11 @@ Economics
 - Cost per purchase: ${total == null ? '—' : per(total, purchases)}
 - Return on advertising spend: ${total == null || total === 0 ? '—' : `${(f.revenueCents / total).toFixed(2)}x`}
 
-Creative comparison
-${creativeBlock('A', input.creativeA)}
-${creativeBlock('B', input.creativeB)}
+Creative comparison (active: ${ACTIVE_CREATIVE_TAGS.join(', ')})
+${creativeBlock('1', input.creativeA)}
+${creativeBlock('2', input.creativeB)}
 - ${compareCreatives(input.creativeA, input.creativeB, input.adDeliveryStatus, input.adDeliveryReason)}
-
+${retiredBlock(input.retiredCreatives)}
 Diagnosis
 - ${weakPoint}
 - ${reason}
@@ -359,4 +391,5 @@ Recommended next action
 `
 }
 
-export const CREATIVE_LABELS = CREATIVE_UTM_CONTENT
+export const ACTIVE_CREATIVE_LABELS  = ACTIVE_CREATIVE_TAGS
+export const RETIRED_CREATIVE_LABELS = RETIRED_CREATIVE_TAGS

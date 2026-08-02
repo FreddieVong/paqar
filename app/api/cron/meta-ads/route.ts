@@ -10,13 +10,14 @@ import {
 import {
   getExperiment, updateExperiment, recordAction, saveSnapshot,
   getFunnelCounts, countPaqarLandingViews, lastValuationStartedAt,
-  listSnapshots, type FunnelCounts,
+  listSnapshots, maxSnapshotSpend, type FunnelCounts,
 } from '@/lib/meta-ads/db'
 import { buildDailyReport, computeSpendSinceLastSync, type CreativeResult } from '@/lib/meta-ads/report'
+import { reconcileBudget } from '@/lib/meta-ads/budget'
 import { VALUATION_PATHS } from '@/lib/funnel-stages'
 import {
   checkMutationAllowed, isTotalSpendExceeded, SPEND_FAILURE_THRESHOLD,
-  MAX_TOTAL_SPEND_MYR, CREATIVE_UTM_CONTENT,
+  MAX_TOTAL_SPEND_MYR, activeSlots, RETIRED_CREATIVE_TAGS,
 } from '@/lib/meta-ads/guards'
 import { alertPauseFailed, alertPauseSucceeded, sendDailyReportEmail } from '@/lib/meta-ads/alerts'
 
@@ -102,6 +103,18 @@ export async function GET(request: NextRequest) {
   }
 
   const spendVerified = spendCents !== null
+
+  // Reconciled cumulative spend. The hard stop below MUST use this rather than
+  // the raw counter: Meta's amount_spent resets when the spending limit
+  // changes, and on 2026-08-02 it read RM27.23 while RM214.03 had been spent.
+  // Enforcing on the counter would have authorised another RM182 against an
+  // allowance with nothing left in it.
+  const budget = reconcileBudget({
+    liveCounterCents:  spendCents,
+    snapshotMaxCents:  await maxSnapshotSpend(experiment.id, campaignId).catch(() => null),
+    openingSpendCents: experiment.opening_spend_cents ?? null,
+  })
+  const cumulativeSpendCents = budget.status === 'verified' ? budget.cumulativeCents : spendCents
   const failures = spendVerified ? 0 : experiment.consecutive_spend_failures + 1
   await updateExperiment(experiment.id, {
     consecutive_spend_failures: failures,
@@ -147,14 +160,20 @@ export async function GET(request: NextRequest) {
       funnel,
     }).catch((err) => console.error('[cron/meta-ads] snapshot failed', err))
 
-    for (const [slot, adId] of [
-      [CREATIVE_UTM_CONTENT.a, experiment.creative_a_ad_id],
-      [CREATIVE_UTM_CONTENT.b, experiment.creative_b_ad_id],
-    ] as const) {
+    // Only events at or after the creative swap count toward the active
+    // creatives. Tag separation alone is not enough: a stray pre-swap test row
+    // carrying a new tag would otherwise be credited to a graphic ad.
+    const swapAt = experiment.graphic_ads_started_at
+      ? new Date(experiment.graphic_ads_started_at)
+      : undefined
+
+    for (const { tag, adId } of activeSlots(experiment)) {
       if (!adId) continue
       const delivery = adDelivery[adId]
-      const adFunnel = await getFunnelCounts({ utmContent: slot, valuationPath: VALUATION_PATHS.plateReport }).catch(() => null)
-      creativeFunnels[slot] = adFunnel
+      const adFunnel = await getFunnelCounts({
+        utmContent: tag, since: swapAt, valuationPath: VALUATION_PATHS.plateReport,
+      }).catch(() => null)
+      creativeFunnels[tag] = adFunnel
       if (!adFunnel) continue
       await saveSnapshot({
         experimentId:     experiment.id,
@@ -188,6 +207,23 @@ export async function GET(request: NextRequest) {
 
     if (isFirstRunToday) {
       const previous = await previousCampaignSpend(experiment.id, campaignId, bucket)
+
+      // Cumulative spend, reconstructed so a Meta counter reset cannot hide
+      // it. Reading spendCents alone reported ~RM182 remaining on 2026-08-02
+      // when RM214 had already been spent.
+      const [slot1, slot2] = activeSlots(experiment)
+
+      // Retired video creatives, for context only. Deliberately NOT scoped to
+      // the swap timestamp — their whole history is the point — and never
+      // summed with the active creatives.
+      const retiredCreatives = (await Promise.all(
+        RETIRED_CREATIVE_TAGS.map(async (tag) => {
+          const rf = await getFunnelCounts({
+            utmContent: tag, valuationPath: VALUATION_PATHS.plateReport,
+          }).catch(() => null)
+          return rf ? buildCreative(tag, null, tag, rf) : null
+        })
+      )).filter((c): c is CreativeResult => c !== null)
       const dayNumber = Math.floor(
         (now.getTime() - new Date(experiment.launched_at).getTime()) / 86_400_000
       ) + 1
@@ -202,8 +238,10 @@ export async function GET(request: NextRequest) {
         adDeliveryStatus,
         adDeliveryReason,
         funnel,
-        creativeA: buildCreative('A', experiment.creative_a_ad_id, CREATIVE_UTM_CONTENT.a),
-        creativeB: buildCreative('B', experiment.creative_b_ad_id, CREATIVE_UTM_CONTENT.b),
+        creativeA: buildCreative('1', slot1.adId, slot1.tag),
+        creativeB: buildCreative('2', slot2.adId, slot2.tag),
+        retiredCreatives,
+        budget,
       })
 
       await sendDailyReportEmail({
@@ -213,7 +251,12 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  function buildCreative(label: string, adId: string | null | undefined, slot: string): CreativeResult {
+  function buildCreative(
+    label: string,
+    adId: string | null | undefined,
+    slot: string,
+    funnelOverride?: FunnelCounts
+  ): CreativeResult {
     const d = adId ? adDelivery[adId] : undefined
     return {
       label,
@@ -223,7 +266,7 @@ export async function GET(request: NextRequest) {
       spendCents:  d?.spendCents ?? null,
       impressions: d?.impressions ?? null,
       linkClicks:  d?.linkClicks ?? null,
-      funnel: creativeFunnels[slot] ?? {
+      funnel: funnelOverride ?? creativeFunnels[slot] ?? {
         landingViews: 0, valuationStarted: 0, valuationStartedAnyPath: 0, valuationCompleted: 0,
         purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0,
       },
@@ -233,10 +276,13 @@ export async function GET(request: NextRequest) {
   // ── 3. Hard stops, in severity order ────────────────────────────────────
   let hardStop: HardStop | null = null
 
-  if (spendVerified && isTotalSpendExceeded(spendCents!)) {
+  if (cumulativeSpendCents !== null && isTotalSpendExceeded(cumulativeSpendCents)) {
     hardStop = {
       rule:   'total_spend_limit',
-      detail: `Total spend RM${(spendCents! / 100).toFixed(2)} has reached the RM${MAX_TOTAL_SPEND_MYR} limit.`,
+      detail: `Cumulative experiment spend RM${(cumulativeSpendCents / 100).toFixed(2)} has reached the RM${MAX_TOTAL_SPEND_MYR} limit`
+            + (budget.status === 'verified' && budget.resetDetected
+                ? ' (Meta counter reset detected; pre-reset spend recovered from Paqar snapshots).'
+                : '.'),
     }
   } else if (!spendVerified && failures >= SPEND_FAILURE_THRESHOLD) {
     hardStop = {

@@ -68,7 +68,7 @@ function setHappyPath() {
     { id: 'ad_b', adset_id: 'set_1', status: 'PAUSED', effective_status: 'PAUSED' },
   ])
   mocks.getAd.mockImplementation(async (id: string) =>
-    id === 'ad_a' ? goodAd('ad_a', 'creative_a') : goodAd('ad_b', 'creative_b')
+    id === 'ad_a' ? goodAd('ad_a', 'creative_c') : goodAd('ad_b', 'creative_d')
   )
 }
 
@@ -218,35 +218,35 @@ describe('ad inventory', () => {
 describe('creative URLs', () => {
   it('rejects an unapproved creative pointing at the wrong domain', async () => {
     mocks.getAd.mockImplementation(async (id: string) => {
-      const ad = goodAd(id, id === 'ad_a' ? 'creative_a' : 'creative_b')
+      const ad = goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d')
       if (id === 'ad_b') {
         ad.creative.object_story_spec.video_data.call_to_action.value.link =
-          'https://example.com/?utm_source=meta&utm_medium=paid_social&utm_campaign=paqar_first_paid_test&utm_content=creative_b'
+          'https://example.com/?utm_source=meta&utm_medium=paid_social&utm_campaign=paqar_first_paid_test&utm_content=creative_d'
       }
       return ad
     })
     const result = await runPreflight(INPUT)
-    expect(check(result, 'ad_B_destination')?.status).toBe('fail')
+    expect(check(result, 'ad_2_destination')?.status).toBe('fail')
   })
 
   it('rejects a creative with the wrong utm_content', async () => {
     mocks.getAd.mockImplementation(async (id: string) =>
-      goodAd(id, 'creative_a') // both tagged creative_a
+      goodAd(id, 'creative_c') // both tagged creative_a
     )
     const result = await runPreflight(INPUT)
-    expect(check(result, 'ad_B_utm')?.status).toBe('fail')
-    expect(check(result, 'ad_B_utm')?.detail).toContain('creative_b')
+    expect(check(result, 'ad_2_utm')?.status).toBe('fail')
+    expect(check(result, 'ad_2_utm')?.detail).toContain('creative_d')
   })
 
   it('rejects wrong campaign-level UTM tags', async () => {
     mocks.getAd.mockImplementation(async (id: string) => {
-      const ad = goodAd(id, id === 'ad_a' ? 'creative_a' : 'creative_b')
+      const ad = goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d')
       ad.creative.object_story_spec.video_data.call_to_action.value.link =
-        'https://paqar.my/?utm_source=facebook&utm_medium=paid_social&utm_campaign=paqar_first_paid_test&utm_content=creative_a'
+        'https://paqar.my/?utm_source=facebook&utm_medium=paid_social&utm_campaign=paqar_first_paid_test&utm_content=creative_c'
       return ad
     })
     const result = await runPreflight(INPUT)
-    expect(check(result, 'ad_A_utm')?.status).toBe('fail')
+    expect(check(result, 'ad_1_utm')?.status).toBe('fail')
   })
 
   it('reads UTMs from url_tags when the link carries none', async () => {
@@ -255,7 +255,7 @@ describe('creative URLs', () => {
       creative: {
         id: `cr_${id}`,
         instagram_actor_id: 'ig_1',
-        url_tags: `utm_source=meta&utm_medium=paid_social&utm_campaign=paqar_first_paid_test&utm_content=${id === 'ad_a' ? 'creative_a' : 'creative_b'}`,
+        url_tags: `utm_source=meta&utm_medium=paid_social&utm_campaign=paqar_first_paid_test&utm_content=${id === 'ad_a' ? 'creative_c' : 'creative_d'}`,
         object_story_spec: {
           page_id: 'page_1',
           video_data: { call_to_action: { value: { link: 'https://paqar.my/' } } },
@@ -263,28 +263,28 @@ describe('creative URLs', () => {
       },
     }))
     const result = await runPreflight(INPUT)
-    expect(check(result, 'ad_A_utm')?.status).toBe('pass')
-    expect(check(result, 'ad_B_utm')?.status).toBe('pass')
+    expect(check(result, 'ad_1_utm')?.status).toBe('pass')
+    expect(check(result, 'ad_2_utm')?.status).toBe('pass')
   })
 
   it('rejects a creative using the wrong Facebook Page', async () => {
     mocks.getAd.mockImplementation(async (id: string) => {
-      const ad = goodAd(id, id === 'ad_a' ? 'creative_a' : 'creative_b')
+      const ad = goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d')
       ad.creative.object_story_spec.page_id = 'someone_elses_page'
       return ad
     })
     const result = await runPreflight(INPUT)
-    expect(check(result, 'ad_A_page')?.status).toBe('fail')
+    expect(check(result, 'ad_1_page')?.status).toBe('fail')
   })
 
   it('rejects a creative using the wrong Instagram account', async () => {
     mocks.getAd.mockImplementation(async (id: string) => {
-      const ad = goodAd(id, id === 'ad_a' ? 'creative_a' : 'creative_b')
+      const ad = goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d')
       ad.creative.instagram_actor_id = 'wrong_ig'
       return ad
     })
     const result = await runPreflight(INPUT)
-    expect(check(result, 'ad_A_ig')?.status).toBe('fail')
+    expect(check(result, 'ad_1_ig')?.status).toBe('fail')
   })
 })
 
@@ -473,7 +473,7 @@ describe('Meta IDs are handled as exact strings', () => {
       { id: REAL_IDS.creativeBAdId, adset_id: REAL_IDS.adSetId, status: 'PAUSED', effective_status: 'PAUSED' },
     ])
     mocks.getAd.mockImplementation(async (id: string) => ({
-      ...goodAd(id, id === REAL_IDS.creativeAAdId ? 'creative_a' : 'creative_b'),
+      ...goodAd(id, id === REAL_IDS.creativeAAdId ? 'creative_c' : 'creative_d'),
       adset_id: REAL_IDS.adSetId,
     }))
     mocks.getCampaign.mockResolvedValue({
@@ -490,5 +490,94 @@ describe('Meta IDs are handled as exact strings', () => {
     expect(mocks.getAdSet).toHaveBeenCalledWith(REAL_IDS.adSetId)
     expect(mocks.getAd).toHaveBeenCalledWith(REAL_IDS.creativeAAdId)
     expect(mocks.getAd).toHaveBeenCalledWith(REAL_IDS.creativeBAdId)
+  })
+})
+
+describe('the graphic swap: retired tags and audience verification', () => {
+  it('rejects an ad still carrying a retired video tag, and names why', async () => {
+    // The failure mode: a graphic ad reusing creative_b would append its
+    // results onto 192 events of retired video history.
+    mocks.getAd.mockImplementation(async (id: string) =>
+      id === 'ad_a' ? goodAd('ad_a', 'creative_b') : goodAd('ad_b', 'creative_d')
+    )
+    const r = await runPreflight({ ...INPUT })
+    const c = check(r, 'ad_1_retired_tag')
+    expect(c?.status).toBe('fail')
+    expect(c?.detail).toContain('RETIRED')
+    expect(c?.detail).toContain('merge graphic-ad results')
+    expect(r.passed).toBe(false)
+  })
+
+  it('passes when both ads use the active tags', async () => {
+    const r = await runPreflight({ ...INPUT })
+    expect(check(r, 'ad_1_retired_tag')?.status).toBe('pass')
+    expect(check(r, 'ad_2_retired_tag')?.status).toBe('pass')
+  })
+
+  it('detects the Carlist.my interest by id and calls it a suggestion', async () => {
+    mocks.getAdSet.mockResolvedValue({
+      id: 'set_1', campaign_id: 'camp_1', status: 'PAUSED', effective_status: 'PAUSED',
+      daily_budget: '3000', optimization_goal: 'OFFSITE_CONVERSIONS',
+      promoted_object: { pixel_id: 'pixel_1', custom_conversion_id: 'cc_1' },
+      targeting: {
+        geo_locations: { countries: ['MY'] },
+        publisher_platforms: ['facebook', 'instagram'],
+        interests: [{ id: '6013492996272', name: 'Carlist.my' }],
+        targeting_automation: { advantage_audience: 1 },
+      },
+    })
+    const r = await runPreflight({ ...INPUT })
+    const c = check(r, 'audience_carlist')
+    expect(c?.status).toBe('pass')
+    expect(c?.detail).toContain('NOT proof of a recent Carlist visit')
+    expect(check(r, 'audience_advantage')?.status).toBe('pass')
+  })
+
+  it('reports UNVERIFIABLE, never "no", when Meta omits the interest field', async () => {
+    // Meta returns no `interests` key when none are set, so absence cannot be
+    // distinguished from "not returned". Claiming "no" would be fabricated.
+    const r = await runPreflight({ ...INPUT })
+    const c = check(r, 'audience_carlist')
+    expect(c?.status).toBe('manual')
+    expect(c?.detail).toContain('UNVERIFIABLE')
+    expect(c?.detail).toContain('does not prove')
+  })
+
+  it('flags Advantage+ being off rather than silently accepting it', async () => {
+    mocks.getAdSet.mockResolvedValue({
+      id: 'set_1', campaign_id: 'camp_1', status: 'PAUSED', effective_status: 'PAUSED',
+      daily_budget: '3000', optimization_goal: 'OFFSITE_CONVERSIONS',
+      promoted_object: { pixel_id: 'pixel_1', custom_conversion_id: 'cc_1' },
+      targeting: {
+        geo_locations: { countries: ['MY'] },
+        publisher_platforms: ['facebook', 'instagram'],
+        interests: [], targeting_automation: { advantage_audience: 0 },
+      },
+    })
+    const r = await runPreflight({ ...INPUT })
+    expect(check(r, 'audience_advantage')?.status).toBe('manual')
+    expect(check(r, 'audience_advantage')?.detail).toContain('advantage_audience=0')
+  })
+
+  it('requires both ads paused during SETUP preflight', async () => {
+    // Setup runs before first activation: a live ad is already spending
+    // against a configuration nobody has approved.
+    mocks.getAd.mockImplementation(async (id: string) => ({
+      ...goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d'),
+      status: 'ACTIVE', effective_status: 'ACTIVE',
+    }))
+    const r = await runPreflight({ ...INPUT, mode: 'setup' })
+    expect(check(r, 'ad_1_paused')?.status).toBe('fail')
+    expect(r.passed).toBe(false)
+  })
+
+  it('does not demand paused ads in LIVE mode, where ACTIVE is correct', async () => {
+    mocks.getAd.mockImplementation(async (id: string) => ({
+      ...goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d'),
+      status: 'ACTIVE', effective_status: 'ACTIVE',
+    }))
+    const r = await runPreflight({ ...INPUT, mode: 'live' })
+    expect(check(r, 'ad_1_paused')?.status).toBe('pass')
+    expect(check(r, 'ad_1_paused')?.detail).toContain('expected while live')
   })
 })

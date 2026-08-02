@@ -5,8 +5,9 @@ import { getExperiment, getFunnelCounts, latestAction, listSnapshots } from '@/l
 import { runPreflight, type PreflightResult } from '@/lib/meta-ads/preflight'
 import { VALUATION_PATHS } from '@/lib/funnel-stages'
 import { buildDailyReport, computeSpendSinceLastSync, type CreativeResult } from '@/lib/meta-ads/report'
+import { reconcileBudget, describeBudget } from '@/lib/meta-ads/budget'
 import {
-  MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, CREATIVE_UTM_CONTENT,
+  MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, ACTIVE_CREATIVE_TAGS, RETIRED_CREATIVE_TAGS,
 } from '@/lib/meta-ads/guards'
 import {
   adminLogin, saveMetaIds, acknowledgeManualItems, enableOperatorAfterPreflight,
@@ -74,6 +75,28 @@ export default async function AdminAdsPage() {
   // plate_report ONLY — see lib/funnel-stages.ts. Mixing entry points was the
   // original cause of the misleading 8.7% completion rate.
   const funnel     = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport }).catch(() => null)
+
+  // Active creatives are scoped to the swap timestamp so retired video data,
+  // and any future tag reuse, can never enter the live comparison.
+  const swapAt = experiment?.graphic_ads_started_at
+    ? new Date(experiment.graphic_ads_started_at) : undefined
+  const activeCreativeFunnels = await Promise.all(
+    ACTIVE_CREATIVE_TAGS.map(async (tag) => ({
+      tag,
+      funnel: await getFunnelCounts({
+        utmContent: tag, since: swapAt, valuationPath: VALUATION_PATHS.plateReport,
+      }).catch(() => null),
+    }))
+  )
+  const retiredCreativeFunnels = await Promise.all(
+    RETIRED_CREATIVE_TAGS.map(async (tag) => ({
+      tag,
+      funnel: await getFunnelCounts({
+        utmContent: tag, valuationPath: VALUATION_PATHS.plateReport,
+      }).catch(() => null),
+    }))
+  )
+
   const modelFunnel = await getFunnelCounts({ valuationPath: VALUATION_PATHS.modelPrice }).catch(() => null)
   const action     = experiment ? await latestAction(experiment.id).catch(() => null) : null
   const snapshots  = experiment ? await listSnapshots(experiment.id, 'campaign').catch(() => []) : []
@@ -115,6 +138,18 @@ export default async function AdminAdsPage() {
     | undefined
   const totalSpend = latestSnap?.spend_cents ?? null
   const remaining  = totalSpend == null ? null : Math.max(0, MAX_TOTAL_SPEND_MYR * 100 - totalSpend)
+
+  // Reconciled against every stored snapshot, because Meta's counter resets
+  // when the spending limit changes and would otherwise under-report spend.
+  const snapshotMax = (snapshots as Array<Record<string, unknown>>)
+    .map((x) => x.spend_cents as number | null)
+    .filter((n): n is number => typeof n === 'number')
+    .reduce<number | null>((max, n) => (max == null || n > max ? n : max), null)
+  const budget = reconcileBudget({
+    liveCounterCents:  totalSpend,
+    snapshotMaxCents:  snapshotMax,
+    openingSpendCents: experiment?.opening_spend_cents ?? null,
+  })
 
   // A DELTA between two syncs, so it needs two readings. With one snapshot it
   // is unknown — not the cumulative total, which is what it used to report.
@@ -221,9 +256,54 @@ export default async function AdminAdsPage() {
           />
         </div>
 
-        {/* ── Creatives ──────────────────────────────────────────── */}
+        {/* ── Active creatives ───────────────────────────────────── */}
+        {/* Scoped to graphic_ads_started_at. Retired video results live in
+            their own section below and are NEVER summed with these: creative_b
+            alone carried 192 events as a video. */}
         <div className={CARD}>
-          <p className={H2}>Creatives</p>
+          <p className={H2}>Active creatives — {ACTIVE_CREATIVE_TAGS.join(' vs ')}</p>
+          {!swapAt && (
+            <p className="text-[12px] text-[#B45309] mb-2 leading-relaxed">
+              graphic_ads_started_at is not set. Until it is, these counts are
+              unbounded in time and may include pre-swap rows.
+            </p>
+          )}
+          {activeCreativeFunnels.map(({ tag, funnel: cf }) => (
+            <div key={tag} className="py-2 border-b border-[#F3F4F6] last:border-0">
+              <p className="text-[13px] font-bold text-[#111827]">{tag}</p>
+              <p className="text-[12px] text-[#6B7280] tabular-nums">
+                landing {cf?.landingViews ?? 0} · started {cf?.valuationStartedAnyPath ?? 0} ·
+                {' '}completed {cf?.valuationCompleted ?? 0} ·
+                {' '}checkout {cf?.paywallViewed ?? 0} paywall views
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Retired creative baseline ──────────────────────────── */}
+        <div className={`${CARD} opacity-75`}>
+          <p className={H2}>
+            Retired creative baseline — {RETIRED_CREATIVE_TAGS.join(', ')}
+          </p>
+          <p className="text-[12px] text-[#6B7280] mb-2 leading-relaxed">
+            Historical video creatives. Shown for context and
+            <strong> excluded from all current decisions</strong> — never summed
+            with the active creatives above.
+          </p>
+          {retiredCreativeFunnels.map(({ tag, funnel: cf }) => (
+            <div key={tag} className="py-2 border-b border-[#F3F4F6] last:border-0">
+              <p className="text-[13px] font-bold text-[#6B7280]">{tag}</p>
+              <p className="text-[12px] text-[#9CA3AF] tabular-nums">
+                landing {cf?.landingViews ?? 0} · started {cf?.valuationStartedAnyPath ?? 0} ·
+                {' '}completed {cf?.valuationCompleted ?? 0}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Per-ad snapshots ───────────────────────────────────── */}
+        <div className={CARD}>
+          <p className={H2}>Per-ad snapshots</p>
           {adSnaps.length === 0 && (
             <p className="text-[13px] text-[#6B7280]">No per-ad snapshots yet.</p>
           )}
@@ -239,10 +319,37 @@ export default async function AdminAdsPage() {
           ))}
         </div>
 
+        {/* ── Pricing-promise warning ────────────────────────────── */}
+        {/* Non-blocking by design: this is a claims question for a human, not
+            a technical fault, and it must never gate preflight. */}
+        <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
+          <p className="font-heading font-bold text-[14px] text-[#92400E] mb-1">
+            Creative claim check
+          </p>
+          <p className="text-[13px] text-[#78350F] leading-relaxed">
+            Graphic creative mentions history checks. Confirm the ad or caption clearly
+            states that accident/claim history is an optional additional check and is
+            <strong> not included in the RM12 base report</strong>.
+          </p>
+          <p className="text-[12px] text-[#92400E] mt-2 leading-relaxed">
+            The RM12 report renders “Rekod tuntutan insurans belum dapat disemak” and
+            then upsells the RM88 add-on — so a buyer expecting records from a RM12
+            purchase will not find them.
+          </p>
+        </div>
+
         {/* ── Spend reconciliation ───────────────────────────────── */}
         <div className={CARD}>
           <p className={H2}>Spend reconciliation</p>
-          <Row label="Campaign spend (Meta)" value={rm(totalSpend)} />
+          {/* Authoritative: rebuilt from stored snapshots so a Meta counter
+              reset cannot make an exhausted budget look available. */}
+          <p className={`text-[13px] leading-relaxed mb-3 ${
+            budget.status !== 'verified' || budget.overspentCents > 0
+              ? 'text-[#B91C1C] font-semibold' : 'text-[#374151]'
+          }`}>
+            {describeBudget(budget)}
+          </p>
+          <Row label="Campaign spend (Meta counter)" value={rm(totalSpend)} />
           <Row label="Matched ad spend" value={matchedCount === 0 ? '—' : rm(matchedSpend)} />
           <Row label="Unallocated" value={rm(unallocated)} />
           <Row label="Status" value={reconciliation} strong />
@@ -312,8 +419,8 @@ export default async function AdminAdsPage() {
             {[
               ['campaignId',    'Campaign ID',    experiment?.meta_campaign_id],
               ['adSetId',       'Ad set ID',      experiment?.meta_adset_id],
-              ['creativeAAdId', `Ad ID — ${CREATIVE_UTM_CONTENT.a}`, experiment?.creative_a_ad_id],
-              ['creativeBAdId', `Ad ID — ${CREATIVE_UTM_CONTENT.b}`, experiment?.creative_b_ad_id],
+              ['creativeAAdId', `Ad ID — active slot 1 (${ACTIVE_CREATIVE_TAGS[0]})`, experiment?.creative_a_ad_id],
+              ['creativeBAdId', `Ad ID — active slot 2 (${ACTIVE_CREATIVE_TAGS[1]})`, experiment?.creative_b_ad_id],
             ].map(([name, label, value]) => (
               <label key={name as string} className="block">
                 <span className="text-[12px] text-[#6B7280]">{label as string}</span>

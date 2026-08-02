@@ -45,10 +45,61 @@ export const REQUIRED_UTM = {
   utm_campaign: 'paqar_first_paid_test',
 } as const
 
-export const CREATIVE_UTM_CONTENT = {
-  a: 'creative_a',
-  b: 'creative_b',
-} as const
+/**
+ * Creative identity lives in utm_content, NOT in the database column names.
+ *
+ * The two video creatives ran as creative_a / creative_b and are retired. The
+ * graphic creatives that replaced them are creative_c / creative_d. These sets
+ * must never be summed: creative_b alone accumulated 192 events as a video, so
+ * reusing that tag for a graphic would blend two different creatives into one
+ * number and make the comparison meaningless — the same cohort-mixing defect
+ * that made a 42% landing page report as 4.6%.
+ *
+ * The experiment table's creative_a_ad_id / creative_b_ad_id columns are
+ * SLOTS, not tags. They hold whichever ads are currently active. Read them
+ * through activeSlots() so a column name is never mistaken for a creative
+ * identity again.
+ */
+export const RETIRED_CREATIVE_TAGS = ['creative_a', 'creative_b'] as const
+export const ACTIVE_CREATIVE_TAGS  = ['creative_c', 'creative_d'] as const
+
+export type RetiredCreativeTag = typeof RETIRED_CREATIVE_TAGS[number]
+export type ActiveCreativeTag  = typeof ACTIVE_CREATIVE_TAGS[number]
+
+export function isRetiredCreativeTag(tag: string | null | undefined): boolean {
+  return tag != null && (RETIRED_CREATIVE_TAGS as readonly string[]).includes(tag)
+}
+
+export function isActiveCreativeTag(tag: string | null | undefined): boolean {
+  return tag != null && (ACTIVE_CREATIVE_TAGS as readonly string[]).includes(tag)
+}
+
+/**
+ * The two live creative slots, paired with the ad ids currently occupying them.
+ * `slot` is positional; `tag` is the identity that appears in ad_events.
+ */
+export interface ActiveSlot { slot: 1 | 2; tag: ActiveCreativeTag; adId: string | null }
+
+// A fixed pair, not an array: MAX_ACTIVE_ADS is 2, and a tuple lets callers
+// destructure both slots without undefined checks that could never fire.
+export function activeSlots(experiment: {
+  creative_a_ad_id: string | null
+  creative_b_ad_id: string | null
+}): readonly [ActiveSlot, ActiveSlot] {
+  return [
+    { slot: 1, tag: ACTIVE_CREATIVE_TAGS[0], adId: experiment.creative_a_ad_id },
+    { slot: 2, tag: ACTIVE_CREATIVE_TAGS[1], adId: experiment.creative_b_ad_id },
+  ]
+}
+
+/**
+ * Carlist.my as a Meta INTEREST. This is an affinity signal — people who
+ * engage with Carlist.my content — and is NEVER evidence that someone
+ * recently visited Carlist. Any copy implying recency would be false.
+ *
+ * Matched on id, not display name: Meta renames interests.
+ */
+export const CARLIST_INTEREST = { id: '6013492996272', name: 'Carlist.my' } as const
 
 export const ALLOWED_DESTINATION_HOST = 'paqar.my'
 

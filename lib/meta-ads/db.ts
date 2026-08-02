@@ -29,6 +29,11 @@ export interface Experiment {
   consecutive_spend_failures: number
   preflight_acknowledged_at:  string | null
   critical_alert_state:       string | null
+  /** When creative_c/creative_d went live. NULL = not yet swapped. */
+  graphic_ads_started_at:     string | null
+  experiment_started_at:      string | null
+  /** Spend before the accounting window. NULL = unknown, not zero. */
+  opening_spend_cents:        number | null
 }
 
 export async function getExperiment(): Promise<Experiment | null> {
@@ -162,6 +167,35 @@ export async function saveSnapshot(input: SnapshotInput): Promise<boolean> {
 
   if (error) throw error
   return (data?.length ?? 0) > 0
+}
+
+/**
+ * The highest cumulative spend Paqar ever recorded for this campaign.
+ *
+ * Snapshots store Meta's CUMULATIVE amount_spent, so the maximum is a floor
+ * under real spend. Meta's counter resets when the campaign spending limit
+ * changes; the stored maximum does not, which is what makes reconciliation
+ * possible after a reset.
+ */
+export async function maxSnapshotSpend(
+  experimentId: string,
+  metaObjectId: string
+): Promise<number | null> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('meta_ads_snapshots')
+    .select('spend_cents')
+    .eq('experiment_id', experimentId)
+    .eq('meta_object_id', metaObjectId)
+    .eq('level', 'campaign')
+    .not('spend_cents', 'is', null)
+    .order('spend_cents', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw error
+  const cents = (data as { spend_cents: number | null } | null)?.spend_cents
+  return typeof cents === 'number' ? cents : null
 }
 
 export async function listSnapshots(experimentId: string, level: 'campaign' | 'ad') {

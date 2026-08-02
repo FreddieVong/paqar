@@ -45,6 +45,11 @@ export interface AdSetInfo {
     publisher_platforms?: string[]
     facebook_positions?:  string[]
     instagram_positions?: string[]
+    /** Interest suggestions. Absent when none are set — NOT proof of absence. */
+    interests?:     Array<{ id?: string; name?: string }>
+    flexible_spec?: Array<{ interests?: Array<{ id?: string; name?: string }> }>
+    /** advantage_audience is 1 when Advantage+ Audience is enabled. */
+    targeting_automation?: { advantage_audience?: number }
   }
 }
 
@@ -93,7 +98,8 @@ export async function getAdSet(adSetId: string): Promise<AdSetInfo> {
   return metaGet<AdSetInfo>(adSetId, {
     fields:
       'id,campaign_id,status,effective_status,daily_budget,optimization_goal,promoted_object,' +
-      'targeting{geo_locations,publisher_platforms,facebook_positions,instagram_positions}',
+      'targeting{geo_locations,publisher_platforms,facebook_positions,instagram_positions,' +
+      'interests,flexible_spec,targeting_automation}',
   })
 }
 
