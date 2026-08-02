@@ -343,10 +343,25 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
     const ads = await listAdsInAdSet(input.adSetId)
     const configured = new Set([input.creativeAAdId, input.creativeBAdId])
 
+    // The guard is "no more than MAX_ACTIVE_ADS can DELIVER", not "only that
+    // many rows exist". Retired creatives are deliberately kept in the ad set,
+    // paused: deleting them would destroy the baseline the retired-creative
+    // report compares against. Counting every row made that retention
+    // permanently unpassable.
+    const configuredPresent = [input.creativeAAdId, input.creativeBAdId]
+      .filter((id) => ads.some((a) => a.id === id))
+    const others       = ads.filter((a) => !configured.has(a.id))
+    const othersActive = others.filter((a) => a.status === 'ACTIVE')
+
     checks.push(
-      ads.length === MAX_ACTIVE_ADS
-        ? pass('ad_count', `Exactly ${MAX_ACTIVE_ADS} ads`, `Found ${ads.length}`)
-        : fail('ad_count', `Exactly ${MAX_ACTIVE_ADS} ads`, `Ad set contains ${ads.length} ads: ${ads.map((a) => a.id).join(', ')}`)
+      configuredPresent.length === MAX_ACTIVE_ADS && othersActive.length === 0
+        ? pass('ad_count', `Exactly ${MAX_ACTIVE_ADS} deliverable ads`,
+            `${configuredPresent.length} configured creative(s) present`
+            + (others.length ? `; ${others.length} retired ad(s) present and paused` : ''))
+        : fail('ad_count', `Exactly ${MAX_ACTIVE_ADS} deliverable ads`,
+            configuredPresent.length !== MAX_ACTIVE_ADS
+              ? `Only ${configuredPresent.length} of the ${MAX_ACTIVE_ADS} configured ads are in this ad set.`
+              : `Unconfigured ad(s) are ACTIVE and would deliver: ${othersActive.map((a) => a.id).join(', ')}`)
     )
 
     const strays = ads.filter((a) => !configured.has(a.id) && a.status === 'ACTIVE')

@@ -71,10 +71,35 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
         Naming the add-on here is both the honest position and the useful one:
         it tells the visitor their concern IS addressed, and where.
       */}
-      <div className="px-[18px] py-[11px] border-b border-[#F3F4F6]">
-        <p className="font-body text-[11px] text-[#6B7280] leading-relaxed">
-          Nak semak <span className="font-bold text-[#14453d]">rekod kemalangan &amp; tuntutan insurans</span> juga?
-          Boleh tambah Semakan Accident/Claim selepas anda buka laporan ini.
+      <div className="px-[18px] py-[13px] bg-[#FFFBEB] border-y border-[#FDE68A]">
+        <div className="flex items-center gap-1.5 mb-2">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" className="flex-shrink-0">
+            <path d="M6 1L11 10.5H1L6 1z" stroke="#B45309" strokeWidth="1.3" strokeLinejoin="round" />
+            <path d="M6 4.8v2.4M6 8.9v.1" stroke="#B45309" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+          <span className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-[#B45309]">
+            Tambahan &mdash; Semakan Accident/Claim
+          </span>
+        </div>
+
+        {/* The SAME four words the creative uses. A visitor who clicked those
+            badges must recognise them instantly, or they conclude the records
+            are not offered here and leave. */}
+        <div className="flex flex-wrap gap-1 mb-2">
+          {['Rekod kemalangan', 'Tuntutan insurans', 'Risiko banjir', 'Total loss'].map((t) => (
+            <span
+              key={t}
+              className="font-heading font-bold text-[10px] text-[#92400E] bg-white
+                         border border-[#FDE68A] rounded-full px-2 py-[3px] leading-none"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+
+        <p className="font-body text-[11px] text-[#78350F] leading-relaxed">
+          <span className="font-bold">Tidak termasuk</span> dalam Laporan Pembeli RM12 &mdash;
+          boleh ditambah selepas anda buka laporan.
         </p>
       </div>
 

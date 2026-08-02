@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         toEmail:    check.lead_email as string,
         plate,
         checkId:    check.id,
-        claimToken: check.claim_token as string,
+        claimToken: (check.claim_token as string | null) ?? null,
       })
       await supabase
         .from('checks')

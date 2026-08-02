@@ -584,3 +584,42 @@ describe('the graphic swap: retired tags and audience verification', () => {
     expect(check(r, 'ad_1_paused')?.detail).toContain('expected while live')
   })
 })
+
+describe('retired creatives may stay in the ad set', () => {
+  it('passes with 4 ads when only the 2 configured ones could deliver', async () => {
+    // Deleting the retired videos would destroy the baseline the
+    // retired-creative report compares against, so they are kept paused.
+    // Counting every row made that retention permanently unpassable.
+    mocks.listAdsInAdSet.mockResolvedValue([
+      { id: 'ad_a', adset_id: 'set_1', status: 'PAUSED', effective_status: 'PAUSED' },
+      { id: 'ad_b', adset_id: 'set_1', status: 'PAUSED', effective_status: 'PAUSED' },
+      { id: 'retired_1', adset_id: 'set_1', status: 'PAUSED', effective_status: 'PAUSED' },
+      { id: 'retired_2', adset_id: 'set_1', status: 'PAUSED', effective_status: 'PAUSED' },
+    ])
+    const r = await runPreflight({ ...INPUT })
+    const c = check(r, 'ad_count')
+    expect(c?.status).toBe('pass')
+    expect(c?.detail).toContain('retired')
+  })
+
+  it('still fails when an unconfigured ad is ACTIVE and would deliver', async () => {
+    mocks.listAdsInAdSet.mockResolvedValue([
+      { id: 'ad_a', adset_id: 'set_1', status: 'PAUSED', effective_status: 'PAUSED' },
+      { id: 'ad_b', adset_id: 'set_1', status: 'PAUSED', effective_status: 'PAUSED' },
+      { id: 'rogue', adset_id: 'set_1', status: 'ACTIVE', effective_status: 'ACTIVE' },
+    ])
+    const r = await runPreflight({ ...INPUT })
+    expect(check(r, 'ad_count')?.status).toBe('fail')
+    expect(check(r, 'ad_count')?.detail).toContain('rogue')
+    expect(r.passed).toBe(false)
+  })
+
+  it('fails when a configured ad is missing from the ad set', async () => {
+    mocks.listAdsInAdSet.mockResolvedValue([
+      { id: 'ad_a', adset_id: 'set_1', status: 'PAUSED', effective_status: 'PAUSED' },
+    ])
+    const r = await runPreflight({ ...INPUT })
+    expect(check(r, 'ad_count')?.status).toBe('fail')
+    expect(check(r, 'ad_count')?.detail).toContain('configured')
+  })
+})
