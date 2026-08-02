@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient }       from '@/lib/supabase/server'
 import { sendRetargetEmail }         from '@/lib/email/retarget'
+import { loadRetargetInsight }       from '@/lib/email/retarget-insight'
 import { decrypt }                   from '@/lib/crypto'
 import { env }                       from '@/lib/env'
 
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   const { data: candidates } = await supabase
     .from('checks')
-    .select('id, plate_encrypted, claim_token, lead_email')
+    .select('id, plate_encrypted, claim_token, lead_email, asking_price_rm')
     .eq('status', 'complete')
     .not('lead_email', 'is', null)
     .is('lead_email_sent_at', null)
@@ -54,12 +55,22 @@ export async function GET(request: NextRequest) {
       plate = decrypt(check.plate_encrypted as string).toUpperCase()
     } catch { /* non-fatal */ }
 
+    // Recovers the seller-price-vs-market comparison from cached data so the
+    // e-mail can lead with it. Database reads only — no paid lookups — and it
+    // returns null whenever the claim would not be safe, in which case the
+    // e-mail falls back to its generic opener.
+    const insight = await loadRetargetInsight(
+      plate,
+      check.asking_price_rm as number | null,
+    )
+
     try {
       await sendRetargetEmail({
         toEmail:    check.lead_email as string,
         plate,
         checkId:    check.id,
         claimToken: (check.claim_token as string | null) ?? null,
+        insight,
       })
       await supabase
         .from('checks')

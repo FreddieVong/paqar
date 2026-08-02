@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 import { env }    from '@/lib/env'
 import { buildRetargetEmailHtml } from './retarget-template'
+import type { RetargetEmailInsight } from './retarget-template'
 
 interface RetargetParams {
   toEmail:  string
@@ -11,6 +12,25 @@ interface RetargetParams {
   // a `as string` cast here previously shipped links reading `claim_token=null`,
   // which the report page rejects, 404ing the recipients who cared most.
   claimToken: string | null
+  /** Null whenever the price picture cannot be stated safely. */
+  insight?:   RetargetEmailInsight | null
+}
+
+/**
+ * Subject lines lead with what the lead's own asking price means, because that
+ * is the question they opened the free check to answer. Kept short — anything
+ * past roughly 40 characters is truncated on a phone. Falls back to the generic
+ * question when there is no safe verdict to state.
+ */
+function subjectFor(plate: string | undefined, insight: RetargetEmailInsight | null | undefined): string {
+  if (!plate) return 'Laporan Paqar — masih tersedia'
+  switch (insight?.verdict) {
+    case 'overpriced':    return `${plate} — harga di atas pasaran`
+    case 'slightly_high': return `${plate} — ada ruang untuk tawar`
+    case 'good_deal':     return `${plate} — bawah harga pasaran`
+    case 'fair_price':    return `${plate} — harga nampak wajar`
+    default:              return `${plate} — berbaloi atau tidak?`
+  }
 }
 
 export function buildRetargetReportUrl(checkId: string, claimToken: string | null): string {
@@ -26,11 +46,13 @@ export async function sendRetargetEmail(params: RetargetParams): Promise<void> {
 
   const resend     = new Resend(env.RESEND_API_KEY)
   const reportUrl  = buildRetargetReportUrl(params.checkId, params.claimToken)
-  const subject    = params.plate
-    ? `${params.plate} — berbaloi atau tidak?`
-    : 'Laporan Paqar — masih tersedia'
+  const subject    = subjectFor(params.plate, params.insight)
 
-  const html = buildRetargetEmailHtml({ plate: params.plate, reportUrl })
+  const html = buildRetargetEmailHtml({
+    plate:   params.plate,
+    reportUrl,
+    insight: params.insight ?? null,
+  })
 
   await resend.emails.send({
     from:    'Paqar <noreply@paqar.my>',

@@ -59,9 +59,56 @@ const LOGO_URL = 'https://paqar.my/paqar-logo-email.png'
 const LOGO_W   = 160
 const LOGO_H   = 50
 
+export interface RetargetEmailInsight {
+  askingRm: number
+  medianRm: number
+  count:    number
+  verdict:  'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
+}
+
 export interface RetargetEmailContent {
   plate?:     string
   reportUrl:  string
+  /** Omitted whenever the price picture cannot be stated safely — see
+   *  lib/email/retarget-insight.ts. The e-mail then falls back to its generic
+   *  opener rather than inventing a number. */
+  insight?:   RetargetEmailInsight | null
+}
+
+const rm = (n: number) => `RM${Math.round(n).toLocaleString('en-MY')}`
+
+/**
+ * Verdict-led opener. The lead already told us the asking price, so the useful
+ * sentence is what that price means, not "belum buat keputusan?".
+ *
+ * Wording tracks the report's own labels (BERBALOI / WAJAR / AGAK MAHAL /
+ * MAHAL) without asserting more than the cohort supports: the gap is described
+ * as a comparison against the market middle, never as a promise of savings.
+ */
+function heroFor(verdict: RetargetEmailInsight['verdict'], plate: string): { line: string; note: string } {
+  switch (verdict) {
+    case 'overpriced':
+      return {
+        line: `Harga ${plate} lebih tinggi<br>dari pasaran.`,
+        note: 'Ada ruang untuk runding. Laporan tunjukkan berapa dan ayat untuk guna.',
+      }
+    case 'slightly_high':
+      return {
+        line: `Harga ${plate} sedikit<br>di atas pasaran.`,
+        note: 'Ada ruang untuk tawar. Laporan tunjukkan berapa dan ayat untuk guna.',
+      }
+    case 'good_deal':
+      return {
+        line: `Harga ${plate} di bawah<br>pasaran semasa.`,
+        note: 'Nampak menarik — tapi semak kenapa sebelum bayar deposit.',
+      }
+    case 'fair_price':
+    default:
+      return {
+        line: `Harga ${plate} setakat ini<br>nampak wajar.`,
+        note: 'Sebelum bayar deposit, semak kondisi dan dokumen kenderaan.',
+      }
+  }
 }
 
 /** Teal check disc + label, the same pairing the homepage value stack uses. */
@@ -93,6 +140,10 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
   // RM12 — this one only opens a page.
   const ctaLabel   = hasPlate ? `Semak ${plate} &mdash; dari RM12` : 'Semak laporan &mdash; dari RM12'
   const url        = content.reportUrl
+  // Only personalise when there is a plate to name; the no-plate fallback has
+  // nothing to anchor a price claim to.
+  const insight    = hasPlate ? (content.insight ?? null) : null
+  const hero       = insight ? heroFor(insight.verdict, plate) : null
 
   return `<!DOCTYPE html>
 <html lang="ms" style="background:${C.page};">
@@ -193,14 +244,47 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
           <!-- ── hero ─────────────────────────────────────────────────── -->
           <tr>
             <td class="gutter" style="padding:26px 24px 0;">
-              <div class="hero t-hi" style="font-family:${HEAD};font-size:26px;font-weight:800;letter-spacing:-0.02em;color:${C.text};line-height:1.18;">Belum buat keputusan<br>tentang ${subjectRef}?</div>
+              <div class="hero t-hi" style="font-family:${HEAD};font-size:26px;font-weight:800;letter-spacing:-0.02em;color:${C.text};line-height:1.18;">${
+                hero ? hero.line : `Belum buat keputusan<br>tentang ${subjectRef}?`
+              }</div>
             </td>
           </tr>
           <tr>
             <td class="gutter" style="padding:12px 24px 0;">
-              <div class="t-mute" style="font-family:${BODY};font-size:15px;font-weight:400;color:${C.muted};line-height:1.6;">Sebelum bayar deposit, semak sama ada harganya berbaloi dan perkara penting yang mungkin tidak diberitahu oleh penjual.</div>
+              <div class="t-mute" style="font-family:${BODY};font-size:15px;font-weight:400;color:${C.muted};line-height:1.6;">${
+                hero ? hero.note : 'Sebelum bayar deposit, semak sama ada harganya berbaloi dan perkara penting yang mungkin tidak diberitahu oleh penjual.'
+              }</div>
             </td>
           </tr>
+
+          <!-- ── the two numbers that matter ──────────────────────────────
+               Seller's price against the market middle, side by side. Both
+               derive from the one cohort in lib/email/retarget-insight.ts, and
+               the listing count is stated so the comparison can be judged
+               rather than taken on faith. -->
+          ${insight ? `
+          <tr>
+            <td class="gutter" style="padding:20px 24px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${C.border};border-radius:14px;">
+                <tr>
+                  <td class="pad-lg" width="50%" valign="top" style="padding:18px 20px;">
+                    <div class="t-dim" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.12em;color:${C.dim};line-height:1.3;height:24px;">SELLER MINTA</div>
+                    <div class="t-hi" style="font-family:${HEAD};font-size:21px;font-weight:800;letter-spacing:-0.02em;color:${C.text};line-height:1.1;">${rm(insight.askingRm)}</div>
+                  </td>
+                  <td class="pad-lg" width="50%" valign="top" style="padding:18px 20px 18px 0;">
+                    <div class="t-dim" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.12em;color:${C.dim};line-height:1.3;height:24px;">HARGA TENGAH<br>PASARAN</div>
+                    <div class="t-teal" style="font-family:${HEAD};font-size:21px;font-weight:800;letter-spacing:-0.02em;color:${C.primary};line-height:1.1;">${rm(insight.medianRm)}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" class="gutter" style="padding:0 20px 16px;">
+                    <div style="height:1px;background:${C.hair};font-size:0;line-height:0;">&nbsp;</div>
+                    <div class="t-dim" style="font-family:${BODY};font-size:11.5px;font-weight:400;color:${C.dim};line-height:1.55;padding-top:11px;">Berdasarkan ${insight.count} iklan model dan tahun yang sama di pasaran semasa.</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>` : ''}
 
           <!-- ── primary CTA ──────────────────────────────────────────── -->
           <tr>
@@ -227,7 +311,7 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
                 <tr>
                   <td class="pad-lg" style="padding:20px;">
                     <div class="t-dim" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.14em;color:${C.dim};line-height:1;padding-bottom:14px;">DALAM LAPORAN</div>
-                    ${benefit('Verdict harga &mdash; murah, wajar atau mahal')}
+                    ${benefit('Verdict harga &mdash; berbaloi, wajar atau mahal')}
                     ${benefit('Julat dan harga tengah pasaran semasa')}
                     ${benefit('Skrip rundingan siap pakai')}
                     ${benefit('Checklist sebelum bayar deposit')}
