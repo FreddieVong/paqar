@@ -16,24 +16,28 @@ import { env } from '@/lib/env'
 
 export const MAX_DAILY_BUDGET_MYR  = 30
 /**
- * Total experiment allowance.
+ * Total experiment allowance, across every campaign on the account.
  *
- * Raised 210 → 265 on 2026-08-02 for a deliberately small mechanical test of
- * the graphic creatives. RM215.73 was already spent (RM186.80 recorded in
- * snapshots plus RM28.93 after Meta's counter reset), leaving RM49.27 of
- * headroom — enough to prove creative_c/creative_d tagging, the swap cutoff
- * and Carlist targeting work on real traffic, and not enough to re-buy an
- * answer already in hand.
+ * History, so the number is never mistaken for drift:
+ *   210 — the original RM210 experiment.
+ *   265 — 2026-08-02, a bounded RM50 mechanical test of the graphic creatives.
+ *   445 — 2026-08-04, funding the RM180 Carlist vs Mudah carousel test
+ *         (RM90 lifetime per ad set) on top of RM217.86 already spent.
+ *         RM397.86 committed, so RM445 leaves headroom without being open-ended.
  *
- * This is NOT a renegotiation of the budget because a counter reset made spend
- * look lower than it was; reconcileBudget() exists precisely to prevent that.
- * It is an explicit, recorded decision to fund one more bounded test.
+ * Every raise here is an explicit decision to spend new money. None of them is
+ * a re-reading of Meta's amount_spent counter, which RESETS when the spending
+ * limit changes and read RM31.06 while RM217.86 had actually been spent —
+ * reconcileBudget() exists precisely to stop that becoming a budget increase.
  *
- * Meta's ACCOUNT spending limit must be set to the same figure — preflight's
- * isSpendCapAllowed() requires an exact match, and Meta's own limit is the
- * primary protection.
+ * Meta's ACCOUNT spending limit must be set to the same figure: preflight's
+ * isSpendCapAllowed() requires an exact match, and Meta's limit — not this
+ * constant — is the primary protection. That matters more than usual now,
+ * because the operator supervises only the ORIGINAL campaign, so its hard stop
+ * cannot pause the Carlist vs Mudah campaign. For that campaign, Meta's
+ * account limit is the ONLY backstop.
  */
-export const MAX_TOTAL_SPEND_MYR   = 265
+export const MAX_TOTAL_SPEND_MYR   = 445
 export const MAX_CAMPAIGNS         = 1
 export const MAX_ADSETS            = 1
 export const MAX_ACTIVE_ADS        = 2

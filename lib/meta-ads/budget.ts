@@ -19,7 +19,11 @@ import { MAX_TOTAL_SPEND_CENTS } from '@/lib/meta-ads/guards'
  * never a refund, and must never reduce the reconciled total.
  */
 
-export type SpendSource = 'counter' | 'counter_plus_snapshot_floor' | 'snapshots_only'
+export type SpendSource =
+  | 'counter'
+  | 'counter_plus_snapshot_floor'
+  | 'opening_plus_counter'
+  | 'snapshots_only'
 
 export type BudgetReconciliation =
   | {
@@ -72,6 +76,24 @@ export function reconcileBudget(input: ReconcileInput): BudgetReconciliation {
     return settle(cumulative, false, 'snapshots_only')
   }
 
+  // A RECORDED opening balance is authoritative and disables reset inference.
+  //
+  // This matters more than it looks. Inference below keys on the counter having
+  // gone BACKWARDS relative to the stored floor — but that signal decays: once
+  // spending resumes after a reset and the counter climbs past the old floor,
+  // the reset becomes undetectable and the pre-reset total silently vanishes.
+  //
+  // Concretely, with a RM186.80 floor and RM31.06 on the counter, spending
+  // RM180 more takes the counter to RM211.06. That is above the floor, so
+  // inference reports RM211.06 cumulative instead of the true RM397.86 —
+  // understating by RM186.80 and letting the hard stop sleep through it.
+  //
+  // Recording the pre-reset total as opening_spend_cents makes the arithmetic
+  // stable for the rest of the epoch: cumulative = opening + counter, always.
+  if (openingSpendCents != null) {
+    return settle(openingSpendCents + liveCounterCents, false, 'opening_plus_counter')
+  }
+
   // Counter readable but no history to compare against. If a reset had already
   // happened we could not detect it, so this cannot be called verified.
   if (snapshotMaxCents == null) {
@@ -86,7 +108,7 @@ export function reconcileBudget(input: ReconcileInput): BudgetReconciliation {
     ? snapshotMaxCents + liveCounterCents  // pre-reset total + post-reset spend
     : liveCounterCents                     // still cumulative; already includes history
 
-  const cumulative = (openingSpendCents ?? 0) + metaSide
+  const cumulative = metaSide
   return settle(cumulative, resetDetected,
     resetDetected ? 'counter_plus_snapshot_floor' : 'counter')
 }

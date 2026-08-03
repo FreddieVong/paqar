@@ -148,8 +148,9 @@ describe('declared limits match the brief', () => {
   it('holds the agreed constants', () => {
     expect(MAX_DAILY_BUDGET_MYR).toBe(30)
     // Pinned so the allowance can only move as a deliberate, reviewed edit.
-    // Raised 210 -> 265 on 2026-08-02 for a bounded RM50 creative test.
-    expect(MAX_TOTAL_SPEND_MYR).toBe(265)
+    // 210 -> 265 (2026-08-02, bounded RM50 creative test)
+    // 265 -> 445 (2026-08-04, RM180 Carlist vs Mudah on top of RM217.86 spent)
+    expect(MAX_TOTAL_SPEND_MYR).toBe(445)
     expect(MAX_CAMPAIGNS).toBe(1)
     expect(MAX_ADSETS).toBe(1)
     expect(MAX_ACTIVE_ADS).toBe(2)
