@@ -23,7 +23,7 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock('@/lib/meta-ads/insights', () => mocks)
 
-import { MAX_TOTAL_SPEND_MYR } from '@/lib/meta-ads/guards'
+import { MAX_TOTAL_SPEND_MYR, ACTIVE_CAMPAIGN, META_SOURCE_MACRO } from '@/lib/meta-ads/guards'
 import { runPreflight } from '@/lib/meta-ads/preflight'
 import { MetaApiError } from '@/lib/meta-ads/client'
 
@@ -32,8 +32,10 @@ const INPUT = {
   creativeAAdId: 'ad_a', creativeBAdId: 'ad_b',
 }
 
-const GOOD_URL = 'https://paqar.my/?utm_source=meta&utm_medium=paid_social'
-               + '&utm_campaign=paqar_first_paid_test&utm_content='
+// Uses the live Meta macro, exactly as the stored ad URL does before Meta
+// expands it at click time.
+const GOOD_URL = `https://paqar.my/?utm_source=${META_SOURCE_MACRO}&utm_medium=paid_social`
+               + `&utm_campaign=${ACTIVE_CAMPAIGN.utm}&utm_content=`
 
 function goodAd(id: string, content: string) {
   return {
@@ -69,7 +71,8 @@ function setHappyPath() {
     { id: 'ad_b', adset_id: 'set_1', status: 'PAUSED', effective_status: 'PAUSED' },
   ])
   mocks.getAd.mockImplementation(async (id: string) =>
-    id === 'ad_a' ? goodAd('ad_a', 'creative_c') : goodAd('ad_b', 'creative_d')
+    id === 'ad_a' ? goodAd('ad_a', ACTIVE_CAMPAIGN.creatives[0])
+                  : goodAd('ad_b', ACTIVE_CAMPAIGN.creatives[1])
   )
 }
 
@@ -219,7 +222,7 @@ describe('ad inventory', () => {
 describe('creative URLs', () => {
   it('rejects an unapproved creative pointing at the wrong domain', async () => {
     mocks.getAd.mockImplementation(async (id: string) => {
-      const ad = goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d')
+      const ad = goodAd(id, id === 'ad_a' ? ACTIVE_CAMPAIGN.creatives[0] : ACTIVE_CAMPAIGN.creatives[1])
       if (id === 'ad_b') {
         ad.creative.object_story_spec.video_data.call_to_action.value.link =
           'https://example.com/?utm_source=meta&utm_medium=paid_social&utm_campaign=paqar_first_paid_test&utm_content=creative_d'
@@ -236,12 +239,12 @@ describe('creative URLs', () => {
     )
     const result = await runPreflight(INPUT)
     expect(check(result, 'ad_2_utm')?.status).toBe('fail')
-    expect(check(result, 'ad_2_utm')?.detail).toContain('creative_d')
+    expect(check(result, 'ad_2_utm')?.detail).toContain(ACTIVE_CAMPAIGN.creatives[1])
   })
 
   it('rejects wrong campaign-level UTM tags', async () => {
     mocks.getAd.mockImplementation(async (id: string) => {
-      const ad = goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d')
+      const ad = goodAd(id, id === 'ad_a' ? ACTIVE_CAMPAIGN.creatives[0] : ACTIVE_CAMPAIGN.creatives[1])
       ad.creative.object_story_spec.video_data.call_to_action.value.link =
         'https://paqar.my/?utm_source=facebook&utm_medium=paid_social&utm_campaign=paqar_first_paid_test&utm_content=creative_c'
       return ad
@@ -256,7 +259,7 @@ describe('creative URLs', () => {
       creative: {
         id: `cr_${id}`,
         instagram_actor_id: 'ig_1',
-        url_tags: `utm_source=meta&utm_medium=paid_social&utm_campaign=paqar_first_paid_test&utm_content=${id === 'ad_a' ? 'creative_c' : 'creative_d'}`,
+        url_tags: `utm_source=fb&utm_medium=paid_social&utm_campaign=${ACTIVE_CAMPAIGN.utm}&utm_content=${id === 'ad_a' ? ACTIVE_CAMPAIGN.creatives[0] : ACTIVE_CAMPAIGN.creatives[1]}`,
         object_story_spec: {
           page_id: 'page_1',
           video_data: { call_to_action: { value: { link: 'https://paqar.my/' } } },
@@ -270,7 +273,7 @@ describe('creative URLs', () => {
 
   it('rejects a creative using the wrong Facebook Page', async () => {
     mocks.getAd.mockImplementation(async (id: string) => {
-      const ad = goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d')
+      const ad = goodAd(id, id === 'ad_a' ? ACTIVE_CAMPAIGN.creatives[0] : ACTIVE_CAMPAIGN.creatives[1])
       ad.creative.object_story_spec.page_id = 'someone_elses_page'
       return ad
     })
@@ -280,7 +283,7 @@ describe('creative URLs', () => {
 
   it('rejects a creative using the wrong Instagram account', async () => {
     mocks.getAd.mockImplementation(async (id: string) => {
-      const ad = goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d')
+      const ad = goodAd(id, id === 'ad_a' ? ACTIVE_CAMPAIGN.creatives[0] : ACTIVE_CAMPAIGN.creatives[1])
       ad.creative.instagram_actor_id = 'wrong_ig'
       return ad
     })
@@ -476,7 +479,7 @@ describe('Meta IDs are handled as exact strings', () => {
       { id: REAL_IDS.creativeBAdId, adset_id: REAL_IDS.adSetId, status: 'PAUSED', effective_status: 'PAUSED' },
     ])
     mocks.getAd.mockImplementation(async (id: string) => ({
-      ...goodAd(id, id === REAL_IDS.creativeAAdId ? 'creative_c' : 'creative_d'),
+      ...goodAd(id, id === REAL_IDS.creativeAAdId ? ACTIVE_CAMPAIGN.creatives[0] : ACTIVE_CAMPAIGN.creatives[1]),
       adset_id: REAL_IDS.adSetId,
     }))
     mocks.getCampaign.mockResolvedValue({
@@ -566,7 +569,7 @@ describe('the graphic swap: retired tags and audience verification', () => {
     // Setup runs before first activation: a live ad is already spending
     // against a configuration nobody has approved.
     mocks.getAd.mockImplementation(async (id: string) => ({
-      ...goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d'),
+      ...goodAd(id, id === 'ad_a' ? ACTIVE_CAMPAIGN.creatives[0] : ACTIVE_CAMPAIGN.creatives[1]),
       status: 'ACTIVE', effective_status: 'ACTIVE',
     }))
     const r = await runPreflight({ ...INPUT, mode: 'setup' })
@@ -576,7 +579,7 @@ describe('the graphic swap: retired tags and audience verification', () => {
 
   it('does not demand paused ads in LIVE mode, where ACTIVE is correct', async () => {
     mocks.getAd.mockImplementation(async (id: string) => ({
-      ...goodAd(id, id === 'ad_a' ? 'creative_c' : 'creative_d'),
+      ...goodAd(id, id === 'ad_a' ? ACTIVE_CAMPAIGN.creatives[0] : ACTIVE_CAMPAIGN.creatives[1]),
       status: 'ACTIVE', effective_status: 'ACTIVE',
     }))
     const r = await runPreflight({ ...INPUT, mode: 'live' })
@@ -621,5 +624,69 @@ describe('retired creatives may stay in the ad set', () => {
     const r = await runPreflight({ ...INPUT })
     expect(check(r, 'ad_count')?.status).toBe('fail')
     expect(check(r, 'ad_count')?.detail).toContain('configured')
+  })
+})
+
+describe('the Meta {{site_source_name}} macro is a valid utm_source', () => {
+  const url = (src: string, campaign: string, content: string) =>
+    `https://paqar.my/?utm_source=${src}&utm_medium=paid_social`
+    + `&utm_campaign=${campaign}&utm_content=${content}&utm_term={{placement}}`
+
+  const withUrls = (a: string, b: string) => {
+    mocks.getAd.mockImplementation(async (id: string) => ({
+      ...goodAd(id, 'x'),
+      creative: { object_story_spec: { link_data: { link: id === 'ad_a' ? a : b } } },
+    }))
+  }
+
+  it('accepts the literal unexpanded macro', async () => {
+    // Verified: URL.searchParams and URLSearchParams both return the braces
+    // literally, so the ad URL Meta stores really does read {{site_source_name}}.
+    withUrls(
+      url('{{site_source_name}}', ACTIVE_CAMPAIGN.utm, ACTIVE_CAMPAIGN.creatives[0]),
+      url('{{site_source_name}}', ACTIVE_CAMPAIGN.utm, ACTIVE_CAMPAIGN.creatives[1]),
+    )
+    const r = await runPreflight({ ...INPUT })
+    expect(check(r, 'ad_1_utm')?.status).toBe('pass')
+    expect(check(r, 'ad_2_utm')?.status).toBe('pass')
+  })
+
+  it('accepts an already-expanded source such as fb', async () => {
+    withUrls(
+      url('fb', ACTIVE_CAMPAIGN.utm, ACTIVE_CAMPAIGN.creatives[0]),
+      url('ig', ACTIVE_CAMPAIGN.utm, ACTIVE_CAMPAIGN.creatives[1]),
+    )
+    const r = await runPreflight({ ...INPUT })
+    expect(check(r, 'ad_1_utm')?.status).toBe('pass')
+    expect(check(r, 'ad_2_utm')?.status).toBe('pass')
+  })
+
+  it('still rejects a genuinely wrong source', async () => {
+    withUrls(
+      url('google', ACTIVE_CAMPAIGN.utm, ACTIVE_CAMPAIGN.creatives[0]),
+      url('fb',     ACTIVE_CAMPAIGN.utm, ACTIVE_CAMPAIGN.creatives[1]),
+    )
+    const r = await runPreflight({ ...INPUT })
+    expect(check(r, 'ad_1_utm')?.status).toBe('fail')
+    expect(check(r, 'ad_1_utm')?.detail).toContain('utm_source')
+  })
+
+  it('rejects the wrong campaign', async () => {
+    withUrls(
+      url('fb', 'paqar_first_paid_test', ACTIVE_CAMPAIGN.creatives[0]),
+      url('fb', ACTIVE_CAMPAIGN.utm,     ACTIVE_CAMPAIGN.creatives[1]),
+    )
+    const r = await runPreflight({ ...INPUT })
+    expect(check(r, 'ad_1_utm')?.status).toBe('fail')
+    expect(check(r, 'ad_1_utm')?.detail).toContain('utm_campaign')
+  })
+
+  it('rejects a creative tag belonging to another campaign', async () => {
+    withUrls(
+      url('fb', ACTIVE_CAMPAIGN.utm, 'creative_c'),
+      url('fb', ACTIVE_CAMPAIGN.utm, ACTIVE_CAMPAIGN.creatives[1]),
+    )
+    const r = await runPreflight({ ...INPUT })
+    expect(check(r, 'ad_1_utm')?.status).toBe('fail')
   })
 })

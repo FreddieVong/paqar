@@ -17,6 +17,7 @@ vi.mock('@/lib/supabase/server', () => ({
         return b
       }
       b.gte = chain
+      b.in = chain
       b.then = (resolve: (v: unknown) => unknown) => {
         const path = b._path as string | undefined
         const filtered = path ? rows.data.filter((r) => r.valuation_path === path) : rows.data

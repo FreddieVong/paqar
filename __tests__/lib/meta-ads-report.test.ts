@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from 'vitest'
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({ env: { META_GRAPH_API_VERSION: 'v25.0' } }))
 
-import { MAX_TOTAL_SPEND_MYR } from '@/lib/meta-ads/guards'
+import { MAX_TOTAL_SPEND_MYR, ACTIVE_CREATIVE_TAGS } from '@/lib/meta-ads/guards'
 import { buildDailyReport, diagnose, type ReportInput, type CreativeResult } from '@/lib/meta-ads/report'
 
 // valuationStartedAnyPath defaults to valuationStarted unless a case sets it
@@ -352,7 +352,7 @@ describe('active and retired creatives are never blended', () => {
 
   it('labels the comparison with the ACTIVE tags only', () => {
     const body = buildDailyReport(input())
-    expect(body).toContain('Creative comparison (active: creative_c, creative_d)')
+    expect(body).toContain(`Creative comparison (active: ${ACTIVE_CREATIVE_TAGS.join(', ')})`)
   })
 
   it('prints retired creatives in their own section, marked excluded', () => {
