@@ -111,3 +111,61 @@ describe('unverifiable budgets show a reconciliation warning, not a number', () 
     expect(huge.cumulativeCents + huge.remainingCents).toBe(MAX_TOTAL_SPEND_CENTS)
   })
 })
+
+describe('REGRESSION: reset inference decays once spending resumes', () => {
+  /**
+   * Found by verifying the RM445 raise against real figures. Reset detection
+   * keys on the counter being BELOW the stored floor. With a RM186.80 floor
+   * and RM31.06 on the counter that holds — but spend RM180 more and the
+   * counter reaches RM211.06, above the floor, so the reset becomes invisible
+   * and RM186.80 of real spend silently disappears. The hard stop would then
+   * not fire until true spend reached roughly RM632.
+   *
+   * A recorded opening balance makes it stable for the rest of the epoch.
+   */
+  const FLOOR = 18680   // RM186.80 recorded before Meta's counter reset
+  const AFTER = 3106    // RM31.06 on the counter today
+
+  it('under-reports once the counter climbs past the floor (the defect)', () => {
+    const r = reconcileBudget({
+      liveCounterCents: AFTER + 18000, snapshotMaxCents: FLOOR, openingSpendCents: null,
+    })
+    if (r.status !== 'verified') throw new Error('expected verified')
+    expect(r.resetDetected).toBe(false)
+    expect(r.cumulativeCents).toBe(AFTER + 18000)   // RM211.06, not the true RM397.86
+  })
+
+  it('a recorded opening balance keeps the total correct as spending continues', () => {
+    const today = reconcileBudget({
+      liveCounterCents: AFTER, snapshotMaxCents: FLOOR, openingSpendCents: FLOOR,
+    })
+    if (today.status !== 'verified') throw new Error('expected verified')
+    expect(today.cumulativeCents).toBe(21786)       // RM217.86 — matches production
+    expect(today.source).toBe('opening_plus_counter')
+
+    const afterSpend = reconcileBudget({
+      liveCounterCents: AFTER + 18000, snapshotMaxCents: FLOOR, openingSpendCents: FLOOR,
+    })
+    if (afterSpend.status !== 'verified') throw new Error('expected verified')
+    expect(afterSpend.cumulativeCents).toBe(39786)  // RM397.86 — the true total
+  })
+
+  it('never double-counts the floor when opening is recorded', () => {
+    const r = reconcileBudget({
+      liveCounterCents: AFTER, snapshotMaxCents: FLOOR, openingSpendCents: FLOOR,
+    })
+    if (r.status !== 'verified') throw new Error('expected verified')
+    // opening + counter, NOT opening + floor + counter.
+    expect(r.cumulativeCents).not.toBe(FLOOR + FLOOR + AFTER)
+    expect(r.cumulativeCents).toBe(FLOOR + AFTER)
+  })
+
+  it('still stops the campaign once the real total passes the allowance', () => {
+    const r = reconcileBudget({
+      liveCounterCents: MAX_TOTAL_SPEND_CENTS, snapshotMaxCents: FLOOR, openingSpendCents: FLOOR,
+    })
+    if (r.status !== 'verified') throw new Error('expected verified')
+    expect(r.remainingCents).toBeLessThan(0)
+    expect(describeBudget(r)).toContain('OVER BUDGET')
+  })
+})
