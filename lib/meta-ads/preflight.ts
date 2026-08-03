@@ -8,6 +8,7 @@ import { MetaApiError, redactMeta } from '@/lib/meta-ads/client'
 import {
   MAX_ACTIVE_ADS, MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR,
   REQUIRED_CURRENCY, REQUIRED_UTM, ACTIVE_CREATIVE_TAGS, isRetiredCreativeTag,
+  ACTIVE_CAMPAIGN, META_SOURCE_MACRO, isMetaUtmSource, META_UTM_SOURCES,
   CARLIST_INTEREST,
   ALLOWED_DESTINATION_HOST, ALLOWED_COUNTRY, OPTIMISATION_EVENT,
   isDailyBudgetAllowed, isSpendCapAllowed, isCountryAllowed,
@@ -418,10 +419,32 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
       }
 
       const utmProblems: string[] = []
+
+      // Exact-match parameters only (utm_medium). utm_source and utm_campaign
+      // are checked separately below because neither is a single constant.
       for (const [key, expected] of Object.entries(REQUIRED_UTM)) {
         const actual = params.get(key)
         if (actual !== expected) utmProblems.push(`${key}=${actual ?? 'missing'} (expected ${expected})`)
       }
+
+      // The stored ad URL contains the UNEXPANDED macro; Meta substitutes a
+      // placement source at click time. Verified that URL.searchParams and
+      // URLSearchParams both return "{{site_source_name}}" literally, including
+      // from a percent-encoded form. Accept the macro or an expanded member —
+      // anything else is a genuine misconfiguration.
+      const source = params.get('utm_source')
+      if (source !== META_SOURCE_MACRO && !isMetaUtmSource(source)) {
+        utmProblems.push(
+          `utm_source=${source ?? 'missing'} `
+          + `(expected ${META_SOURCE_MACRO} or one of ${META_UTM_SOURCES.join('/')})`
+        )
+      }
+
+      const campaign = params.get('utm_campaign')
+      if (campaign !== ACTIVE_CAMPAIGN.utm) {
+        utmProblems.push(`utm_campaign=${campaign ?? 'missing'} (expected ${ACTIVE_CAMPAIGN.utm})`)
+      }
+
       const content = params.get('utm_content')
       if (content !== expectedContent) {
         utmProblems.push(`utm_content=${content ?? 'missing'} (expected ${expectedContent})`)

@@ -1,7 +1,7 @@
 import 'server-only'
 import { createServiceClient } from '@/lib/supabase/server'
 import { myatDate } from '@/lib/attribution'
-import { REQUIRED_UTM } from '@/lib/meta-ads/guards'
+import { REQUIRED_UTM, META_UTM_SOURCES, resolveCampaign } from '@/lib/meta-ads/guards'
 import type { ValuationPath } from '@/lib/funnel-stages'
 
 /**
@@ -282,14 +282,24 @@ export async function getFunnelCounts(opts: {
    * so mixing them into one denominator understates the report funnel.
    */
   valuationPath?: ValuationPath
+  /**
+   * Exact utm_campaign to report. Defaults to the ACTIVE campaign and can
+   * never widen to "all campaigns" — resolveCampaign() turns null, undefined
+   * and empty string into the active value, because a missing argument
+   * silently blending cohorts is the defect this scoping exists to prevent.
+   */
+  campaign?:      string | null
 } = {}): Promise<FunnelCounts> {
   const supabase = createServiceClient()
 
   let query = supabase
     .from('ad_events')
     .select('id, event_name, amount_cents, check_id, journey_id, valuation_path, session_id')
-    .eq('utm_source', REQUIRED_UTM.utm_source)
-    .eq('utm_campaign', REQUIRED_UTM.utm_campaign)
+    // Meta expands {{site_source_name}} to a placement source, so the stored
+    // value is fb/ig/an/msg — never the literal "meta" the old filter demanded.
+    .in('utm_source', META_UTM_SOURCES)
+    .eq('utm_medium', REQUIRED_UTM.utm_medium)
+    .eq('utm_campaign', resolveCampaign(opts.campaign))
 
   if (opts.utmContent) query = query.eq('utm_content', opts.utmContent)
   if (opts.since)      query = query.gte('occurred_at', opts.since.toISOString())
@@ -388,26 +398,33 @@ export async function getFunnelCounts(opts: {
  * Meta reporting real landing activity while Paqar recorded none is a strong
  * technical signal.
  */
-export async function countPaqarLandingViews(since: Date): Promise<number> {
+export async function countPaqarLandingViews(
+  since: Date,
+  campaign?: string | null
+): Promise<number> {
   const supabase = createServiceClient()
   const { count, error } = await supabase
     .from('ad_events')
     .select('id', { count: 'exact', head: true })
     .eq('event_name', 'landing_page_view')
-    .eq('utm_source', REQUIRED_UTM.utm_source)
+    .in('utm_source', META_UTM_SOURCES)
+    .eq('utm_medium', REQUIRED_UTM.utm_medium)
+    .eq('utm_campaign', resolveCampaign(campaign))
     .gte('occurred_at', since.toISOString())
   if (error) throw error
   return count ?? 0
 }
 
 /** Most recent valuation_started from paid traffic — used to spot a sudden stop. */
-export async function lastValuationStartedAt(): Promise<Date | null> {
+export async function lastValuationStartedAt(campaign?: string | null): Promise<Date | null> {
   const supabase = createServiceClient()
   const { data } = await supabase
     .from('ad_events')
     .select('occurred_at')
     .eq('event_name', 'valuation_started')
-    .eq('utm_source', REQUIRED_UTM.utm_source)
+    .in('utm_source', META_UTM_SOURCES)
+    .eq('utm_medium', REQUIRED_UTM.utm_medium)
+    .eq('utm_campaign', resolveCampaign(campaign))
     .order('occurred_at', { ascending: false })
     .limit(1)
     .maybeSingle()

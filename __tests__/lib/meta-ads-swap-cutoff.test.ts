@@ -20,6 +20,7 @@ vi.mock('@/lib/supabase/server', () => ({
         if (col === 'utm_content')    f.content = val as string
         return b
       }
+      b.in = () => b
       b.gte = (col: string, val: unknown) => {
         if (col === 'occurred_at') f.since = val as string
         return b

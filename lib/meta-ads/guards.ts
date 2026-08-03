@@ -57,11 +57,77 @@ export const MAX_TOTAL_SPEND_CENTS  = MAX_TOTAL_SPEND_MYR * 100
  */
 export const SPEND_FAILURE_THRESHOLD = 2
 
+/**
+ * Meta expands the {{site_source_name}} macro at click time, so the value that
+ * actually lands in ad_events is a placement source, never the literal "meta".
+ *
+ * The old exact filter `utm_source = 'meta'` therefore excluded every click
+ * from any campaign using the macro: the rows were written correctly and then
+ * dropped by every read. Membership of this family is the test.
+ */
+export const META_UTM_SOURCES = ['meta', 'fb', 'ig', 'an', 'msg'] as const
+export type MetaUtmSource = typeof META_UTM_SOURCES[number]
+
+/** The literal, pre-expansion macro as it sits in the ad's stored URL. */
+export const META_SOURCE_MACRO = '{{site_source_name}}'
+
+export function isMetaUtmSource(value: string | null | undefined): boolean {
+  return value != null && (META_UTM_SOURCES as readonly string[]).includes(value)
+}
+
+/**
+ * Only the parameters that must match EXACTLY, whatever the campaign.
+ *
+ * utm_source is a family (above) and utm_campaign varies per campaign, so
+ * neither belongs here — folding them in is what made the reporting layer
+ * silently campaign-specific.
+ */
 export const REQUIRED_UTM = {
-  utm_source:   'meta',
-  utm_medium:   'paid_social',
-  utm_campaign: 'paqar_first_paid_test',
+  utm_medium: 'paid_social',
 } as const
+
+/**
+ * Each campaign owns its own creative tags. Numbers from different campaigns
+ * are NEVER summed: blending cohorts is the defect that reported a landing
+ * page converting at 42% as 4.6% and got a working campaign paused.
+ */
+export interface CampaignConfig {
+  readonly utm:       string
+  readonly creatives: readonly [string, string]
+}
+
+export const CAMPAIGNS = {
+  firstPaidTest: {
+    utm:       'paqar_first_paid_test',
+    creatives: ['creative_c', 'creative_d'],
+  },
+  carlistVsMudah: {
+    utm:       'carlist_vs_mudah_aug26',
+    creatives: ['carlist_carousel', 'mudah_carousel'],
+  },
+} as const satisfies Record<string, CampaignConfig>
+
+/** The one campaign live reporting describes. Changing this is a decision. */
+export const ACTIVE_CAMPAIGN: CampaignConfig = CAMPAIGNS.carlistVsMudah
+
+/**
+ * Resolves a caller-supplied campaign to an exact utm_campaign value.
+ *
+ * Empty string, null and undefined all fall back to the active campaign — a
+ * query must never degrade into "every campaign" because an argument was
+ * missing, which would silently reintroduce cohort blending.
+ */
+export function resolveCampaign(campaign?: string | null): string {
+  const trimmed = typeof campaign === 'string' ? campaign.trim() : ''
+  return trimmed.length > 0 ? trimmed : ACTIVE_CAMPAIGN.utm
+}
+
+/** Creative tags for a campaign; falls back to the active one. */
+export function campaignCreatives(campaign?: string | null): readonly [string, string] {
+  const utm = resolveCampaign(campaign)
+  const found = Object.values(CAMPAIGNS).find((c) => c.utm === utm)
+  return (found ?? ACTIVE_CAMPAIGN).creatives
+}
 
 /**
  * Creative identity lives in utm_content, NOT in the database column names.
@@ -78,11 +144,23 @@ export const REQUIRED_UTM = {
  * through activeSlots() so a column name is never mistaken for a creative
  * identity again.
  */
-export const RETIRED_CREATIVE_TAGS = ['creative_a', 'creative_b'] as const
-export const ACTIVE_CREATIVE_TAGS  = ['creative_c', 'creative_d'] as const
+/**
+ * Retired in launch order: creative_a/b were the videos, creative_c/d the
+ * static graphics of paqar_first_paid_test. Both belong to history now that
+ * the Carlist vs Mudah carousels are live. They stay listed so the historical
+ * baseline can still be reported — and so preflight can name the exact cause
+ * when a live ad reuses one, rather than reporting a generic UTM mismatch.
+ */
+export const RETIRED_CREATIVE_TAGS = [
+  'creative_a', 'creative_b',                 // videos
+  ...CAMPAIGNS.firstPaidTest.creatives,       // creative_c, creative_d — graphics
+] as const
+
+/** Derived from the active campaign, never hard-coded independently of it. */
+export const ACTIVE_CREATIVE_TAGS = ACTIVE_CAMPAIGN.creatives
 
 export type RetiredCreativeTag = typeof RETIRED_CREATIVE_TAGS[number]
-export type ActiveCreativeTag  = typeof ACTIVE_CREATIVE_TAGS[number]
+export type ActiveCreativeTag  = string
 
 export function isRetiredCreativeTag(tag: string | null | undefined): boolean {
   return tag != null && (RETIRED_CREATIVE_TAGS as readonly string[]).includes(tag)
