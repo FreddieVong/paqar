@@ -44,6 +44,20 @@ export const CONTACT = {
   whatsapp: '60124424221' as string | null,
 }
 
+/**
+ * Reply-to for transactional mail. Deliberately NOT CONTACT.email.
+ *
+ * CONTACT.email is the address we publish on the site; this is an inbox that
+ * merely has to receive. paqar.my has no MX at all now, so any @paqar.my
+ * reply-to hard-bounces — and a customer replying to their RM12 receipt is
+ * the last person who should hit an error.
+ *
+ * The rule this encodes, already learned once in customer-feedback.ts: a
+ * reply-to must be an inbox someone actually reads, never noreply@ and never
+ * an address chosen because it looks tidy on a domain.
+ */
+export const SUPPORT_REPLY_TO = 'freddie.vong@yahoo.com'
+
 export const SAME_AS = [
   SOCIAL.facebook,
   SOCIAL.instagram,

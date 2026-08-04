@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { env }    from '@/lib/env'
+import { SUPPORT_REPLY_TO } from '@/lib/site'
 
 /**
  * The one question worth asking a paying customer.
@@ -36,7 +37,10 @@ export type FeedbackSend =
   | { ok: true;  id: string | null }
   | { ok: false; reason: string }
 
-const REPLY_TO = 'freddie.vong@yahoo.com'
+// Was declared here first; now shared, because every transactional template
+// needs the same guarantee and five of them were still pointing at an
+// @paqar.my address that cannot receive mail.
+const REPLY_TO = SUPPORT_REPLY_TO
 
 function body(plate: string | null): string {
   const car = plate ? ` untuk ${plate}` : ''
