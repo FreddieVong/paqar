@@ -29,11 +29,13 @@ export const GOOGLE_BUSINESS = {
   review:  'https://g.page/r/CcBaaoqXP_shEBM/review',
 } as const
 
-// hello@paqar.my is NOT listed here, and that is intentional. The paqar.my
-// domain has no MX record, so that address cannot receive mail at all — it
-// silently swallowed seven consecutive daily ops reports before anyone
-// noticed (see lib/meta-ads/alerts.ts). Publishing it as a support channel
-// sends customers into a void, which is worse than showing no channel.
+// hello@paqar.my is NOT listed here, and that is intentional. It silently
+// swallowed seven consecutive daily ops reports (see lib/meta-ads/alerts.ts).
+// paqar.my now publishes MX records via Namecheap's forwarding service, but
+// that only accepts mail for addresses with an explicit forwarding rule — so
+// the address stays unlisted until someone has confirmed a rule exists AND
+// tested a real round trip. Publishing an untested support address is how the
+// original problem happened; WhatsApp is the channel we can actually verify.
 //
 // `whatsapp` is digits-only international format, no '+', spaces or hyphens,
 // because that is what wa.me expects in the path: '60123456789'.
