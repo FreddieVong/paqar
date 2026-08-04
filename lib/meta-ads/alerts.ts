@@ -11,22 +11,57 @@ import { redactMeta } from '@/lib/meta-ads/client'
  * may still be delivering.
  */
 
-function alertRecipient(): string {
-  return env.ADS_ALERT_EMAIL ?? 'hello@paqar.my'
+/**
+ * Where alerts go. Returns null rather than a fallback address ON PURPOSE.
+ *
+ * This used to default to 'hello@paqar.my'. That address has no MX record —
+ * paqar.my cannot receive mail at all — so seven consecutive daily reports
+ * were "sent" into nothing while the operator recorded each as email_sent. A
+ * hardcoded fallback did not add resilience; it manufactured the appearance of
+ * delivery and hid the misconfiguration for a week.
+ *
+ * Refusing to send, loudly, is strictly better than mailing a void.
+ */
+function alertRecipient(): string | null {
+  return env.ADS_ALERT_EMAIL ?? null
 }
 
-async function send(subject: string, html: string): Promise<void> {
-  if (!env.RESEND_API_KEY) {
-    console.error('[ads-alert] RESEND_API_KEY unset — alert not delivered:', subject)
-    return
+export type AlertDelivery =
+  | { ok: true;  recipient: string; id: string | null }
+  | { ok: false; recipient: string | null; reason: string }
+
+/**
+ * Returns the outcome instead of swallowing it. Callers record the result, so
+ * a silent misroute shows up in the audit trail the next day rather than
+ * whenever someone happens to notice the inbox is empty.
+ */
+async function send(subject: string, html: string): Promise<AlertDelivery> {
+  const to = alertRecipient()
+  if (!to) {
+    const reason = 'ADS_ALERT_EMAIL is not set — no recipient configured'
+    console.error('[ads-alert]', reason, '|', subject)
+    return { ok: false, recipient: null, reason }
   }
-  const resend = new Resend(env.RESEND_API_KEY)
-  await resend.emails.send({
-    from: 'Paqar <noreply@paqar.my>',
-    to:   alertRecipient(),
-    subject,
-    html,
-  }).catch((err) => console.error('[ads-alert]', err))
+  if (!env.RESEND_API_KEY) {
+    const reason = 'RESEND_API_KEY unset'
+    console.error('[ads-alert]', reason, '|', subject)
+    return { ok: false, recipient: to, reason }
+  }
+  try {
+    const resend = new Resend(env.RESEND_API_KEY)
+    const res = await resend.emails.send({
+      from: 'Paqar <noreply@paqar.my>', to, subject, html,
+    })
+    if (res.error) {
+      console.error('[ads-alert] resend rejected', res.error)
+      return { ok: false, recipient: to, reason: String(res.error.message ?? res.error) }
+    }
+    return { ok: true, recipient: to, id: res.data?.id ?? null }
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err)
+    console.error('[ads-alert]', reason)
+    return { ok: false, recipient: to, reason }
+  }
 }
 
 const WRAP = (body: string) =>
@@ -92,8 +127,8 @@ export async function alertPauseFailed(params: {
 export async function sendDailyReportEmail(params: {
   subject: string
   report:  string
-}): Promise<void> {
-  await send(
+}): Promise<AlertDelivery> {
+  return send(
     params.subject,
     WRAP(`<pre style="font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.6;color:#111827;white-space:pre-wrap;">${
       params.report.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]!))

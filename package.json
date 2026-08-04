@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "warm-market-cache": "npx tsx scripts/warm-market-cache.ts",
-    "email:test": "npx tsx scripts/send-test-retarget-email.ts"
+    "email:test": "npx tsx scripts/send-test-retarget-email.ts",
+    "email:ask-abandoned": "npx tsx scripts/ask-abandoned-checkouts.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
