@@ -4,6 +4,8 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
+import { BrandModelList, brandCollectionItems } from '@/components/layout/BrandModelList'
+import type { BrandModel } from '@/lib/model-hubs'
 
 const YEAR = new Date().getFullYear()
 
@@ -18,9 +20,9 @@ export const metadata: Metadata = {
   },
 }
 
-const MODELS = [
-  { slug: 'toyota-vios',  model: 'Vios',  yearKey: 'vios',  years: ['2020','2021','2022','2023'], range: 'RM36k – RM80k', tag: 'Sedan Jepun paling tahan lama' },
-  { slug: 'toyota-yaris', model: 'Yaris', yearKey: 'yaris', years: ['2021','2022','2023'],         range: 'RM50k – RM80k', tag: 'Hatchback kompak Jepun' },
+const MODELS: BrandModel[] = [
+  { hubSlug: 'toyota-vios',  model: 'Vios',  yearKey: 'vios',  years: ['2020','2021','2022','2023'], range: 'RM36k – RM80k', tag: 'Sedan Jepun paling tahan lama' },
+  { model: 'Yaris', yearKey: 'yaris', years: ['2021','2022','2023'],         range: 'RM50k – RM80k', tag: 'Hatchback kompak Jepun' },
 ]
 
 export default function HargaToyota() {
@@ -31,7 +33,7 @@ export default function HargaToyota() {
         url="https://paqar.my/harga-toyota-terpakai"
         description="Harga pasaran kereta terpakai Toyota — Vios, Yaris mengikut tahun."
         breadcrumbName="Harga Toyota Terpakai"
-        items={MODELS.map(m => ({ name: `Toyota ${m.model}`, url: `https://paqar.my/harga-kereta-terpakai/${m.slug}` }))}
+        items={brandCollectionItems('Toyota', MODELS)}
       />
       <Nav />
       <Shell>
@@ -46,28 +48,7 @@ export default function HargaToyota() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {MODELS.map((m) => (
-              <div key={m.slug} className="space-y-1.5">
-                <Link href={`/harga-kereta-terpakai/${m.slug}`}
-                  className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group">
-                  <div>
-                    <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">Toyota {m.model}</p>
-                    <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{m.range} · {m.tag}</p>
-                  </div>
-                  <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
-                </Link>
-                <div className="flex gap-1.5 flex-wrap px-1">
-                  {m.years.map(y => (
-                    <Link key={y} href={`/harga-${m.yearKey}-${y}`}
-                      className="font-body text-[11px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[6px] px-2 py-0.5 hover:bg-[#DCFCE7] transition-colors">
-                      {y}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <BrandModelList brand="Toyota" models={MODELS} />
 
           <div className="space-y-3">
             <p className="font-heading font-bold text-[14px] text-[#111827]">Semak harga Toyota yang nak anda beli:</p>

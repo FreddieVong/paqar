@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
+import { organizationSchema, whatsappUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Tentang Paqar — Semak Harga Kereta Terpakai Malaysia',
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 }
 
 export default function TentangPage() {
+  const contactHref = whatsappUrl('Hai Paqar, saya ada soalan.')
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'AboutPage',
@@ -22,12 +24,7 @@ export default function TentangPage() {
     url: 'https://paqar.my/tentang',
     description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
     mainEntity: {
-      '@type': 'Organization',
-      name: 'Paqar',
-      url: 'https://paqar.my',
-      logo: 'https://paqar.my/paqar-logo.png',
-      description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan Laporan Pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
-      contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'hello@paqar.my' },
+      ...organizationSchema(),
       areaServed: { '@type': 'Country', name: 'Malaysia' },
     },
   }
@@ -115,18 +112,31 @@ export default function TentangPage() {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact — rendered only when a channel actually receives messages.
+              The previous mailto pointed at hello@paqar.my, which has no MX
+              record, so every "contact us" here silently failed. */}
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <h2 className="font-heading font-bold text-[16px] text-[#111827] mb-3">Hubungi kami</h2>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
               Ada soalan, maklum balas, atau isu dengan laporan anda?
             </p>
-            <a
-              href="mailto:hello@paqar.my"
-              className="inline-block font-heading font-bold text-[14px] text-[#064E4A] underline underline-offset-2"
-            >
-              hello@paqar.my
-            </a>
+            {contactHref ? (
+              <a
+                href={contactHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block font-heading font-bold text-[14px] text-[#064E4A] underline underline-offset-2"
+              >
+                WhatsApp Paqar →
+              </a>
+            ) : (
+              // Points at the social row in the footer, which is real and on
+              // every page. Naming a channel we do not have would repeat the
+              // hello@paqar.my mistake in a new form.
+              <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
+                Hubungi kami melalui saluran media sosial rasmi Paqar yang disenaraikan di bahagian bawah laman web ini.
+              </p>
+            )}
           </div>
 
           {/* Links */}

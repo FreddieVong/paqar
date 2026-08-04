@@ -7,8 +7,15 @@ export default function robots(): MetadataRoute.Robots {
     '/dashboard/',
     '/auth/',
     '/api/',
-    '/semak-saman-kereta/',
+    // Admin pages already set `robots: { index: false }` per page. This is
+    // belt-and-braces at the crawl layer, so a new admin route is covered the
+    // moment it exists rather than whenever someone remembers the metadata.
+    '/admin/',
   ]
+  // Removed: '/semak-saman-kereta/'. No such route has ever existed — the real
+  // page is /panduan-semak-saman, which is public, in the sitemap, and must
+  // stay crawlable. Note the rule is a prefix match, so it never actually
+  // blocked the real page; it was simply dead weight.
 
   // Public, citable API endpoints. These live under /api/ (disallowed above),
   // so they need their own longer-prefix Allow rules to be reachable —

@@ -1,0 +1,165 @@
+import { describe, it, expect } from 'vitest'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { join, relative } from 'node:path'
+import { MODEL_HUB_SLUGS } from '@/lib/model-hubs'
+
+// Source-level guards. The defects these cover are properties of the source
+// itself — a literal dead mailto, an empty href, a hub slug with no route —
+// so scanning the source is the direct test, not a proxy for one. Rendering
+// every page would need Supabase and the network; this does not.
+
+const ROOT = join(__dirname, '..', '..')
+const SCAN_DIRS = ['app', 'components']
+
+function sourceFiles(): string[] {
+  const out: string[] = []
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir)) {
+      if (entry === 'node_modules' || entry === '.next') continue
+      const full = join(dir, entry)
+      if (statSync(full).isDirectory()) walk(full)
+      else if (/\.tsx?$/.test(entry)) out.push(full)
+    }
+  }
+  for (const d of SCAN_DIRS) walk(join(ROOT, d))
+  return out
+}
+
+/**
+ * Comments are stripped before scanning. These guards are about what the app
+ * renders, and several of the fixes carry comments that quote the old broken
+ * markup on purpose — that documentation should not trip the guard that
+ * documents it.
+ */
+function stripComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+}
+
+const FILES = sourceFiles().map(f => ({
+  path: relative(ROOT, f),
+  text: stripComments(readFileSync(f, 'utf8')),
+}))
+
+describe('contact routing', () => {
+  it('has no clickable mailto to the unreachable hello@paqar.my', () => {
+    // paqar.my has no MX record — mail to it is discarded. Seven daily ops
+    // reports were lost this way before anyone noticed.
+    const offenders = FILES.filter(f => f.text.includes('mailto:hello@paqar.my')).map(f => f.path)
+    expect(offenders).toEqual([])
+  })
+
+  it('has no mailto at all pointing at a paqar.my address in the UI', () => {
+    const offenders = FILES.filter(f => /mailto:[^"'`\s]*@paqar\.my/.test(f.text)).map(f => f.path)
+    expect(offenders).toEqual([])
+  })
+})
+
+describe('link integrity', () => {
+  it('has no empty href', () => {
+    const offenders = FILES
+      .filter(f => /href=(""|''|\{''\}|\{""\}|\{``\})/.test(f.text))
+      .map(f => f.path)
+    expect(offenders).toEqual([])
+  })
+
+  it('never hardcodes a wa.me link with a missing number', () => {
+    const offenders = FILES
+      .filter(f => /wa\.me\/(null|undefined|\$\{undefined\})/.test(f.text))
+      .map(f => f.path)
+    expect(offenders).toEqual([])
+  })
+
+  it('does not build model-hub URLs by lowercasing a make and model', () => {
+    // The derivation that produced honda-hr-v, honda-civic, proton-persona
+    // and toyota-yaris. Hub slugs must be stated, not computed.
+    const offenders = FILES
+      .filter(f => /harga-kereta-terpakai\/\$\{[^}]*toLowerCase\(\)/.test(f.text))
+      .map(f => f.path)
+    expect(offenders).toEqual([])
+  })
+})
+
+describe('model hub slugs in source', () => {
+  const hubSlugLiterals = FILES.flatMap(f =>
+    Array.from(f.text.matchAll(/hubSlug: '([^']+)'/g)).map(m => ({ path: f.path, slug: m[1]! })),
+  )
+
+  it('finds hub slugs declared in the pages', () => {
+    expect(hubSlugLiterals.length).toBeGreaterThan(0)
+  })
+
+  it('only ever declares a hubSlug that has a real route', () => {
+    const bad = hubSlugLiterals.filter(h => !(MODEL_HUB_SLUGS as readonly string[]).includes(h.slug))
+    expect(bad).toEqual([])
+  })
+
+  it('never declares the routes that do not exist', () => {
+    const invented = ['honda-civic', 'proton-persona', 'toyota-yaris', 'honda-hr-v']
+    const bad = hubSlugLiterals.filter(h => invented.includes(h.slug))
+    expect(bad).toEqual([])
+  })
+
+  it('maps HR-V to honda-hrv on the year pages', () => {
+    const yearPage = FILES.find(f => f.path.includes('harga-model') && f.path.endsWith('page.tsx'))!
+    expect(yearPage.text).toContain("hubSlug: 'honda-hrv'")
+    expect(yearPage.text).not.toContain("hubSlug: 'honda-hr-v'")
+  })
+
+  it('leaves Civic, Persona and Yaris without a hub on the year pages', () => {
+    const yearPage = FILES.find(f => f.path.includes('harga-model') && f.path.endsWith('page.tsx'))!
+    // Each entry starts `key: {` and the hubSlug, when present, is 2 lines down.
+    for (const key of ['civic', 'persona', 'yaris']) {
+      const entry = yearPage.text.split(new RegExp(`^  '?${key}'?: \\{$`, 'm'))[1]!
+      // Keys may be quoted ('hr-v'), so the boundary must allow quotes too.
+      const untilNextEntry = entry.split(/^  '?[a-z0-9-]+'?: \{$/m)[0]!
+      expect(untilNextEntry).not.toContain('hubSlug')
+    }
+  })
+})
+
+describe('robots rules', () => {
+  const robots = readFileSync(join(ROOT, 'app', 'robots.ts'), 'utf8')
+
+  it('no longer blocks a route that never existed', () => {
+    // '/semak-saman-kereta/' was stale; the real page is /panduan-semak-saman.
+    const disallowBlock = robots.split('const disallow')[1]!.split(']')[0]!
+    expect(disallowBlock).not.toContain('/semak-saman-kereta/')
+  })
+
+  it('blocks admin routes at the crawl layer', () => {
+    const disallowBlock = robots.split('const disallow')[1]!.split(']')[0]!
+    expect(disallowBlock).toContain('/admin/')
+  })
+
+  it('keeps the real saman guide crawlable', () => {
+    const disallowBlock = robots.split('const disallow')[1]!.split(']')[0]!
+    expect(disallowBlock).not.toContain('/panduan-semak-saman')
+  })
+})
+
+describe('llms.txt', () => {
+  const llms = readFileSync(join(ROOT, 'public', 'llms.txt'), 'utf8')
+
+  it('lists all three social profiles and the GBP profile', () => {
+    expect(llms).toContain('https://www.facebook.com/paqar.my')
+    expect(llms).toContain('https://www.instagram.com/paqar.my')
+    expect(llms).toContain('https://www.tiktok.com/@paqar.my')
+    expect(llms).toContain('https://g.page/r/CcBaaoqXP_shEBM')
+  })
+
+  it('uses the GBP profile URL, not the review deep link', () => {
+    expect(llms).not.toContain('g.page/r/CcBaaoqXP_shEBM/review')
+  })
+
+  it('points the FAQ at the real /faq page, not a nonexistent anchor', () => {
+    // The homepage has one id, `semak`. There has never been a #soalan-lazim.
+    expect(llms).not.toContain('#soalan-lazim')
+    expect(llms).toContain('https://paqar.my/faq')
+  })
+
+  it('no longer advertises the unreachable inbox', () => {
+    expect(llms).not.toContain('hello@paqar.my')
+  })
+})

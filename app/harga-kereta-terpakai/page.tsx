@@ -3,6 +3,7 @@ import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
+import type { ModelHubSlug } from '@/lib/model-hubs'
 
 const YEAR = new Date().getFullYear()
 
@@ -17,7 +18,9 @@ export const metadata: Metadata = {
   },
 }
 
-const MODELS = [
+// slug is typed against the shared allowlist, so this index can only ever
+// list hubs that actually render.
+const MODELS: { slug: ModelHubSlug; brand: string; model: string; range: string; tag: string }[] = [
   { slug: 'perodua-myvi',   brand: 'Perodua', model: 'Myvi',   range: 'RM33k – RM74k',  tag: 'Paling popular' },
   { slug: 'perodua-axia',   brand: 'Perodua', model: 'Axia',   range: 'RM20k – RM48k',  tag: 'Paling berpatutan' },
   { slug: 'perodua-bezza',  brand: 'Perodua', model: 'Bezza',  range: 'RM26k – RM55k',  tag: 'Sedan ekonomi' },

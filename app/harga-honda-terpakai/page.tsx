@@ -4,6 +4,8 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
+import { BrandModelList, brandCollectionItems } from '@/components/layout/BrandModelList'
+import type { BrandModel } from '@/lib/model-hubs'
 
 const YEAR = new Date().getFullYear()
 
@@ -18,11 +20,14 @@ export const metadata: Metadata = {
   },
 }
 
-const MODELS = [
-  { slug: 'honda-city',  model: 'City',  yearKey: 'city',  years: ['2021','2022','2023'],         range: 'RM38k – RM92k', tag: 'Sedan dengan ruang paling luas' },
-  { slug: 'honda-jazz',  model: 'Jazz',  yearKey: 'jazz',  years: ['2018','2019','2020'],         range: 'RM38k – RM70k', tag: 'Magic Seats — ruang dalaman fleksibel' },
-  { slug: 'honda-hrv',   model: 'HR-V',  yearKey: 'hr-v',  years: ['2021','2022','2023'],         range: 'RM56k – RM92k', tag: 'Crossover SUV popular' },
-  { slug: 'honda-civic', model: 'Civic', yearKey: 'civic', years: ['2020','2021','2022'],         range: 'RM70k – RM120k', tag: 'Sedan sport dengan prestasi tinggi' },
+// `hubSlug` is the all-years model hub, and it is optional on purpose: Civic
+// has year pages but no hub page, so linking one would 404. Typing it as
+// ModelHubSlug means an invented slug fails typecheck rather than shipping.
+const MODELS: BrandModel[] = [
+  { hubSlug: 'honda-city', model: 'City',  yearKey: 'city',  years: ['2021','2022','2023'], range: 'RM38k – RM92k',  tag: 'Sedan dengan ruang paling luas' },
+  { hubSlug: 'honda-jazz', model: 'Jazz',  yearKey: 'jazz',  years: ['2018','2019','2020'], range: 'RM38k – RM70k',  tag: 'Magic Seats — ruang dalaman fleksibel' },
+  { hubSlug: 'honda-hrv',  model: 'HR-V',  yearKey: 'hr-v',  years: ['2021','2022','2023'], range: 'RM56k – RM92k',  tag: 'Crossover SUV popular' },
+  { model: 'Civic', yearKey: 'civic', years: ['2020','2021','2022'], range: 'RM70k – RM120k', tag: 'Sedan sport dengan prestasi tinggi' },
 ]
 
 export default function HargaHonda() {
@@ -33,7 +38,7 @@ export default function HargaHonda() {
         url="https://paqar.my/harga-honda-terpakai"
         description="Harga pasaran kereta terpakai Honda — City, Jazz, HR-V, Civic mengikut tahun."
         breadcrumbName="Harga Honda Terpakai"
-        items={MODELS.map(m => ({ name: `Honda ${m.model}`, url: `https://paqar.my/harga-kereta-terpakai/${m.slug}` }))}
+        items={brandCollectionItems('Honda', MODELS)}
       />
       <Nav />
       <Shell>
@@ -48,28 +53,7 @@ export default function HargaHonda() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {MODELS.map((m) => (
-              <div key={m.slug} className="space-y-1.5">
-                <Link href={`/harga-kereta-terpakai/${m.slug}`}
-                  className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group">
-                  <div>
-                    <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">Honda {m.model}</p>
-                    <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{m.range} · {m.tag}</p>
-                  </div>
-                  <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
-                </Link>
-                <div className="flex gap-1.5 flex-wrap px-1">
-                  {m.years.map(y => (
-                    <Link key={y} href={`/harga-${m.yearKey}-${y}`}
-                      className="font-body text-[11px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[6px] px-2 py-0.5 hover:bg-[#DCFCE7] transition-colors">
-                      {y}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <BrandModelList brand="Honda" models={MODELS} />
 
           <div className="space-y-3">
             <p className="font-heading font-bold text-[14px] text-[#111827]">Semak harga Honda yang nak anda beli:</p>

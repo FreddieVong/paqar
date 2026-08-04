@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
+import { whatsappUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Dasar Privasi | Paqar',
@@ -14,6 +15,10 @@ export const metadata: Metadata = {
 }
 
 export default function PrivasiPage() {
+  // PDPA gives users a right to request access, correction and deletion, so
+  // this page must name a channel that works. hello@paqar.my does not receive
+  // mail, which made the stated right unexercisable in practice.
+  const contactHref = whatsappUrl('Hai Paqar, saya ada pertanyaan berkaitan privasi / PDPA.')
   return (
     <>
       <Nav />
@@ -59,16 +64,33 @@ export default function PrivasiPage() {
             },
             {
               title: 'Hak Anda di Bawah PDPA',
-              body: 'Di bawah Akta Perlindungan Data Peribadi 2010 (PDPA), anda berhak untuk mengakses data peribadi anda, meminta pembetulan data yang tidak tepat, dan meminta penghapusan data anda. Hubungi kami melalui e-mel untuk membuat permintaan ini.',
+              body: `Di bawah Akta Perlindungan Data Peribadi 2010 (PDPA), anda berhak untuk mengakses data peribadi anda, meminta pembetulan data yang tidak tepat, dan meminta penghapusan data anda. ${
+                contactHref
+                  ? 'Hubungi kami melalui WhatsApp untuk membuat permintaan ini.'
+                  : 'Hubungi kami melalui saluran media sosial rasmi Paqar yang disenaraikan di bahagian bawah laman web ini untuk membuat permintaan ini.'
+              }`,
             },
             {
               title: 'Hubungi Kami',
-              body: 'Untuk sebarang pertanyaan berkaitan privasi, hubungi kami di hello@paqar.my.',
+              body: contactHref
+                ? 'Untuk sebarang pertanyaan berkaitan privasi, hubungi kami melalui WhatsApp.'
+                : 'Untuk sebarang pertanyaan berkaitan privasi, hubungi kami melalui saluran media sosial rasmi Paqar yang disenaraikan di bahagian bawah laman web ini.',
+              href: contactHref,
             },
-          ].map(({ title, body }) => (
+          ].map(({ title, body, href }) => (
             <div key={title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
               <p className="font-heading font-bold text-[14px] text-[#111827] mb-2">{title}</p>
               <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">{body}</p>
+              {href && (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 font-body text-[13px] text-[#064E4A] font-semibold underline underline-offset-2"
+                >
+                  WhatsApp Paqar →
+                </a>
+              )}
             </div>
           ))}
 

@@ -37,8 +37,15 @@ Paqar helps Malaysian used-car buyers check whether a car price is fair and get 
 - All guides: https://paqar.my/panduan
 - About Paqar: https://paqar.my/tentang
 - Market price by model: https://paqar.my/harga-kereta-terpakai
-- FAQ: https://paqar.my/#soalan-lazim
+- FAQ: https://paqar.my/faq
 - Public API documentation: https://paqar.my/api-docs
+
+## Social
+
+- Facebook: https://www.facebook.com/paqar.my
+- Instagram: https://www.instagram.com/paqar.my
+- TikTok: https://www.tiktok.com/@paqar.my
+- Google Business Profile: https://g.page/r/CcBaaoqXP_shEBM
 
 ## Public API (free, no authentication)
 
@@ -85,6 +92,5 @@ Returns: `model`, `modelSlug`, and `generations[]`, each with `years` and
 
 ## Contact
 
-Email: hello@paqar.my
 Website: https://paqar.my
 Language: Malay (Bahasa Malaysia), serves Malaysian market

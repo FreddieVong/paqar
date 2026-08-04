@@ -1,14 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-
-// Public Google review link for Paqar's Business Profile
-const GOOGLE_REVIEW_URL = 'https://g.page/r/CcBaaoqXP_shEBM/review'
+import { GOOGLE_BUSINESS, whatsappUrl } from '@/lib/site'
 
 type State = 'idle' | 'positive' | 'negative'
 
 export function ReportFeedback({ checkId, plate }: { checkId: string; plate: string }) {
   const [state, setState] = useState<State>('idle')
+  // Carries the plate so the customer does not have to repeat it. Null when no
+  // WhatsApp number is configured — the previous mailto here pointed at
+  // hello@paqar.my, so unhappy customers were being sent to a dead inbox at
+  // exactly the moment they most needed a reply.
+  const supportHref = whatsappUrl(`Hai Paqar, saya ada masalah dengan laporan untuk plat ${plate}.`)
 
   function record(helpful: boolean) {
     fetch('/api/feedback', {
@@ -32,7 +35,7 @@ export function ReportFeedback({ checkId, plate }: { checkId: string; plate: str
           </p>
         </div>
         <a
-          href={GOOGLE_REVIEW_URL}
+          href={GOOGLE_BUSINESS.review}
           target="_blank"
           rel="noopener noreferrer"
           className="block w-full bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[10px] py-3 text-center hover:bg-[#053D3A] transition-colors"
@@ -49,11 +52,16 @@ export function ReportFeedback({ checkId, plate }: { checkId: string; plate: str
       <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[14px] px-4 py-4 text-center">
         <p className="font-heading font-bold text-[13px] text-[#111827] mb-0.5">Terima kasih kerana beritahu kami.</p>
         <p className="font-body text-[12px] text-[#6B7280]">
-          Kami akan cuba baiki.{' '}
-          <a href="mailto:hello@paqar.my" className="text-[#064E4A] underline underline-offset-2">
-            Hubungi kami
-          </a>{' '}
-          jika ada masalah.
+          Kami akan cuba baiki.
+          {supportHref && (
+            <>
+              {' '}
+              <a href={supportHref} target="_blank" rel="noopener noreferrer" className="text-[#064E4A] underline underline-offset-2">
+                Hubungi kami
+              </a>{' '}
+              jika ada masalah.
+            </>
+          )}
         </p>
       </div>
     )

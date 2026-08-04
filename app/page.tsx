@@ -3,7 +3,9 @@ import Link           from 'next/link'
 import { unstable_cache } from 'next/cache'
 import { Nav }           from '@/components/layout/Nav'
 import { HomeCheckerTabs } from '@/components/check/HomeCheckerTabs'
+import { SocialLinks }    from '@/components/layout/SocialLinks'
 import { getCheckCount } from '@/lib/db/checks'
+import { organizationSchema, whatsappUrl } from '@/lib/site'
 
 // Only the canonical is declared here — title/description/openGraph are
 // inherited from the root layout, which describes the homepage anyway.
@@ -33,14 +35,11 @@ const homeSchema = {
         'query-input': 'required name=search_term_string',
       },
     },
-    {
-      '@type': 'Organization',
-      name: 'Paqar',
-      url: 'https://paqar.my',
-      logo: 'https://paqar.my/paqar-logo.png',
-      description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan Laporan Pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
-      contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'hello@paqar.my' },
-    },
+    // sameAs is what tells Google the site, the three social profiles and the
+    // Google Business Profile are one entity. The ContactPoint that used to
+    // sit here published hello@paqar.my — an address with no MX record — so
+    // it is now emitted only when a channel actually works.
+    organizationSchema(),
     {
       '@type': 'Service',
       name: 'Laporan Pembeli Kereta Terpakai',
@@ -113,6 +112,8 @@ export default async function HomePage() {
   const countDisplay = checkCount >= 1000
     ? `${(Math.floor(checkCount / 100) * 100).toLocaleString()}+`
     : null
+
+  const contactHref = whatsappUrl('Hai Paqar, saya perlukan bantuan.')
 
   return (
     <>
@@ -519,14 +520,19 @@ export default async function HomePage() {
         <p className="font-body text-[12px] text-[#D1D5DB] leading-relaxed mb-2">
           © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
         </p>
+        <SocialLinks className="mb-2" />
         <div className="flex items-center justify-center gap-4">
           <Link href="/tentang" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Tentang</Link>
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/privasi" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Privasi</Link>
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/terma" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Terma</Link>
-          <span className="text-[#E5E7EB]">·</span>
-          <a href="mailto:hello@paqar.my" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Hubungi Kami</a>
+          {contactHref && (
+            <>
+              <span className="text-[#E5E7EB]">·</span>
+              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Hubungi Kami</a>
+            </>
+          )}
         </div>
       </footer>
     </>

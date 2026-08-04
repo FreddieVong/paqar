@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { SocialLinks } from './SocialLinks'
+import { whatsappUrl } from '@/lib/site'
 
 export function Shell({
   children,
@@ -16,6 +18,10 @@ export function Shell({
   width?: 'default' | 'wide'
 }) {
   const maxWidth = width === 'wide' ? 'max-w-3xl' : 'max-w-lg'
+  // Rendered only when a channel actually works. This used to be a
+  // mailto:hello@paqar.my, but that domain has no MX record — the link looked
+  // live and went nowhere. No link beats a link into a void.
+  const contactHref = whatsappUrl('Hai Paqar, saya perlukan bantuan.')
   return (
     <>
       <main className={`${maxWidth} mx-auto px-4 py-8`}>
@@ -62,10 +68,13 @@ export function Shell({
             <Link href="/terma" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Terma
             </Link>
-            <a href="mailto:hello@paqar.my" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
-              Hubungi Kami
-            </a>
+            {contactHref && (
+              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+                Hubungi Kami
+              </a>
+            )}
           </div>
+          <SocialLinks />
           <p className="font-body text-[11px] text-[#D1D5DB]">
             © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
           </p>

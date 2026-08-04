@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
+import { whatsappUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Terma & Syarat | Paqar',
@@ -14,6 +15,12 @@ export const metadata: Metadata = {
 }
 
 export default function TermaPage() {
+  // The clause must still tell users how to reach us, but it named
+  // hello@paqar.my — an address the domain cannot receive mail on. Pointing a
+  // legal contact clause at a dead inbox is worse than describing the channel
+  // generically, so the address is gone and the live channel is linked only
+  // when one exists.
+  const contactHref = whatsappUrl('Hai Paqar, saya ada pertanyaan berkaitan Terma & Syarat.')
   return (
     <>
       <Nav />
@@ -63,12 +70,25 @@ export default function TermaPage() {
             },
             {
               title: 'Hubungi Kami',
-              body: 'Untuk sebarang pertanyaan berkaitan terma ini, hubungi kami di hello@paqar.my.',
+              body: contactHref
+                ? 'Untuk sebarang pertanyaan berkaitan terma ini, hubungi kami melalui WhatsApp.'
+                : 'Untuk sebarang pertanyaan berkaitan terma ini, hubungi kami melalui saluran media sosial rasmi Paqar yang disenaraikan di bahagian bawah laman web ini.',
+              href: contactHref,
             },
-          ].map(({ title, body }) => (
+          ].map(({ title, body, href }) => (
             <div key={title} className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
               <p className="font-heading font-bold text-[14px] text-[#111827] mb-2">{title}</p>
               <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">{body}</p>
+              {href && (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 font-body text-[13px] text-[#064E4A] font-semibold underline underline-offset-2"
+                >
+                  WhatsApp Paqar →
+                </a>
+              )}
             </div>
           ))}
 

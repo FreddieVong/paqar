@@ -7,6 +7,7 @@ import { CopyButton }      from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
 import { JomCheckUpsell }  from './JomCheckUpsell'
 import { HistoryRiskBanner } from './HistoryRiskBanner'
+import { ReloadButton }     from './ReloadButton'
 import { VariantCheckCard } from './VariantCheckCard'
 import { findGuideByMakeModel, findVariantPosition, VERDICT_LABELS } from '@/lib/variant-guides'
 import { assessDepreciation } from '@/lib/depreciation'
@@ -228,9 +229,9 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
             Soalan penjual di bawah masih berguna — gunakan ia untuk tanya penjual anda.
           </p>
-          <a href="" className="font-body text-[13px] text-[#B45309] font-semibold underline underline-offset-2 mt-3 inline-block">
+          <ReloadButton className="font-body text-[13px] text-[#B45309] font-semibold underline underline-offset-2 mt-3 inline-block">
             Cuba muat semula →
-          </a>
+          </ReloadButton>
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 import { VARIANT_GUIDES } from '@/lib/variant-guides'
+import { isModelHubSlug, type ModelHubSlug } from '@/lib/model-hubs'
 
 type PriceRow = { year: string; min: number; max: number }
 
@@ -18,7 +19,10 @@ type ModelConfig = {
   faqs:        { q: string; a: string }[]
 }
 
-const MODELS: Record<string, ModelConfig> = {
+// Typed against the shared allowlist: every key here must exist in
+// MODEL_HUB_SLUGS and vice versa, so the routes that other pages are allowed
+// to link to can never drift from the routes that actually render.
+const MODELS: Record<ModelHubSlug, ModelConfig> = {
   'perodua-myvi': {
     brand: 'Perodua', model: 'Myvi', yearKey: 'myvi',
     description: 'Perodua Myvi adalah kereta terpakai paling popular di Malaysia. Mudah diselenggara, kos servis rendah, dan ada banyak pilihan di pasaran. Semak harga pasaran sebelum beli.',
@@ -350,7 +354,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const cfg = MODELS[params.model]
+  const cfg = isModelHubSlug(params.model) ? MODELS[params.model] : undefined
   if (!cfg) return {}
   const year        = new Date().getFullYear()
   const title       = `Harga ${cfg.brand} ${cfg.model} Terpakai Malaysia ${year} | Paqar`
@@ -373,7 +377,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default function ModelPage({ params }: Props) {
-  const cfg = MODELS[params.model]
+  const cfg = isModelHubSlug(params.model) ? MODELS[params.model] : undefined
   if (!cfg) notFound()
 
   const schema = {
