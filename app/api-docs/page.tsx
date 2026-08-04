@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
+import { organizationSchema, whatsappUrl } from '@/lib/site'
 
 const TITLE = 'Paqar Public API — Malaysian Used Car Valuation Data'
 const DESC  = 'Free JSON API for Malaysian used-car market valuations, price ranges, and variant guides. No API key required. Rate limited to 10 requests per minute.'
@@ -65,6 +66,7 @@ const ENDPOINTS = [
 ] as const
 
 export default function ApiDocsPage() {
+  const contactHref = whatsappUrl('Hi Paqar, I have a question about the public API.')
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'WebAPI',
@@ -74,12 +76,8 @@ export default function ApiDocsPage() {
     description: DESC,
     termsOfService: 'https://paqar.my/terma',
     provider: {
-      '@type': 'Organization',
-      name: 'Paqar',
-      url: 'https://paqar.my',
-      logo: 'https://paqar.my/paqar-logo.png',
+      ...organizationSchema(),
       areaServed: { '@type': 'Country', name: 'Malaysia' },
-      contactPoint: { '@type': 'ContactPoint', contactType: 'technical support', email: 'hello@paqar.my' },
     },
     potentialAction: ENDPOINTS.map(e => ({
       '@type': 'SearchAction',
@@ -214,10 +212,12 @@ export default function ApiDocsPage() {
           </section>
 
           <div className="border-t border-[#E5E7EB] pt-5 space-y-1.5">
-            <p className="font-body text-[13px] text-[#6B7280]">
-              Questions or need a higher rate limit? Email{' '}
-              <a href="mailto:hello@paqar.my" className="text-[#064E4A] font-semibold underline">hello@paqar.my</a>.
-            </p>
+            {contactHref && (
+              <p className="font-body text-[13px] text-[#6B7280]">
+                Questions or need a higher rate limit?{' '}
+                <a href={contactHref} target="_blank" rel="noopener noreferrer" className="text-[#064E4A] font-semibold underline">Message us on WhatsApp</a>.
+              </p>
+            )}
             <p className="font-body text-[13px] text-[#6B7280]">
               Machine-readable summary:{' '}
               <a href="/llms.txt" className="text-[#064E4A] font-semibold underline">/llms.txt</a>

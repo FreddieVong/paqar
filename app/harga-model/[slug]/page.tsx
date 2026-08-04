@@ -8,6 +8,8 @@ import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
 import { filterOutlierPrices, filterListingsByYear } from '@/lib/price-stats'
 import { VARIANT_GUIDES } from '@/lib/variant-guides'
 import { parseSlug }      from '@/lib/year-model-slug'
+import type { ModelHubSlug } from '@/lib/model-hubs'
+import { modelYearBreadcrumbs } from '@/lib/breadcrumbs'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,11 +21,23 @@ type ModelInfo = {
   brand:       string
   description: string
   tips:        string[]
+  /**
+   * The all-years hub at /harga-kereta-terpakai/{hubSlug}, stated explicitly.
+   *
+   * This used to be derived as `${make.toLowerCase()}-${model.toLowerCase()}`,
+   * which produced 'honda-hr-v' (real hub: 'honda-hrv') and invented
+   * 'honda-civic' / 'proton-persona' / 'toyota-yaris', none of which exist.
+   * Every affected year page therefore rendered a link and a JSON-LD
+   * breadcrumb pointing at notFound(). Undefined here means "no hub", and the
+   * link and breadcrumb entry are both omitted.
+   */
+  hubSlug?:    ModelHubSlug
 }
 
 const MODEL_MAP: Record<string, ModelInfo> = {
   myvi: {
     make: 'Perodua', model: 'Myvi', brand: 'Perodua',
+    hubSlug: 'perodua-myvi',
     description: 'Perodua Myvi adalah hatchback terpakai paling popular di Malaysia. Kos servis rendah, mudah dijual semula, dan ada banyak pilihan di pasaran.',
     tips: [
       'Semak nombor enjin dan casis pada geran — nombor mesti sama persis',
@@ -34,6 +48,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   axia: {
     make: 'Perodua', model: 'Axia', brand: 'Perodua',
+    hubSlug: 'perodua-axia',
     description: 'Perodua Axia adalah pilihan kereta terpakai paling berpatutan di Malaysia. Kos petrol dan insurans rendah, sesuai untuk pemandu baru atau guna dalam bandar.',
     tips: [
       'Axia 2023 (generasi baru) lebih besar dan lebih selamat — harga lebih tinggi dari generasi lama',
@@ -44,6 +59,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   bezza: {
     make: 'Perodua', model: 'Bezza', brand: 'Perodua',
+    hubSlug: 'perodua-bezza',
     description: 'Perodua Bezza ialah sedan ekonomi paling popular di Malaysia. Boot besar, enjin 1.0L dan 1.3L, kos servis rendah.',
     tips: [
       'Bezza 1.3L Advance dan X ada VSC — lebih selamat dari varian 1.0L',
@@ -54,6 +70,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   alza: {
     make: 'Perodua', model: 'Alza', brand: 'Perodua',
+    hubSlug: 'perodua-alza',
     description: 'Perodua Alza ialah MPV 7-tempat duduk paling popular di Malaysia. Sesuai untuk keluarga besar dengan bajet terhad.',
     tips: [
       'Alza 2022 (generasi baru) jauh lebih besar dan lebih selamat dari generasi lama — harga berbeza ketara',
@@ -64,6 +81,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   ativa: {
     make: 'Perodua', model: 'Ativa', brand: 'Perodua',
+    hubSlug: 'perodua-ativa',
     description: 'Perodua Ativa ialah SUV kompak pertama Perodua. Enjin turbo 1.0L, reka bentuk moden, dan teknologi keselamatan terkini.',
     tips: [
       'Semua varian Ativa ada ASA (Auto Safety Alert) — pastikan sistem ini berfungsi',
@@ -74,6 +92,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   saga: {
     make: 'Proton', model: 'Saga', brand: 'Proton',
+    hubSlug: 'proton-saga',
     description: 'Proton Saga ialah sedan nasional yang paling lama bertahan di pasaran. Kos rendah, mudah disenggara, dan banyak pilihan di pasaran terpakai.',
     tips: [
       'Saga 2019 ke atas (facelift) ada CVT dan lebih halus dari model lama — pilih ini jika bajet mengizinkan',
@@ -94,6 +113,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   iriz: {
     make: 'Proton', model: 'Iriz', brand: 'Proton',
+    hubSlug: 'proton-iriz',
     description: 'Proton Iriz ialah hatchback keluarga dengan teknologi keselamatan terkini. Sesuai untuk penggunaan bandar dan lebuh raya.',
     tips: [
       'Iriz 2019 ke atas ada VSC (Vehicle Stability Control) — lebih selamat dari model awal',
@@ -104,6 +124,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   x50: {
     make: 'Proton', model: 'X50', brand: 'Proton',
+    hubSlug: 'proton-x50',
     description: 'Proton X50 ialah SUV kompak paling popular di kelasnya. Enjin turbo 1.5L, teknologi ADAS, dan reka bentuk premium.',
     tips: [
       'X50 ada 4 varian — Standard, Executive, Premium, dan Flagship. Harga berbeza ketara antara varian',
@@ -114,6 +135,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   x70: {
     make: 'Proton', model: 'X70', brand: 'Proton',
+    hubSlug: 'proton-x70',
     description: 'Proton X70 ialah SUV keluarga dengan reka bentuk premium dan teknologi canggih. Pilihan popular untuk keluarga Malaysia.',
     tips: [
       'X70 CKD (2020 ke atas) lebih baik dari X70 CBU awal — ada lebih banyak ciri keselamatan',
@@ -124,6 +146,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   city: {
     make: 'Honda', model: 'City', brand: 'Honda',
+    hubSlug: 'honda-city',
     description: 'Honda City ialah sedan Jepun yang popular di Malaysia. Kos servis berpatutan, kereta tahan lama, dan nilai jual semula yang baik.',
     tips: [
       'City 2020 ke atas (generasi 7) lebih besar dan ada Honda Sensing — nilai lebih baik',
@@ -134,6 +157,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   jazz: {
     make: 'Honda', model: 'Jazz', brand: 'Honda',
+    hubSlug: 'honda-jazz',
     description: 'Honda Jazz terkenal dengan Magic Seats yang fleksibel dan ruang dalaman yang sangat luas berbanding saiznya. Enjin 1.5L VTEC yang tahan lama menjadikannya pilihan popular.',
     tips: [
       'Semak Magic Seats — pastikan mekanisme lipatan baris kedua masih berfungsi ke semua posisi',
@@ -154,6 +178,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   'hr-v': {
     make: 'Honda', model: 'HR-V', brand: 'Honda',
+    hubSlug: 'honda-hrv',
     description: 'Honda HR-V ialah SUV kompak yang popular dengan reka bentuk menarik dan ruang kabin yang luas.',
     tips: [
       'HR-V 2022 (generasi 3) ada enjin hibrid e:HEV — jimat petrol tetapi teknologi lebih kompleks',
@@ -164,6 +189,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   vios: {
     make: 'Toyota', model: 'Vios', brand: 'Toyota',
+    hubSlug: 'toyota-vios',
     description: 'Toyota Vios ialah sedan Jepun paling popular di Malaysia. Tahan lama, kos servis rendah, dan nilai jual semula yang stabil.',
     tips: [
       'Vios J (asas) tiada VSC — pilih varian E ke atas untuk keselamatan lebih baik',
@@ -184,6 +210,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
   almera: {
     make: 'Nissan', model: 'Almera', brand: 'Nissan',
+    hubSlug: 'nissan-almera',
     description: 'Nissan Almera ialah sedan turbo yang paling jimat petrol di kelasnya. Enjin 1.0L turbo dengan teknologi terkini.',
     tips: [
       'Almera Turbo ada ProPilot Assist pada varian VLP — teknologi canggih, pastikan berfungsi',
@@ -290,20 +317,14 @@ export default async function YearModelPage({ params }: Props) {
     : null
 
   const displayModel = `${info.brand} ${info.model}`
-  const modelHubSlug = `${info.make.toLowerCase()}-${info.model.toLowerCase()}`
+  // Read, never derived — see the ModelInfo.hubSlug docs. Undefined means the
+  // model has year pages but no all-years hub.
+  const modelHubSlug = info.hubSlug
 
   const schema = {
     '@context': 'https://schema.org',
     '@graph': [
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Laman Utama',           item: 'https://paqar.my' },
-          { '@type': 'ListItem', position: 2, name: 'Harga Kereta Terpakai', item: 'https://paqar.my/harga-kereta-terpakai' },
-          { '@type': 'ListItem', position: 3, name: displayModel,            item: `https://paqar.my/harga-kereta-terpakai/${modelHubSlug}` },
-          { '@type': 'ListItem', position: 4, name: `${displayModel} ${year}`, item: `https://paqar.my/harga-${params.slug}` },
-        ],
-      },
+      modelYearBreadcrumbs({ displayModel, year, slug: params.slug, hubSlug: modelHubSlug }),
       ...(stats ? [{
         '@type': 'FAQPage',
         mainEntity: [
@@ -462,13 +483,15 @@ export default async function YearModelPage({ params }: Props) {
             >
               Kira ansuran bulanan untuk {info.model} {year} →
             </Link>
-            <Link
-              href={`/harga-kereta-terpakai/${modelHubSlug}`}
-              className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
-            >
-              Harga {displayModel} semua tahun →
-            </Link>
-            {VARIANT_GUIDES[modelHubSlug] && (
+            {modelHubSlug && (
+              <Link
+                href={`/harga-kereta-terpakai/${modelHubSlug}`}
+                className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+              >
+                Harga {displayModel} semua tahun →
+              </Link>
+            )}
+            {modelHubSlug && VARIANT_GUIDES[modelHubSlug] && (
               <Link
                 href={`/varian/${modelHubSlug}`}
                 className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
