@@ -35,7 +35,11 @@ const store = vi.hoisted(() => ({
 const alerts = vi.hoisted(() => ({
   alertPauseFailed:     vi.fn(async () => {}),
   alertPauseSucceeded:  vi.fn(async () => {}),
-  sendDailyReportEmail: vi.fn(async () => {}),
+  // Returns an AlertDelivery now: the cron records WHERE the report went and
+  // whether it landed, so a silent misroute shows up in the audit trail.
+  sendDailyReportEmail: vi.fn(async () => ({
+    ok: true as const, recipient: 'ops@example.com', id: 'em_test',
+  })),
 }))
 
 vi.mock('@/lib/meta-ads/client', async () => {
@@ -538,5 +542,32 @@ describe('the total-spend stop enforces on reconciled spend, not the reset count
     meta.getCampaignSpendCents.mockResolvedValue(5000)
     await call()
     expect(store.actions.some((a) => a.rule === 'total_spend_limit')).toBe(false)
+  })
+})
+
+describe('the daily report records where it actually went', () => {
+  it('logs the recipient on success, not just "sent"', async () => {
+    seedExperiment()
+    await call()
+    const rec = store.actions.find((a) => a.action === 'email_delivered')
+    expect(rec).toBeDefined()
+    expect(rec?.success).toBe(true)
+    expect(rec?.responseSummary).toContain('ops@example.com')
+  })
+
+  it('records a FAILURE when delivery does not happen', async () => {
+    // The defect this guards: seven reports were mailed to an address with no
+    // MX record and every one was logged as email_sent. The audit trail
+    // asserted a delivery that never occurred.
+    seedExperiment()
+    alerts.sendDailyReportEmail.mockResolvedValueOnce({
+      ok: false, recipient: null, reason: 'ADS_ALERT_EMAIL is not set',
+    })
+    await call()
+    const rec = store.actions.find((a) => a.action === 'email_failed')
+    expect(rec).toBeDefined()
+    expect(rec?.success).toBe(false)
+    expect(rec?.responseSummary).toContain('NOT delivered')
+    expect(store.actions.some((a) => a.action === 'email_delivered')).toBe(false)
   })
 })

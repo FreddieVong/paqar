@@ -244,10 +244,29 @@ export async function GET(request: NextRequest) {
         budget,
       })
 
-      await sendDailyReportEmail({
+      // Record WHERE it went and whether it landed. The idempotency row above
+      // was previously written before the send, so seven reports mailed to an
+      // address with no MX record were all logged as email_sent. The audit
+      // trail asserted delivery that never happened.
+      const delivery = await sendDailyReportEmail({
         subject: `Paqar Meta Ads — Day ${dayNumber} (${reportDate})`,
         report,
-      }).catch((err) => console.error('[cron/meta-ads] report email failed', err))
+      }).catch((err) => ({
+        ok: false as const,
+        recipient: null,
+        reason: err instanceof Error ? err.message : String(err),
+      }))
+
+      await recordAction({
+        experimentId:    experiment.id,
+        rule:            'daily_report',
+        action:          delivery.ok ? 'email_delivered' : 'email_failed',
+        success:         delivery.ok,
+        responseSummary: delivery.ok
+          ? `Delivered to ${delivery.recipient}`
+          : `NOT delivered${delivery.recipient ? ` to ${delivery.recipient}` : ''}: ${delivery.reason}`,
+        idempotencyKey:  `daily_report_delivery:${experiment.id}:${reportDate}`,
+      }).catch((err) => console.error('[cron/meta-ads] delivery record failed', err))
     }
   }
 
