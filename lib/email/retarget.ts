@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { env }    from '@/lib/env'
 import { buildRetargetEmailHtml } from './retarget-template'
 import type { RetargetEmailInsight } from './retarget-template'
+import { SUPPORT_REPLY_TO } from '@/lib/site'
 
 interface RetargetParams {
   toEmail:  string
@@ -56,7 +57,7 @@ export async function sendRetargetEmail(params: RetargetParams): Promise<void> {
 
   await resend.emails.send({
     from:    'Paqar <noreply@paqar.my>',
-    replyTo: 'hello@paqar.my',
+    replyTo: SUPPORT_REPLY_TO,
     to:      params.toEmail,
     subject,
     html,

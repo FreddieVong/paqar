@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { env }    from '@/lib/env'
+import { SUPPORT_REPLY_TO } from '@/lib/site'
 
 type JomCheckPendingParams = {
   toEmail:   string
@@ -53,7 +54,7 @@ export async function sendJomCheckPendingEmail(params: JomCheckPendingParams): P
 
   await resend.emails.send({
     from:    'Paqar <noreply@paqar.my>',
-    replyTo: 'hello@paqar.my',
+    replyTo: SUPPORT_REPLY_TO,
     to:      params.toEmail,
     subject,
     html,

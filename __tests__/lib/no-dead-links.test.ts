@@ -56,6 +56,36 @@ describe('contact routing', () => {
   })
 })
 
+describe('transactional email reply-to', () => {
+  const emailFiles = readdirSync(join(ROOT, 'lib', 'email'))
+    .filter(f => f.endsWith('.ts'))
+    .map(f => ({ path: `lib/email/${f}`, text: stripComments(readFileSync(join(ROOT, 'lib', 'email', f), 'utf8')) }))
+
+  it('never replies to an @paqar.my address', () => {
+    // paqar.my publishes no MX at all, so any @paqar.my reply-to hard-bounces.
+    // A customer replying to their RM12 receipt must not hit an error.
+    const offenders = emailFiles
+      .filter(f => /replyTo:\s*'[^']*@paqar\.my'/.test(f.text))
+      .map(f => f.path)
+    expect(offenders).toEqual([])
+  })
+
+  it('never replies to a noreply address', () => {
+    const offenders = emailFiles
+      .filter(f => /replyTo:\s*'?noreply/i.test(f.text))
+      .map(f => f.path)
+    expect(offenders).toEqual([])
+  })
+
+  it('routes every reply-to through the shared constant', () => {
+    const withReplyTo = emailFiles.filter(f => /replyTo:/.test(f.text))
+    expect(withReplyTo.length).toBeGreaterThan(0)
+    for (const f of withReplyTo) {
+      expect(f.text, f.path).toMatch(/replyTo:\s*(SUPPORT_REPLY_TO|REPLY_TO)\b/)
+    }
+  })
+})
+
 describe('link integrity', () => {
   it('has no empty href', () => {
     const offenders = FILES

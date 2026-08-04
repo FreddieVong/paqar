@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { env }    from '@/lib/env'
+import { SUPPORT_REPLY_TO } from '@/lib/site'
 
 // timeZone is explicit because Vercel runs in UTC: without it a payment made
 // between 00:00 and 08:00 MYT is dated to the previous day on the customer's
@@ -103,7 +104,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
 
   await resend.emails.send({
     from:    'Paqar <noreply@paqar.my>',
-    replyTo: 'hello@paqar.my',
+    replyTo: SUPPORT_REPLY_TO,
     to:      params.toEmail,
     subject,
     html,
