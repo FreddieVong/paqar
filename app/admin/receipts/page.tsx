@@ -22,7 +22,17 @@ export default async function AdminReceiptsPage() {
     )
   }
 
-  const rows = await getUndeliveredReceipts(50).catch(() => [])
+  // A failed query must NOT render as "nothing outstanding" — that is the
+  // exact shape of a silent outage: the operator sees a clean queue and stops
+  // looking, while receipts pile up undelivered.
+  let rows: Awaited<ReturnType<typeof getUndeliveredReceipts>> = []
+  let queryError: string | null = null
+  try {
+    rows = await getUndeliveredReceipts(50)
+  } catch (err) {
+    queryError = String(err)
+    console.error('[admin:receipts] queue query failed', { op: 'receipt_queue', error: queryError })
+  }
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 space-y-4">
@@ -34,7 +44,18 @@ export default async function AdminReceiptsPage() {
         </p>
       </div>
 
-      {rows.length === 0 ? (
+      {queryError ? (
+        <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-[12px] p-4">
+          <p className="font-heading font-bold text-[14px] text-[#991B1B]">
+            Queue unavailable — this is NOT an empty queue.
+          </p>
+          <p className="font-body text-[12px] text-[#991B1B] mt-1 break-words">
+            The delivery query failed, so outstanding receipts cannot be listed.
+            Fix this before assuming nothing is outstanding.
+          </p>
+          <p className="font-body text-[11px] text-[#7F1D1D] mt-2 break-words">{queryError}</p>
+        </div>
+      ) : rows.length === 0 ? (
         <p className="font-body text-[14px] text-[#15803D]">
           Nothing outstanding — every paid report has a delivered receipt.
         </p>

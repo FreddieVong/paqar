@@ -187,9 +187,15 @@ export async function markUpgradePaid(billId: string): Promise<boolean> {
 // retryable row instead of silence — see migration 026 for why that matters
 // (the receipt is the only durable copy of an anonymous buyer's access URL).
 //
-// Every writer here SWALLOWS its error on purpose. These columns may not exist
-// yet on an environment where migration 026 has not been applied, and a
-// bookkeeping failure must never roll back or block a confirmed payment.
+// Migration 026 is applied in production (2026-08-05), so these columns exist.
+// The earlier "swallow everything, assume success" compatibility behaviour has
+// been removed: it existed only to survive the window before the schema landed,
+// and leaving it in would mean an untracked delivery could masquerade as a
+// tracked one.
+//
+// Writers still do not THROW — a bookkeeping failure must never roll back a
+// confirmed payment — but they now report failure to the caller and log it
+// loudly with the operation name and safe identifiers.
 
 export type ReceiptStatus = 'pending' | 'sending' | 'sent' | 'failed'
 
@@ -212,9 +218,20 @@ async function updateReceiptState(
   }
 }
 
-/** Claim the send. Returns false when another caller already holds or completed
- *  it, which is what stops a duplicate Billplz callback sending twice. */
-export async function claimReceiptSend(buyerReportId: string): Promise<boolean> {
+export type ReceiptClaim = 'granted' | 'already_delivered' | 'claim_error'
+
+/**
+ * Atomically claim the right to send. This IS the idempotency mechanism:
+ * `.not('receipt_status','in','("sending","sent")')` means only one caller can
+ * transition a row, so a duplicate Billplz callback, a webhook racing the
+ * browser return, or a double-clicked retry cannot each send a receipt.
+ *
+ * On an unexpected DB error it returns 'claim_error' and does NOT grant the
+ * send. It used to fail OPEN and return true, which quietly turned a database
+ * problem into duplicate customer email while still calling itself idempotent.
+ * Now the caller surfaces the error and an operator retries deliberately.
+ */
+export async function claimReceiptSend(buyerReportId: string): Promise<ReceiptClaim> {
   try {
     const supabase = createServiceClient()
     const { data, error } = await supabase
@@ -224,17 +241,19 @@ export async function claimReceiptSend(buyerReportId: string): Promise<boolean> 
       .not('receipt_status', 'in', '("sending","sent")')
       .select('id')
     if (error) throw error
-    return (data?.length ?? 0) > 0
+    return (data?.length ?? 0) > 0 ? 'granted' : 'already_delivered'
   } catch (err) {
-    console.error('[receipt-state:claim]', { buyerReportId, error: String(err) })
-    // Column missing (pre-migration) or transient DB failure. Fail OPEN: a
-    // customer missing a receipt is worse than a rare duplicate receipt.
-    return true
+    console.error('[receipt-state:claim] FAILED — send withheld', {
+      op: 'receipt_claim', buyerReportId, error: String(err),
+    })
+    return 'claim_error'
   }
 }
 
-export async function markReceiptSent(buyerReportId: string): Promise<void> {
-  await updateReceiptState(buyerReportId, {
+/** Returns false when the state could NOT be recorded — the caller must not
+ *  report a tracked delivery in that case. */
+export async function markReceiptSent(buyerReportId: string): Promise<boolean> {
+  return updateReceiptState(buyerReportId, {
     receipt_status:     'sent',
     receipt_sent_at:    new Date().toISOString(),
     receipt_last_error: null,
@@ -242,7 +261,7 @@ export async function markReceiptSent(buyerReportId: string): Promise<void> {
 }
 
 /** `reason` must already be safe: no token, no address, no credentials. */
-export async function markReceiptFailed(buyerReportId: string, reason: string): Promise<void> {
+export async function markReceiptFailed(buyerReportId: string, reason: string): Promise<boolean> {
   let attempts = 1
   try {
     const supabase = createServiceClient()
@@ -251,7 +270,7 @@ export async function markReceiptFailed(buyerReportId: string, reason: string): 
     attempts = ((data?.receipt_attempts as number | null) ?? 0) + 1
   } catch { /* fall back to 1 */ }
 
-  await updateReceiptState(buyerReportId, {
+  return updateReceiptState(buyerReportId, {
     receipt_status:     'failed',
     receipt_attempts:   attempts,
     receipt_last_error: reason.slice(0, 300),

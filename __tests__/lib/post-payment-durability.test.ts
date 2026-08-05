@@ -145,3 +145,39 @@ describe('operator retry', () => {
     expect(actions.startsWith("'use server'")).toBe(true)
   })
 })
+
+describe('no silent degradation after migration 026', () => {
+  const db    = read('lib/db/buyer-reports.ts')
+  const admin = read('app/admin/receipts/page.tsx')
+
+  it('the claim no longer fails open', () => {
+    // It used to `return true` on a DB error, turning an outage into duplicate
+    // customer email while still describing itself as idempotent. Assert the
+    // behaviour, not the prose — the comment above the function documents the
+    // old shape on purpose.
+    const fn = db.split('export async function claimReceiptSend')[1]!.split('\nexport ')[0]!
+    expect(fn).toContain("return 'claim_error'")
+    expect(fn).not.toMatch(/catch[\s\S]*return true/)
+  })
+
+  it('state writers report failure instead of assuming success', () => {
+    expect(db).toMatch(/markReceiptSent\(buyerReportId: string\): Promise<boolean>/)
+    expect(db).toMatch(/markReceiptFailed\(buyerReportId: string, reason: string\): Promise<boolean>/)
+  })
+
+  it('a send whose state write failed is reported untracked, not tracked', () => {
+    const delivery = read('lib/receipt-delivery.ts')
+    expect(delivery).toContain('SENT BUT UNTRACKED')
+    expect(delivery).toMatch(/status: 'sent'; tracked: boolean/)
+  })
+
+  it('the admin queue distinguishes a DB error from an empty queue', () => {
+    expect(admin).not.toMatch(/getUndeliveredReceipts\(50\)\.catch\(\(\) => \[\]\)/)
+    expect(admin).toContain('Queue unavailable')
+    expect(admin).toContain('NOT an empty queue')
+  })
+
+  it('logs the queue failure with an operation name', () => {
+    expect(admin).toMatch(/op: 'receipt_queue'/)
+  })
+})

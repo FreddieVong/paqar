@@ -8,7 +8,7 @@ import {
 import type { BuyerReport }            from '@/types/domain'
 
 export type ReceiptDeliveryResult =
-  | { ok: true;  status: 'sent' }
+  | { ok: true;  status: 'sent'; tracked: boolean }
   | { ok: true;  status: 'skipped'; reason: 'already_delivered' }
   | { ok: false; status: 'failed';  reason: string }
 
@@ -63,8 +63,20 @@ export async function deliverBuyerReportReceipt(
   }
 
   if (!opts.force) {
-    const claimed = await claimReceiptSend(buyerReportId)
-    if (!claimed) return { ok: true, status: 'skipped', reason: 'already_delivered' }
+    const claim = await claimReceiptSend(buyerReportId)
+    if (claim === 'already_delivered') {
+      return { ok: true, status: 'skipped', reason: 'already_delivered' }
+    }
+    if (claim === 'claim_error') {
+      // The claim is the idempotency guarantee. Without it we cannot promise a
+      // single send, so we withhold rather than risk mailing the buyer twice.
+      // An operator resolves this with a deliberate retry.
+      const reason = 'claim_failed'
+      console.error('[receipt-delivery] claim failed; send withheld', {
+        op: 'receipt', buyerReportId, checkId,
+      })
+      return { ok: false, status: 'failed', reason }
+    }
   }
 
   try {
@@ -77,8 +89,16 @@ export async function deliverBuyerReportReceipt(
       reportUrl,
       checkId,
     })
-    await markReceiptSent(buyerReportId)
-    return { ok: true, status: 'sent' }
+    // The email went out. If the state write fails the customer still has
+    // their receipt, but delivery is now UNTRACKED — say so rather than
+    // reporting a cleanly tracked send.
+    const tracked = await markReceiptSent(buyerReportId)
+    if (!tracked) {
+      console.error('[receipt-delivery] SENT BUT UNTRACKED — state write failed', {
+        op: 'receipt_state', buyerReportId, checkId,
+      })
+    }
+    return { ok: true, status: 'sent', tracked }
   } catch (err) {
     // Provider errors can echo the payload; keep only the class and a short
     // prefix so no token or address reaches the column.

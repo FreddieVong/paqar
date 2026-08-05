@@ -27,8 +27,10 @@ const withoutToken = { check: { claim_token: null,      plate_encrypted: 'x' } }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  claimReceiptSend.mockResolvedValue(true)
+  claimReceiptSend.mockResolvedValue('granted')
   sendReceiptEmail.mockResolvedValue(undefined)
+  markReceiptSent.mockResolvedValue(true)
+  markReceiptFailed.mockResolvedValue(true)
 })
 
 describe('successful delivery', () => {
@@ -36,7 +38,7 @@ describe('successful delivery', () => {
     getCheck.mockResolvedValue(withToken)
     const r = await deliverBuyerReportReceipt(report)
 
-    expect(r).toEqual({ ok: true, status: 'sent' })
+    expect(r).toEqual({ ok: true, status: 'sent', tracked: true })
     const arg = sendReceiptEmail.mock.calls[0]![0] as { reportUrl: string; checkId: string }
     // Not merely "contains /laporan-pembeli/" — a complete URL the report
     // page's own authorization would accept.
@@ -71,7 +73,7 @@ describe('missing claim token', () => {
 describe('idempotency', () => {
   it('skips when another caller already holds or completed the send', async () => {
     getCheck.mockResolvedValue(withToken)
-    claimReceiptSend.mockResolvedValue(false)
+    claimReceiptSend.mockResolvedValue('already_delivered')
 
     const r = await deliverBuyerReportReceipt(report)
     expect(r).toEqual({ ok: true, status: 'skipped', reason: 'already_delivered' })
@@ -80,7 +82,7 @@ describe('idempotency', () => {
 
   it('a duplicate webhook does not send a second receipt', async () => {
     getCheck.mockResolvedValue(withToken)
-    claimReceiptSend.mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+    claimReceiptSend.mockResolvedValueOnce('granted').mockResolvedValueOnce('already_delivered')
 
     await deliverBuyerReportReceipt(report)
     await deliverBuyerReportReceipt(report)
@@ -89,10 +91,10 @@ describe('idempotency', () => {
 
   it('force bypasses the claim for a deliberate operator resend', async () => {
     getCheck.mockResolvedValue(withToken)
-    claimReceiptSend.mockResolvedValue(false)
+    claimReceiptSend.mockResolvedValue('already_delivered')
 
     const r = await deliverBuyerReportReceipt(report, { force: true })
-    expect(r).toEqual({ ok: true, status: 'sent' })
+    expect(r).toEqual({ ok: true, status: 'sent', tracked: true })
     expect(sendReceiptEmail).toHaveBeenCalledTimes(1)
   })
 })
@@ -128,5 +130,29 @@ describe('check lookup failure', () => {
     expect(r.ok).toBe(false)
     expect(sendReceiptEmail).not.toHaveBeenCalled()
     expect(markReceiptFailed).toHaveBeenCalled()
+  })
+})
+
+describe('claim error (database problem)', () => {
+  it('withholds the send rather than risking a duplicate', async () => {
+    // This used to fail OPEN and send anyway, which turned a DB problem into
+    // duplicate customer email while still calling itself idempotent.
+    getCheck.mockResolvedValue(withToken)
+    claimReceiptSend.mockResolvedValue('claim_error')
+
+    const r = await deliverBuyerReportReceipt(report)
+    expect(r).toEqual({ ok: false, status: 'failed', reason: 'claim_failed' })
+    expect(sendReceiptEmail).not.toHaveBeenCalled()
+  })
+})
+
+describe('state write failure after a successful send', () => {
+  it('reports the delivery as untracked rather than cleanly tracked', async () => {
+    getCheck.mockResolvedValue(withToken)
+    markReceiptSent.mockResolvedValue(false)
+
+    const r = await deliverBuyerReportReceipt(report)
+    expect(r).toEqual({ ok: true, status: 'sent', tracked: false })
+    expect(sendReceiptEmail).toHaveBeenCalledTimes(1)
   })
 })
