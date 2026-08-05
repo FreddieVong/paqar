@@ -179,3 +179,103 @@ export async function markUpgradePaid(billId: string): Promise<boolean> {
   if (error) throw error
   return (data?.length ?? 0) > 0
 }
+
+// ── Receipt delivery state ────────────────────────────────────────────────
+//
+// waitUntil() keeps the function alive; it does not make delivery observable.
+// These record what actually happened so a lost receipt becomes a visible,
+// retryable row instead of silence — see migration 026 for why that matters
+// (the receipt is the only durable copy of an anonymous buyer's access URL).
+//
+// Every writer here SWALLOWS its error on purpose. These columns may not exist
+// yet on an environment where migration 026 has not been applied, and a
+// bookkeeping failure must never roll back or block a confirmed payment.
+
+export type ReceiptStatus = 'pending' | 'sending' | 'sent' | 'failed'
+
+async function updateReceiptState(
+  buyerReportId: string,
+  patch: Record<string, unknown>,
+  op: string,
+): Promise<boolean> {
+  try {
+    const supabase = createServiceClient()
+    const { error } = await supabase
+      .from('buyer_reports')
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq('id', buyerReportId)
+    if (error) throw error
+    return true
+  } catch (err) {
+    console.error(`[receipt-state:${op}]`, { buyerReportId, error: String(err) })
+    return false
+  }
+}
+
+/** Claim the send. Returns false when another caller already holds or completed
+ *  it, which is what stops a duplicate Billplz callback sending twice. */
+export async function claimReceiptSend(buyerReportId: string): Promise<boolean> {
+  try {
+    const supabase = createServiceClient()
+    const { data, error } = await supabase
+      .from('buyer_reports')
+      .update({ receipt_status: 'sending', updated_at: new Date().toISOString() })
+      .eq('id', buyerReportId)
+      .not('receipt_status', 'in', '("sending","sent")')
+      .select('id')
+    if (error) throw error
+    return (data?.length ?? 0) > 0
+  } catch (err) {
+    console.error('[receipt-state:claim]', { buyerReportId, error: String(err) })
+    // Column missing (pre-migration) or transient DB failure. Fail OPEN: a
+    // customer missing a receipt is worse than a rare duplicate receipt.
+    return true
+  }
+}
+
+export async function markReceiptSent(buyerReportId: string): Promise<void> {
+  await updateReceiptState(buyerReportId, {
+    receipt_status:     'sent',
+    receipt_sent_at:    new Date().toISOString(),
+    receipt_last_error: null,
+  }, 'sent')
+}
+
+/** `reason` must already be safe: no token, no address, no credentials. */
+export async function markReceiptFailed(buyerReportId: string, reason: string): Promise<void> {
+  let attempts = 1
+  try {
+    const supabase = createServiceClient()
+    const { data } = await supabase
+      .from('buyer_reports').select('receipt_attempts').eq('id', buyerReportId).single()
+    attempts = ((data?.receipt_attempts as number | null) ?? 0) + 1
+  } catch { /* fall back to 1 */ }
+
+  await updateReceiptState(buyerReportId, {
+    receipt_status:     'failed',
+    receipt_attempts:   attempts,
+    receipt_last_error: reason.slice(0, 300),
+  }, 'failed')
+}
+
+/** Operational queue: paid purchases whose receipt did not land. */
+export async function getUndeliveredReceipts(limit = 50): Promise<BuyerReport[]> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .select('*')
+    .eq('status', 'paid')
+    .or('receipt_status.is.null,receipt_status.eq.failed,receipt_status.eq.pending')
+    .order('paid_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []) as BuyerReport[]
+}
+
+export async function getBuyerReportById(id: string): Promise<BuyerReport | null> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports').select('*').eq('id', id).single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data as BuyerReport | null
+}

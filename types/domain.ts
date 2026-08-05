@@ -52,6 +52,12 @@ export interface BuyerReport {
   jomcheck_checked_at: string | null
   jomcheck_error:      string | null
   paid_at:            string | null
+  // Receipt delivery (migration 026). receipt_status is null on rows that
+  // predate tracking — treat that as unknown, never as sent.
+  receipt_status?:     'pending' | 'sending' | 'sent' | 'failed' | null
+  receipt_attempts?:   number | null
+  receipt_last_error?: string | null
+  receipt_sent_at?:    string | null
   created_at:         string
   updated_at:         string
 }

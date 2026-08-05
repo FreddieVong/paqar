@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 import { env }    from '@/lib/env'
-import { SUPPORT_REPLY_TO } from '@/lib/site'
+import { SUPPORT_REPLY_TO, whatsappUrl, SITE_URL } from '@/lib/site'
 
 // timeZone is explicit because Vercel runs in UTC: without it a payment made
 // between 00:00 and 08:00 MYT is dated to the previous day on the customer's
@@ -18,7 +18,17 @@ type ReceiptParams = {
   amountCents: number
   paidAt:      string
   plate:       string | null
-  reportUrl?:  string
+  /**
+   * REQUIRED, and must already carry a working access credential.
+   *
+   * This used to be optional, which meant a failed check lookup in the webhook
+   * produced a receipt with no way to reach the report. Callers now go through
+   * deliverBuyerReportReceipt(), which records a retryable failure instead of
+   * sending a receipt that cannot deliver the product.
+   */
+  reportUrl:   string
+  /** Human reference for support. Safe to print: not a credential. */
+  checkId?:    string
 }
 
 export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
@@ -32,6 +42,11 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
   const dateStr    = formatDate(params.paidAt)
   const plateLabel = params.plate ? ` (${params.plate})` : ''
   const subject    = `Resit & Link Laporan — Paqar${plateLabel}`
+  // Falls back to the site when no number is configured, so the receipt
+  // never renders an empty href.
+  const supportUrl = whatsappUrl(
+    `Hai Paqar, saya ada masalah dengan laporan saya.${params.checkId ? `\n\nRujukan: ${params.checkId}` : ''}`
+  ) ?? SITE_URL
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
@@ -57,13 +72,11 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
       <p style="color:#9CA3AF;font-size:11px;text-align:center;margin:-12px 0 20px;">
         Simpan emel ini — link laporan anda ada di sini
       </p>
-      ` : `
-      <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin:20px 0;">
-        <p style="color:#374151;font-size:13px;margin:0;line-height:1.6;">
-          Log masuk ke akaun Paqar anda untuk akses laporan.
-        </p>
+      <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:14px;margin:0 0 20px;word-break:break-all;">
+        <p style="color:#9CA3AF;font-size:11px;margin:0 0 4px;">Kalau butang di atas tak berfungsi, buka link ini:</p>
+        <p style="color:#374151;font-size:11px;margin:0;line-height:1.5;">${params.reportUrl}</p>
       </div>
-      `}
+      ` : ''}
 
       ${(params.amountCents === 10000 || params.amountCents === 8800) && env.JOMCHECK_MODE === 'manual' ? `
       <div style="background:#F0FAFA;border:1px solid #99D4D1;border-radius:12px;padding:16px;margin:0 0 20px;">
@@ -94,6 +107,15 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
         Berjaya runding harga atau beli dengan lebih yakin? <strong>Balas e-mel ini</strong> dan
         kongsi pengalaman anda — kami mungkin paparkan cerita anda di paqar.my (nama pertama sahaja).
       </p>
+
+      <div style="border-top:1px solid #E5E7EB;margin-top:20px;padding-top:16px;">
+        <p style="color:#374151;font-size:13px;margin:0 0 6px;line-height:1.6;">
+          Ada masalah buka laporan? WhatsApp kami${params.checkId ? ` dan sertakan rujukan <strong>${params.checkId}</strong>` : ''}.
+        </p>
+        <a href="${supportUrl}" style="color:#064E4A;font-size:13px;font-weight:700;text-decoration:none;">
+          Hubungi Paqar di WhatsApp →
+        </a>
+      </div>
 
       <p style="color:#9CA3AF;font-size:11px;margin-top:24px;line-height:1.7;">
         Paqar &middot; Perkhidmatan pihak ketiga &middot; Bukan platform rasmi kerajaan<br/>

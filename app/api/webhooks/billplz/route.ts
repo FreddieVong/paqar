@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse }              from 'next/server'
+import { waitUntil }                              from '@vercel/functions'
 import { verifyWebhookSignature }                 from '@/lib/billplz'
 import { markReportPaid, getBuyerReportByBillId,
          markUpgradePaid, getBuyerReportByUpgradeBillId,
          setVehicleApiData } from '@/lib/db/buyer-reports'
-import { sendReceiptEmail }                       from '@/lib/email/receipt'
+import { deliverBuyerReportReceipt }              from '@/lib/receipt-delivery'
+import { buildBuyerReportAccessUrl }              from '@/lib/report-access'
 import { sendJomCheckPendingEmail }               from '@/lib/email/jomcheck-pending'
 import { recordPurchase }                         from '@/lib/purchase-attribution'
 import { isJomCheckManual }                       from '@/lib/jomcheck'
@@ -20,12 +22,19 @@ import { buildMarketModelKeyword }               from '@/lib/market-keyword'
 // the buyer's expectation with an interim email. Best-effort: swallows its own
 // errors so a failed ping/email never breaks the payment webhook.
 async function notifyManualJomCheckOrder(o: {
-  plate: string; email: string; amountCents: number; reportUrl: string
+  plate: string; email: string; amountCents: number; reportUrl: string | null
 }): Promise<void> {
   if (!isJomCheckManual()) return
   await sendTelegramMessage(
     `Order JomCheck baru\nPlat: ${o.plate}\nEmail: ${o.email}\nRM${(o.amountCents / 100).toFixed(0)}\nFulfil → https://paqar.my/admin/jomcheck`,
   ).catch(() => {})
+  // The owner alert always fires. The buyer email is skipped when no valid
+  // access URL exists, because its whole purpose is to hand over that link —
+  // a tokenless one 404s.
+  if (!o.reportUrl) {
+    console.error('[jomcheck-pending-email] skipped: no valid access URL')
+    return
+  }
   await sendJomCheckPendingEmail({ toEmail: o.email, plate: o.plate, reportUrl: o.reportUrl })
     .catch(err => console.error('[jomcheck-pending-email]', err))
 }
@@ -59,31 +68,43 @@ export async function POST(request: NextRequest) {
       if (upgradeReport) {
         const wasJustUpgraded = await markUpgradePaid(billId)
         if (wasJustUpgraded) {
-          sendReceiptEmail({
-            product:     'buyer_report',
-            toEmail:     upgradeReport.buyer_email,
-            amountCents: 8800,
-            paidAt,
-            plate:       null,
-            reportUrl:   `https://paqar.my/laporan-pembeli/${upgradeReport.check_id}`,
-          }).catch(err => console.error('[receipt-email:jomcheck-upgrade]', err))
-          void recordPurchase({
-            billId,
-            email:         upgradeReport.buyer_email,
-            amountCents:   8800,
-            checkId:       upgradeReport.check_id,
-            buyerReportId: upgradeReport.id,
-          })
+          // Same rule as the primary purchase: this used to send a receipt
+          // pointing at a tokenless URL, which 404s for an anonymous buyer.
+          waitUntil(
+            deliverBuyerReportReceipt({ ...upgradeReport, amount_cents: 8800 }, { paidAt })
+              .then(r => { if (!r.ok) console.error('[post-payment:receipt] upgrade delivery failed', {
+                op: 'receipt_upgrade', billId, buyerReportId: upgradeReport.id,
+                checkId: upgradeReport.check_id, reason: r.reason,
+              }) })
+              .catch(err => console.error('[post-payment:receipt] upgrade threw', {
+                op: 'receipt_upgrade', billId, buyerReportId: upgradeReport.id, error: String(err),
+              })),
+          )
+          waitUntil(
+            recordPurchase({
+              billId,
+              email:         upgradeReport.buyer_email,
+              amountCents:   8800,
+              checkId:       upgradeReport.check_id,
+              buyerReportId: upgradeReport.id,
+            }).catch(err => console.error('[post-payment:attribution] upgrade failed', {
+              op: 'attribution_upgrade', billId, buyerReportId: upgradeReport.id, error: String(err),
+            })),
+          )
 
           // Manual JomCheck fulfilment: alert the owner + set buyer expectation
           try {
             const checkRow = await getCheck(upgradeReport.check_id)
             const plate = checkRow ? decrypt(checkRow.check.plate_encrypted as string).toUpperCase() : '(plat)'
-            const token = checkRow?.check.claim_token
-            const reportUrl = token
-              ? `https://paqar.my/laporan-pembeli/${upgradeReport.check_id}?claim_token=${token}`
-              : `https://paqar.my/laporan-pembeli/${upgradeReport.check_id}`
-            await notifyManualJomCheckOrder({ plate, email: upgradeReport.buyer_email, amountCents: 8800, reportUrl })
+            const reportUrl = buildBuyerReportAccessUrl({
+              checkId:    upgradeReport.check_id,
+              claimToken: checkRow?.check.claim_token,
+            })
+            // No usable URL → skip the buyer-facing interim email rather than
+            // send one whose only link 404s. The owner alert still fires.
+            await notifyManualJomCheckOrder({
+              plate, email: upgradeReport.buyer_email, amountCents: 8800, reportUrl,
+            })
           } catch (err) { console.error('[jomcheck-notify:upgrade]', err) }
         }
       }
@@ -92,34 +113,55 @@ export async function POST(request: NextRequest) {
 
     const wasJustPaid = await markReportPaid(billId)
     if (wasJustPaid) {
-      let reportUrl: string | undefined
       let plate: string | null = null
+      let reportUrl: string | undefined
       try {
         const checkRow = await getCheck(buyerReport.check_id)
         if (checkRow) {
           plate = decrypt(checkRow.check.plate_encrypted as string).toUpperCase()
-          const token = checkRow.check.claim_token
-          reportUrl = token
-            ? `https://paqar.my/laporan-pembeli/${buyerReport.check_id}?claim_token=${token}`
-            : `https://paqar.my/laporan-pembeli/${buyerReport.check_id}`
+          reportUrl = buildBuyerReportAccessUrl({
+            checkId:    buyerReport.check_id,
+            claimToken: checkRow.check.claim_token,
+          }) ?? undefined
         }
-      } catch { /* non-fatal */ }
+      } catch { /* non-fatal — deliverBuyerReportReceipt resolves this itself */ }
 
-      sendReceiptEmail({
-        product:     'buyer_report',
-        toEmail:     buyerReport.buyer_email,
-        amountCents: buyerReport.amount_cents,
-        paidAt,
-        plate,
-        reportUrl,
-      }).catch(err => console.error('[receipt-email:buyer_report]', err))
-      void recordPurchase({
-        billId,
-        email:         buyerReport.buyer_email,
-        amountCents:   buyerReport.amount_cents,
-        checkId:       buyerReport.check_id,
-        buyerReportId: buyerReport.id,
-      })
+      // ── CRITICAL: receipt delivery ──────────────────────────────────────
+      // Held by waitUntil so the runtime cannot freeze the instance before the
+      // send resolves, and tracked in the DB so a loss is visible and
+      // retryable rather than silent. Deliberately NOT bundled with the
+      // best-effort work below: a cache-warm failure must never be able to
+      // mark a receipt failed, and a failed receipt must never be hidden
+      // inside an aggregate that looks successful.
+      waitUntil(
+        deliverBuyerReportReceipt(buyerReport, { paidAt })
+          .then(result => {
+            if (!result.ok) {
+              console.error('[post-payment:receipt] delivery failed', {
+                op: 'receipt', billId, buyerReportId: buyerReport.id,
+                checkId: buyerReport.check_id, reason: result.reason,
+              })
+            }
+          })
+          .catch(err => console.error('[post-payment:receipt] threw', {
+            op: 'receipt', billId, buyerReportId: buyerReport.id,
+            checkId: buyerReport.check_id, error: String(err),
+          })),
+      )
+
+      // ── Best-effort: attribution ────────────────────────────────────────
+      waitUntil(
+        recordPurchase({
+          billId,
+          email:         buyerReport.buyer_email,
+          amountCents:   buyerReport.amount_cents,
+          checkId:       buyerReport.check_id,
+          buyerReportId: buyerReport.id,
+        }).catch(err => console.error('[post-payment:attribution] failed', {
+          op: 'attribution', billId, buyerReportId: buyerReport.id,
+          checkId: buyerReport.check_id, error: String(err),
+        })),
+      )
 
       // Combined RM100 purchase → same manual-fulfilment alert + interim email
       if (buyerReport.add_jomcheck && plate) {
@@ -127,13 +169,16 @@ export async function POST(request: NextRequest) {
           plate,
           email:       buyerReport.buyer_email,
           amountCents: buyerReport.amount_cents,
-          reportUrl:   reportUrl ?? `https://paqar.my/laporan-pembeli/${buyerReport.check_id}`,
+          reportUrl:   reportUrl ?? null,
         }).catch(err => console.error('[jomcheck-notify:combined]', err))
       }
 
-      // Pre-warm vehicle + market price caches so the report loads fully on first view
+      // ── Best-effort: cache warm-up ──────────────────────────────────────
+      // Purely a latency optimisation; the report page re-fetches vehicle data
+      // on view if it is missing, so losing this costs a slower first load and
+      // nothing else. Still held by waitUntil rather than left floating.
       if (plate) {
-        ;(async () => {
+        waitUntil((async () => {
           try {
             const apiResult = await getOrFetchVehicleData(plate)
             if (!apiResult) return
@@ -148,9 +193,12 @@ export async function POST(request: NextRequest) {
               await fetchAndCacheMarketPrices(apiResult.make, mo, apiResult.registrationYear).catch(() => {})
             }
           } catch (err) {
-            console.error('[post-payment:cache-warmup]', err)
+            console.error('[post-payment:cache-warmup] failed', {
+              op: 'cache_warmup', billId, buyerReportId: buyerReport.id,
+              checkId: buyerReport.check_id, error: String(err),
+            })
           }
-        })()
+        })())
       }
     }
 

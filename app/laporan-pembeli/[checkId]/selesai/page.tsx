@@ -7,7 +7,9 @@ import { markReportPaid, getBuyerReportByBillId,
          markUpgradePaid, getBuyerReportByUpgradeBillId,
          getBuyerReport } from '@/lib/db/buyer-reports'
 import { decrypt }                                   from '@/lib/crypto'
-import { sendReceiptEmail }                          from '@/lib/email/receipt'
+import { deliverBuyerReportReceipt }                 from '@/lib/receipt-delivery'
+import { buildBuyerReportAccessUrl }                 from '@/lib/report-access'
+import { whatsappUrl }                               from '@/lib/site'
 import { recordPurchase }                            from '@/lib/purchase-attribution'
 import { verifyRedirectSignature }                   from '@/lib/billplz'
 import { isJomCheckManual }                          from '@/lib/jomcheck'
@@ -27,7 +29,21 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
 
   if (!claimToken) redirect('/')
 
-  const reportUrl = `https://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}`
+  // Built through the shared helper so this page can never render a button
+  // whose URL the report page would reject (claim_token=undefined was the
+  // shape this used to be able to produce).
+  const reportUrl = buildBuyerReportAccessUrl({ checkId: params.checkId, claimToken })
+
+  // Support CTAs. The check ID is a safe reference — it is not a credential,
+  // and without it the buyer has to explain the whole purchase from scratch.
+  // The claim token is deliberately NOT included: it grants report access and
+  // must never travel through a shareable message.
+  const invalidSupportUrl = whatsappUrl(
+    `Hai Paqar, pembayaran saya tidak dapat disahkan.\n\nCheck ID: ${params.checkId}`,
+  )
+  const pendingSupportUrl = whatsappUrl(
+    `Hai Paqar, pembayaran saya masih "sedang disahkan".\n\nCheck ID: ${params.checkId}`,
+  )
 
   // Verify redirect signature first — if missing/invalid/tampered, displayState will be 'invalid'
   const verifiedParams = verifyRedirectSignature(searchParams)
@@ -69,14 +85,10 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
         if (isNormalMatch && report) {
           wasJustPaid = await markReportPaid(billId).catch(() => false)
           if (wasJustPaid) {
-            sendReceiptEmail({
-              product:     'buyer_report',
-              toEmail:     report.buyer_email,
-              amountCents: report.amount_cents,
-              paidAt:      new Date().toISOString(),
-              plate:       null,
-              reportUrl,
-            }).catch(() => {})
+            // Idempotent: claimReceiptSend() refuses a row the webhook has
+            // already sent, so browser-return and webhook cannot double-send.
+            await deliverBuyerReportReceipt(report).catch(err =>
+              console.error('[selesai:receipt]', { buyerReportId: report.id, error: String(err) }))
           }
           // Called regardless of wasJustPaid. If the webhook won the race but
           // its attribution write failed, this is the retry; if it succeeded,
@@ -94,14 +106,9 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
         if (isUpgradeMatch && upgradeReport) {
           wasJustUpgraded = await markUpgradePaid(billId).catch(() => false)
           if (wasJustUpgraded) {
-            sendReceiptEmail({
-              product:     'buyer_report',
-              toEmail:     upgradeReport.buyer_email,
-              amountCents: 8800,
-              paidAt:      new Date().toISOString(),
-              plate:       null,
-              reportUrl,
-            }).catch(() => {})
+            await deliverBuyerReportReceipt({ ...upgradeReport, amount_cents: 8800 })
+              .catch(err => console.error('[selesai:receipt-upgrade]',
+                { buyerReportId: upgradeReport.id, error: String(err) }))
           }
           void recordPurchase({
             billId,
@@ -226,8 +233,22 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
                 Pembayaran sedang disahkan
               </p>
               <p className="font-body text-[13px] text-[#78350F] leading-relaxed">
-                Sila cuba semula sebentar lagi.
+                Pembayaran masih sedang disahkan. Jika status ini tidak berubah, hubungi
+                kami dan sertakan rujukan di bawah.
               </p>
+              <p className="font-body text-[12px] text-[#78350F] mt-2">
+                Rujukan: <strong>{params.checkId}</strong>
+              </p>
+              {pendingSupportUrl && (
+                <a
+                  href={pendingSupportUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-3 bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
+                >
+                  Hubungi Paqar di WhatsApp
+                </a>
+              )}
             </div>
           )}
 
@@ -247,17 +268,35 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
                 Pembayaran tidak dapat disahkan
               </p>
               <p className="font-body text-[13px] text-[#991B1B] leading-relaxed">
-                Sila hubungi sokongan atau cuba semula.
+                Kalau anda sudah bayar, jangan bayar lagi. Hubungi kami dengan rujukan
+                di bawah dan kami akan semak.
               </p>
+              <p className="font-body text-[12px] text-[#991B1B] mt-2">
+                Rujukan: <strong>{params.checkId}</strong>
+              </p>
+              {invalidSupportUrl && (
+                <a
+                  href={invalidSupportUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-3 bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
+                >
+                  Hubungi Paqar di WhatsApp
+                </a>
+              )}
             </div>
           )}
 
-          <a
-            href={`/laporan-pembeli/${params.checkId}?claim_token=${claimToken}`}
-            className="block w-full bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 hover:bg-[#053D3A] transition-colors"
-          >
-            Lihat Laporan Saya →
-          </a>
+          {/* Only rendered when the URL carries a credential the report page
+              will actually accept. */}
+          {reportUrl && (
+            <a
+              href={reportUrl}
+              className="block w-full bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 hover:bg-[#053D3A] transition-colors"
+            >
+              Lihat Laporan Saya →
+            </a>
+          )}
 
           {showJomCheckNudge && (
             <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
@@ -267,9 +306,9 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
             </p>
           )}
 
-          {plate && displayState.state === 'verified_paid' && (
+          {plate && reportUrl && displayState.state === 'verified_paid' && (
             <WhatsAppShareButton
-              href={`https://wa.me/?text=${encodeURIComponent(`Laporan Paqar untuk ${plate} sedia!\n\nLihat laporan di sini:\nhttps://paqar.my/laporan-pembeli/${params.checkId}?claim_token=${claimToken}\n\nJuga boleh tempah inspection sebelum bayar deposit.`)}`}
+              href={`https://wa.me/?text=${encodeURIComponent(`Laporan Paqar untuk ${plate} sedia!\n\nLihat laporan di sini:\n${reportUrl}\n\nJuga boleh tempah inspection sebelum bayar deposit.`)}`}
             />
           )}
 
