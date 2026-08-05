@@ -1,8 +1,4 @@
 import express, { type Request, type Response, type NextFunction } from 'express'
-import { scrapePdrm }          from './scrapers/pdrm.js'
-import { scrapeJpj }           from './scrapers/jpj.js'
-import { scrapeAes }           from './scrapers/aes.js'
-import { scrapeLocalCouncils } from './scrapers/local-councils.js'
 import { scrapeMudahMarket }   from './scrapers/mudah-market.js'
 
 const app  = express()
@@ -26,41 +22,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.get('/health', (_req, res) => {
   // version: bump when scraping behavior changes — lets deploys be verified
   // from outside without Railway dashboard access
-  res.json({ ok: true, version: '2026-07-24-price-fix', ts: new Date().toISOString() })
-})
-
-// ── Saman endpoints ───────────────────────────────────────────────────────────
-app.post('/check/pdrm', async (req, res) => {
-  const { plate } = req.body as { plate?: string }
-  if (!plate) { res.status(400).json({ error: 'plate required' }); return }
-  const result = await scrapePdrm(plate)
-  console.log('[pdrm]', JSON.stringify({ status: result.status, error: (result as {error?:string}).error }))
-  res.json(result)
-})
-
-app.post('/check/jpj', async (req, res) => {
-  const { plate } = req.body as { plate?: string }
-  if (!plate) { res.status(400).json({ error: 'plate required' }); return }
-  const result = await scrapeJpj(plate)
-  console.log('[jpj]', JSON.stringify({ status: result.status, error: (result as {error?:string}).error }))
-  res.json(result)
-})
-
-app.post('/check/aes', async (req, res) => {
-  const { plate } = req.body as { plate?: string }
-  if (!plate) { res.status(400).json({ error: 'plate required' }); return }
-  const result = await scrapeAes(plate)
-  res.json(result)
-})
-
-app.post('/check/local_councils', async (req, res) => {
-  const { plate } = req.body as { plate?: string }
-  if (!plate) { res.status(400).json({ error: 'plate required' }); return }
-  const result = await scrapeLocalCouncils(plate)
-  res.json(result)
+  res.json({ ok: true, version: '2026-08-06-market-only', ts: new Date().toISOString() })
 })
 
 // ── Market prices (Mudah listing scraper) ────────────────────────────────────
+// This is the service's only job. The saman endpoints (pdrm/jpj/aes/
+// local_councils) were removed 2026-08-06 — nothing in the app had called them
+// since the free check pivoted from saman lookup to market pricing.
 app.post('/check/mudah-market', async (req, res) => {
   const { make, model, year, debug } = req.body as { make?: string; model?: string; year?: string; debug?: boolean }
   if (!make || !model) { res.status(400).json({ error: 'make and model required' }); return }
