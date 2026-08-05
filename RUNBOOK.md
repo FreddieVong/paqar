@@ -61,3 +61,41 @@ sends a count-only result (no meter/severity detail) but still fulfils the order
 | `ANTHROPIC_API_KEY` | Powers "Baca dari gambar" (falls back to manual counts if absent) |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Owner order alerts (no-op if unset) |
 | `RESEND_API_KEY` | Sends the customer emails |
+
+## Receipt delivery — interim daily routine
+
+The receipt carries the **only** durable copy of an anonymous buyer's report
+link (no account is required to purchase, and the claim token is not stored in
+their browser). There is no automatic retry yet, so this is checked by hand.
+
+**Who / how often:** the owner, once daily while volume is low. It takes under
+a minute. Skip a day only if there were no purchases.
+
+1. Open `https://paqar.my/admin/receipts` (sign in via `/admin/jomcheck` first).
+2. **If it shows "Queue unavailable"** — that is a database error, NOT an empty
+   queue. Fix that before assuming nothing is outstanding.
+3. **Retry anything with `failed`.** Read `receipt_last_error` first:
+   - `missing_claim_token` — the check was claimed into an account. The buyer
+     can reach the report by signing in; retrying will not help. Contact them.
+   - `send_failed: …` — a provider problem. Retry is the right action.
+   - `claim_failed` — a database error during the claim. Retry.
+4. **Do not use Force** on a row already `sent` unless the buyer has told you
+   they never received it. Plain Retry is refused for a delivered row on
+   purpose; Force exists to override that deliberately and will mail them again.
+5. **If retry keeps failing,** contact the buyer on WhatsApp
+   (+60 12-442 4221) using the `check_id` shown on the row as the reference.
+   Never send them the claim token in a message — send the full report URL only
+   if they ask for the link directly.
+6. **Verify the recovery** by opening the report URL in a private window. It
+   must load; the bare URL without `?claim_token=` must stay 404.
+
+Rows with status `untracked (pre-026)` predate delivery tracking (before
+2026-08-05). They are not evidence of a failure — leave them unless a buyer
+reports a problem.
+
+Full reconciliation, including which paid reports still have a route back:
+
+```bash
+set -a; . ./.env.local; set +a
+npx tsx scripts/reconcile-receipts.ts
+```
