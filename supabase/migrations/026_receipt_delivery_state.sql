@@ -33,7 +33,7 @@ COMMENT ON COLUMN buyer_reports.receipt_status IS
   'Receipt delivery state: pending | sending | sent | failed. NULL = row predates receipt tracking (2026-08-05); treat as unknown, not as sent.';
 
 COMMENT ON COLUMN buyer_reports.receipt_attempts IS
-  'Number of delivery attempts. Incremented on every attempt including retries, so a permanently failing address is visible rather than retried forever.';
+  'Number of FAILED delivery attempts. Incremented by markReceiptFailed only, so a permanently failing address is visible rather than retried forever. A first-time success therefore leaves this at 0.';
 
 COMMENT ON COLUMN buyer_reports.receipt_last_error IS
   'Short, safe reason for the last failure (e.g. missing_claim_token, or the provider error class). NEVER contains the claim token, the recipient address or provider credentials.';
