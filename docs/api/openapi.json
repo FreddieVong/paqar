@@ -5,7 +5,8 @@
     "version": "1.0.0",
     "description": "Malaysian used-car valuation and variant guide API for LLMs and integrations",
     "contact": {
-      "email": "support@paqar.my"
+      "name": "Paqar support (WhatsApp)",
+      "url": "https://wa.me/60124424221"
     }
   },
   "servers": [
@@ -22,13 +23,17 @@
     "/plate/{plate}": {
       "get": {
         "summary": "Get vehicle teaser by plate",
-        "tags": ["Plate Lookup"],
+        "tags": [
+          "Plate Lookup"
+        ],
         "parameters": [
           {
             "name": "plate",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "example": "WPH925",
             "description": "Vehicle plate (3 letters + 3 digits)"
           }
@@ -41,52 +46,80 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "make": { "type": "string" },
-                    "model": { "type": "string" },
-                    "registrationYear": { "type": "string" },
-                    "color": { "type": "string" },
-                    "mileage": { "type": "number" }
+                    "make": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "registrationYear": {
+                      "type": "string"
+                    },
+                    "color": {
+                      "type": "string"
+                    },
+                    "mileage": {
+                      "type": "number"
+                    }
                   }
                 }
               }
             }
           },
-          "400": { "description": "Invalid plate format" },
-          "404": { "description": "Plate not found" },
-          "429": { "description": "Rate limit exceeded" }
+          "400": {
+            "description": "Invalid plate format"
+          },
+          "404": {
+            "description": "Plate not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
         }
       }
     },
     "/valuation": {
       "get": {
         "summary": "Get full valuation",
-        "tags": ["Valuation"],
+        "tags": [
+          "Valuation"
+        ],
         "parameters": [
           {
             "name": "plate",
             "in": "query",
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "example": "WPH925"
           },
           {
             "name": "nvic",
             "in": "query",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "make",
             "in": "query",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "year",
             "in": "query",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "model",
             "in": "query",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -97,42 +130,91 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "variant": { "type": ["string", "null"] },
-                    "wmNewPrice": { "type": ["number", "null"] },
-                    "marketMedian": { "type": ["number", "null"] },
-                    "marketMin": { "type": ["number", "null"] },
-                    "marketMax": { "type": ["number", "null"] },
-                    "marketCount": { "type": "number" },
-                    "confidence": { "type": "string", "enum": ["high", "medium", "low"], "description": "Weight of the comparable set. high = 10+ listings, medium = 5-9, low = 0-4. Mixed-variant cohorts are capped at medium. Separate from whether Paqar would issue a buyer-facing verdict." },
-                    "isSpecialVariant": { "type": "boolean" }
+                    "variant": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "wmNewPrice": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "marketMedian": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "marketMin": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "marketMax": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "marketCount": {
+                      "type": "number"
+                    },
+                    "confidence": {
+                      "type": "string",
+                      "enum": [
+                        "high",
+                        "medium",
+                        "low"
+                      ],
+                      "description": "Weight of the comparable set. high = 10+ listings, medium = 5-9, low = 0-4. Mixed-variant cohorts are capped at medium. Separate from whether Paqar would issue a buyer-facing verdict."
+                    },
+                    "isSpecialVariant": {
+                      "type": "boolean"
+                    }
                   }
                 }
               }
             }
           },
-          "400": { "description": "Missing parameters" },
-          "404": { "description": "Vehicle or valuation not found" },
-          "429": { "description": "Rate limit exceeded" }
+          "400": {
+            "description": "Missing parameters"
+          },
+          "404": {
+            "description": "Vehicle or valuation not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
         }
       }
     },
     "/variants/{make}/{model}": {
       "get": {
         "summary": "Get variant guide",
-        "tags": ["Variants"],
+        "tags": [
+          "Variants"
+        ],
         "parameters": [
           {
             "name": "make",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "example": "Honda"
           },
           {
             "name": "model",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "example": "City"
           }
         ],
@@ -144,22 +226,37 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "model": { "type": "string" },
-                    "modelSlug": { "type": "string" },
+                    "model": {
+                      "type": "string"
+                    },
+                    "modelSlug": {
+                      "type": "string"
+                    },
                     "generations": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "years": { "type": "string" },
+                          "years": {
+                            "type": "string"
+                          },
                           "variants": {
                             "type": "array",
                             "items": {
                               "type": "object",
                               "properties": {
-                                "name": { "type": "string" },
-                                "verdict": { "type": "string" },
-                                "spotChecks": { "type": "array", "items": { "type": "string" } }
+                                "name": {
+                                  "type": "string"
+                                },
+                                "verdict": {
+                                  "type": "string"
+                                },
+                                "spotChecks": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
                               }
                             }
                           }
@@ -171,8 +268,12 @@
               }
             }
           },
-          "404": { "description": "Model not found" },
-          "429": { "description": "Rate limit exceeded" }
+          "404": {
+            "description": "Model not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
         }
       }
     }
@@ -180,11 +281,15 @@
   "components": {
     "headers": {
       "X-Citation": {
-        "schema": { "type": "string" },
+        "schema": {
+          "type": "string"
+        },
         "description": "Attribution header for API responses"
       },
       "Retry-After": {
-        "schema": { "type": "integer" },
+        "schema": {
+          "type": "integer"
+        },
         "description": "Seconds until rate limit resets"
       }
     }

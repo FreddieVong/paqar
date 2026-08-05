@@ -206,3 +206,30 @@ describe('receipt claim is NULL-safe', () => {
     expect(filter).not.toContain('sent')
   })
 })
+
+describe('payment form trust affordances', () => {
+  const form = read('components/report/PaymentForm.tsx')
+
+  it('offers a support route on the screen where money changes hands', () => {
+    // Previously zero: a buyer stuck at checkout had nowhere to go, on a
+    // domain that accepts no inbound mail.
+    expect(form).toContain('whatsappUrl(')
+    expect(form).toContain('Ada masalah bayar?')
+  })
+
+  it('carries the check id as a support reference, never the claim token', () => {
+    const msg = form.match(/whatsappUrl\(`([^`]+)`\)/)?.[1] ?? ''
+    expect(msg).toContain('${checkId}')
+    expect(msg).not.toContain('claimToken')
+    expect(msg).not.toContain('claim_token')
+  })
+
+  it('puts the RM88 add-on AFTER the RM12 pay button', () => {
+    // It used to sit between the RM12 offer and the RM12 button, badged
+    // "Paling disyorkan" — an 8x upsell as the last thing read before paying.
+    const payButton = form.indexOf('type="submit"')
+    const addOn     = form.indexOf('JomCheck add-on')
+    expect(payButton).toBeGreaterThan(-1)
+    expect(addOn).toBeGreaterThan(payButton)
+  })
+})

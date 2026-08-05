@@ -247,7 +247,7 @@ A: No. Rate limiting and IP-based throttling will block aggressive scraping. If 
 A: Yes. Paid tiers (higher rate limits, bulk endpoints) coming in Q3 2026.
 
 **Q: What's the SLA/uptime guarantee?**
-A: Best-effort. We aim for 99% uptime; no SLA yet. Email support@paqar.my for issues.
+A: Best-effort. We aim for 99% uptime; no SLA yet. Report issues on [WhatsApp](https://wa.me/60124424221).
 
 **Q: Can I use this for commercial purposes?**
 A: Check our terms of service (link here). Generally yes, with attribution; no reselling data.
@@ -256,6 +256,5 @@ A: Check our terms of service (link here). Generally yes, with attribution; no r
 
 ## Support
 
-- **Issues or bugs:** support@paqar.my
-- **Feature requests:** features@paqar.my
-- **Feedback:** hello@paqar.my
+The `paqar.my` domain does not accept incoming email. Reach us on
+[WhatsApp](https://wa.me/60124424221) for issues, feature requests or feedback.

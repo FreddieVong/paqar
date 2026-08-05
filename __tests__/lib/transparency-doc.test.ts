@@ -82,6 +82,12 @@ describe('API docs agree with the shared confidence bands', () => {
     expect(readme).not.toMatch(/carlist/i)
   })
 
+  it('publishes no @paqar.my address anywhere — the domain accepts no mail', () => {
+    for (const [name, src] of [['README', readme], ['openapi.json', openapi]] as const) {
+      expect(src, name).not.toMatch(/[a-z0-9._-]+@paqar\.my/i)
+    }
+  })
+
   it('flags the confidence behaviour change for API consumers', () => {
     expect(readme).toMatch(/Changed:/i)
   })

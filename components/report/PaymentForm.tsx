@@ -5,6 +5,7 @@ import { initiateBuyerReport }     from '@/app/laporan-pembeli/[checkId]/_action
 import { analytics }               from '@/lib/analytics'
 import { checkoutEventId }        from '@/lib/checkout-event-id'
 import { trackAdEvent, type ValuationPathKey } from '@/lib/meta-events'
+import { whatsappUrl }         from '@/lib/site'
 
 const JOMCHECK_ENABLED = process.env.NEXT_PUBLIC_JOMCHECK_ENABLED === 'true'
 
@@ -62,6 +63,9 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
     }).catch(() => { /* best-effort */ })
   }
 
+  // Carries the check id so a stuck buyer does not have to explain the whole
+  // purchase from scratch. Never the claim token.
+  const supportUrl = whatsappUrl(`Hai Paqar, saya ada masalah untuk bayar.\n\nCheck ID: ${checkId}`)
   const title = addJomCheck ? 'Laporan + Accident/Claim — RM100' : 'Laporan Pembeli — RM12'
   const ctaText = addJomCheck ? 'Bayar RM100 & Buka Laporan →' : 'Bayar RM12 & Buka Laporan Pembeli →'
 
@@ -179,6 +183,54 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
           />
         </div>
 
+        {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[16px]
+                     rounded-[14px] py-4 flex items-center justify-center gap-2
+                     disabled:opacity-60 transition-colors"
+        >
+          {isPending ? 'Memproses…' : ctaText}
+        </button>
+
+        {/*
+          Two fixes at the exact point where every real buyer has been lost.
+
+          1. This line used to promise "Kad Kredit/Debit". The Billplz
+             collection (dptd0er6) offers FPX online banking ONLY — no cards,
+             no e-wallets. Anyone who arrived intending to pay by card found
+             no way to do it, after committing an email and generating a bill.
+
+          2. Clicking pay leaves paqar.my for a Billplz page headed TENTEC SDN
+             BHD, with no logo, asking for bank credentials. An unfamiliar
+             company name at the moment money is due reads as a scam. Naming
+             it HERE turns that surprise into a confirmation.
+        */}
+        <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
+          Bayar sekali · Tiada langganan<br />
+          Pembayaran diproses oleh Billplz (TENTEC SDN BHD) melalui perbankan online FPX.
+        </p>
+
+        {supportUrl && (
+          <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
+            Ada masalah bayar?{' '}
+            <a href={supportUrl} target="_blank" rel="noopener noreferrer"
+               className="text-[#064E4A] font-semibold underline underline-offset-2">
+              WhatsApp kami
+            </a>
+          </p>
+        )}
+
+        {/* The RM88 add-on sits AFTER the RM12 button on purpose.
+            It used to sit between the RM12 offer and the RM12 button, badged
+            "Paling disyorkan", immediately after the pitch had said the ad's
+            accident/claim promise was NOT included in RM12. The last thing a
+            buyer read before paying was an 8x more expensive upsell, which
+            reframes RM12 as the stingy option at the exact moment of decision.
+            Below the button it is still discoverable and still one tap, but it
+            no longer interrupts the purchase the buyer came to make. */}
         {/* JomCheck add-on — only shown when feature flag is enabled */}
         {JOMCHECK_ENABLED && (
           <button
@@ -239,36 +291,6 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
             </div>
           </button>
         )}
-
-        {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={isPending}
-          className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[16px]
-                     rounded-[14px] py-4 flex items-center justify-center gap-2
-                     disabled:opacity-60 transition-colors"
-        >
-          {isPending ? 'Memproses…' : ctaText}
-        </button>
-
-        {/*
-          Two fixes at the exact point where every real buyer has been lost.
-
-          1. This line used to promise "Kad Kredit/Debit". The Billplz
-             collection (dptd0er6) offers FPX online banking ONLY — no cards,
-             no e-wallets. Anyone who arrived intending to pay by card found
-             no way to do it, after committing an email and generating a bill.
-
-          2. Clicking pay leaves paqar.my for a Billplz page headed TENTEC SDN
-             BHD, with no logo, asking for bank credentials. An unfamiliar
-             company name at the moment money is due reads as a scam. Naming
-             it HERE turns that surprise into a confirmation.
-        */}
-        <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-          Bayar sekali · Tiada langganan<br />
-          Pembayaran diproses oleh Billplz (TENTEC SDN BHD) melalui perbankan online FPX.
-        </p>
       </form>
     </div>
   )
