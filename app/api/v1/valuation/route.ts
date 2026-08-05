@@ -6,7 +6,7 @@ import { normalizePlate } from '@/lib/api/normalize'
 import { createJsonResponse, createErrorResponse } from '@/lib/api/response'
 import { handleApiError } from '@/lib/api/errors'
 import { apiRateLimiter } from '@/lib/api/rate-limit'
-import { buildComparableCohort, type CohortMode } from '@/lib/comparables'
+import { buildComparableCohort, comparableConfidence, type CohortMode, type ComparableConfidence } from '@/lib/comparables'
 
 export const dynamic = 'force-dynamic'
 
@@ -203,14 +203,17 @@ async function getMarketStats(
 }
 
 /**
- * Confidence from cohort specificity AND quantity. A same-variant/normal cohort
- * is scored by listing count; a mixed-variant fallback is capped at "medium"
- * (never "high") so callers can't read multi-variant figures as high-confidence.
- * The `marketCohort` field makes the mixed cohort explicit to consumers.
+ * Confidence from cohort specificity AND quantity. Bands come from the shared
+ * `comparableConfidence` helper so the API and the two UIs can no longer drift;
+ * a mixed-variant fallback is then capped at "medium" (never "high") so callers
+ * can't read multi-variant figures as high-confidence. The `marketCohort` field
+ * makes the mixed cohort explicit to consumers.
+ *
+ * BEHAVIOUR CHANGE: cohorts of 3–4 listings previously reported "medium" here
+ * while the report UI called the same cohort "Data pasaran terhad". They now
+ * both report "low". Documented in docs/api/README.md and openapi.json.
  */
-function mapConfidence(mode: CohortMode, marketCount: number): 'low' | 'medium' | 'high' {
-  if (marketCount < 3) return 'low'
-  if (mode === 'mixed_variants') return 'medium'
-  if (marketCount < 10) return 'medium'
-  return 'high'
+function mapConfidence(mode: CohortMode, marketCount: number): ComparableConfidence {
+  const byCount = comparableConfidence(marketCount)
+  return mode === 'mixed_variants' && byCount === 'high' ? 'medium' : byCount
 }

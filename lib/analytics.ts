@@ -49,7 +49,10 @@ export const analytics = {
     posthog.capture('cta_clicked', props),
 
   verdictViewed: (props: {
-    verdict: 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced' | 'no_data'
+    // 'suppressed' is distinct from 'no_data': we HAD comparables, they were
+    // the wrong variant. Collapsing the two would hide how often variant
+    // mismatch is costing a verdict.
+    verdict: 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced' | 'no_data' | 'suppressed'
     listing_count: number
     has_data: boolean
   }) => posthog.capture('verdict_viewed', props),

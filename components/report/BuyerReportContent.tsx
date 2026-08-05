@@ -1,6 +1,6 @@
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
-import { buildComparableCohort } from '@/lib/comparables'
+import { buildComparableCohort, evaluateVerdictEligibility, comparableConfidence } from '@/lib/comparables'
 import { InspectionCTA }   from './InspectionCTA'
 import { InsuranceCTA }    from './InsuranceCTA'
 import { CopyButton }      from './CopyButton'
@@ -16,16 +16,12 @@ const fmt        = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})
 const floorClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.floor(n / u) * u }
 const roundClean = (n: number) => { const u = n >= 50_000 ? 5_000 : 1_000; return Math.round(n / u) * u }
 
-function dataConfidenceLevel(count: number): 'high' | 'medium' | 'limited' {
-  if (count >= 10) return 'high'
-  if (count >= 5)  return 'medium'
-  return 'limited'
-}
-
+// Keyed by the shared ComparableConfidence type — the band thresholds now live
+// once, in lib/comparables.ts, alongside the cohort they describe.
 const CONFIDENCE_CONFIG = {
-  high:    { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Cukup stabil untuk dijadikan panduan.' },
-  medium:  { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Guna sebagai panduan awal sahaja.' },
-  limited: { label: 'Data pasaran terhad',        labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Data terhad. Guna sebagai anggaran kasar sahaja.' },
+  high:   { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Cukup stabil untuk dijadikan panduan.' },
+  medium: { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Guna sebagai panduan awal sahaja.' },
+  low:    { label: 'Data pasaran terhad',       labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Data terhad. Guna sebagai anggaran kasar sahaja.' },
 } as const
 
 function translateCoverType(ct: string): string {
@@ -128,8 +124,25 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const mPrices          = cohort.prices
   const marketMin        = cohort.min
   const marketMax        = cohort.max
-  const marketMedian     = cohort.count >= 2 ? cohort.median : null
-  const hasMarketData = askingPriceRm != null && marketMin != null && marketMax != null
+  // The cohort's real median, whatever the sample size. Do NOT null this to
+  // express "not enough data" — that is what formatted as RM0 in the buyer's
+  // negotiation script. Sample-size policy lives in evaluateVerdictEligibility.
+  const marketMedian     = cohort.median
+
+  // The one rule deciding whether a verdict may be published at all.
+  const eligibility   = evaluateVerdictEligibility(cohort, askingPriceRm)
+  const isProvisional = eligibility.evidenceLevel === 'provisional'
+  // A variant mismatch now suppresses the verdict outright, so the VARIAN KHAS
+  // card can no longer key off verdictSource === 'market' alone — there is no
+  // market verdict any more. Without this the suppression would silently fall
+  // through to a depreciation verdict and lose the explanation.
+  // (buildComparableCohort only ever returns mixed_variants for a special
+  // variant, so this implies isSpecialVariant.)
+  const variantSuppressed = eligibility.suppressionReason === 'mixed_variants'
+  // Every median-dependent figure hangs off this, so a null median can never
+  // reach currency formatting.
+  const hasMarketData = eligibility.eligible
+    && marketMedian != null && marketMin != null && marketMax != null
   const priceVerdict  = !hasMarketData ? null
     : askingPriceRm! < marketMin! ? 'good_deal'    as const
     : askingPriceRm! <= marketMax! ? 'fair_price'  as const
@@ -159,21 +172,26 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
     ? wmNewPrice * Math.max(0.20, Math.pow(depreciationRate, new Date().getFullYear() - regYear))
     : null
 
-  const depreciationVerdict = (() => {
-    if (!hasDepreciation || depreciationExpected == null) return null
-    if (askingPriceRm! < depreciationExpected * 0.90)  return 'good_deal'    as const
-    if (askingPriceRm! <= depreciationExpected * 1.05)  return 'fair_price'  as const
-    if (askingPriceRm! <= depreciationExpected * 1.15)  return 'slightly_high' as const
-    return 'overpriced' as const
-  })()
+  // Depreciation is SUPPORTING CONTEXT, never a verdict.
+  //
+  // It used to produce its own MAHAL/WAJAR/BERBALOI badge, which meant a
+  // one-listing cohort still showed "MAHAL" in 22px red. The distinction
+  // between "market says MAHAL" and "a depreciation curve says MAHAL" is
+  // invisible to a buyer — they read the badge, not the footnote. So a cohort
+  // Paqar refuses to judge now renders no badge at all.
+  const insufficientData = eligibility.suppressionReason === 'insufficient_data'
+  const showDepreciationEstimate = insufficientData && depreciationExpected != null
 
-  const effectiveVerdict = priceVerdict ?? depreciationVerdict
-  const verdictSource    = priceVerdict ? 'market' : depreciationVerdict ? 'depreciation' : null
+  const effectiveVerdict = priceVerdict
+  const verdictSource    = priceVerdict ? 'market' : null
 
   // New-price context — only shown WITH an interpretation (lib/depreciation.ts);
   // a bare new-price anchor next to market data is the dealer's pitch.
   // Suppressed for special variants: the median is other variants' prices.
-  const depreciationInsight = (!isSpecialVariant && wmNewPrice != null && marketMedian != null && regYear != null)
+  // Requires an eligible cohort: this interprets the new price AGAINST the
+  // market median, so on a one-ad cohort it would read a single advertisement
+  // as the market.
+  const depreciationInsight = (!isSpecialVariant && hasMarketData && wmNewPrice != null && marketMedian != null && regYear != null)
     ? assessDepreciation(Number(wmNewPrice), marketMedian, new Date().getFullYear() - regYear)
     : null
   const vehicleNotFound  = !vehicleData?.make
@@ -236,12 +254,50 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       )}
 
       {/* 1. Keputusan Paqar — top decision card */}
-      {effectiveVerdict != null && (() => {
+      {/* Insufficient comparables: a neutral estimate, not a judgement. No
+          MAHAL/WAJAR/BERBALOI badge appears anywhere in this state. */}
+      {showDepreciationEstimate && !variantSuppressed && (
+        <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[14px] p-5">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
+            Anggaran berdasarkan susut nilai
+          </p>
+          <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-4">
+            Belum cukup iklan setanding untuk beri keputusan harga pasaran. Anggaran ini
+            berdasarkan harga baharu dan umur kenderaan sahaja — bukan harga pasaran semasa.
+          </p>
+          <div className="space-y-2.5">
+            {askingPriceRm != null && (
+              <div className="flex items-center justify-between">
+                <p className="font-body text-[12px] text-[#6B7280]">Seller minta</p>
+                <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(askingPriceRm)}</p>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <p className="font-body text-[12px] text-[#6B7280]">Anggaran susut nilai</p>
+              <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(roundClean(depreciationExpected!))}</p>
+            </div>
+            <div className="pt-2 border-t border-black/10">
+              <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Cadangan</p>
+              <p className="font-heading font-bold text-[13px] text-[#111827]">
+                Guna angka ini sebagai rujukan kasar sahaja. Semak beberapa iklan model yang
+                sama sendiri sebelum bayar deposit.
+              </p>
+            </div>
+            <p className="font-body text-[11px] text-[#9CA3AF] leading-relaxed">
+              {mPrices.length === 0
+                ? 'Tiada iklan setanding dijumpai buat masa ini.'
+                : `Hanya ${mPrices.length} iklan setanding dijumpai — terlalu sedikit untuk harga pasaran.`}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {(effectiveVerdict != null || variantSuppressed) && (() => {
         // Special variant + market-based verdict: the comps are other
         // variants' prices, so a confident MAHAL/BERBALOI would be a lie
         // (a JCW GP at RM150k is not "RM29k over" base-Cooper listings).
         // Say what we know, say what we can't, tell the buyer what to do.
-        if (isSpecialVariant && verdictSource === 'market') {
+        if (isSpecialVariant && (verdictSource === 'market' || variantSuppressed)) {
           return (
             <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
               <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
@@ -281,6 +337,10 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             </div>
           )
         }
+
+        // Reachable only with a verdict: a suppressed special variant already
+        // returned the VARIAN KHAS card above.
+        if (!effectiveVerdict) return null
 
         // A price FAR below the market floor is a scam/hidden-problem
         // signature (deposit scams, accident/flood cars), not a bargain —
@@ -342,10 +402,15 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                 <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Cadangan</p>
                 <p className="font-heading font-bold text-[13px] text-[#111827]">{cadangan}</p>
               </div>
-              {verdictSource === 'depreciation' && (
-                <p className="font-body text-[10px] text-[#9CA3AF]">
-                  Anggaran berdasarkan harga baru & umur kenderaan. Tiada data pasaran semasa untuk model ini.
-                </p>
+              {isProvisional && verdictSource === 'market' && (
+                // 3–4 comparables. Deliberately not fine print: a buyer who
+                // negotiates on this needs to know how thin the evidence is
+                // before the seller pushes back.
+                <div className="bg-black/5 rounded-lg px-3 py-2">
+                  <p className="font-body text-[12px] text-[#111827] leading-relaxed">
+                    Anggaran awal — hanya {mPrices.length} iklan setanding dijumpai.
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -443,14 +508,20 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               </div>
             )}
 
+            {/* Raw evidence (the individual listing prices) is honest at any
+                sample size. The AGGREGATE claims — "harga tengah pasaran" and
+                the trade-in band — are not: one advertisement is not a market
+                median, and this block is where that used to render (as RM0
+                when the median was nulled, and as a confident single-ad median
+                once it wasn't). Both now require verdict eligibility. */}
             {mPrices.length > 0 && marketPrices && (() => {
-              const median  = marketMedian!
+              const showAggregate = hasMarketData && marketMedian != null
               const daysAgo = Math.floor((Date.now() - new Date(marketPrices.fetchedAt).getTime()) / 86_400_000)
               // Confidence reflects sample quantity AND cohort specificity.
               // same_variant/normal → by count; mixed_variants → capped at
               // "Sederhana" so high confidence can never sit over a mixed set
               // (the banner + methodology always flag the mixed cohort).
-              const byCount   = dataConfidenceLevel(mPrices.length)
+              const byCount   = comparableConfidence(mPrices.length)
               const confLevel = cohort.mode === 'mixed_variants' && byCount === 'high' ? 'medium' : byCount
               const conf      = CONFIDENCE_CONFIG[confLevel]
 
@@ -459,26 +530,34 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               // other years/variants in); without this line, our rigor reads as gaps.
               const excludedCount = (marketPrices.listings.length ?? 0) - relevantListings.length
 
-              // Trade-in estimate (only when median is valid). Floor/ceil so
-              // cheap cars can't collapse to "RM7,000 – RM7,000"
-              const tradeInLow  = Math.floor(median * 0.80 / 1000) * 1000
-              const tradeInHigh = Math.ceil(median * 0.85 / 1000) * 1000
+              // Trade-in estimate (only when the median may be published).
+              // Floor/ceil so cheap cars can't collapse to "RM7,000 – RM7,000"
+              const tradeInLow  = showAggregate ? Math.floor(marketMedian * 0.80 / 1000) * 1000 : null
+              const tradeInHigh = showAggregate ? Math.ceil(marketMedian * 0.85 / 1000) * 1000 : null
 
 
               return (
                 <div className="mb-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="font-heading font-bold text-[12px] text-[#111827]">Bukti Harga Pasaran</p>
+                    {/* "Evidence of market price" only when there is enough of
+                        it to be evidence. Otherwise this is simply the ads we
+                        found, and must not be titled as proof of a price. */}
+                    <p className="font-heading font-bold text-[12px] text-[#111827]">
+                      {showAggregate ? 'Bukti Harga Pasaran' : 'Iklan Dijumpai'}
+                    </p>
                     <p className="font-body text-[10px] text-[#9CA3AF]">
                       {daysAgo === 0 ? 'Hari ini' : `${daysAgo} hari lalu`}
                     </p>
                   </div>
 
-                  {/* Median — prominent anchor */}
-                  <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2">
-                    <p className="font-body text-[12px] text-[#6B7280]">Harga tengah pasaran</p>
-                    <p className="font-heading font-bold text-[14px] text-[#064E4A]">RM{fmt(median)}</p>
-                  </div>
+                  {/* Median — prominent anchor. Only ever shown for a cohort
+                      Paqar would issue a verdict on. */}
+                  {showAggregate && (
+                    <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2">
+                      <p className="font-body text-[12px] text-[#6B7280]">Harga tengah pasaran</p>
+                      <p className="font-heading font-bold text-[14px] text-[#064E4A]">RM{fmt(marketMedian)}</p>
+                    </div>
+                  )}
 
                   <p className="font-body text-[11px] text-[#6B7280]">
                     {vehicleData?.registrationYear
@@ -514,7 +593,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
                   {/* Trade-in estimate — median-derived, so meaningless for
                       special variants whose comps are other variants */}
-                  {!isSpecialVariant && (
+                  {!isSpecialVariant && tradeInLow != null && tradeInHigh != null && (
                     <div className="mt-1 pt-3 border-t border-[#F3F4F6]">
                       <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
                       <p className="font-heading font-bold text-[14px] text-[#111827]">
@@ -604,7 +683,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       })()}
 
       {/* 3. Skrip Rundingan */}
-      {effectiveVerdict && askingPriceRm != null && vehicleData?.make && (() => {
+      {(effectiveVerdict || variantSuppressed || showDepreciationEstimate) && askingPriceRm != null && vehicleData?.make && (() => {
         const make    = String(vehicleData.make ?? '')
         const model   = String(vehicleData.model ?? '')
         const year    = String(vehicleData.registrationYear ?? '')
@@ -613,7 +692,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         // Special variant: quoting the generic median at the seller would
         // embarrass the buyer ("RM99k for a GP?"). The script's job here is
         // variant verification, not price anchoring.
-        if (isSpecialVariant && verdictSource === 'market') {
+        if (isSpecialVariant && (verdictSource === 'market' || variantSuppressed)) {
           const specialScript = `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya faham ini varian ${officialVariant}. Boleh tuan/puan sahkan varian ni dalam geran atau rekod kenderaan, dan share sejarah servis?\n\nSaya serius nak beli kalau semua okay — boleh saya buat inspection sebelum bayar deposit?`
           return (
             <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -634,26 +713,67 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           )
         }
 
-        // Market-data scripts include live RM ranges; depreciation scripts use expected value as target
-        const depOffer = depreciationExpected != null ? fmt(roundClean(depreciationExpected * 0.95)) : null
-        const listingCount = mPrices.length
-        const scripts: Record<typeof effectiveVerdict, string> = hasMarketData ? {
-          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} listing serupa di pasaran — harga tengah pasaran sekarang RM${fmt(marketMedian!)}, dalam julat RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm)} agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
-          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} listing serupa di pasaran — harga tengah pasaran sekarang RM${fmt(marketMedian!)}, dalam julat RM${fmt(marketMin!)}–RM${fmt(marketMax!)}.\n\nHarga RM${fmt(askingPriceRm)} sedikit di atas pasaran. Boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?`,
-          fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nSaya dah semak ${listingCount} listing serupa — harga tengah pasaran sekitar RM${fmt(marketMedian!)}. Harga tuan/puan nampak okay. Apa harga terbaik yang boleh offer?`,
-          good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga ni nampak menarik berbanding pasaran. Bila boleh saya datang tengok? Saya serius nak beli.`,
-        } : {
-          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nBerdasarkan harga baru dan umur kenderaan ini, harga RM${fmt(askingPriceRm)} nampak agak tinggi. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${depOffer ?? '...'}?`,
-          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nBerdasarkan harga baru dan umur kenderaan ini, harga RM${fmt(askingPriceRm)} sedikit tinggi. Boleh consider harga yang lebih berpatutan?`,
-          fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak okay untuk kereta umur ini. Apa harga terbaik yang boleh tuan/puan offer?`,
-          good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga nampak menarik. Bila boleh saya datang tengok kereta?`,
+        // Not enough comparables. The script may still help the buyer open a
+        // conversation, but it must name its own basis: this is a depreciation
+        // curve, not evidence about the current market. It deliberately avoids
+        // "harga tengah pasaran" and "listing serupa" entirely.
+        if (showDepreciationEstimate) {
+          const depScript = `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nPaqar belum menemui cukup iklan setanding untuk menentukan harga pasaran. Berdasarkan harga baharu dan umur kenderaan sahaja, anggaran kasarnya sekitar RM${fmt(roundClean(depreciationExpected!))}.\n\nBoleh kita bincang harga? Saya serius nak beli kalau condition okay — boleh saya buat inspection sebelum bayar deposit?`
+          return (
+            <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+              <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-3">
+                Skrip Rundingan
+              </p>
+              <div className="bg-[#F9FAFB] rounded-lg p-4 mb-3">
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed whitespace-pre-line">
+                  {depScript}
+                </p>
+              </div>
+              <CopyButton text={depScript} />
+              <p className="font-body text-[11px] text-[#9CA3AF] mt-3 leading-relaxed">
+                Anggaran susut nilai bukan harga pasaran. Semak beberapa iklan model yang sama
+                sendiri sebelum setuju harga.
+              </p>
+            </div>
+          )
         }
+
+        // Reachable only when a market verdict exists.
+        if (!effectiveVerdict) return null
+
+        const listingCount = mPrices.length
+
+        // Narrow ONCE, explicitly. The previous `fmt(marketMedian!)` assertions
+        // are what let a null median render as "RM0" inside the very string the
+        // buyer pastes to a seller. If any figure is missing the market scripts
+        // are not built at all, and the depreciation wording is used instead.
+        const marketFigures = hasMarketData && marketMedian != null && marketMin != null && marketMax != null
+          ? { median: fmt(marketMedian), min: fmt(marketMin), max: fmt(marketMax) }
+          : null
+
+        // A provisional cohort (3–4 comparables) may still speak, but not with
+        // the confidence of a full one — the seller will push back, and the
+        // buyer should not be over-committed to a thin number.
+        const provisionalNote = isProvisional
+          ? `\n\n(Nota: ini anggaran awal — hanya ${listingCount} iklan setanding dijumpai.)`
+          : ''
+
+        const scripts: Record<NonNullable<typeof effectiveVerdict>, string> | null = marketFigures ? {
+          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} listing serupa di pasaran — harga tengah pasaran sekarang RM${marketFigures.median}, dalam julat RM${marketFigures.min}–RM${marketFigures.max}.\n\nHarga RM${fmt(askingPriceRm)} agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?${provisionalNote}`,
+          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} listing serupa di pasaran — harga tengah pasaran sekarang RM${marketFigures.median}, dalam julat RM${marketFigures.min}–RM${marketFigures.max}.\n\nHarga RM${fmt(askingPriceRm)} sedikit di atas pasaran. Boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?${provisionalNote}`,
+          fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nSaya dah semak ${listingCount} listing serupa — harga tengah pasaran sekitar RM${marketFigures.median}. Harga tuan/puan nampak okay. Apa harga terbaik yang boleh offer?${provisionalNote}`,
+          good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga ni nampak menarik berbanding pasaran. Bila boleh saya datang tengok? Saya serius nak beli.`,
+        } : null
+        // Unreachable: effectiveVerdict is market-only, so marketFigures is
+        // always present here. Kept as a type-safe guard rather than an
+        // assertion.
+        if (!scripts) return null
         const script = scripts[effectiveVerdict]
 
         // Follow-up for when the seller pushes back — negotiations rarely end
         // after one message. Only shown when we have a concrete target price.
         const followUpTarget = (effectiveVerdict === 'overpriced' || effectiveVerdict === 'slightly_high')
-          ? (hasMarketData ? fmt(offerHigh) : depOffer)
+          ? fmt(offerHigh)
           : null
         const followUpScript = followUpTarget
           ? `Saya faham tuan/puan ada harga sendiri. Tapi berdasarkan listing yang saya semak, RM${followUpTarget} memang harga pasaran sekarang.\n\nKalau boleh buat RM${followUpTarget}, saya boleh confirm minggu ini juga. Kalau tak boleh, takpe — terima kasih, saya consider unit lain.`

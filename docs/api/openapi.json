@@ -103,7 +103,7 @@
                     "marketMin": { "type": ["number", "null"] },
                     "marketMax": { "type": ["number", "null"] },
                     "marketCount": { "type": "number" },
-                    "confidence": { "type": "string", "enum": ["high", "medium", "low", "limited"] },
+                    "confidence": { "type": "string", "enum": ["high", "medium", "low"], "description": "Weight of the comparable set. high = 10+ listings, medium = 5-9, low = 0-4. Mixed-variant cohorts are capped at medium. Separate from whether Paqar would issue a buyer-facing verdict." },
                     "isSpecialVariant": { "type": "boolean" }
                   }
                 }

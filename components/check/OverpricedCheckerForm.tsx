@@ -6,6 +6,27 @@ import type { CreateCheckResponse, Verdict, PriceCheckResult } from '@/types/api
 import { analytics }   from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
 import { trackAdEvent } from '@/lib/meta-events'
+import { comparableConfidence } from '@/lib/comparables'
+
+// Shared by the verdict and the suppressed-verdict branches: a mixed-variant
+// cohort still has a real, useful range, and the buyer deserves to know how
+// much weight it carries even when Paqar declines to judge the price.
+function ConfidenceChip({ count }: { count: number }) {
+  const conf = {
+    high:   { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Cukup stabil untuk dijadikan panduan.' },
+    medium: { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Guna sebagai panduan awal sahaja.' },
+    low:    { label: 'Data pasaran terhad',       labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Data terhad. Guna sebagai anggaran kasar sahaja.' },
+  }[comparableConfidence(count)]
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-1.5">
+        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${conf.dot}`} />
+        <span className={`font-body text-[11px] font-semibold ${conf.labelCls}`}>{conf.label}</span>
+      </div>
+      <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">{conf.text}</p>
+    </div>
+  )
+}
 
 type FormState = 'idle' | 'loading' | 'result' | 'error'
 
@@ -242,7 +263,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
       setFormState('result')
       analytics.verdictViewed(
         data.hasData
-          ? { verdict: data.verdict, listing_count: data.listingCount, has_data: true }
+          ? { verdict: data.verdict ?? 'suppressed', listing_count: data.listingCount, has_data: true }
           : { verdict: 'no_data', listing_count: 0, has_data: false }
       )
     } catch {
@@ -405,19 +426,33 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
   }
 
   // ── Result ─────────────────────────────────────────────────────────────
-  const hasDataResult  = result && result.hasData ? result : null
-  const cfg            = hasDataResult ? VERDICT_CONFIG[hasDataResult.verdict] : null
-  const noData         = !hasDataResult || !cfg
-  const isNegVerdict   = hasDataResult?.verdict === 'overpriced' || hasDataResult?.verdict === 'slightly_high'
-  const askInt         = parseInt(askingPrice, 10)
-  const suggestedOffer = (isNegVerdict && hasDataResult)
-    ? computeSuggestedOffer(hasDataResult.minPrice, hasDataResult.medianPrice, hasDataResult.maxPrice, askInt, hasDataResult.listingCount)
+  const dataResult    = result && result.hasData ? result : null
+  // Suppressed = we have a real range but the comparables are the wrong
+  // variant, so no MAHAL/WAJAR/BERBALOI may be shown at any listing count.
+  const suppressed    = dataResult?.verdictStatus === 'suppressed'
+  const isProvisional = dataResult?.verdictStatus === 'provisional'
+  const cfg           = dataResult?.verdict ? VERDICT_CONFIG[dataResult.verdict] : null
+  const noData        = dataResult == null
+  const showVerdict   = dataResult != null && cfg != null && !suppressed
+
+  const askInt        = parseInt(askingPrice, 10)
+  const isNegVerdict  = showVerdict
+    && (dataResult.verdict === 'overpriced' || dataResult.verdict === 'slightly_high')
+  // Anchored on the median, so it must not be built from a suppressed or
+  // incomplete cohort.
+  const suggestedOffer = (isNegVerdict && dataResult.minPrice != null
+      && dataResult.medianPrice != null && dataResult.maxPrice != null)
+    ? computeSuggestedOffer(dataResult.minPrice, dataResult.medianPrice, dataResult.maxPrice, askInt, dataResult.listingCount)
     : null
 
   return (
     <div className="space-y-3 w-full overflow-x-hidden">
       <CollapsedSummary brand={brand} model={model} year={year} askingPrice={askingPrice} onReset={resetForm} />
-      <div className={`border rounded-[14px] p-5 overflow-hidden ${noData ? 'bg-[#F9FAFB] border-[#E5E7EB]' : `${cfg!.cardBg} ${cfg!.cardBorder}`}`}>
+      <div className={`border rounded-[14px] p-5 overflow-hidden ${
+        noData     ? 'bg-[#F9FAFB] border-[#E5E7EB]'
+        : suppressed ? 'bg-[#FFFBEB] border-[#FDE68A]'
+        : `${cfg!.cardBg} ${cfg!.cardBorder}`
+      }`}>
         {noData ? (
           <>
             {retried ? (
@@ -434,6 +469,33 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
                 : 'Ambil masa sebentar — atau teruskan dengan Laporan Pembeli sekarang.'}
             </p>
           </>
+        ) : suppressed ? (
+          <>
+            {/* Variant mismatch. The range is real and worth showing; a
+                confident verdict against other variants' prices would be a
+                lie, however many listings there are. */}
+            <span className="inline-block font-heading font-bold text-[11px] rounded-[5px] px-3 py-1 mb-2 bg-[#FEF3C7] text-[#B45309]">
+              VARIAN KHAS
+            </span>
+            <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
+              Varian ini bercampur dalam iklan pasaran, jadi kami tidak beri keputusan harga.
+            </p>
+            <p className="font-body text-[12px] text-[#6B7280] mb-1 leading-relaxed">
+              {dataResult!.variantToken
+                ? `Iklan untuk “${dataResult!.variantToken}” terlalu sedikit — yang ada di bawah termasuk varian lain, dan harganya jauh berbeza.`
+                : 'Iklan yang ada termasuk varian lain, dan harganya jauh berbeza.'}
+            </p>
+            {dataResult!.minPrice != null && dataResult!.maxPrice != null && (
+              <p className="font-body text-[12px] text-[#6B7280] mb-1">
+                Julat iklan dijumpai: RM{dataResult!.minPrice.toLocaleString()} – RM{dataResult!.maxPrice.toLocaleString()}
+              </p>
+            )}
+            <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
+              Berdasarkan {dataResult!.listingCount} listing pasaran terkini
+              {dataResult!.fetchedAt ? ` · Dikemaskini: ${formatFetchedAt(dataResult!.fetchedAt)}` : ''}
+            </p>
+            <ConfidenceChip count={dataResult!.listingCount} />
+          </>
         ) : (
           <>
             <span className={`inline-block font-heading font-bold text-[11px] rounded-[5px] px-3 py-1 mb-2 ${cfg!.badgeCls}`}>
@@ -442,7 +504,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
 
             {/* RM gap line */}
             {(() => {
-              const med = hasDataResult!.medianPrice
+              const med = dataResult!.medianPrice
               const ask = parseInt(askingPrice, 10)
               if (!med || isNaN(ask)) return null
               const diff = Math.abs(ask - med)
@@ -464,8 +526,9 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             {/* Short copy — a price FAR below market is a scam/hidden-problem
                 signature, not a bargain; escalate the guidance */}
             {(() => {
-              const suspiciouslyCheap = hasDataResult!.verdict === 'good_deal'
-                && askInt > 0 && askInt < hasDataResult!.minPrice * 0.8
+              const suspiciouslyCheap = dataResult!.verdict === 'good_deal'
+                && askInt > 0 && dataResult!.minPrice != null
+                && askInt < dataResult!.minPrice * 0.8
               if (suspiciouslyCheap) return (
                 <p className="font-body text-[12px] font-semibold text-[#B45309] mb-1 leading-relaxed">
                   Harga ini jauh di bawah pasaran — selalunya tanda scam deposit atau kereta
@@ -479,44 +542,36 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             })()}
 
             {/* Price range */}
-            {hasDataResult!.minPrice !== hasDataResult!.maxPrice && (
+            {dataResult!.minPrice != null && dataResult!.maxPrice != null
+              && dataResult!.minPrice !== dataResult!.maxPrice && (
               <p className="font-body text-[12px] text-[#6B7280] mb-1">
-                Harga pasaran: RM{hasDataResult!.minPrice.toLocaleString()} – RM{hasDataResult!.maxPrice.toLocaleString()}
+                Harga pasaran: RM{dataResult!.minPrice.toLocaleString()} – RM{dataResult!.maxPrice.toLocaleString()}
               </p>
             )}
 
             {/* Source + count + confidence */}
             <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
-              Berdasarkan {hasDataResult!.listingCount} listing pasaran terkini
-              {hasDataResult!.fetchedAt ? ` · Dikemaskini: ${formatFetchedAt(hasDataResult!.fetchedAt)}` : ''}
+              Berdasarkan {dataResult!.listingCount} listing pasaran terkini
+              {dataResult!.fetchedAt ? ` · Dikemaskini: ${formatFetchedAt(dataResult!.fetchedAt)}` : ''}
             </p>
-            {(() => {
-              const n = hasDataResult!.listingCount
-              const level = n >= 10 ? 'high' : n >= 5 ? 'medium' : 'limited'
-              const conf = {
-                high:    { label: 'Keyakinan data: Tinggi',    labelCls: 'text-[#15803D]', dot: 'bg-[#22C55E]', text: 'Cukup stabil untuk dijadikan panduan.' },
-                medium:  { label: 'Keyakinan data: Sederhana', labelCls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', text: 'Guna sebagai panduan awal sahaja.' },
-                limited: { label: 'Data pasaran terhad',        labelCls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]', text: 'Data terhad. Guna sebagai anggaran kasar sahaja.' },
-              }[level]
-              return (
-                <div className="mb-4">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${conf.dot}`} />
-                    <span className={`font-body text-[11px] font-semibold ${conf.labelCls}`}>{conf.label}</span>
-                  </div>
-                  <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">{conf.text}</p>
-                </div>
-              )
-            })()}
+            {isProvisional && (
+              // 3–4 comparables. Sits above the confidence chip and reads as
+              // plain copy, not fine print — a buyer about to negotiate on
+              // three ads needs to know that before the seller pushes back.
+              <p className="font-body text-[12px] font-semibold text-[#B45309] mb-2 leading-relaxed">
+                Anggaran awal — hanya {dataResult!.listingCount} iklan setanding ditemui.
+              </p>
+            )}
+            <ConfidenceChip count={dataResult!.listingCount} />
           </>
         )}
 
         {/* Negotiation nudge — shown only for overpriced/slightly_high with enough data */}
-        {suggestedOffer !== null && hasDataResult && (
+        {suggestedOffer !== null && dataResult?.minPrice != null && dataResult?.maxPrice != null && (
           <NegotiationNudge
             askingPrice={askInt}
-            minPrice={hasDataResult.minPrice}
-            maxPrice={hasDataResult.maxPrice}
+            minPrice={dataResult.minPrice}
+            maxPrice={dataResult.maxPrice}
             suggestedOffer={suggestedOffer}
           />
         )}

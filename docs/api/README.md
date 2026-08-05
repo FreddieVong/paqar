@@ -121,16 +121,27 @@ Returns full valuation including market context.
   "marketMin": "number | null",
   "marketMax": "number | null",
   "marketCount": "number",
-  "confidence": "high | medium | low | limited",
+  "confidence": "high | medium | low",
   "isSpecialVariant": "boolean"
 }
 ```
 
-**Confidence Levels:**
-- `high` — 10+ market comparables, exact or near-exact variant match
-- `medium` — 3-10 comparables
-- `low` — <3 comparables or generic variant match
-- `limited` — Special variant (premium/rare) with insufficient exact matches
+**Confidence Levels** — the weight of the comparable set, not a verdict:
+- `high` — 10 or more comparables
+- `medium` — 5–9 comparables
+- `low` — 0–4 comparables
+
+A mixed-variant cohort (`marketCohort: "mixed_variants"`) is capped at `medium`,
+never `high`, however many listings it contains.
+
+> **Changed:** cohorts of 3–4 comparables previously reported `medium` and now
+> report `low`, matching what the report UI has always shown for the same
+> cohort. The value `limited` was documented but never emitted; it has been
+> removed from the schema.
+
+This endpoint returns statistics only and deliberately issues no buyer-facing
+verdict. Paqar's own verdict policy is stricter than these bands — see
+[TRANSPARENCY.md](TRANSPARENCY.md#confidence-and-verdict-eligibility).
 
 **Errors:**
 - `400` — Missing required parameters
@@ -200,7 +211,7 @@ No authentication required for public endpoints. API keys for higher rate limits
 
 Paqar data comes from:
 - **NVIC (Vehicle registry):** Make, model, year, color, mileage, registration details
-- **Mudah.my & Carlist:** Market listing prices (filtered for outliers, junk rows)
+- **Mudah.my:** Market listing prices (filtered by year, trimmed for outliers)
 - **JomCheck:** Vehicle inspection history (if available)
 - **JPJ:** Road tax, engine capacity, body type
 
