@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api/errors'
+import { comparableConfidence } from '@/lib/comparables'
 import { RateLimiter } from '@/lib/api/rate-limit'
 
 /**
@@ -193,54 +194,34 @@ describe('Valuation Endpoint', () => {
   })
 
   describe('Confidence Mapping', () => {
-    it('limits confidence to "low" for special variants', () => {
-      // Special variants always get "low" confidence
-      const isSpecialVariant = true
-      const marketCount = 50
-      const confidence = isSpecialVariant ? 'low' : (
-        marketCount < 3 ? 'low' : marketCount < 10 ? 'medium' : 'high'
-      )
-      expect(confidence).toBe('low')
+    // These previously re-implemented the band logic inline and asserted their
+    // own expression, so they passed no matter what production did — and the
+    // API had already drifted from the UI at counts of 3-4 without any test
+    // noticing. They now exercise the one shared helper.
+
+    it.each([
+      [0,  'low'],
+      [2,  'low'],
+      [3,  'low'],
+      [4,  'low'],
+      [5,  'medium'],
+      [9,  'medium'],
+      [10, 'high'],
+      [50, 'high'],
+    ] as const)('maps %i comparables to %s', (count, expected) => {
+      expect(comparableConfidence(count)).toBe(expected)
     })
 
-    it('returns "low" confidence for <3 market listings', () => {
-      // Less than 3 listings = low confidence
-      const isSpecialVariant = false
-      const marketCount = 2
-      const confidence = isSpecialVariant ? 'low' : (
-        marketCount < 3 ? 'low' : marketCount < 10 ? 'medium' : 'high'
-      )
-      expect(confidence).toBe('low')
+    it('reports low for 3-4 comparables (was medium before the bands were shared)', () => {
+      // Documented behaviour change: the API used to call a 3-listing cohort
+      // "medium" while the report UI called the same cohort "Data pasaran
+      // terhad". Both now say low.
+      expect(comparableConfidence(3)).toBe('low')
+      expect(comparableConfidence(4)).toBe('low')
     })
 
-    it('returns "medium" confidence for 3-10 market listings', () => {
-      // 3-10 listings = medium confidence
-      const isSpecialVariant = false
-      const marketCount = 5
-      const confidence = isSpecialVariant ? 'low' : (
-        marketCount < 3 ? 'low' : marketCount < 10 ? 'medium' : 'high'
-      )
-      expect(confidence).toBe('medium')
-    })
-
-    it('returns "high" confidence for 10+ market listings', () => {
-      // 10+ listings = high confidence
-      const isSpecialVariant = false
-      const marketCount = 15
-      const confidence = isSpecialVariant ? 'low' : (
-        marketCount < 3 ? 'low' : marketCount < 10 ? 'medium' : 'high'
-      )
-      expect(confidence).toBe('high')
-    })
-
-    it('defaults to "low" when market data unavailable', () => {
-      // When no market data, default to "low"
-      const isSpecialVariant = false
-      const marketCount = 0
-      const confidence = isSpecialVariant ? 'low' : (
-        marketCount < 3 ? 'low' : marketCount < 10 ? 'medium' : 'high'
-      )
-      expect(confidence).toBe('low')
+    it('never labels a cohort high below 10 comparables', () => {
+      for (let n = 0; n < 10; n++) expect(comparableConfidence(n)).not.toBe('high')
     })
   })
 

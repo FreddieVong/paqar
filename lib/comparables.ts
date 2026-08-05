@@ -78,6 +78,95 @@ interface CohortOptions {
   minSample?:        number
 }
 
+// ── Product policy ─────────────────────────────────────────────────────────
+//
+// Deliberately separate from the cohort statistics above. A one-listing cohort
+// genuinely HAS a median — that single price — and the cohort must keep
+// reporting it, because the cohort's job is to describe the evidence
+// truthfully. What changes with sample size is not the arithmetic but whether
+// Paqar has earned the right to tell a buyer "this is MAHAL".
+//
+// Conflating the two is what produced the RM0 bug: the report nulled the median
+// to express "not enough data", then formatted that null as currency and pasted
+// "harga tengah pasaran sekarang RM0" into the message the buyer sends the
+// seller. Policy belongs in a policy function, not in a statistic.
+
+/** Minimum comparables before any buyer-facing verdict may be shown. */
+export const MIN_LISTINGS_FOR_VERDICT = 3
+/** At or above this, a verdict carries no provisional caveat. */
+export const MIN_LISTINGS_FOR_NORMAL_VERDICT = 5
+
+export type VerdictSuppressionReason =
+  | 'insufficient_data'
+  | 'mixed_variants'
+  | 'missing_asking_price'
+
+export type VerdictEvidenceLevel =
+  | 'none'
+  | 'provisional'
+  | 'normal'
+
+export interface VerdictEligibility {
+  eligible:          boolean
+  evidenceLevel:     VerdictEvidenceLevel
+  suppressionReason: VerdictSuppressionReason | null
+}
+
+/**
+ * The single rule deciding whether Paqar may publish a price verdict.
+ *
+ *   no asking price          → nothing to judge against
+ *   mixed special variants   → never, at any count: comparing a GTI to base
+ *                              Golfs is wrong however many Golfs there are
+ *   0–2 comparables          → no verdict
+ *   3–4 comparables          → provisional, and the caller MUST show a caution
+ *   5+ comparables           → normal
+ *
+ * Variant mismatch is checked before count on purpose — it is a correctness
+ * failure, not a sample-size one, so more listings cannot cure it.
+ */
+export function evaluateVerdictEligibility(
+  cohort: Pick<ComparableCohort, 'count' | 'median' | 'min' | 'max' | 'mode' | 'variantToken'>,
+  askingPriceRm?: number | null,
+): VerdictEligibility {
+  if (askingPriceRm == null) {
+    return { eligible: false, evidenceLevel: 'none', suppressionReason: 'missing_asking_price' }
+  }
+
+  if (cohort.mode === 'mixed_variants' && cohort.variantToken != null) {
+    return { eligible: false, evidenceLevel: 'none', suppressionReason: 'mixed_variants' }
+  }
+
+  if (
+    cohort.count < MIN_LISTINGS_FOR_VERDICT ||
+    cohort.median == null || cohort.min == null || cohort.max == null
+  ) {
+    return { eligible: false, evidenceLevel: 'none', suppressionReason: 'insufficient_data' }
+  }
+
+  if (cohort.count < MIN_LISTINGS_FOR_NORMAL_VERDICT) {
+    return { eligible: true, evidenceLevel: 'provisional', suppressionReason: null }
+  }
+
+  return { eligible: true, evidenceLevel: 'normal', suppressionReason: null }
+}
+
+export type ComparableConfidence = 'low' | 'medium' | 'high'
+
+/**
+ * How much weight the comparable SET carries — distinct from whether a verdict
+ * may be issued at all. A 4-listing cohort is verdict-eligible (provisional)
+ * AND low confidence; a 12-listing mixed-variant cohort is high confidence in
+ * its range but not verdict-eligible at all. Keep the two concepts apart.
+ *
+ * Previously duplicated in three places, two of which had already drifted.
+ */
+export function comparableConfidence(count: number): ComparableConfidence {
+  if (count >= 10) return 'high'
+  if (count >= MIN_LISTINGS_FOR_NORMAL_VERDICT) return 'medium'
+  return 'low'
+}
+
 function medianOf(prices: number[]): number | null {
   if (prices.length === 0) return null
   const sorted = [...prices].sort((a, b) => a - b)
