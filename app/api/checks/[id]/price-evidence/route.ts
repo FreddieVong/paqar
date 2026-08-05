@@ -30,12 +30,16 @@ export const dynamic = 'force-dynamic'
  *
  * WHAT IT DELIBERATELY WITHHOLDS
  *
- * There is no `medianPrice` in the response, and that is a structural choice
- * rather than an oversight. The median is the negotiation anchor — the report
- * builds its target offer, trade-in band and seller script from it. Free gets
- * the EVIDENCE (where the price sits in the market); RM12 keeps the ACTION
- * (what to offer and what to say). A field that is never serialised cannot
- * leak through a UI change later.
+ * No median, no range, no comparable count — all computed, none serialised.
+ *
+ * Free answers WHETHER the price is right. RM12 answers WHAT TO DO about it:
+ * the median, the range, the gap, the offer to make and the words to say. The
+ * count goes too, because it is the one number that describes Paqar's process
+ * rather than the buyer's car — it invites auditing the sample instead of
+ * acting on the conclusion, and no count reads as impressive to a layperson.
+ *
+ * Withholding at the API rather than in the UI is the structural guarantee: a
+ * field that is never sent cannot leak through a later markup change.
  *
  * Same pipeline as the model checker and the paid report: buildComparableCohort
  * → evaluateVerdictEligibility → comparableConfidence. No second source of
@@ -114,7 +118,6 @@ export async function GET(
     return NextResponse.json({
       state: 'evidence', vehicle,
       verdict: null, verdictStatus: 'suppressed', verdictReason: 'insufficient_data',
-      listingCount: cohort.count, minPrice: null, maxPrice: null,
       confidence: comparableConfidence(cohort.count),
       cohortMode: cohort.mode, variantToken: cohort.variantToken,
       fetchedAt: cached.fetchedAt,
@@ -124,14 +127,12 @@ export async function GET(
   const base = {
     state:        'evidence' as const,
     vehicle,
-    listingCount: cohort.count,
-    minPrice:     cohort.min,
-    maxPrice:     cohort.max,
     confidence:   comparableConfidence(cohort.count),
     cohortMode:   cohort.mode,
     variantToken: cohort.variantToken,
     fetchedAt:    cached.fetchedAt,
-    // NOTE: medianPrice is intentionally absent. See the header comment.
+    // NOTE: median, min, max and listingCount are all intentionally absent.
+    // See the header comment — this endpoint returns a judgement, not data.
   }
 
   if (eligibility.suppressionReason === 'mixed_variants') {

@@ -80,11 +80,14 @@ describe('the negotiation anchor is never exposed for free', () => {
       .toEqual(['make', 'model', 'registrationyear', 'description'])
   })
 
-  it('still returns the range, which is evidence rather than an anchor', async () => {
+  it('omits the range and the comparable count too', async () => {
+    // Both paths now answer WHETHER, never by how much. The count in
+    // particular describes Paqar's sample rather than the buyer's car.
     getMarket.mockResolvedValue({ listings: listings(6), fetchedAt: 'x', searchUrl: '' })
     const d = await call(QS)
-    expect(d.minPrice).toBe(40_000)
-    expect(d.maxPrice).toBe(45_000)
+    for (const field of ['minPrice', 'maxPrice', 'medianPrice', 'listingCount']) {
+      expect(d[field], `leaked: ${field}`).toBeUndefined()
+    }
   })
 })
 
@@ -94,7 +97,6 @@ describe('required states', () => {
     const d = await call(QS)
     expect(d.verdict).toBeNull()
     expect(d.verdictReason).toBe('insufficient_data')
-    expect(d.minPrice).toBeNull()
   })
 
   it.each([3, 4])('gives a provisional verdict on %i comparables', async (n) => {
@@ -123,8 +125,7 @@ describe('required states', () => {
     expect(d.verdict).toBeNull()
     expect(d.verdictReason).toBe('mixed_variants')
     expect(d.variantToken).toBe('GTI')
-    // The range is still useful and still shown.
-    expect(d.minPrice).toBe(60_000)
+    expect(d.minPrice).toBeUndefined()
   })
 
   it('waits rather than guessing while the vehicle lookup is pending', async () => {
@@ -174,7 +175,8 @@ describe('the RM12 CTA no longer sells the now-free verdict', () => {
   })
 
   it('sells the next action instead', () => {
-    expect(pitch).toContain('Sekarang anda tahu')
+    expect(pitch).toContain('Lihat harga pasaran sebenar')
+    expect(pitch).toContain('jumlah yang patut anda tawarkan')
     expect(pitch).toContain('Anggaran rundingan')
     expect(pitch).toContain('Skrip bercakap dengan penjual')
     expect(pitch).toContain('Senarai semak sebelum deposit')

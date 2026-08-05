@@ -31,19 +31,27 @@ export type Verdict = 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced
  */
 export type VerdictReason = 'insufficient_data' | 'mixed_variants' | 'missing_asking_price'
 
+/**
+ * The free checker's result: a judgement, never the underlying figures.
+ *
+ * There is deliberately no median, range or comparable count here. Free tells a
+ * buyer WHETHER the price is right; the RM12 report tells them WHAT TO DO —
+ * the median, the range, the gap, the offer and the script. The count goes too:
+ * it describes Paqar's sample rather than the buyer's car, and inviting someone
+ * to audit the sample size is the opposite of what a free result should do.
+ *
+ * Keeping the fields out of the TYPE, not just the UI, is what stops them
+ * reappearing in a later markup change.
+ */
 export type PriceCheckResult =
   | { hasData: false; verdictReason?: VerdictReason }
   | {
       hasData:        true
       /** null when suppressed — read verdictStatus/verdictReason for why. */
       verdict:        Verdict | null
-      /** 'provisional' = 3–4 comparables; the UI must show a caution. */
+      /** 'provisional' = 3–4 comparables; surfaced via the confidence chip. */
       verdictStatus:  'normal' | 'provisional' | 'suppressed'
       verdictReason:  VerdictReason | null
-      listingCount:   number
-      medianPrice:    number | null
-      minPrice:       number | null
-      maxPrice:       number | null
       /** Weight of the comparable set — separate from verdict eligibility. */
       confidence:     'low' | 'medium' | 'high'
       cohortMode:     'same_variant' | 'mixed_variants' | 'normal'

@@ -35,11 +35,11 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
             before paying a deposit; this is the answer to that, not a pitch
             for a different product. */}
         <p className="font-heading font-extrabold text-[15px] leading-snug text-white mb-2 tracking-tight">
-          Sekarang anda tahu<br />kedudukan harganya.
+          Lihat harga pasaran sebenar<br />dan jumlah yang patut anda tawarkan.
         </p>
         <p className="font-body text-[11px] text-white/55 leading-relaxed">
-          Dapatkan laporan penuh untuk anggaran rundingan, skrip bercakap dengan penjual,
-          maklumat kenderaan dan senarai semak sebelum bayar deposit.
+          Laporan penuh RM12 — harga tengah dan julat pasaran, sasaran rundingan,
+          skrip untuk penjual, maklumat kenderaan dan senarai semak sebelum deposit.
         </p>
         {plate && (
           <div className="mt-3">

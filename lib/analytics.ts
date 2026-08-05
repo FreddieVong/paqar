@@ -51,18 +51,18 @@ export const analytics = {
   // ── Free plate-path evidence ───────────────────────────────────────────
   // Separate from verdictViewed, which belongs to the model tab. Keeping them
   // apart is the only way to compare the two journeys' conversion.
-  plateEvidenceViewed: (props: { listing_count: number; confidence: 'low' | 'medium' | 'high' }) =>
+  plateEvidenceViewed: (props: { confidence: 'low' | 'medium' | 'high' }) =>
     posthog.capture('plate_price_evidence_viewed', props),
 
   plateVerdictViewed: (props: {
     verdict: 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
     status: 'normal' | 'provisional' | 'suppressed'
-    listing_count: number
+    confidence: 'low' | 'medium' | 'high'
   }) => posthog.capture('plate_verdict_viewed', props),
 
   plateVerdictSuppressed: (props: {
     reason: 'insufficient_data' | 'mixed_variants' | 'missing_asking_price'
-    listing_count: number
+    confidence: 'low' | 'medium' | 'high'
   }) => posthog.capture('plate_verdict_suppressed', props),
 
   paidReportCtaViewed: (props: { has_free_verdict: boolean }) =>
@@ -76,7 +76,11 @@ export const analytics = {
     // the wrong variant. Collapsing the two would hide how often variant
     // mismatch is costing a verdict.
     verdict: 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced' | 'no_data' | 'suppressed'
-    listing_count: number
+    // The comparable count used to ride along here. It is gone from every free
+    // surface, so it is gone from the payload too; `confidence` is the band it
+    // produced and is already shown to the buyer, so it leaks nothing while
+    // keeping "do thin cohorts convert worse?" answerable.
+    confidence: 'low' | 'medium' | 'high' | null
     has_data: boolean
   }) => posthog.capture('verdict_viewed', props),
 

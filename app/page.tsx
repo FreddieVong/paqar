@@ -175,9 +175,12 @@ export default async function HomePage() {
               <p className="font-heading font-bold text-[15px] text-[#111827] mb-0.5">Semak Harga Pasaran</p>
               <p className="font-body text-[13px] text-[#6B7280] mb-3">Tahu sama ada harga seller mahal, wajar atau berbaloi.</p>
               <div className="space-y-1.5 mb-3">
+                {/* "Harga tengah & julat pasaran" used to sit here under a
+                    "Percuma" badge. Those figures are what RM12 sells now — the
+                    free check gives the verdict and how much to trust it. */}
                 {[
                   'Keputusan harga percuma',
-                  'Harga tengah & julat pasaran',
+                  'Tahap keyakinan data',
                   'Analisis siap — bukan data mentah',
                 ].map(item => (
                   <div key={item} className="flex items-center gap-2">

@@ -20,6 +20,18 @@ const schema = z.object({
   askingPrice: z.number().int().min(1000).max(2_000_000),
 })
 
+/**
+ * The response is a JUDGEMENT, not data.
+ *
+ * median, min, max and listingCount are computed here and deliberately never
+ * serialised. The count is the one number that describes Paqar's process
+ * rather than the buyer's car — it invites auditing the sample instead of
+ * acting on the conclusion, and no count reads as impressive (8, 14 and 30 all
+ * sound thin). The range and the median are what RM12 sells.
+ *
+ * Withholding them at the API rather than in the UI is the point: a field that
+ * is never sent cannot leak through a later markup change.
+ */
 function computeVerdict(askingPrice: number, min: number, max: number): Verdict {
   if (askingPrice < min)         return 'good_deal'
   if (askingPrice <= max)        return 'fair_price'
@@ -91,10 +103,6 @@ export async function POST(request: NextRequest) {
       verdict:       null,
       verdictStatus: 'suppressed',
       verdictReason: 'mixed_variants',
-      listingCount:  cohort.count,
-      medianPrice:   cohort.median,
-      minPrice:      cohort.min,
-      maxPrice:      cohort.max,
       confidence,
       cohortMode:    cohort.mode,
       variantToken:  cohort.variantToken,
@@ -112,10 +120,6 @@ export async function POST(request: NextRequest) {
     verdict:       computeVerdict(askingPrice, min, max),
     verdictStatus: eligibility.evidenceLevel === 'provisional' ? 'provisional' : 'normal',
     verdictReason: null,
-    listingCount:  cohort.count,
-    medianPrice:   cohort.median,
-    minPrice:      min,
-    maxPrice:      max,
     confidence,
     cohortMode:    cohort.mode,
     variantToken:  cohort.variantToken,

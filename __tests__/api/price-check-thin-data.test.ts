@@ -73,11 +73,11 @@ describe('price-check verdict policy', () => {
     expect(data.verdictStatus).toBe('normal')
     expect(data.verdictReason).toBeNull()
     expect(data.confidence).toBe('medium')
-    expect(data.minPrice).toBe(45_000)
-    expect(data.maxPrice).toBe(50_000)
-    expect(data.medianPrice).toBe(47_500)
     // Asking 50,000 sits exactly at the top of the 45k–50k band → within market.
     expect(data.verdict).toBe('fair_price')
+    // The band itself is not disclosed — see "free response carries no figures".
+    expect(data.minPrice).toBeUndefined()
+    expect(data.maxPrice).toBeUndefined()
   })
 
   it('calls an asking price above the band overpriced', async () => {
@@ -127,9 +127,6 @@ describe('price-check variant safety', () => {
     expect(data.verdictStatus).toBe('suppressed')
     expect(data.verdictReason).toBe('mixed_variants')
     expect(data.variantToken).toBe('GTI')
-    // The range is real and still useful to the buyer.
-    expect(data.minPrice).toBe(60_000)
-    expect(data.listingCount).toBe(8)
   })
 
   it('issues a verdict when enough listings name the same variant', async () => {
@@ -165,5 +162,26 @@ describe('price-check variant safety', () => {
     ))
     const data = await post({ ...golfBody, model: 'Golf GTI', askingPrice: 150_000 })
     expect(data.verdictReason == null || data.verdict == null).toBe(true)
+  })
+})
+
+
+describe('free response carries no figures', () => {
+  beforeEach(() => vi.mocked(getCachedMarketPrices).mockReset())
+
+  it('omits median, range and comparable count', async () => {
+    vi.mocked(getCachedMarketPrices).mockResolvedValue(
+      cached(Array.from({ length: 8 }, (_, i) => myvi(45_000 + i * 1_000, i))),
+    )
+    const data = await post(myviBody)
+    // Free answers WHETHER the price is right. Every figure — including the
+    // count, which describes Paqar's sample rather than the buyer's car — is
+    // what RM12 sells. Withheld at the API so a UI change cannot leak them.
+    for (const field of ['medianPrice', 'minPrice', 'maxPrice', 'listingCount']) {
+      expect(data[field], `leaked: ${field}`).toBeUndefined()
+    }
+    // What free DOES carry.
+    expect(data.verdict).toBeTruthy()
+    expect(data.confidence).toBeTruthy()
   })
 })

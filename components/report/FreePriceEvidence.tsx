@@ -11,12 +11,10 @@ type Evidence = {
   verdict:       Verdict | null
   verdictStatus: 'normal' | 'provisional' | 'suppressed'
   verdictReason: 'insufficient_data' | 'mixed_variants' | null
-  listingCount:  number
-  minPrice:      number | null
-  maxPrice:      number | null
   confidence:    'low' | 'medium' | 'high'
   variantToken:  string | null
-  // medianPrice is deliberately not part of this contract — see the API route.
+  // No median, range or comparable count — see the API route. Free answers
+  // WHETHER the price is right; RM12 answers what to do about it.
 }
 type Response =
   | Evidence
@@ -25,28 +23,33 @@ type Response =
   | { state: 'needs_asking_price' }
 
 const VERDICT = {
-  overpriced:    { badge: 'MAHAL',      cls: 'bg-[#DC2626] text-white', card: 'bg-[#FEF2F2] border-[#FECACA]', line: 'Harga ini di atas julat pasaran semasa.' },
-  slightly_high: { badge: 'AGAK MAHAL', cls: 'bg-[#B45309] text-white', card: 'bg-[#FFFBEB] border-[#FDE68A]', line: 'Harga ini sedikit di atas julat pasaran semasa.' },
-  fair_price:    { badge: 'WAJAR',      cls: 'bg-[#064E4A] text-white', card: 'bg-[#F0FDF4] border-[#BBF7D0]', line: 'Harga ini berada dalam julat pasaran semasa.' },
-  good_deal:     { badge: 'BERBALOI',   cls: 'bg-[#0891B2] text-white', card: 'bg-[#F0FAFA] border-[#99D4D1]', line: 'Harga ini di bawah julat pasaran semasa — semak sebabnya.' },
+  overpriced:    { badge: 'MAHAL',      cls: 'bg-[#DC2626] text-white', card: 'bg-[#FEF2F2] border-[#FECACA]', line: 'Harga ini berada di atas paras pasaran semasa untuk kereta ini.' },
+  slightly_high: { badge: 'AGAK MAHAL', cls: 'bg-[#B45309] text-white', card: 'bg-[#FFFBEB] border-[#FDE68A]', line: 'Harga ini sedikit di atas paras pasaran semasa.' },
+  fair_price:    { badge: 'WAJAR',      cls: 'bg-[#064E4A] text-white', card: 'bg-[#F0FDF4] border-[#BBF7D0]', line: 'Harga ini berada dalam paras pasaran semasa.' },
+  good_deal:     { badge: 'BERBALOI',   cls: 'bg-[#0891B2] text-white', card: 'bg-[#F0FAFA] border-[#99D4D1]', line: 'Harga ini di bawah paras pasaran semasa — semak sebabnya.' },
 } as const
 
+// `low` also carries the provisional meaning: a 3–4 comparable cohort is always
+// low confidence, and 0–2 never gets a verdict, so a verdict shown alongside
+// low confidence can only be provisional.
 const CONFIDENCE = {
-  high:   { label: 'Keyakinan data: Tinggi',    cls: 'text-[#15803D]', dot: 'bg-[#22C55E]' },
-  medium: { label: 'Keyakinan data: Sederhana', cls: 'text-[#B45309]', dot: 'bg-[#F59E0B]' },
-  low:    { label: 'Data pasaran terhad',       cls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]' },
+  high:   { label: 'Keyakinan data: Tinggi',    cls: 'text-[#15803D]', dot: 'bg-[#22C55E]', sub: null },
+  medium: { label: 'Keyakinan data: Sederhana', cls: 'text-[#B45309]', dot: 'bg-[#F59E0B]', sub: null },
+  low:    { label: 'Data pasaran terhad',       cls: 'text-[#6B7280]', dot: 'bg-[#9CA3AF]',
+            sub: 'Anggaran awal sahaja — data pasaran untuk kereta ini masih terhad.' },
 } as const
-
-const fmt = (n: number) => n.toLocaleString('en-MY')
 
 /**
  * Free price evidence on the plate path.
  *
- * Shows where the asking price sits in the market — verdict, range, count,
- * confidence — and stops there. The negotiation anchor (median), the target
- * offer, the trade-in band and the seller script stay in the RM12 report,
- * which is what the CTA below now sells. The API never serialises a median, so
- * none of that can leak through this component.
+ * Answers WHETHER the price is right — verdict, one qualitative sentence,
+ * confidence — and stops there. Every figure (median, range, gap, offer,
+ * trade-in) belongs to the RM12 report, which is what the CTA below sells.
+ *
+ * The comparable count goes too. It is the one number that describes Paqar's
+ * sample rather than the buyer's car, and it invites auditing the method
+ * instead of acting on the conclusion. The API never serialises any of it, so
+ * none of it can leak through this component.
  */
 export function FreePriceEvidence({
   checkId, claimToken, initialAskingPrice,
@@ -94,17 +97,17 @@ export function FreePriceEvidence({
   useEffect(() => {
     if (!data || data.state !== 'evidence') return
     once('evidence', () => {
-      analytics.plateEvidenceViewed({ listing_count: data.listingCount, confidence: data.confidence })
+      analytics.plateEvidenceViewed({ confidence: data.confidence })
       trackAdEvent('plate_price_evidence_viewed', { checkId, valuationPath: 'plate_report' })
     })
     if (data.verdict) {
       once('verdict', () => {
-        analytics.plateVerdictViewed({ verdict: data.verdict!, status: data.verdictStatus, listing_count: data.listingCount })
+        analytics.plateVerdictViewed({ verdict: data.verdict!, status: data.verdictStatus, confidence: data.confidence })
         trackAdEvent('plate_verdict_viewed', { checkId, valuationPath: 'plate_report' })
       })
     } else {
       once('suppressed', () => {
-        analytics.plateVerdictSuppressed({ reason: data.verdictReason ?? 'insufficient_data', listing_count: data.listingCount })
+        analytics.plateVerdictSuppressed({ reason: data.verdictReason ?? 'insufficient_data', confidence: data.confidence })
         trackAdEvent('plate_verdict_suppressed', { checkId, valuationPath: 'plate_report' })
       })
     }
@@ -149,7 +152,6 @@ export function FreePriceEvidence({
   }
   if (data.state !== 'evidence') return null
 
-  const suppressed = data.verdictStatus === 'suppressed'
   const cfg        = data.verdict ? VERDICT[data.verdict] : null
   const conf       = CONFIDENCE[data.confidence]
 
@@ -172,9 +174,8 @@ export function FreePriceEvidence({
             Varian ini bercampur dalam iklan pasaran, jadi kami tidak beri keputusan harga.
           </p>
           <p className="font-body text-[12px] text-[#6B7280] mb-1 leading-relaxed">
-            {data.variantToken
-              ? `Iklan untuk “${data.variantToken}” terlalu sedikit — yang ada termasuk varian lain, dan harganya jauh berbeza.`
-              : 'Iklan yang ada termasuk varian lain, dan harganya jauh berbeza.'}
+            Iklan untuk varian ini terlalu sedikit — yang ada termasuk varian lain,
+            dan harganya jauh berbeza.
           </p>
         </>
       ) : (
@@ -186,38 +187,28 @@ export function FreePriceEvidence({
             Belum cukup iklan setanding untuk beri keputusan harga.
           </p>
           <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
-            {data.listingCount === 0
-              ? 'Tiada iklan setanding dijumpai buat masa ini.'
-              : `Hanya ${data.listingCount} iklan setanding dijumpai — terlalu sedikit untuk harga pasaran.`}
+            Belum cukup iklan setanding untuk beri keputusan harga.
           </p>
         </>
       )}
 
-      {/* ── 3. Market range (never the median) ── */}
-      {data.minPrice != null && data.maxPrice != null && (
-        <p className="font-body text-[13px] text-[#374151] mt-1">
-          {suppressed ? 'Julat iklan dijumpai: ' : 'Harga pasaran: '}
-          <strong>RM{fmt(data.minPrice)} – RM{fmt(data.maxPrice)}</strong>
+      {/* ── 3. How it was judged — method, not figures ── */}
+      {cfg && (
+        <p className="font-body text-[12px] text-[#6B7280] mb-2">
+          Dinilai berdasarkan tahun, model dan varian kenderaan.
         </p>
       )}
 
-      {/* ── 4. Count + confidence, and the provisional caution ── */}
-      {data.listingCount > 0 && (
-        <>
-          <p className="font-body text-[11px] text-[#9CA3AF] mt-1">
-            Berdasarkan {data.listingCount} iklan setanding di pasaran
-          </p>
-          {data.verdictStatus === 'provisional' && (
-            <p className="font-body text-[12px] font-semibold text-[#B45309] mt-2 leading-relaxed">
-              Anggaran awal — hanya {data.listingCount} iklan setanding ditemui.
-            </p>
-          )}
-          <div className="flex items-center gap-1.5 mt-2">
-            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${conf.dot}`} />
-            <span className={`font-body text-[11px] font-semibold ${conf.cls}`}>{conf.label}</span>
-          </div>
-        </>
-      )}
+      {/* ── 4. Confidence, which also carries the provisional signal ── */}
+      <div className="mt-2">
+        <div className="flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${conf.dot}`} />
+          <span className={`font-body text-[11px] font-semibold ${conf.cls}`}>{conf.label}</span>
+        </div>
+        {conf.sub && (
+          <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">{conf.sub}</p>
+        )}
+      </div>
     </div>
   )
 }
