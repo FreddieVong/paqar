@@ -238,7 +238,14 @@ export async function claimReceiptSend(buyerReportId: string): Promise<ReceiptCl
       .from('buyer_reports')
       .update({ receipt_status: 'sending', updated_at: new Date().toISOString() })
       .eq('id', buyerReportId)
-      .not('receipt_status', 'in', '("sending","sent")')
+      // An ALLOWLIST, not a denylist. `NOT IN ('sending','sent')` looks
+      // equivalent but is not: receipt_status is NULL on every new purchase
+      // (the column has no default), and SQL three-valued logic makes
+      // `NULL NOT IN (...)` evaluate to NULL — so the row matched nothing, the
+      // claim was refused as "already delivered", and no receipt was ever sent.
+      // Verified in production on 2026-08-05 after a real RM12 purchase
+      // produced receipt_status = NULL and no Paqar receipt.
+      .or('receipt_status.is.null,receipt_status.in.(pending,failed)')
       .select('id')
     if (error) throw error
     return (data?.length ?? 0) > 0 ? 'granted' : 'already_delivered'

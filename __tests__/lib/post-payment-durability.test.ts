@@ -181,3 +181,28 @@ describe('no silent degradation after migration 026', () => {
     expect(admin).toMatch(/op: 'receipt_queue'/)
   })
 })
+
+describe('receipt claim is NULL-safe', () => {
+  const db = read('lib/db/buyer-reports.ts')
+
+  it('uses an allowlist, not NOT IN', () => {
+    // NULL NOT IN ('sending','sent') evaluates to NULL under SQL three-valued
+    // logic, so the claim matched zero rows for every new purchase (the column
+    // has no default) and no receipt was ever sent. Confirmed in production
+    // by a real RM12 purchase that finished with receipt_status = NULL.
+    const fn = db.split('export async function claimReceiptSend')[1]!.split('\nexport ')[0]!
+    expect(fn).toContain('receipt_status.is.null')
+    expect(fn).toContain('receipt_status.in.(pending,failed)')
+    expect(fn).not.toMatch(/\.not\(\s*'receipt_status'/)
+  })
+
+  it('claims from every non-terminal state, including untracked rows', () => {
+    const fn = db.split('export async function claimReceiptSend')[1]!.split('\nexport ')[0]!
+    // null = new/untracked, pending = queued, failed = retryable.
+    for (const state of ['null', 'pending', 'failed']) expect(fn).toContain(state)
+    // sending/sent must NOT appear in the allowlist.
+    const filter = fn.match(/\.or\('([^']+)'\)/)?.[1] ?? ''
+    expect(filter).not.toContain('sending')
+    expect(filter).not.toContain('sent')
+  })
+})
