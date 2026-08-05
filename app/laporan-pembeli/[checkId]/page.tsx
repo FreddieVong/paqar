@@ -10,6 +10,8 @@ import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
+import { FreePriceEvidence }   from '@/components/report/FreePriceEvidence'
+import { PaidReportCtaTracker } from '@/components/report/PaidReportCtaTracker'
 import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
 import { VehiclePreviewTeaser } from '@/components/report/VehiclePreviewTeaser'
 import { decrypt }              from '@/lib/crypto'
@@ -215,8 +217,21 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
 
           {isPlateFlow ? (
             <>
+              {/* Free price evidence BEFORE the ask. PlateCheckerForm promises
+                  that adding the asking price reveals whether the seller's
+                  price is fair; until now that number was only prefilled into
+                  checkout. This keeps the promise, and gives the ad path the
+                  same proof the model tab has always given away. */}
+              <FreePriceEvidence
+                checkId={params.checkId}
+                claimToken={claimToken}
+                initialAskingPrice={
+                  searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined
+                }
+              />
               {/* plate="" — the page header above already shows the plate;
                   the pitch's plate block is only load-bearing on /check/[id] */}
+              <PaidReportCtaTracker checkId={params.checkId} hasFreeVerdict={true} />
               <BuyerReportPitch plate="" />
               <PaymentForm
                 checkId={params.checkId}

@@ -42,6 +42,15 @@ export const FUNNEL_STAGES = [
   'plate_lookup_failed',
   'plate_result_poll_timed_out',
   'valuation_completed',
+  // The plate path now shows free price evidence before the RM12 ask. These
+  // measure whether proving capability first changes what happens at the
+  // paywall — the whole point of showing it. Diagnostic only, like the three
+  // below; none are forwarded to Meta.
+  'plate_price_evidence_viewed',
+  'plate_verdict_viewed',
+  'plate_verdict_suppressed',
+  'paid_report_cta_viewed',
+  'paid_report_cta_clicked',
   // Between completion and checkout sat a blind spot. 14 Meta visitors
   // completed a valuation and 1 reached the payment form, but nothing recorded
   // WHERE the other 13 went — never saw the offer, saw it and left, or engaged

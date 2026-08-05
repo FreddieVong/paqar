@@ -48,6 +48,29 @@ export const analytics = {
   ctaClicked: (props: { cta: 'workshop' | 'bjak' | 'whatsapp_share' }) =>
     posthog.capture('cta_clicked', props),
 
+  // ── Free plate-path evidence ───────────────────────────────────────────
+  // Separate from verdictViewed, which belongs to the model tab. Keeping them
+  // apart is the only way to compare the two journeys' conversion.
+  plateEvidenceViewed: (props: { listing_count: number; confidence: 'low' | 'medium' | 'high' }) =>
+    posthog.capture('plate_price_evidence_viewed', props),
+
+  plateVerdictViewed: (props: {
+    verdict: 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
+    status: 'normal' | 'provisional' | 'suppressed'
+    listing_count: number
+  }) => posthog.capture('plate_verdict_viewed', props),
+
+  plateVerdictSuppressed: (props: {
+    reason: 'insufficient_data' | 'mixed_variants' | 'missing_asking_price'
+    listing_count: number
+  }) => posthog.capture('plate_verdict_suppressed', props),
+
+  paidReportCtaViewed: (props: { has_free_verdict: boolean }) =>
+    posthog.capture('paid_report_cta_viewed', props),
+
+  paidReportCtaClicked: (props: { has_free_verdict: boolean }) =>
+    posthog.capture('paid_report_cta_clicked', props),
+
   verdictViewed: (props: {
     // 'suppressed' is distinct from 'no_data': we HAD comparables, they were
     // the wrong variant. Collapsing the two would hide how often variant

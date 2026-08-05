@@ -132,7 +132,10 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
                        transition-all"
           />
           <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
-            Disyorkan — dengan harga ini, laporan anda dapat keputusan harga dan skrip rundingan peribadi.
+            {/* Was "…dapat keputusan harga dan skrip rundingan". The price
+                verdict is now shown free above this form, so promising it here
+                would be selling something already on screen. */}
+            Disyorkan — dengan harga ini, laporan anda dapat sasaran harga untuk rundingan dan skrip peribadi untuk penjual.
           </p>
         </div>
 

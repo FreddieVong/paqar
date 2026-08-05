@@ -1,18 +1,22 @@
 /**
- * Ordered by what the ad promised, not by what is easiest to describe.
+ * Sells the NEXT DECISION, not the verdict.
  *
- * Ads run "jangan tersalah beli kereta — semak dulu sebelum bayar deposit".
- * This block used to open on the negotiation script, which answers a question
- * nobody arrived with. Of 7 people who reached the paywall on 2 Aug, 6 left
- * without touching it, and a promise/page mismatch is the cheapest available
- * explanation. The price verdict now leads, because it is the thing the ad
- * implies and the thing RM12 uniquely delivers.
+ * The verdict, the market range, the comparable count and the confidence are
+ * now shown free on this page, immediately above. Listing "Harga pasaran
+ * sebenar — tahu sama ada mahal, wajar atau berbaloi" as an RM12 benefit would
+ * be charging for something the buyer can already see two inches higher, which
+ * reads as either a lie or a bait.
+ *
+ * What RM12 still uniquely delivers is the ACTION: what to offer, what to say,
+ * what the registry holds, and what to check before the deposit leaves. The
+ * free block proves Paqar can price the car; this block sells what to do about
+ * it.
  */
 const STACK = [
-  { title: 'Harga pasaran sebenar',       desc: 'Tahu sama ada harga kereta itu mahal, wajar atau berbaloi.' },
-  { title: 'Skrip rundingan harga',       desc: 'Bantu anda bincang harga berdasarkan data.' },
-  { title: 'Soalan penting untuk seller', desc: 'Tanya soalan yang boleh dedahkan masalah tersembunyi.' },
+  { title: 'Anggaran rundingan',          desc: 'Sasaran harga untuk mula tawar, dikira dari harga tengah pasaran.' },
+  { title: 'Skrip bercakap dengan penjual', desc: 'Ayat siap untuk WhatsApp, dengan angka pasaran kereta ini.' },
   { title: 'Maklumat kenderaan (JPJ)',    desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
+  { title: 'Senarai semak sebelum deposit', desc: 'Soalan untuk penjual dan perkara wajib semak sebelum bayar.' },
 ]
 
 export function BuyerReportPitch({ plate }: { plate: string }) {
@@ -31,10 +35,11 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
             before paying a deposit; this is the answer to that, not a pitch
             for a different product. */}
         <p className="font-heading font-extrabold text-[15px] leading-snug text-white mb-2 tracking-tight">
-          Semak dulu sebelum<br />anda bayar deposit.
+          Sekarang anda tahu<br />kedudukan harganya.
         </p>
         <p className="font-body text-[11px] text-white/55 leading-relaxed">
-          Tahu harga pasaran sebenar kereta ini, dan apa yang patut anda tanya penjual.
+          Dapatkan laporan penuh untuk anggaran rundingan, skrip bercakap dengan penjual,
+          maklumat kenderaan dan senarai semak sebelum bayar deposit.
         </p>
         {plate && (
           <div className="mt-3">

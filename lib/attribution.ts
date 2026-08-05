@@ -32,6 +32,15 @@ export type AdEventName =
   | 'valuation_completed'
   | 'paywall_viewed'
   | 'payment_form_focused'
+  // Free plate-path evidence, recorded so we can measure whether proving
+  // capability before the RM12 ask changes conversion. Campaign attribution
+  // rides on the session cookie, so these join to creative like every other
+  // stage. Diagnostic only — never forwarded to Meta.
+  | 'plate_price_evidence_viewed'
+  | 'plate_verdict_viewed'
+  | 'plate_verdict_suppressed'
+  | 'paid_report_cta_viewed'
+  | 'paid_report_cta_clicked'
   | 'checkout_started'
   | 'purchase'
 
