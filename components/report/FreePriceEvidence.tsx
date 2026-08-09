@@ -186,8 +186,16 @@ export function FreePriceEvidence({
           <p className="font-heading font-bold text-[14px] text-[#111827] mb-1">
             Belum cukup iklan setanding untuk beri keputusan harga.
           </p>
+          {/* The headline says WHAT happened; this says what it means and what
+              to do. It used to repeat the sentence above word for word, which
+              read as a rendering fault on the one journey the ads pay for.
+              No count, no range, no median — this is a free surface. The
+              refresh advice is true because the route now re-scrapes a thin
+              row in the background, exactly as the model checker does. */}
           <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
-            Belum cukup iklan setanding untuk beri keputusan harga.
+            Iklan untuk model, tahun dan varian ini masih terlalu sedikit di
+            pasaran. Kami sedang cuba dapatkan lagi — muat semula halaman ini
+            sebentar lagi.
           </p>
         </>
       )}

@@ -14,6 +14,7 @@
 
 import { readFileSync } from 'fs'
 import { createClient } from '@supabase/supabase-js'
+import { coveredCombos } from '../lib/market-coverage'
 
 // Load .env.local if present — does not override vars already in the environment
 try {
@@ -43,38 +44,12 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 // ── Combinations ──────────────────────────────────────────────────────────────
-// Edit this list to add or remove combinations.
-// Years are sorted ascending so logs are easy to read.
+// Read from lib/market-coverage.ts — the same declaration the daily cron and the
+// sitemap use. This script used to keep its own copy, which had silently drifted
+// (it scraped Mazda CX-5, never scraped Honda Jazz, and disagreed with the cron
+// on Iriz and HR-V years). Add or remove combinations there, not here.
 
-function expand(make: string, model: string, years: string[]) {
-  return years.map(year => ({ make, model, year }))
-}
-
-const COMBINATIONS = [
-  // Perodua — most popular brand in Malaysia
-  ...expand('Perodua', 'Myvi',   ['2019', '2020', '2021', '2022', '2023']),
-  ...expand('Perodua', 'Axia',   ['2020', '2021', '2022', '2023']),
-  ...expand('Perodua', 'Bezza',  ['2020', '2021', '2022', '2023']),
-  ...expand('Perodua', 'Alza',   ['2021', '2022', '2023']),
-  ...expand('Perodua', 'Ativa',  ['2021', '2022', '2023']),
-  // Proton
-  ...expand('Proton',  'Saga',   ['2019', '2020', '2021', '2022', '2023']),
-  ...expand('Proton',  'Persona',['2020', '2021', '2022']),
-  ...expand('Proton',  'Iriz',   ['2020', '2021', '2022']),
-  ...expand('Proton',  'X50',    ['2021', '2022', '2023']),
-  ...expand('Proton',  'X70',    ['2020', '2021', '2022']),
-  // Honda
-  ...expand('Honda',   'City',   ['2021', '2022', '2023']),
-  ...expand('Honda',   'Civic',  ['2020', '2021', '2022']),
-  ...expand('Honda',   'HR-V',   ['2020', '2021', '2022']),
-  // Toyota
-  ...expand('Toyota',  'Vios',   ['2020', '2021', '2022', '2023']),
-  ...expand('Toyota',  'Yaris',  ['2021', '2022', '2023']),
-  // Nissan
-  ...expand('Nissan',  'Almera', ['2021', '2022', '2023']),
-  // Mazda
-  ...expand('Mazda',   'CX-5',   ['2020', '2021', '2022']),
-]
+const COMBINATIONS = coveredCombos()
 
 // ── Scraper helpers ───────────────────────────────────────────────────────────
 // Mirrors lib/db/market-prices.ts logic without any Next.js dependencies.

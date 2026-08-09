@@ -144,8 +144,30 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
     }
   }
 
-  const row   = await getCheck(params.checkId, claimToken)
-  const plate = row ? decrypt(row.check.plate_encrypted as string).toUpperCase() : null
+  const row = await getCheck(params.checkId, claimToken)
+
+  // The plate is cosmetic here — a heading and the share text. It must never
+  // be able to 500 the page a customer lands on straight after paying, which
+  // an unguarded decrypt of a malformed ciphertext would do. Same posture as
+  // receipt-delivery.ts and the webhook.
+  let plate: string | null = null
+  if (row) {
+    try { plate = decrypt(row.check.plate_encrypted as string).toUpperCase() }
+    catch { console.error('[selesai] plate decrypt failed', { checkId: params.checkId }) }
+  }
+
+  /**
+   * Whether the token in the URL actually opens the report.
+   *
+   * getCheck(id, token) returns null when the token does not match, so `row`
+   * is the verification — reportUrl above was built from the raw query string
+   * alone, which meant a mistyped or truncated claim_token still rendered a
+   * "Lihat Laporan Saya" button. That button then 404s on the report page,
+   * which applies the same check properly. Handing a paying customer a dead
+   * link at the exact moment they are looking for what they just bought is the
+   * worst possible time to do it: it reads as "my payment vanished".
+   */
+  const credentialWorks = row !== null
 
   // RM88 add-on nudge — only for RM12 buyers when JomCheck is live
   // Only show if we're in verified_paid state and it's the normal (non-upgrade) path
@@ -288,14 +310,43 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
           )}
 
           {/* Only rendered when the URL carries a credential the report page
-              will actually accept. */}
-          {reportUrl && (
+              will actually accept — shape AND match, not shape alone. */}
+          {reportUrl && credentialWorks && (
             <a
               href={reportUrl}
               className="block w-full bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 hover:bg-[#053D3A] transition-colors"
             >
               Lihat Laporan Saya →
             </a>
+          )}
+
+          {/* The token does not open this check. Never a dead button: give the
+              buyer a way to reach a human, with the one reference that is safe
+              to put in a message. */}
+          {!credentialWorks && (
+            <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5 text-left">
+              <p className="font-heading font-bold text-[14px] text-[#111827] mb-1.5">
+                Kami tidak dapat buka laporan dengan pautan ini
+              </p>
+              <p className="font-body text-[13px] text-[#78350F] leading-relaxed">
+                Pautan ini tidak sepadan dengan mana-mana semakan. Kalau anda sudah
+                bayar, jangan bayar lagi — hubungi kami dengan rujukan di bawah dan
+                kami akan hantar laporan anda.
+              </p>
+              <p className="font-body text-[12px] text-[#78350F] mt-2">
+                Rujukan: <strong>{params.checkId}</strong>
+              </p>
+              {pendingSupportUrl && (
+                <a
+                  href={pendingSupportUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-3 bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
+                >
+                  Hubungi Paqar di WhatsApp
+                </a>
+              )}
+            </div>
           )}
 
           {showJomCheckNudge && (
@@ -306,7 +357,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
             </p>
           )}
 
-          {plate && reportUrl && displayState.state === 'verified_paid' && (
+          {plate && reportUrl && credentialWorks && displayState.state === 'verified_paid' && (
             <WhatsAppShareButton
               href={`https://wa.me/?text=${encodeURIComponent(`Laporan Paqar untuk ${plate} sedia!\n\nLihat laporan di sini:\n${reportUrl}\n\nJuga boleh tempah inspection sebelum bayar deposit.`)}`}
             />

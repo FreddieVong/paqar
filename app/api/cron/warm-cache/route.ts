@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient }             from '@supabase/supabase-js'
 import { Resend }                   from 'resend'
 import { env }                      from '@/lib/env'
+import { coveredCombos }            from '@/lib/market-coverage'
 
 // Dead-man alert: if a full cron run caches nothing, the pipeline is broken
 // (scraper down, Railway lapsed, Mudah layout changed, Mudah blocking us).
@@ -33,32 +34,12 @@ async function sendPipelineAlert(detail: string): Promise<void> {
 export const maxDuration = 300
 
 // ── Combinations to keep warm ─────────────────────────────────────────────
+//
+// Declared once in lib/market-coverage.ts, which the sitemap and the model hubs
+// read too — so a year page can never be advertised without this cron warming
+// the row behind it. coveredCombos() preserves declaration order.
 
-type Combo = { make: string; model: string; year: string }
-
-function expand(make: string, model: string, years: string[]): Combo[] {
-  return years.map(year => ({ make, model, year }))
-}
-
-const COMBINATIONS: Combo[] = [
-  ...expand('Perodua', 'Myvi',    ['2019','2020','2021','2022','2023']),
-  ...expand('Perodua', 'Axia',    ['2020','2021','2022','2023']),
-  ...expand('Perodua', 'Bezza',   ['2020','2021','2022','2023']),
-  ...expand('Perodua', 'Alza',    ['2021','2022','2023']),
-  ...expand('Perodua', 'Ativa',   ['2021','2022','2023']),
-  ...expand('Proton',  'Saga',    ['2019','2020','2021','2022','2023']),
-  ...expand('Proton',  'Persona', ['2020','2021','2022']),
-  ...expand('Proton',  'Iriz',    ['2019','2020','2021']),
-  ...expand('Proton',  'X50',     ['2021','2022','2023']),
-  ...expand('Proton',  'X70',     ['2020','2021','2022']),
-  ...expand('Honda',   'City',    ['2021','2022','2023']),
-  ...expand('Honda',   'Civic',   ['2020','2021','2022']),
-  ...expand('Honda',   'HR-V',    ['2021','2022','2023']),
-  ...expand('Honda',   'Jazz',    ['2018','2019','2020']),
-  ...expand('Toyota',  'Vios',    ['2020','2021','2022','2023']),
-  ...expand('Toyota',  'Yaris',   ['2021','2022','2023']),
-  ...expand('Nissan',  'Almera',  ['2021','2022','2023']),
-]
+const COMBINATIONS = coveredCombos()
 
 // ── Scraper ───────────────────────────────────────────────────────────────
 

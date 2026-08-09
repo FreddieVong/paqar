@@ -1,4 +1,4 @@
-import type { Check } from './domain'
+import type { LookupStatus } from '@/lib/funnel-stages'
 
 export interface CreateCheckResponse {
   checkId: string
@@ -12,11 +12,37 @@ export interface VehiclePreview {
   registrationYear: string
 }
 
-export type PlateLookupStatus =
-  | 'pending' | 'found' | 'not_found' | 'provider_timeout' | 'provider_error'
+/**
+ * Aliased rather than retyped. lib/funnel-stages.ts owns this union (it is what
+ * eventForLookupStatus switches on and what the DB CHECK constraint in
+ * migration 021 enforces); a second hand-written copy here could drift from it
+ * silently. That module is pure constants with no server-only import, so a
+ * client component can import this type safely.
+ */
+export type PlateLookupStatus = LookupStatus
+
+/**
+ * The ONLY fields of a check that /api/checks/[id] may serialise.
+ *
+ * It used to return the whole row — `select('*')` spread straight into the
+ * response — which meant plate_encrypted, plate_hash, ic_encrypted, ic_hash,
+ * user_id, claim_token, lead_email and lead_email_sent_at all went to the
+ * browser. That is not merely untidy: checks are shared between visitors by
+ * plate hash (getCachedCheck hands a second visitor who checks the same plate
+ * the same checkId AND claim_token), so the second visitor could read the
+ * FIRST visitor's email address from this endpoint.
+ *
+ * Both consumers — ResultsStream and VehiclePreviewTeaser — only ever read
+ * `status`. Narrowing the TYPE, not just the handler, is what stops a field
+ * creeping back in via a later spread.
+ */
+export interface CheckStatusView {
+  id:     string
+  status: 'pending' | 'running' | 'complete' | 'expired'
+}
 
 export interface PollCheckResponse {
-  check:           Check
+  check:           CheckStatusView
   vehiclePreview?: VehiclePreview | null
   /** Terminal outcome of the plate lookup. null = legacy or not yet attempted. */
   lookupStatus?:   PlateLookupStatus | null

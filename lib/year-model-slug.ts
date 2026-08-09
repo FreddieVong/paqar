@@ -1,10 +1,11 @@
 // Slug parsing for the /harga-{model}-{year} year pages.
 //
 // Extracted from app/harga-model/[slug]/page.tsx so the bounds are testable:
-// the route is force-dynamic, so an unbounded year turns every model into
-// ~10,000 crawlable 200-responses (each doing a Supabase query) that render
-// the same empty fallback. Bounding the year keeps the crawlable URL space
-// to roughly what the sitemap actually declares.
+// the 58 warm year pages are prerendered, but dynamicParams stays on, so an
+// unbounded year would still turn every model into ~10,000 crawlable
+// 200-responses (each doing a Supabase query) rendering the same empty
+// fallback. Bounding the year keeps the crawlable URL space to roughly what
+// the sitemap actually declares.
 
 export const MIN_MODEL_YEAR = 1980
 

@@ -118,8 +118,26 @@ describe('payment recovery UI', () => {
     }
   })
 
-  it('renders the report button only when the URL carries a credential', () => {
-    expect(selesai).toMatch(/\{reportUrl && \(/)
+  it('renders the report button only when the credential actually opens the check', () => {
+    // Was `{reportUrl && (`, which only proved the URL had the right SHAPE.
+    // buildBuyerReportAccessUrl reads the raw query string, so a mistyped or
+    // truncated claim_token still produced a button — one that 404s on the
+    // report page, which verifies the token properly. `credentialWorks` is
+    // getCheck(id, token) having actually matched.
+    expect(selesai).toMatch(/\{reportUrl && credentialWorks && \(/)
+    expect(selesai).toMatch(/const credentialWorks = row !== null/)
+  })
+
+  it('offers a route to support instead of a dead button', () => {
+    expect(selesai).toMatch(/\{!credentialWorks && \(/)
+    expect(selesai).toContain('Kami tidak dapat buka laporan dengan pautan ini')
+  })
+
+  it('never lets a plate decrypt failure 500 the post-payment page', () => {
+    // An unguarded decrypt here would throw on a malformed ciphertext and take
+    // down the page a customer lands on immediately after paying. The plate is
+    // cosmetic on this page.
+    expect(selesai).toMatch(/try \{ plate = decrypt/)
   })
 })
 

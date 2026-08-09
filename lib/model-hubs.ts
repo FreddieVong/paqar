@@ -55,9 +55,23 @@ export function isModelHubSlug(value: string): value is ModelHubSlug {
 export type BrandModel = {
   hubSlug?: ModelHubSlug
   model:    string
-  /** Key used in the /harga-{yearKey}-{year} year pages. */
+  /**
+   * Key used in the /harga-{yearKey}-{year} year pages, AND the key the live
+   * price span is looked up under — it is the yearKey in lib/market-coverage.ts.
+   */
   yearKey:  string
   years:    string[]
-  range:    string
   tag:      string
 }
+
+/**
+ * NOTE: there is deliberately no `range` field.
+ *
+ * Every brand hub and the model index used to carry a hand-typed
+ * `range: 'RM33k – RM74k'` per model, rendered as the row's subtitle. Nothing
+ * updated them, and by August 2026 all of them overstated the market — Myvi
+ * advertised RM33k–RM74k against a real RM25.8k–RM49.8k, Saga RM20k–RM48k
+ * against RM13k–RM35.8k. Ranges now come from getCoverageModelSpans() at render
+ * time, keyed on `yearKey`, so a figure can only exist where a cohort produced
+ * it. Guarded by __tests__/lib/brand-hub-price-claims.test.ts.
+ */

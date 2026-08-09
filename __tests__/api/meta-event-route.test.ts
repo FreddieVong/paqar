@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server'
 import { FakeSupabase } from '../helpers/fake-supabase'
 
 const fake = new FakeSupabase()
-const sendMetaEvent = vi.hoisted(() => vi.fn(async () => true))
+const sendMetaEvent = vi.hoisted(() => vi.fn(async (_args: Record<string, unknown>) => true))
 
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({ env: { META_GRAPH_API_VERSION: 'v25.0' } }))
@@ -55,14 +55,14 @@ describe('landing_page_view', () => {
 
   it('creates the first-touch session row', async () => {
     await post({ event: 'landing_page_view', url: LANDING_URL })
-    const [session] = fake.rows('ad_sessions')
+    const session = fake.rows('ad_sessions')[0]!
     expect(session.utm_content).toBe('creative_a')
     expect(session.fbclid).toBe('XYZ')
   })
 
   it('uses the server-derived event_id, never one supplied by the client', async () => {
     await post({ event: 'landing_page_view', url: LANDING_URL, eventId: 'client-supplied' })
-    const [event] = fake.rows('ad_events')
+    const event = fake.rows('ad_events')[0]!
     expect(event.event_id).toBe(eventId.landingPageView('sid_1', '/'))
   })
 
@@ -228,7 +228,7 @@ describe('new funnel stages', () => {
   it('records plate_submitted with its path and journey', async () => {
     await post({ event: 'plate_submitted', url: LANDING_URL,
                  attemptId: 'j1', valuationPath: 'plate_report' })
-    const [row] = fake.rows('ad_events')
+    const row = fake.rows('ad_events')[0]!
     expect(row.event_name).toBe('plate_submitted')
     expect(row.valuation_path).toBe('plate_report')
     expect(row.journey_id).toBe('j1')
@@ -242,7 +242,7 @@ describe('new funnel stages', () => {
 
   it('records a poll timeout with its structured error fields', async () => {
     await post({ event: 'plate_result_poll_timed_out', url: LANDING_URL, checkId: 'ch_1' })
-    const [row] = fake.rows('ad_events')
+    const row = fake.rows('ad_events')[0]!
     expect(row.error_stage).toBe('plate_result_polling')
     expect(row.error_code).toBe('poll_timeout')
     expect(row.check_id).toBe('ch_1')
@@ -331,5 +331,73 @@ describe('paywall diagnostics never reach Meta', () => {
     await post({ event: 'payment_form_focused', url: PAYWALL_URL, checkId: 'ch_1',
                  valuationPath: 'plate_report' })
     expect(fake.tables.get('ad_events')?.length).toBe(2)
+  })
+})
+
+describe('free-evidence and CTA stages are recorded', () => {
+  const REPORT_URL = 'https://paqar.my/laporan-pembeli/ch_1'
+
+  // These five were declared everywhere EXCEPT the route's zod enum, so every
+  // call from FreePriceEvidence and PaidReportCtaTracker was 400d and dropped.
+  // The experiment they exist to measure — does proving capability before the
+  // RM12 ask change conversion? — recorded nothing at all.
+  const STAGES = [
+    'plate_price_evidence_viewed',
+    'plate_verdict_viewed',
+    'plate_verdict_suppressed',
+    'paid_report_cta_viewed',
+    'paid_report_cta_clicked',
+  ] as const
+
+  for (const event of STAGES) {
+    it(`accepts ${event} and writes a row`, async () => {
+      const res = await post({ event, url: REPORT_URL, checkId: 'ch_1',
+                               valuationPath: 'plate_report' })
+      expect(res.status).toBe(200)
+      expect(await res.json()).toEqual({ ok: true, duplicate: false })
+      const row = fake.rows('ad_events')[0] as Record<string, unknown>
+      expect(row.event_name).toBe(event)
+      expect(row.valuation_path).toBe('plate_report')
+    })
+
+    it(`${event} requires a checkId`, async () => {
+      expect((await post({ event, url: REPORT_URL })).status).toBe(400)
+    })
+
+    it(`${event} stays out of Meta — diagnostic only`, async () => {
+      await post({ event, url: REPORT_URL, checkId: 'ch_1', valuationPath: 'plate_report' })
+      expect(sendMetaEvent).not.toHaveBeenCalled()
+    })
+
+    it(`${event} is idempotent across a re-render`, async () => {
+      await post({ event, url: REPORT_URL, checkId: 'ch_1', valuationPath: 'plate_report' })
+      const again = await post({ event, url: REPORT_URL, checkId: 'ch_1', valuationPath: 'plate_report' })
+      expect(await again.json()).toMatchObject({ duplicate: true })
+      expect(fake.rows('ad_events')).toHaveLength(1)
+    })
+  }
+
+  it('gives each stage its own event_id, so none collapses into another', async () => {
+    for (const event of STAGES) {
+      await post({ event, url: REPORT_URL, checkId: 'ch_1', valuationPath: 'plate_report' })
+    }
+    // Five distinct rows AND five distinct ids. A shared derivation would have
+    // produced one row per name but identical ids, which silently breaks the
+    // per-stage dedupe the moment two stages share a check.
+    const rows = fake.rows('ad_events')
+    expect(rows).toHaveLength(STAGES.length)
+    const ids = new Set(rows.map(r => r.event_id))
+    expect(ids.size).toBe(STAGES.length)
+  })
+
+  it('does not borrow valuation_completed’s id derivation', async () => {
+    // The old trailing `else` computed valuationCompleted(...) for anything it
+    // did not recognise. Had the enum simply been widened, these five would
+    // each have taken that id.
+    await post({ event: 'plate_verdict_viewed', url: REPORT_URL, checkId: 'ch_1',
+                 valuationPath: 'plate_report' })
+    const row = fake.rows('ad_events')[0] as Record<string, unknown>
+    expect(row.event_id).not.toBe(eventId.valuationCompleted('sid_1', 'ch_1'))
+    expect(row.event_id).toBe(eventId.perCheckStage('plate_verdict_viewed', 'sid_1', 'ch_1'))
   })
 })

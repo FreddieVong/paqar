@@ -2,6 +2,7 @@ import { getCachedVehicleData }  from '@/lib/db/plate-lookups'
 import { getValuationByNvic }    from '@/lib/db/vehicle-valuations'
 import { getCachedMarketPrices } from '@/lib/db/market-prices'
 import { buildComparableCohort } from '@/lib/comparables'
+import { buildMarketModelKeyword } from '@/lib/market-keyword'
 
 /**
  * The price picture a retarget e-mail is allowed to state, derived entirely
@@ -68,7 +69,17 @@ export async function loadRetargetInsight(
       && Number(wmNewPrice) >= familyFloor * 1.3
     if (isSpecialVariant) return null
 
-    const market = await getCachedMarketPrices(vehicle.make, vehicle.model, vehicle.registrationYear)
+    // The SAME cache key every other surface uses. This was reading the raw
+    // `vehicle.model`, while the report page, the free price-evidence endpoint,
+    // the payment webhook and the checkout pre-warm all key on
+    // buildMarketModelKeyword(model, description). For the vehicles that helper
+    // exists for — JPJ returns model "7" for a BMW 7 Series, description
+    // "BMW 7 30Li (CBU)", keyword "730" — the raw model matches a row nothing
+    // ever writes, so the lookup returned null and the e-mail silently dropped
+    // its price insight for the generic opener. No claim was ever wrong; the
+    // strongest sentence in the e-mail just went missing.
+    const modelKeyword = buildMarketModelKeyword(vehicle.model, vehicle.description ?? '')
+    const market = await getCachedMarketPrices(vehicle.make, modelKeyword, vehicle.registrationYear)
     if (!market?.listings?.length) return null
 
     const cohort = buildComparableCohort(market.listings, {

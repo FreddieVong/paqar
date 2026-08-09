@@ -193,3 +193,81 @@ describe('no surface sells the now-free verdict', () => {
     expect(copy).toContain('sasaran harga')
   })
 })
+
+describe('a thin cached row self-heals', () => {
+  it('re-scrapes in the background when the cohort is too small', async () => {
+    // /api/price-check has always done this. The plate path did not, so a row
+    // that dipped below the threshold once stayed below it for the full 7-day
+    // TTL — every visitor on that model-year got "belum cukup iklan", on the
+    // journey the ads pay for.
+    const { fetchAndCacheMarketPrices } = await import('@/lib/db/market-prices')
+    getMarket.mockResolvedValue({ listings: listings(2), fetchedAt: 'x', searchUrl: '' })
+
+    const d = await call(QS)
+
+    expect(d.verdictReason).toBe('insufficient_data')
+    expect(fetchAndCacheMarketPrices).toHaveBeenCalledWith('Perodua', 'Myvi', '2020')
+  })
+
+  it('does not re-scrape when the cohort is healthy', async () => {
+    const { fetchAndCacheMarketPrices } = await import('@/lib/db/market-prices')
+    getMarket.mockResolvedValue({ listings: listings(8), fetchedAt: 'x', searchUrl: '' })
+
+    await call(QS)
+
+    expect(fetchAndCacheMarketPrices).not.toHaveBeenCalled()
+  })
+})
+
+describe('the suppression states read as written copy, not a rendering fault', () => {
+  const ui = readFileSync(
+    join(__dirname, '..', '..', 'components/report/FreePriceEvidence.tsx'), 'utf8',
+  )
+
+  /**
+   * The blocks of Malay prose this component renders.
+   *
+   * A "prose line" carries no code punctuation at all — no angle brackets,
+   * braces, parentheses, quotes, equals or semicolons — which excludes JSX
+   * tags, object literals and every statement, while keeping the text nodes
+   * between tags. Consecutive prose lines are joined, because a sentence wraps
+   * across lines in the source but is one sentence on screen.
+   */
+  function proseBlocks(src: string): string[] {
+    const isProse = (l: string) => /^[A-Za-z]/.test(l) && !/[<>{}()=;:"'`]/.test(l)
+    const blocks: string[] = []
+    let current: string[] = []
+    const flush = () => {
+      if (current.length) blocks.push(current.join(' ').replace(/\s+/g, ' ').trim())
+      current = []
+    }
+    for (const raw of src.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')) {
+      const line = raw.trim()
+      if (isProse(line)) current.push(line)
+      else flush()
+    }
+    flush()
+    // Short fragments are button labels and badges, not copy worth comparing.
+    return blocks.filter(b => b.length >= 20)
+  }
+
+  it('never renders the same sentence twice in one state', () => {
+    // The insufficient-data card printed "Belum cukup iklan setanding untuk
+    // beri keputusan harga." as both the headline AND the paragraph under it.
+    // A buyer reads that as a broken page, on the journey the ads pay for.
+    const blocks = proseBlocks(ui)
+    expect(blocks.length, 'found no prose — the extractor is broken').toBeGreaterThan(4)
+
+    const seen = new Map<string, number>()
+    for (const s of blocks) seen.set(s, (seen.get(s) ?? 0) + 1)
+    const repeated = [...seen.entries()].filter(([, n]) => n > 1).map(([s]) => s)
+    expect(repeated, `duplicated copy: ${repeated.join(' | ')}`).toEqual([])
+  })
+
+  it('still explains the insufficient-data state without quoting a figure', () => {
+    const block = ui.split('DATA TIDAK CUKUP')[1]!.split('{/* ── 3.')[0]!
+    expect(block).toContain('Belum cukup iklan setanding')
+    // Free tells you WHETHER, paid tells you WHAT TO DO. No count leaks here.
+    expect(block).not.toMatch(/RM\s?\{|listingCount|medianPrice/)
+  })
+})

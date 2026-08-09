@@ -16,6 +16,12 @@ export async function createBill(params: {
   callbackUrl:  string
   redirectUrl:  string
   collectionId?: string
+  /**
+   * Malaysian mobile, digits only with country code (e.g. 60123456789).
+   * Optional: Billplz rejects a malformed number outright, and losing the
+   * sale to a typo is far worse than losing the number.
+   */
+  mobile?:      string | null
 }): Promise<BillplzBill> {
   if (!params.collectionId) params.collectionId = env.BILLPLZ_COLLECTION_ID ?? ''
   if (!env.BILLPLZ_API_KEY || !params.collectionId) {
@@ -33,6 +39,11 @@ export async function createBill(params: {
     'reference[1]':   params.description,
     deliver:          'true',
   })
+
+  // Only sent when we have something plausible. Four abandoned checkouts in
+  // July could not be followed up because Billplz recorded mobile=none, and
+  // in Malaysia WhatsApp reaches people that email does not.
+  if (params.mobile) body.set('mobile', params.mobile)
 
   const res = await fetch(`${BILLPLZ_BASE}/bills`, {
     method:  'POST',

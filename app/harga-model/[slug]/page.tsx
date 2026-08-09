@@ -1,17 +1,19 @@
 import type { Metadata }  from 'next'
 import { notFound }       from 'next/navigation'
 import Link               from 'next/link'
-import { createClient }   from '@supabase/supabase-js'
 import { Nav }            from '@/components/layout/Nav'
 import { Shell }          from '@/components/layout/Shell'
 import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
-import { filterOutlierPrices, filterListingsByYear } from '@/lib/price-stats'
+import { getCachedMarketPrices } from '@/lib/db/market-prices'
+import { buildMarketYearStats }  from '@/lib/comparables'
+import { formatFetchedAt, MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
+import { coveredYearSlugs } from '@/lib/market-coverage'
 import { VARIANT_GUIDES } from '@/lib/variant-guides'
 import { parseSlug }      from '@/lib/year-model-slug'
 import type { ModelHubSlug } from '@/lib/model-hubs'
 import { modelYearBreadcrumbs } from '@/lib/breadcrumbs'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
 
 // ── Model config ───────────────────────────────────────────────────────────
 
@@ -221,25 +223,28 @@ const MODEL_MAP: Record<string, ModelInfo> = {
   },
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-function formatFetchedAt(iso: string): string {
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ''
-  const months = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis']
-  return `${months[d.getMonth()]} ${d.getFullYear()}`
-}
-
-function medianOf(sorted: number[]): number {
-  const mid = Math.floor(sorted.length / 2)
-  return sorted.length % 2 === 0
-    ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
-    : sorted[mid]!
-}
-
 // ── Metadata ───────────────────────────────────────────────────────────────
 
 type Props = { params: { slug: string } }
+
+/**
+ * Prerender every year page we keep warm.
+ *
+ * The slug here is the REWRITTEN one: next.config.mjs maps /harga-:slug to
+ * /harga-model/:slug, so this route sees 'city-2021' and the public URL stays
+ * /harga-city-2021. That is exactly the shape coveredYearSlugs() emits, which
+ * is why the list is taken from there rather than rebuilt — the sitemap, the
+ * warm-cache cron and these params must name the same 58 pages or one of them
+ * is lying.
+ *
+ * dynamicParams stays at its default (true) on purpose: slugs outside this set
+ * — an older year for a covered model, say — still render on demand with the
+ * empty-data fallback at HTTP 200. Pinning it false would turn URLs that
+ * currently return 200 into 404s and deindex them.
+ */
+export function generateStaticParams() {
+  return coveredYearSlugs().map((slug) => ({ slug }))
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const parsed = parseSlug(params.slug)
@@ -277,43 +282,28 @@ export default async function YearModelPage({ params }: Props) {
   const info = MODEL_MAP[modelKey]
   if (!info) notFound()
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  )
-  const { data: cached } = await supabase
-    .from('market_price_cache')
-    .select('listings, fetched_at')
-    .eq('make', info.make.toLowerCase())
-    .eq('model', info.model.toLowerCase())
-    .eq('year', year)
-    .gte('fetched_at', new Date(Date.now() - 7 * 86_400_000).toISOString())
-    .single()
-
   // Compute price stats when cache has enough data; otherwise render the page
   // without the live price sections. A fallback page keeps the URL alive for
   // Google — a 404 here (e.g. after a failed cron run) would deindex the page.
-  const listings = (cached?.listings ?? []) as { price: number; year?: string | null; title?: string | null }[]
-  const validPrices = filterOutlierPrices(
-    filterListingsByYear(listings, year)
-      .map(l => l.price)
-      .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0)
-  )
+  //
+  // Both the read and the arithmetic go through the shared path: the cache TTL
+  // lives once in getCachedMarketPrices, and the year filter, outlier trim and
+  // minimum-sample gate live once in buildMarketYearStats. This page used to
+  // re-implement all four inline.
+  const cached    = await getCachedMarketPrices(info.make, info.model, year, MARKET_PAGE_REVALIDATE_SECONDS)
+  const yearStats = cached
+    ? buildMarketYearStats(cached.listings, year, cached.fetchedAt)
+    : null
 
-  const stats = validPrices.length >= 3
-    ? (() => {
-        const sorted   = [...validPrices].sort((a, b) => a - b)
-        const minPrice = sorted[0]!
-        const maxPrice = sorted[sorted.length - 1]!
-        return {
-          minPrice,
-          maxPrice,
-          medianPrice:         medianOf(sorted),
-          listingCount:        sorted.length,
-          overpricedThreshold: Math.round(maxPrice * 1.08 / 1000) * 1000,
-          updatedLabel:        cached?.fetched_at ? formatFetchedAt(cached.fetched_at as string) : '',
-        }
-      })()
+  const stats = yearStats
+    ? {
+        minPrice:            yearStats.min,
+        maxPrice:            yearStats.max,
+        medianPrice:         yearStats.median,
+        listingCount:        yearStats.count,
+        overpricedThreshold: Math.round(yearStats.max * 1.08 / 1000) * 1000,
+        updatedLabel:        formatFetchedAt(yearStats.fetchedAt),
+      }
     : null
 
   const displayModel = `${info.brand} ${info.model}`

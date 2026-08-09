@@ -10,8 +10,7 @@ import { BuyerReportPitch }         from '@/components/report/BuyerReportPitch'
 import { createClient }  from '@/lib/supabase/client'
 import { analytics }     from '@/lib/analytics'
 
-import type { Check } from '@/types/domain'
-import type { PollCheckResponse, VehiclePreview } from '@/types/api'
+import type { PollCheckResponse, VehiclePreview, CheckStatusView } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
 const POLL_TIMEOUT_MS  = 90_000
@@ -28,7 +27,7 @@ interface Props {
 
 export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props) {
   const router = useRouter()
-  const [check,        setCheck]        = useState<Check | null>(null)
+  const [check,        setCheck]        = useState<CheckStatusView | null>(null)
   const [preview,      setPreview]      = useState<VehiclePreview | null>(null)
   const [error,        setError]        = useState<string | null>(null)
   const [authedUser,   setAuthedUser]   = useState<string | null | undefined>(undefined)

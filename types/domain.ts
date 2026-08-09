@@ -6,6 +6,12 @@ export interface Check {
   status: 'pending' | 'running' | 'complete' | 'expired'
   claim_token: string | null
   idempotency_key: string | null
+  /**
+   * paqar_sid of the visitor who created the check. Scopes cache reuse so a
+   * claim_token is never handed to a second visitor — migration 027. Null on
+   * rows predating the column, and null never matches.
+   */
+  session_id?: string | null
   expires_at: string | null
   created_at: string
   updated_at: string
@@ -39,6 +45,12 @@ export interface BuyerReport {
   id:              string
   check_id:        string
   buyer_email:     string
+  /**
+   * Normalised Malaysian mobile (60XXXXXXXXX) captured at checkout, or null.
+   * Optional by design (migration 026) — a required field would trade a real
+   * sale for a follow-up channel. Absent on rows created before the column.
+   */
+  buyer_phone?:    string | null
   status:          'pending' | 'paid' | 'expired'
   billplz_bill_id: string | null
   amount_cents:       number

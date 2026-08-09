@@ -4,17 +4,46 @@ import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { coveredModelByHub, sharedCoveredYears } from '@/lib/market-coverage'
+import { getModelYearCohorts } from '@/lib/db/market-prices'
+import { formatFetchedAt, oldestFetchedAt, MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
+import type { ModelHubSlug } from '@/lib/model-hubs'
 
-type PriceRow = { year: string; minA: number; maxA: number; minB: number; maxB: number }
+export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
 
+/**
+ * Editorial content only. No price may be stated here.
+ *
+ * This file used to declare a `priceRows` table per comparison — hand-typed
+ * min/max figures for both models across six years — under a heading reading
+ * "Harga pasaran mengikut tahun", and repeat those ranges inside `faqs`, which
+ * are emitted as FAQPage JSON-LD. Nothing ever updated them, and by August 2026
+ * they disagreed with Paqar's own cohorts by more than the price of the car:
+ *
+ *     Myvi 2023   page said RM58k–RM74k    cohort said RM33.8k–RM49.8k
+ *     Myvi 2020   page said RM46k–RM60k    cohort said RM30.9k–RM39.8k
+ *     Axia 2020   page said RM28k–RM39k    cohort said RM11.8k–RM27.8k
+ *
+ * A buyer using this page as a benchmark would read a badly overpriced car as a
+ * bargain — the exact harm Paqar exists to prevent — and these are the pages
+ * that rank best (Search Console positions 8.8–12.9), linked from the homepage.
+ *
+ * The table now comes from market_price_cache at render time, and the years
+ * come from lib/market-coverage.ts, so a row can only exist where evidence
+ * does. Guarded by __tests__/lib/comparison-price-claims.test.ts, the same way
+ * the model hubs are.
+ *
+ * `slugA`/`slugB` are ModelHubSlug, not string: they name both the hub link and
+ * the coverage entry the cohort is read from, so a typo is a compile error
+ * rather than a silently empty table.
+ */
 type ComparisonConfig = {
   titleA:      string
   titleB:      string
-  slugA:       string
-  slugB:       string
+  slugA:       ModelHubSlug
+  slugB:       ModelHubSlug
   heading:     string
   description: string
-  priceRows:   PriceRow[]
   prosA:       string[]
   prosB:       string[]
   verdict:     string
@@ -27,14 +56,6 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     slugA:  'perodua-myvi', slugB:  'perodua-axia',
     heading:     'Myvi vs Axia terpakai — mana lebih berbaloi?',
     description: 'Dua kereta Perodua paling popular di pasaran terpakai Malaysia. Axia lebih murah, Myvi lebih besar dan lebih selamat. Bergantung kepada bajet dan keperluan anda.',
-    priceRows: [
-      { year: '2018', minA: 37000, maxA: 52000, minB: 23000, maxB: 33000 },
-      { year: '2019', minA: 42000, maxA: 56000, minB: 26000, maxB: 36000 },
-      { year: '2020', minA: 46000, maxA: 60000, minB: 28000, maxB: 39000 },
-      { year: '2021', minA: 50000, maxA: 65000, minB: 29000, maxB: 41000 },
-      { year: '2022', minA: 54000, maxA: 70000, minB: 31000, maxB: 43000 },
-      { year: '2023', minA: 58000, maxA: 74000, minB: 35000, maxB: 48000 },
-    ],
     prosA: [
       'Lebih besar — selesa untuk 4 penumpang dewasa',
       'VSC dan ASA pada varian 2018 ke atas (lebih selamat)',
@@ -42,15 +63,15 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
       'Enjin 1.3L dan 1.5L — lebih bertenaga di lebuh raya',
     ],
     prosB: [
-      'Harga lebih rendah RM13k–RM20k berbanding Myvi',
+      'Harga beli lebih rendah daripada Myvi tahun yang sama',
       'Kos petrol lebih jimat — enjin 1.0L',
       'Ideal untuk guna dalam bandar sahaja',
       'Kos insurans lebih rendah',
     ],
-    verdict: 'Jika bajet di bawah RM35k atau anda hanya guna dalam bandar, Axia adalah pilihan bijak. Jika anda perlu kereta untuk lebuh raya atau angkut keluarga, bayar lebih sedikit untuk Myvi adalah berbaloi.',
+    verdict: 'Kalau anda hanya guna dalam bandar dan bajet ketat, Axia adalah pilihan bijak. Kalau anda perlu kereta untuk lebuh raya atau angkut keluarga, bayar lebih sedikit untuk Myvi adalah berbaloi. Banding jadual harga di atas untuk lihat beza sebenar mengikut tahun.',
     faqs: [
       { q: 'Myvi atau Axia lebih senang dijual semula?', a: 'Myvi lebih mudah dijual semula dan harga turun lebih perlahan. Axia juga laku tapi pasarannya lebih terhad kepada pembeli bajet.' },
-      { q: 'Berapa perbezaan harga antara Myvi dan Axia terpakai 2020?', a: 'Myvi 2020 terpakai biasanya RM46k–RM60k. Axia 2020 terpakai biasanya RM28k–RM39k. Beza lebih kurang RM17k–RM21k.' },
+      { q: 'Berapa perbezaan harga antara Myvi dan Axia terpakai?', a: 'Axia konsisten lebih murah daripada Myvi tahun yang sama. Jadual harga di atas menunjukkan julat sebenar kedua-duanya mengikut tahun, dikira dari iklan pasaran semasa.' },
       { q: 'Axia boleh bawa ke lebuh raya?', a: 'Boleh, tapi enjin 1.0L akan bekerja keras. Jika anda kerap guna lebuh raya atau bawa penumpang banyak, Myvi adalah pilihan lebih selesa.' },
     ],
   },
@@ -59,14 +80,6 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     slugA:  'toyota-vios', slugB:  'honda-city',
     heading:     'Vios vs City terpakai — mana lebih berbaloi?',
     description: 'Dua sedan Jepun paling popular di Malaysia. Vios lebih tahan lasak dan kos penyelenggaraan lebih rendah. City pula menawarkan ruang dalaman yang lebih besar dan teknologi lebih canggih.',
-    priceRows: [
-      { year: '2017', minA: 36000, maxA: 52000, minB: 38000, maxB: 56000 },
-      { year: '2018', minA: 40000, maxA: 57000, minB: 43000, maxB: 62000 },
-      { year: '2019', minA: 44000, maxA: 62000, minB: 47000, maxB: 68000 },
-      { year: '2020', minA: 50000, maxA: 68000, minB: 54000, maxB: 74000 },
-      { year: '2021', minA: 56000, maxA: 74000, minB: 62000, maxB: 80000 },
-      { year: '2022', minA: 62000, maxA: 80000, minB: 68000, maxB: 88000 },
-    ],
     prosA: [
       'Kos penyelenggaraan lebih rendah — Toyota bahagian murah dan mudah dapat',
       'Nilai jual semula paling tinggi antara semua sedan',
@@ -82,7 +95,7 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     verdict: 'Untuk nilai jual semula dan kebolehpercayaan jangka panjang, Vios menang. Untuk keselesaan penumpang belakang dan rekabentuk yang lebih segar, City lebih menarik — tapi kos penyelenggaraan sedikit lebih tinggi.',
     faqs: [
       { q: 'Vios atau City lebih senang dijual semula?', a: 'Toyota Vios mempunyai nilai jual semula yang lebih tinggi dan stabil. Honda City juga laku tapi harga turunnya sedikit lebih cepat.' },
-      { q: 'Berapa perbezaan harga Vios dan City terpakai?', a: 'Honda City terpakai biasanya RM3k–RM8k lebih mahal berbanding Toyota Vios tahun yang sama. Perbezaan harga bertambah besar untuk model yang lebih baru.' },
+      { q: 'Berapa perbezaan harga Vios dan City terpakai?', a: 'Kedua-duanya rapat, dan mana yang lebih mahal berubah mengikut tahun dan varian. Rujuk jadual harga di atas untuk julat sebenar bagi tahun yang anda pertimbangkan.' },
       { q: 'Vios 2020 atau City 2020 — mana lebih berbaloi?', a: 'Bergantung kepada keutamaan anda. Vios 2020 lebih berjimat dan mudah selenggara. City 2020 (Generasi 7) ada rekabentuk baharu dan ruang yang lebih besar.' },
     ],
   },
@@ -91,14 +104,6 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     slugA:  'perodua-bezza', slugB: 'proton-saga',
     heading:     'Bezza vs Saga terpakai — kereta nasional mana lebih berbaloi?',
     description: 'Dua sedan nasional paling laris di pasaran terpakai Malaysia. Bezza terkenal dengan kecekapan bahan api, Saga pula menawarkan kuasa enjin lebih besar dengan harga yang kompetitif.',
-    priceRows: [
-      { year: '2017', minA: 28000, maxA: 40000, minB: 20000, maxB: 32000 },
-      { year: '2018', minA: 30000, maxA: 42000, minB: 22000, maxB: 34000 },
-      { year: '2019', minA: 33000, maxA: 46000, minB: 25000, maxB: 37000 },
-      { year: '2020', minA: 36000, maxA: 50000, minB: 27000, maxB: 40000 },
-      { year: '2021', minA: 38000, maxA: 52000, minB: 30000, maxB: 43000 },
-      { year: '2022', minA: 40000, maxA: 55000, minB: 32000, maxB: 48000 },
-    ],
     prosA: [
       'Kecekapan bahan api lebih baik — enjin 1.0L EEV',
       'Lebih jimat — kos penyelenggaraan dan insurans rendah',
@@ -106,7 +111,7 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
       'Boot besar untuk sedan compact',
     ],
     prosB: [
-      'Lebih murah RM6k–RM10k berbanding Bezza',
+      'Harga beli biasanya lebih rendah daripada Bezza tahun yang sama',
       'Enjin 1.3L lebih bertenaga — lebih sesuai untuk lebuh raya',
       'Teknologi Proton PREVE lebih canggih pada varian premium',
       'Ruang dalam kabin lebih luas',
@@ -114,7 +119,7 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     verdict: 'Jika anda utamakan kecekapan bahan api dan nilai jual semula, Bezza adalah pilihan lebih selamat. Saga menawarkan lebih banyak kuasa dan lebih murah — tapi nilai jual semula cenderung lebih rendah daripada Bezza.',
     faqs: [
       { q: 'Bezza atau Saga lebih jimat petrol?', a: 'Bezza lebih jimat — enjin 1.0L EEV boleh capai 18–20km/L dalam bandar berbanding Saga 1.3L yang biasanya 14–16km/L.' },
-      { q: 'Berapa perbezaan harga Bezza dan Saga terpakai?', a: 'Saga terpakai biasanya RM6k–RM10k lebih murah daripada Bezza tahun yang sama. Perbezaan ini menjadikan Saga pilihan bajet yang menarik.' },
+      { q: 'Berapa perbezaan harga Bezza dan Saga terpakai?', a: 'Saga biasanya lebih murah daripada Bezza tahun yang sama, yang menjadikannya pilihan bajet yang menarik. Jadual harga di atas menunjukkan beza sebenar mengikut tahun.' },
       { q: 'Mana lebih senang dapat alat ganti — Bezza atau Saga?', a: 'Kedua-duanya senang dapat alat ganti. Perodua ada lebih banyak Authorized Service Centre tetapi Proton juga ada rangkaian servis yang luas.' },
     ],
   },
@@ -123,13 +128,6 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     slugA:  'perodua-myvi', slugB:  'proton-saga',
     heading:     'Myvi vs Saga terpakai — mana lebih berbaloi?',
     description: 'Dua kereta paling popular di Malaysia — hatchback Perodua vs sedan Proton. Myvi lebih besar dan lebih selamat, Saga lebih murah dan lebih bertenaga.',
-    priceRows: [
-      { year: '2018', minA: 37000, maxA: 52000, minB: 22000, maxB: 34000 },
-      { year: '2019', minA: 42000, maxA: 56000, minB: 25000, maxB: 37000 },
-      { year: '2020', minA: 46000, maxA: 60000, minB: 27000, maxB: 40000 },
-      { year: '2021', minA: 50000, maxA: 65000, minB: 30000, maxB: 43000 },
-      { year: '2022', minA: 54000, maxA: 70000, minB: 32000, maxB: 48000 },
-    ],
     prosA: [
       'Lebih besar — hatchback dengan headroom dan legroom lebih luas',
       'VSC dan ASA pada 2018 ke atas — lebih selamat',
@@ -137,7 +135,7 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
       'Pilihan varian lebih banyak (1.3L dan 1.5L)',
     ],
     prosB: [
-      'Lebih murah RM15k–RM22k berbanding Myvi',
+      'Harga beli jauh lebih rendah daripada Myvi tahun yang sama',
       'Enjin 1.3L lebih bertenaga untuk harga sama',
       'Boot sedan lebih besar — sesuai untuk barang atau keluarga',
       'Kos servis sangat rendah — bahagian murah dan mudah dapat',
@@ -145,7 +143,7 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     verdict: 'Jika keselamatan dan nilai jual semula adalah keutamaan, Myvi adalah pilihan lebih bijak. Jika anda mahukan kereta nasional dengan kos rendah dan ruang boot besar, Saga menawarkan nilai yang sukar ditandingi pada harganya.',
     faqs: [
       { q: 'Myvi atau Saga lebih selamat?', a: 'Myvi lebih selamat — terutama varian 2018 ke atas yang ada VSC (Vehicle Stability Control) dan ASA (Advanced Safety Assist). Saga tiada ciri keselamatan aktif pada kebanyakan varian.' },
-      { q: 'Berapa perbezaan harga Myvi dan Saga terpakai 2020?', a: 'Myvi 2020 terpakai RM46k–RM60k. Saga 2020 terpakai RM27k–RM40k. Beza lebih kurang RM19k–RM20k.' },
+      { q: 'Berapa perbezaan harga Myvi dan Saga terpakai?', a: 'Saga konsisten lebih murah daripada Myvi tahun yang sama. Jadual harga di atas menunjukkan julat sebenar kedua-duanya, dikira dari iklan pasaran semasa.' },
       { q: 'Saga senang dijual semula?', a: 'Ya, Saga masih mudah dijual semula kerana harganya rendah dan permintaan tinggi di kalangan pembeli bajet. Tapi nilai tukar ganti Myvi lebih tinggi dan harga turunnya lebih perlahan.' },
     ],
   },
@@ -154,13 +152,6 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     slugA:  'perodua-axia', slugB:  'proton-saga',
     heading:     'Axia vs Saga terpakai — kereta bajet mana lebih berbaloi?',
     description: 'Dua kereta nasional paling murah di pasaran terpakai. Axia lebih jimat petrol, Saga lebih bertenaga dan ada ruang boot yang lebih besar.',
-    priceRows: [
-      { year: '2018', minA: 23000, maxA: 33000, minB: 22000, maxB: 34000 },
-      { year: '2019', minA: 26000, maxA: 36000, minB: 25000, maxB: 37000 },
-      { year: '2020', minA: 28000, maxA: 39000, minB: 27000, maxB: 40000 },
-      { year: '2021', minA: 29000, maxA: 41000, minB: 30000, maxB: 43000 },
-      { year: '2022', minA: 31000, maxA: 43000, minB: 32000, maxB: 48000 },
-    ],
     prosA: [
       'Lebih jimat petrol — enjin 1.0L EEV terbaik di kelasnya',
       'Kos insurans lebih rendah',
@@ -185,13 +176,6 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     slugA:  'perodua-myvi', slugB:  'perodua-bezza',
     heading:     'Myvi vs Bezza terpakai — hatchback atau sedan Perodua?',
     description: 'Dua kereta Perodua paling laris di Malaysia. Myvi adalah hatchback yang lebih besar dan lebih selamat, manakala Bezza menawarkan boot yang besar dengan harga lebih rendah.',
-    priceRows: [
-      { year: '2018', minA: 37000, maxA: 52000, minB: 30000, maxB: 42000 },
-      { year: '2019', minA: 42000, maxA: 56000, minB: 33000, maxB: 46000 },
-      { year: '2020', minA: 46000, maxA: 60000, minB: 36000, maxB: 50000 },
-      { year: '2021', minA: 50000, maxA: 65000, minB: 38000, maxB: 52000 },
-      { year: '2022', minA: 54000, maxA: 70000, minB: 40000, maxB: 55000 },
-    ],
     prosA: [
       'Lebih besar dan lebih selamat — VSC dan ASA pada 2018 ke atas',
       'Prestasi lebih baik di lebuh raya (enjin 1.3L dan 1.5L)',
@@ -199,7 +183,7 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
       'Rekabentuk lebih sporty dan moden',
     ],
     prosB: [
-      'Lebih murah RM7k–RM12k berbanding Myvi',
+      'Harga beli lebih rendah daripada Myvi tahun yang sama',
       'Boot sedan yang besar — sesuai untuk keluarga atau perniagaan',
       'Enjin 1.0L dan 1.3L lebih jimat petrol',
       'Kos insurans lebih rendah',
@@ -207,7 +191,7 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     verdict: 'Myvi untuk pengguna yang utamakan keselamatan, ruang kabin, dan nilai jual semula. Bezza untuk pengguna yang mahukan sedan dengan boot besar pada harga lebih jimat — sesuai untuk keluarga muda atau kegunaan perniagaan ringan.',
     faqs: [
       { q: 'Myvi atau Bezza lebih sesuai untuk keluarga?', a: 'Myvi lebih selesa untuk penumpang — headroom dan legroom lebih luas di tempat duduk belakang. Bezza pula ada boot yang lebih besar untuk simpan barang.' },
-      { q: 'Berapa perbezaan harga Myvi dan Bezza terpakai 2020?', a: 'Myvi 2020 terpakai RM46k–RM60k. Bezza 2020 terpakai RM36k–RM50k. Beza lebih kurang RM10k.' },
+      { q: 'Berapa perbezaan harga Myvi dan Bezza terpakai?', a: 'Bezza biasanya lebih murah daripada Myvi tahun yang sama, walaupun jarak antara keduanya berubah mengikut tahun. Rujuk jadual harga di atas untuk angka semasa.' },
       { q: 'Bezza lebih jimat petrol dari Myvi?', a: 'Ya, Bezza varian 1.0L lebih jimat berbanding Myvi 1.3L. Tapi Myvi 1.3L dan Bezza 1.3L penggunaan petrol hampir sama.' },
     ],
   },
@@ -216,15 +200,9 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     slugA:  'perodua-alza', slugB:  'proton-x50',
     heading:     'Alza vs X50 terpakai — MPV atau SUV?',
     description: 'Pilihan popular untuk keluarga Malaysia. Alza adalah MPV 7-tempat duduk yang praktikal dan murah diselenggara. X50 adalah SUV kompak dengan teknologi tinggi dan rekabentuk sporty.',
-    priceRows: [
-      { year: '2020', minA: 30000, maxA: 48000, minB: 58000, maxB: 78000 },
-      { year: '2021', minA: 35000, maxA: 56000, minB: 64000, maxB: 84000 },
-      { year: '2022', minA: 54000, maxA: 74000, minB: 70000, maxB: 88000 },
-      { year: '2023', minA: 62000, maxA: 80000, minB: 76000, maxB: 92000 },
-    ],
     prosA: [
       '7 tempat duduk — sesuai untuk keluarga ramai',
-      'Lebih murah RM20k–RM30k berbanding X50 tahun sama',
+      'Harga beli jauh lebih rendah daripada X50 tahun yang sama',
       'Kos penyelenggaraan lebih rendah',
       'Bagasi fleksibel — kerusi belakang boleh dilipat',
     ],
@@ -237,7 +215,7 @@ const COMPARISONS: Record<string, ComparisonConfig> = {
     verdict: 'Jika keluarga anda 5 orang ke atas atau anda perlukan 7 tempat duduk, Alza jelas lebih praktikal dan jimat. Jika anda mahukan SUV dengan teknologi moden dan bajet cukup untuk X50, pengalaman memandunya jauh berbeza.',
     faqs: [
       { q: 'Alza atau X50 lebih sesuai untuk keluarga?', a: 'Alza lebih sesuai jika anda kerap bawa 6-7 penumpang. X50 pula sesuai untuk keluarga 4-5 orang yang mahukan keselesaan dan teknologi lebih tinggi.' },
-      { q: 'Berapa perbezaan harga Alza dan X50 terpakai?', a: 'X50 terpakai biasanya RM20k–RM30k lebih mahal daripada Alza tahun yang sama. Bagi keluarga besar, lebihan wang itu mungkin lebih baik digunakan untuk tujuan lain.' },
+      { q: 'Berapa perbezaan harga Alza dan X50 terpakai?', a: 'X50 biasanya lebih mahal daripada Alza tahun yang sama. Bagi keluarga besar, lebihan wang itu mungkin lebih baik digunakan untuk tujuan lain — banding jadual harga di atas sebelum putuskan.' },
       { q: 'Alza 2022 ke atas vs Alza lama — sama ke?', a: 'Berbeza sangat. Alza 2022 (generasi 2) adalah kenderaan baharu sepenuhnya — lebih besar, lebih selamat, dan ada ciri keselamatan aktif. Alza generasi 1 (sebelum 2022) lebih murah tapi rekabentuk lebih lama.' },
     ],
   },
@@ -266,9 +244,47 @@ function fmt(n: number) {
   return `RM${(n / 1000).toFixed(0)}k`
 }
 
-export default function ComparisonPage({ params }: { params: { slug: string } }) {
+/**
+ * One row per year BOTH models have evidence for.
+ *
+ * A year where only one side clears the eligibility gate is dropped entirely: a
+ * comparison row with a blank column is not a comparison, it is a lone price
+ * claim sitting under a heading that promises a comparison. Row count therefore
+ * varies over time as cohorts cross the threshold — deliberate, and the same
+ * posture the model hubs take.
+ */
+async function comparisonRows(cfg: ComparisonConfig) {
+  const a = coveredModelByHub(cfg.slugA)
+  const b = coveredModelByHub(cfg.slugB)
+  const years = sharedCoveredYears(cfg.slugA, cfg.slugB)
+  if (!a || !b || years.length === 0) return { rows: [], updatedLabel: '' }
+
+  const [statsA, statsB] = await Promise.all([
+    getModelYearCohorts(a.make, a.model, years, MARKET_PAGE_REVALIDATE_SECONDS),
+    getModelYearCohorts(b.make, b.model, years, MARKET_PAGE_REVALIDATE_SECONDS),
+  ])
+
+  const byYearA = new Map(statsA.map(s => [s.year, s]))
+  const byYearB = new Map(statsB.map(s => [s.year, s]))
+
+  const rows = years.flatMap(year => {
+    const sa = byYearA.get(year)
+    const sb = byYearB.get(year)
+    if (!sa || !sb) return []
+    return [{ year, a: sa, b: sb }]
+  })
+
+  // The oldest scrape across BOTH columns — labelling the table with the newest
+  // would claim a freshness half of it does not have.
+  const oldest = oldestFetchedAt(rows.flatMap(r => [r.a.fetchedAt, r.b.fetchedAt]))
+  return { rows, updatedLabel: oldest ? formatFetchedAt(oldest) : '' }
+}
+
+export default async function ComparisonPage({ params }: { params: { slug: string } }) {
   const cfg = COMPARISONS[params.slug]
   if (!cfg) notFound()
+
+  const { rows: priceRows, updatedLabel } = await comparisonRows(cfg)
 
   const schema = {
     '@context': 'https://schema.org',
@@ -313,30 +329,46 @@ export default function ComparisonPage({ params }: { params: { slug: string } })
             </p>
           </div>
 
-          {/* Price table */}
+          {/* Price table — live cohort data only. See the note on ComparisonConfig. */}
           <div>
             <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-3">Harga pasaran mengikut tahun</h2>
-            <div className="overflow-hidden rounded-[12px] border border-[#E5E7EB]">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                    <th className="font-heading font-bold text-[11px] text-left px-3 py-2.5 text-[#6B7280]">Tahun</th>
-                    <th className="font-heading font-bold text-[11px] text-center px-3 py-2.5 text-[#064E4A]">{cfg.titleA}</th>
-                    <th className="font-heading font-bold text-[11px] text-center px-3 py-2.5 text-[#1D4ED8]">{cfg.titleB}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cfg.priceRows.map((row, i) => (
-                    <tr key={row.year} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}>
-                      <td className="font-body font-semibold text-[#374151] px-3 py-2.5">{row.year}</td>
-                      <td className="font-body text-center text-[#064E4A] px-3 py-2.5">{fmt(row.minA)} – {fmt(row.maxA)}</td>
-                      <td className="font-body text-center text-[#1D4ED8] px-3 py-2.5">{fmt(row.minB)} – {fmt(row.maxB)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="font-body text-[10px] text-[#9CA3AF] mt-2">Anggaran harga pasaran. Semak harga sebenar kereta pilihan anda di bawah.</p>
+            {priceRows.length > 0 ? (
+              <>
+                <div className="overflow-hidden rounded-[12px] border border-[#E5E7EB]">
+                  <table className="w-full text-[13px]">
+                    <thead>
+                      <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                        <th className="font-heading font-bold text-[11px] text-left px-3 py-2.5 text-[#6B7280]">Tahun</th>
+                        <th className="font-heading font-bold text-[11px] text-center px-3 py-2.5 text-[#064E4A]">{cfg.titleA}</th>
+                        <th className="font-heading font-bold text-[11px] text-center px-3 py-2.5 text-[#1D4ED8]">{cfg.titleB}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {priceRows.map((row, i) => (
+                        <tr key={row.year} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}>
+                          <td className="font-body font-semibold text-[#374151] px-3 py-2.5">{row.year}</td>
+                          <td className="font-body text-center text-[#064E4A] px-3 py-2.5">{fmt(row.a.min)} – {fmt(row.a.max)}</td>
+                          <td className="font-body text-center text-[#1D4ED8] px-3 py-2.5">{fmt(row.b.min)} – {fmt(row.b.max)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="font-body text-[10px] text-[#9CA3AF] mt-2">
+                  Dikira dari iklan pasaran semasa{updatedLabel ? ` · Dikemaskini: ${updatedLabel}` : ''}.
+                  Harga sebenar bergantung kepada varian, jarak tempuh dan kondisi — semak kereta pilihan anda di bawah.
+                </p>
+              </>
+            ) : (
+              // Never an empty table and never a 404: a cron lapse must not
+              // deindex a page that ranks. Same posture as the model hubs.
+              <div className="bg-white border border-[#E5E7EB] rounded-[12px] p-4">
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                  Data harga pasaran sedang dikemaskini. Sementara itu, semak harga kereta
+                  yang anda nak beli terus di bawah — ia percuma.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Pros / cons */}

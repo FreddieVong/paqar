@@ -113,3 +113,32 @@ describe('retarget insight — stays silent when a claim would be unsafe', () =>
     expect(await loadRetargetInsight('JUF222', 60_000)).toBeNull()
   })
 })
+
+describe('the e-mail reads the same cache key as the report', () => {
+  it('keys on buildMarketModelKeyword, not the raw JPJ model', async () => {
+    // JPJ returns model "7" for a BMW 7 Series with the real designation in the
+    // description. Every other surface — the report page, the free price
+    // evidence endpoint, the payment webhook, the checkout pre-warm — reads
+    // market_price_cache under "730". This module read "7", matched a row
+    // nothing writes, and silently fell back to the generic opener.
+    getCachedVehicleData.mockResolvedValue({
+      make: 'BMW', model: '7', registrationYear: '2020',
+      description: 'BMW 7 30Li (CBU)', nvic: 'NV1',
+    })
+
+    await loadRetargetInsight('WXY1234', 300_000)
+
+    expect(getCachedMarketPrices).toHaveBeenCalledWith('BMW', '730', '2020')
+  })
+
+  it('passes an ordinary model through unchanged', async () => {
+    getCachedVehicleData.mockResolvedValue({
+      make: 'Perodua', model: 'MYVI', registrationYear: '2020',
+      description: 'PERODUA MYVI 1.5 AV', nvic: 'NV2',
+    })
+
+    await loadRetargetInsight('WXY1234', 45_000)
+
+    expect(getCachedMarketPrices).toHaveBeenCalledWith('Perodua', 'MYVI', '2020')
+  })
+})

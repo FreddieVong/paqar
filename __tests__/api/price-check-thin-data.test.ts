@@ -9,6 +9,7 @@ vi.mock('@/lib/db/market-prices', () => ({
 
 import { POST } from '@/app/api/price-check/route'
 import { getCachedMarketPrices } from '@/lib/db/market-prices'
+import type { MarketListing } from '@/lib/db/market-prices'
 
 const request = (body: unknown) =>
   new NextRequest('http://localhost/api/price-check', {
@@ -20,7 +21,7 @@ const request = (body: unknown) =>
 const golfBody = { brand: 'Volkswagen', model: 'Golf', year: '2020', askingPrice: 120_000 }
 const myviBody = { brand: 'Perodua', model: 'Myvi', year: '2020', askingPrice: 50_000 }
 
-const cached = (listings: unknown[]) => ({
+const cached = (listings: MarketListing[]) => ({
   listings, fetchedAt: '2026-07-24T00:00:00Z', searchUrl: '',
 })
 const myvi = (price: number, i: number) =>

@@ -5,6 +5,9 @@ import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
 import { BrandModelList, brandCollectionItems } from '@/components/layout/BrandModelList'
+import { getCoverageModelSpans }   from '@/lib/db/market-prices'
+import { MARKET_COVERAGE }         from '@/lib/market-coverage'
+import { MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
 import type { BrandModel } from '@/lib/model-hubs'
 
 const YEAR = new Date().getFullYear()
@@ -20,15 +23,26 @@ export const metadata: Metadata = {
   },
 }
 
+// Price spans are read from market_price_cache at render time; the warm-cache
+// cron refreshes it daily, so anything faster than hourly re-renders identical
+// data. Same window as every other market page.
+export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
+
 const MODELS: BrandModel[] = [
-  { hubSlug: 'proton-saga',    model: 'Saga',    yearKey: 'saga',    years: ['2019','2020','2021','2022','2023'], range: 'RM20k – RM48k',  tag: 'Sedan nasional terlaris' },
-  { model: 'Persona', yearKey: 'persona', years: ['2020','2021','2022'],               range: 'RM30k – RM60k',  tag: 'Sedan keluarga berpatutan' },
-  { hubSlug: 'proton-iriz',    model: 'Iriz',    yearKey: 'iriz',    years: ['2019','2020','2021'],               range: 'RM24k – RM52k',  tag: 'Hatchback kompak' },
-  { hubSlug: 'proton-x50',     model: 'X50',     yearKey: 'x50',     years: ['2021','2022','2023'],               range: 'RM58k – RM92k',  tag: 'SUV kompak terlaris' },
-  { hubSlug: 'proton-x70',     model: 'X70',     yearKey: 'x70',     years: ['2020','2021','2022'],               range: 'RM65k – RM104k', tag: 'SUV C-segment' },
+  { hubSlug: 'proton-saga',    model: 'Saga',    yearKey: 'saga',    years: ['2019','2020','2021','2022','2023'],  tag: 'Sedan nasional terlaris' },
+  { model: 'Persona', yearKey: 'persona', years: ['2020','2021','2022'],  tag: 'Sedan keluarga berpatutan' },
+  { hubSlug: 'proton-iriz',    model: 'Iriz',    yearKey: 'iriz',    years: ['2019','2020','2021'],  tag: 'Hatchback kompak' },
+  { hubSlug: 'proton-x50',     model: 'X50',     yearKey: 'x50',     years: ['2021','2022','2023'],  tag: 'SUV kompak terlaris' },
+  { hubSlug: 'proton-x70',     model: 'X70',     yearKey: 'x70',     years: ['2020','2021','2022'], tag: 'SUV C-segment' },
 ]
 
-export default function HargaProton() {
+export default async function HargaProton() {
+  // Keyed on yearKey, the same key MARKET_COVERAGE and the year pages use.
+  const spans = await getCoverageModelSpans(
+    MARKET_COVERAGE.filter(c => c.make === 'Proton'),
+    MARKET_PAGE_REVALIDATE_SECONDS,
+  )
+
   return (
     <>
       <CollectionSchema
@@ -51,7 +65,7 @@ export default function HargaProton() {
             </p>
           </div>
 
-          <BrandModelList brand="Proton" models={MODELS} />
+          <BrandModelList brand="Proton" models={MODELS} spans={spans} />
 
           <div className="space-y-3">
             <p className="font-heading font-bold text-[14px] text-[#111827]">Semak harga Proton yang nak anda beli:</p>

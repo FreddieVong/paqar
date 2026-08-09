@@ -5,6 +5,7 @@ export async function createBuyerReport(params: {
   checkId:          string
   buyerEmail:       string
   billplzBillId:    string
+  buyerPhone?:      string | null
   amountCents:      number
   addJomCheck?:     boolean
   askingPriceRm?:   number
@@ -18,6 +19,11 @@ export async function createBuyerReport(params: {
       check_id:            params.checkId,
       buyer_email:         params.buyerEmail,
       billplz_bill_id:     params.billplzBillId,
+      // Migration 026 added this column so an abandoned checkout can be
+      // followed up on WhatsApp. It was accepted as a parameter but never
+      // written, so every row was NULL and the whole feature was a no-op on
+      // Paqar's side — the number reached Billplz and nothing else.
+      buyer_phone:         params.buyerPhone ?? null,
       amount_cents:        params.amountCents,
       add_jomcheck:        params.addJomCheck ?? false,
       jomcheck_status:     'not_requested',

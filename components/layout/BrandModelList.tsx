@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { BrandModel } from '@/lib/model-hubs'
+import type { ModelPriceSpan } from '@/lib/db/market-prices'
 
 // Shared model list for the five brand hub pages (/harga-{brand}-terpakai).
 //
@@ -10,16 +11,33 @@ import type { BrandModel } from '@/lib/model-hubs'
 // A model without a `hubSlug` still renders: same card, same price range, same
 // year chips. It simply is not a link, because there is nowhere to go. The
 // year pages it points to are real and stay clickable.
+//
+// `spans` is keyed on yearKey and comes from getCoverageModelSpans(). A model
+// with no entry renders its tag alone: the row, the link and every year chip
+// survive, only the unevidenced figure goes. Dropping the row instead would
+// cost internal links to pages that are perfectly fine.
 
-export function BrandModelList({ brand, models }: { brand: string; models: BrandModel[] }) {
+function formatSpan(span: ModelPriceSpan): string {
+  const k = (n: number) => `RM${Math.round(n / 1000)}k`
+  return `${k(span.min)} – ${k(span.max)}`
+}
+
+export function BrandModelList({ brand, models, spans }: {
+  brand:  string
+  models: BrandModel[]
+  spans:  Map<string, ModelPriceSpan>
+}) {
   return (
     <div className="flex flex-col gap-3">
       {models.map((m) => {
+        const span = spans.get(m.yearKey)
         const heading = (
           <>
             <div>
               <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">{brand} {m.model}</p>
-              <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{m.range} · {m.tag}</p>
+              <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">
+                {span ? `${formatSpan(span)} · ${m.tag}` : m.tag}
+              </p>
             </div>
             {m.hubSlug && (
               <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>

@@ -4,8 +4,15 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
 import type { ModelHubSlug } from '@/lib/model-hubs'
+import { getCoverageModelSpans }   from '@/lib/db/market-prices'
+import { MARKET_COVERAGE, coveredModelByHub } from '@/lib/market-coverage'
+import { MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
 
 const YEAR = new Date().getFullYear()
+
+// Price spans come from market_price_cache at render time. Same window as the
+// brand hubs and the year pages.
+export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
 
 export const metadata: Metadata = {
   title: `Harga Kereta Terpakai Malaysia ${YEAR} — Semak Harga Pasaran | Paqar`,
@@ -20,24 +27,32 @@ export const metadata: Metadata = {
 
 // slug is typed against the shared allowlist, so this index can only ever
 // list hubs that actually render.
-const MODELS: { slug: ModelHubSlug; brand: string; model: string; range: string; tag: string }[] = [
-  { slug: 'perodua-myvi',   brand: 'Perodua', model: 'Myvi',   range: 'RM33k – RM74k',  tag: 'Paling popular' },
-  { slug: 'perodua-axia',   brand: 'Perodua', model: 'Axia',   range: 'RM20k – RM48k',  tag: 'Paling berpatutan' },
-  { slug: 'perodua-bezza',  brand: 'Perodua', model: 'Bezza',  range: 'RM26k – RM55k',  tag: 'Sedan ekonomi' },
-  { slug: 'perodua-alza',   brand: 'Perodua', model: 'Alza',   range: 'RM30k – RM80k',  tag: 'MPV 7-tempat' },
-  { slug: 'perodua-ativa',  brand: 'Perodua', model: 'Ativa',  range: 'RM53k – RM78k',  tag: 'SUV crossover' },
-  { slug: 'proton-saga',    brand: 'Proton',  model: 'Saga',   range: 'RM20k – RM48k',  tag: 'Nasional' },
-  { slug: 'proton-iriz',    brand: 'Proton',  model: 'Iriz',   range: 'RM24k – RM52k',  tag: 'Hatchback kompak' },
-  { slug: 'proton-x50',     brand: 'Proton',  model: 'X50',    range: 'RM58k – RM92k',  tag: 'SUV kompak' },
-  { slug: 'proton-x70',     brand: 'Proton',  model: 'X70',    range: 'RM65k – RM104k', tag: 'SUV besar' },
-  { slug: 'toyota-vios',    brand: 'Toyota',  model: 'Vios',   range: 'RM36k – RM80k',  tag: 'Paling tahan lama' },
-  { slug: 'honda-city',     brand: 'Honda',   model: 'City',   range: 'RM38k – RM92k',  tag: 'Ruang luas' },
-  { slug: 'honda-jazz',     brand: 'Honda',   model: 'Jazz',   range: 'RM38k – RM70k',  tag: 'Magic Seats' },
-  { slug: 'honda-hrv',      brand: 'Honda',   model: 'HR-V',   range: 'RM56k – RM92k',  tag: 'Crossover SUV' },
-  { slug: 'nissan-almera',  brand: 'Nissan',  model: 'Almera', range: 'RM46k – RM72k',  tag: 'Jimat petrol' },
+// No `range` here by design — see the note on BrandModel in lib/model-hubs.ts.
+// The figures are looked up per model through coveredModelByHub(slug).yearKey.
+const MODELS: { slug: ModelHubSlug; brand: string; model: string; tag: string }[] = [
+  { slug: 'perodua-myvi',   brand: 'Perodua', model: 'Myvi',  tag: 'Paling popular' },
+  { slug: 'perodua-axia',   brand: 'Perodua', model: 'Axia',  tag: 'Paling berpatutan' },
+  { slug: 'perodua-bezza',  brand: 'Perodua', model: 'Bezza',  tag: 'Sedan ekonomi' },
+  { slug: 'perodua-alza',   brand: 'Perodua', model: 'Alza',  tag: 'MPV 7-tempat' },
+  { slug: 'perodua-ativa',  brand: 'Perodua', model: 'Ativa',  tag: 'SUV crossover' },
+  { slug: 'proton-saga',    brand: 'Proton',  model: 'Saga',  tag: 'Nasional' },
+  { slug: 'proton-iriz',    brand: 'Proton',  model: 'Iriz',  tag: 'Hatchback kompak' },
+  { slug: 'proton-x50',     brand: 'Proton',  model: 'X50',  tag: 'SUV kompak' },
+  { slug: 'proton-x70',     brand: 'Proton',  model: 'X70', tag: 'SUV besar' },
+  { slug: 'toyota-vios',    brand: 'Toyota',  model: 'Vios',  tag: 'Paling tahan lama' },
+  { slug: 'honda-city',     brand: 'Honda',   model: 'City',  tag: 'Ruang luas' },
+  { slug: 'honda-jazz',     brand: 'Honda',   model: 'Jazz',  tag: 'Magic Seats' },
+  { slug: 'honda-hrv',      brand: 'Honda',   model: 'HR-V',  tag: 'Crossover SUV' },
+  { slug: 'nissan-almera',  brand: 'Nissan',  model: 'Almera',  tag: 'Jimat petrol' },
 ]
 
-export default function HargaKeretaTerpakaiPage() {
+export default async function HargaKeretaTerpakaiPage() {
+  const spans = await getCoverageModelSpans(MARKET_COVERAGE, MARKET_PAGE_REVALIDATE_SECONDS)
+  const spanFor = (slug: ModelHubSlug) => {
+    const key = coveredModelByHub(slug)?.yearKey
+    return key ? spans.get(key) : undefined
+  }
+
   return (
     <>
       <CollectionSchema
@@ -63,7 +78,9 @@ export default function HargaKeretaTerpakaiPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            {MODELS.map((m) => (
+            {MODELS.map((m) => {
+              const span = spanFor(m.slug)
+              return (
               <Link
                 key={m.slug}
                 href={`/harga-kereta-terpakai/${m.slug}`}
@@ -73,11 +90,14 @@ export default function HargaKeretaTerpakaiPage() {
                   <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">
                     {m.brand} {m.model}
                   </p>
-                  <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">{m.range} · {m.tag}</p>
+                  <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">
+                    {span ? `RM${Math.round(span.min / 1000)}k – RM${Math.round(span.max / 1000)}k · ${m.tag}` : m.tag}
+                  </p>
                 </div>
                 <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
               </Link>
-            ))}
+              )
+            })}
           </div>
 
           <div className="space-y-2">

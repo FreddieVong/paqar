@@ -5,6 +5,9 @@ import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
 import { BrandModelList, brandCollectionItems } from '@/components/layout/BrandModelList'
+import { getCoverageModelSpans }   from '@/lib/db/market-prices'
+import { MARKET_COVERAGE }         from '@/lib/market-coverage'
+import { MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
 import type { BrandModel } from '@/lib/model-hubs'
 
 const YEAR = new Date().getFullYear()
@@ -20,11 +23,22 @@ export const metadata: Metadata = {
   },
 }
 
+// Price spans are read from market_price_cache at render time; the warm-cache
+// cron refreshes it daily, so anything faster than hourly re-renders identical
+// data. Same window as every other market page.
+export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
+
 const MODELS: BrandModel[] = [
-  { hubSlug: 'nissan-almera', model: 'Almera', yearKey: 'almera', years: ['2021','2022','2023'], range: 'RM46k – RM72k', tag: 'Sedan turbo paling jimat petrol' },
+  { hubSlug: 'nissan-almera', model: 'Almera', yearKey: 'almera', years: ['2021','2022','2023'], tag: 'Sedan turbo paling jimat petrol' },
 ]
 
-export default function HargaNissan() {
+export default async function HargaNissan() {
+  // Keyed on yearKey, the same key MARKET_COVERAGE and the year pages use.
+  const spans = await getCoverageModelSpans(
+    MARKET_COVERAGE.filter(c => c.make === 'Nissan'),
+    MARKET_PAGE_REVALIDATE_SECONDS,
+  )
+
   return (
     <>
       <CollectionSchema
@@ -47,7 +61,7 @@ export default function HargaNissan() {
             </p>
           </div>
 
-          <BrandModelList brand="Nissan" models={MODELS} />
+          <BrandModelList brand="Nissan" models={MODELS} spans={spans} />
 
           <div className="space-y-3">
             <p className="font-heading font-bold text-[14px] text-[#111827]">Semak harga Nissan yang nak anda beli:</p>

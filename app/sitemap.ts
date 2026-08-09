@@ -1,8 +1,26 @@
 import type { MetadataRoute } from 'next'
+import { coveredYearSlugs }   from '@/lib/market-coverage'
+import { MODEL_HUB_SLUGS }    from '@/lib/model-hubs'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = 'https://paqar.my'
+
+  /**
+   * Editorial pages: the date the copy was last written. Curated on purpose —
+   * an always-current lastModified on static prose is a claim Google learns to
+   * discount, and then ignores on the pages where it is true.
+   */
   const now  = new Date('2026-06-23')
+
+  /**
+   * Market pages: generated at build time from market_price_cache, which the
+   * warm-cache cron refreshes daily, and re-rendered hourly by ISR. These are
+   * declared changeFrequency 'weekly' and their content genuinely does change,
+   * so `now` — frozen at 2026-06-23 while the data moved on for weeks — was
+   * simply false. Build time is the honest answer: it is when the figures on
+   * the page were last produced.
+   */
+  const marketPagesBuiltAt = new Date()
 
   return [
     { url: base,                                                         lastModified: now,                        changeFrequency: 'weekly',  priority: 1.0 },
@@ -37,8 +55,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/terma`,                                              lastModified: new Date('2025-01-01'),     changeFrequency: 'yearly',  priority: 0.3 },
     // Model price hub
     { url: `${base}/harga-kereta-terpakai`,                              lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
-    ...['perodua-myvi','perodua-axia','perodua-bezza','proton-saga','toyota-vios','honda-city','perodua-alza','proton-x50','perodua-ativa','honda-jazz','proton-x70','proton-iriz','honda-hrv','nissan-almera'].map(m => ({
-      url: `${base}/harga-kereta-terpakai/${m}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.85,
+    // Read from the same list the hub route types its MODELS map against, so a
+    // hub can never be advertised here without a page behind it — and a new hub
+    // is never forgotten. The hand-typed copy this replaces was correct, but it
+    // was the fourth hand-synced list in a file that has already shipped one
+    // drift bug.
+    ...MODEL_HUB_SLUGS.map(m => ({
+      url: `${base}/harga-kereta-terpakai/${m}`, lastModified: marketPagesBuiltAt, changeFrequency: 'monthly' as const, priority: 0.85,
     })),
     // Brand hub pages
     { url: `${base}/harga-perodua-terpakai`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
@@ -46,27 +69,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/harga-toyota-terpakai`,  lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/harga-honda-terpakai`,   lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/harga-nissan-terpakai`,  lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
-    // Year-specific model price pages
-    ...[
-      ...['2019','2020','2021','2022','2023'].map(y => `myvi-${y}`),
-      ...['2020','2021','2022','2023'].map(y => `axia-${y}`),
-      ...['2020','2021','2022','2023'].map(y => `bezza-${y}`),
-      ...['2021','2022','2023'].map(y => `alza-${y}`),
-      ...['2021','2022','2023'].map(y => `ativa-${y}`),
-      ...['2019','2020','2021','2022','2023'].map(y => `saga-${y}`),
-      ...['2020','2021','2022'].map(y => `persona-${y}`),
-      ...['2019','2020','2021'].map(y => `iriz-${y}`),
-      ...['2021','2022','2023'].map(y => `x50-${y}`),
-      ...['2020','2021','2022'].map(y => `x70-${y}`),
-      ...['2021','2022','2023'].map(y => `city-${y}`),
-      ...['2020','2021','2022'].map(y => `civic-${y}`),
-      ...['2021','2022','2023'].map(y => `hr-v-${y}`),
-      ...['2018','2019','2020'].map(y => `jazz-${y}`),
-      ...['2020','2021','2022','2023'].map(y => `vios-${y}`),
-      ...['2021','2022','2023'].map(y => `yaris-${y}`),
-      ...['2021','2022','2023'].map(y => `almera-${y}`),
-    ].map(s => ({
-      url: `${base}/harga-${s}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.85,
+    // Year-specific model price pages — derived from the one coverage
+    // declaration the warm-cache cron scrapes from, so this list can never
+    // advertise a year page whose cache row is never populated.
+    ...coveredYearSlugs().map(s => ({
+      url: `${base}/harga-${s}`, lastModified: marketPagesBuiltAt, changeFrequency: 'weekly' as const, priority: 0.85,
     })),
     // Comparison pages
     { url: `${base}/bandingkan`,             lastModified: now, changeFrequency: 'monthly', priority: 0.8 },

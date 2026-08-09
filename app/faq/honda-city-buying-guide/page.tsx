@@ -127,9 +127,13 @@ export default function HondaCityGuide() {
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">Harga Pasaran Sebenar (Julai 2026)</h2>
-          <p className="text-[#374151] mb-4">Berdasarkan listing sebenar di pasaran:</p>
-          <table className="w-full text-sm border-collapse">
+          <h2 className="text-2xl font-bold mb-4">Anggaran harga City terpakai</h2>
+        <p className="text-[#374151] mb-4">
+          Anggaran panduan untuk beri anda titik permulaan, bukan harga pasaran yang
+          dikira untuk kereta tertentu. Harga sebenar bergantung kepada varian, jarak
+          tempuh dan kondisi — semak harga sebenar City yang anda minat sebelum buat tawaran.
+        </p>
+                    <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-[#F3F4F6]">
                 <th className="border p-3 text-left">Model</th>

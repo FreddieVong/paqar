@@ -96,7 +96,12 @@ export default function ViosBuyingGuide() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-2xl font-bold mb-4">Harga Pasaran Sebenar (Julai 2026)</h2>
+        <h2 className="text-2xl font-bold mb-4">Anggaran harga Vios terpakai</h2>
+        <p className="text-[#374151] mb-4">
+          Anggaran panduan untuk beri anda titik permulaan, bukan harga pasaran yang
+          dikira untuk kereta tertentu. Harga sebenar bergantung kepada varian, jarak
+          tempuh dan kondisi — semak harga sebenar Vios yang anda minat sebelum buat tawaran.
+        </p>
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-[#F3F4F6]">
