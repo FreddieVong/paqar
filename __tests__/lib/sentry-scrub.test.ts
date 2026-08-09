@@ -165,3 +165,44 @@ describe('the server SDK is actually initialised', () => {
     expect(src.indexOf('sentry.server.config')).toBeLessThan(src.indexOf('./lib/env'))
   })
 })
+
+describe('all three runtimes are covered', () => {
+  const root = join(__dirname, '..', '..')
+  const instrumentation = readFileSync(join(root, 'instrumentation.ts'), 'utf-8')
+
+  it('an edge config exists and uses the shared scrubber', () => {
+    const src = readFileSync(join(root, 'sentry.edge.config.ts'), 'utf-8')
+    expect(src).toContain('beforeSend: scrubEvent')
+    expect(src).not.toMatch(/beforeSend\(event\)\s*\{/)
+  })
+
+  it('instrumentation loads it under the edge runtime guard', () => {
+    // Nothing imports the edge config implicitly. Without this line an
+    // exception in middleware — which runs on every non-static, non-API
+    // request — is silently discarded.
+    const block = instrumentation.split("NEXT_RUNTIME === 'edge'")[1] ?? ''
+    expect(block).toContain('sentry.edge.config')
+  })
+
+  it('keeps middleware off the tracing path', () => {
+    // Middleware is the hottest code in the app. Sampling traces there would
+    // add overhead to every page view to measure the least interesting work.
+    // Errors are what was missing; traces are not worth the cost here.
+    const src = readFileSync(join(root, 'sentry.edge.config.ts'), 'utf-8')
+    expect(src).toMatch(/tracesSampleRate:\s*0\b/)
+  })
+
+  it('the scrubber uses no Node built-ins, so it runs on Edge', () => {
+    // URL, URLSearchParams and RegExp only. A node:crypto or node:fs import
+    // here would fail the Edge build rather than degrade quietly.
+    const src = readFileSync(join(root, 'lib/sentry-scrub.ts'), 'utf-8')
+    expect(src).not.toMatch(/from\s+['"]node:/)
+    expect(src).not.toMatch(/require\(['"]node:/)
+  })
+
+  it('every runtime config routes through the one scrubber', () => {
+    for (const f of ['sentry.client.config.ts', 'sentry.server.config.ts', 'sentry.edge.config.ts']) {
+      expect(readFileSync(join(root, f), 'utf-8'), f).toContain('beforeSend: scrubEvent')
+    }
+  })
+})
