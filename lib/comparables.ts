@@ -132,6 +132,80 @@ export function excludePerformanceModels<T extends PricedListing>(listings: T[])
   })
 }
 
+// ── The same car posted twice ──────────────────────────────────────────────
+//
+// A Mudah URL is `mudah.my/<slug>-<listingId>.htm`. The id is per POSTING; the
+// slug is generated from the title and is therefore per DESCRIPTION. A dealer
+// who reposts a car gets a new id and the same slug.
+//
+// THE TRAP, measured before writing any of this
+//
+// Grouping by slug alone looks obviously right and is catastrophically wrong.
+// Across 833 production listings, 66 slug groups covering 157 listings — 19% of
+// everything — share a slug. Only two of those groups are the same car. The
+// rest are genuinely different cars whose descriptions collapse to the same
+// generic slug: `2023-nissan-almera-1-0-vlt-a` matched five separate vehicles
+// at RM50,800 through RM75,000 with mileages from 25k to 90k. Deduplicating on
+// the slug would have deleted a fifth of the market and called it hygiene.
+//
+// So the slug is necessary and nowhere near sufficient. A posting is treated as
+// a repeat only when the slug, the exact asking price, the mileage BAND and the
+// transmission all match — four fields that agree by coincidence far less often
+// than any one of them does.
+const LISTING_ID   = /mudah\.my\/(.+?)-\d{6,}\.htm/
+const MILEAGE_BAND = /(\d+k-\d+k|<\s*5k)/
+const TRANSMISSION = /(Auto|Manual)/
+
+/**
+ * A per-vehicle fingerprint, or null when it cannot be built confidently.
+ *
+ * Null is the safe answer and every caller treats it as "keep this listing".
+ * The mileage band and transmission are REQUIRED rather than optional-with-a-
+ * fallback: if the scraper's card format ever changes, a degraded fingerprint
+ * of slug+price alone would start merging cars that merely share a description
+ * and a price — and the production data has exactly that case, two X50s at
+ * RM60,800 one mileage band apart. Failing to dedupe is cheap; merging two real
+ * cars corrupts the median a buyer acts on.
+ */
+function listingFingerprint(l: PricedListing): string | null {
+  const slug = (l.url ?? '').match(LISTING_ID)?.[1]
+  if (!slug) return null
+  const mileage = (l.title ?? '').match(MILEAGE_BAND)?.[1]
+  const trans   = (l.title ?? '').match(TRANSMISSION)?.[1]
+  if (!mileage || !trans) return null
+  return `${slug}|${l.price}|${mileage}|${trans}`
+}
+
+/**
+ * Collapses repeat postings of the same vehicle to one comparable.
+ *
+ * Counting one car twice overstates both the sample and the confidence derived
+ * from it — comparableConfidence bands at 5 and 10 listings, so on a thin
+ * cohort a single repost can promote "limited data" to "medium".
+ *
+ * Measured impact on production data is deliberately small: 3 listings of 833
+ * (0.36%), 3 of 58 cohorts, no confidence band changes, medians moving by at
+ * most RM500. That is the honest size of the problem, and the reason this rule
+ * is conservative rather than clever — the failure mode of an aggressive
+ * version is far more expensive than the duplicates it would catch.
+ *
+ * NOTE: this does NOT count independent SELLERS. The scraper captures the
+ * seller TYPE (Verified Dealer / Direct Owner / Mudah Certified) but never the
+ * seller's identity, so two dealers advertising the same physical car are
+ * indistinguishable from two cars. Closing that gap needs a scraper change, not
+ * a change here.
+ */
+export function excludeDuplicateListings<T extends PricedListing>(listings: T[]): T[] {
+  const seen = new Set<string>()
+  return listings.filter(l => {
+    const fp = listingFingerprint(l)
+    if (fp === null) return true          // cannot fingerprint -> never merge
+    if (seen.has(fp)) return false
+    seen.add(fp)
+    return true
+  })
+}
+
 // ── Reconditioned imports ──────────────────────────────────────────────────
 //
 // Mudah renders a card as
@@ -366,7 +440,7 @@ export function buildComparableCohort<T extends PricedListing>(
   // "questionable above" threshold to RM172,584 against a RM86k median.
   // Approved as a deliberate market-definition decision, 2026-08-09.
   // Guarded by __tests__/lib/performance-variant-contamination.test.ts.
-  const inMarket    = excludeReconImports(listings)
+  const inMarket    = excludeReconImports(excludeDuplicateListings(listings))
   const yearMatched = year != null && year !== ''
     ? filterListingsByYear(inMarket, year)
     : inMarket

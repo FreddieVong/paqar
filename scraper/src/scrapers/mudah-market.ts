@@ -9,6 +9,54 @@ export interface MarketListing {
   mileage: string | null
 }
 
+/**
+ * TODO — capture a stable SELLER IDENTITY. Not yet implemented; note only.
+ *
+ * WHY
+ *
+ * Paqar reports confidence from the number of comparables, but what a buyer
+ * actually wants to know is how many INDEPENDENT sellers are asking that price.
+ * Ten listings from one dealer's forecourt is one opinion about the market, not
+ * ten. Today the two are indistinguishable, so confidence overstates itself
+ * whenever a dealer holds several of the same model.
+ *
+ * WHAT IS MISSING
+ *
+ * The title carries the seller TYPE — "Verified Dealer", "Direct Owner",
+ * "Mudah Certified" — and nothing else. There is no identity, so two dealers
+ * advertising the same physical car and two genuinely separate cars look
+ * identical downstream. lib/comparables.ts can therefore only collapse exact
+ * REPOSTS (same slug + price + mileage band + transmission), which measured at
+ * 3 listings in 833. Seller-level weighting is not implementable app-side.
+ *
+ * WHAT TO CAPTURE
+ *
+ * This scraper already intercepts Mudah's listing JSON (see the response
+ * handler below) and discards everything except the five fields above. The
+ * seller fields are almost certainly already in that payload. Log one raw
+ * listing object and look for, in order of preference:
+ *
+ *   1. a numeric account/store/seller id — stable across reposts and renames;
+ *   2. the seller's store URL — stable, and derivable into an id;
+ *   3. the shop/company display NAME — usable but weakest: dealers rename, and
+ *      "Direct Owner" listings share a blank or generic value, so a null and an
+ *      empty string must never be treated as the same seller.
+ *
+ * ACCEPTANCE
+ *
+ * The field must be stable across two scrapes a week apart for a listing that
+ * has not changed, and must differ between two listings known to be from
+ * different dealers. Anything that fails either test will silently merge
+ * sellers, which is worse than the current overcount.
+ *
+ * INTERACTION WITH THE CAP
+ *
+ * dedupeAndCap() caps each cohort at 15. Once sellers are known, the cap should
+ * arguably apply per seller rather than per cohort — otherwise one dealer with
+ * 15 cars can still fill a cohort on its own and seller counting will just
+ * report "1".
+ */
+
 export interface MudahMarketResult {
   listings:  MarketListing[]
   searchUrl: string

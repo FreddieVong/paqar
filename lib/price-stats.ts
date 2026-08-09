@@ -1,4 +1,15 @@
-export interface PricedListing { price: number; year?: string | null; title?: string | null }
+export interface PricedListing {
+  price: number
+  year?: string | null
+  title?: string | null
+  /**
+   * Mudah listing URL. Optional because several callers construct listings
+   * without one, and every rule that uses it declines rather than guesses when
+   * it is absent. Carries the only per-posting identifier the scraper captures
+   * — see excludeDuplicateListings.
+   */
+  url?: string | null
+}
 
 // Mudah listing titles glue the year to neighbouring digits/words, so a plain
 // word-boundary regex misses it and the scraper stores year: null. Recover it
