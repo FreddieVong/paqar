@@ -25,6 +25,7 @@ interface Props {
 
 export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuationPath }: Props) {
   const [email,        setEmail]        = useState('')
+  const [phone,        setPhone]        = useState('')
   const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
   const [mileage,      setMileage]      = useState('')
   const [addJomCheck,  setAddJomCheck]  = useState(false)
@@ -93,6 +94,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
         checkId,
         claimToken,
         buyerEmail:    email,
+        buyerPhone:    phone,
         baseUrl:       window.location.origin,
         addJomCheck,
         askingPriceRm:    price   ? parseInt(price, 10)   : undefined,
@@ -184,6 +186,33 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
                        focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
                        transition-all"
           />
+        </div>
+
+        {/* Optional by design. Checkout converts ~1% of paywall views, so a
+            required field would trade a real sale for a follow-up channel —
+            the wrong way round. An unrecognised number is dropped server-side
+            rather than blocking the bill. */}
+        <div>
+          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+            No. WhatsApp <span className="text-[#9CA3AF] font-normal normal-case tracking-normal">— pilihan</span>
+          </label>
+          <input
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            onFocus={trackFirstFocus}
+            placeholder="contoh: 012-345 6789"
+            className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
+                       font-heading font-semibold text-[16px] text-[#111827]
+                       placeholder:text-[#D1D5DB] placeholder:font-normal
+                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       transition-all"
+          />
+          <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
+            Kalau ada masalah dengan laporan atau pembayaran, kami boleh hubungi anda terus.
+          </p>
         </div>
 
         {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}

@@ -10,13 +10,13 @@ import { FakeSupabase } from '../helpers/fake-supabase'
  */
 
 const fake = new FakeSupabase()
-const sendMetaEvent = vi.fn(async () => true)
+const sendMetaEvent = vi.fn(async (_args: Record<string, unknown>) => true)
 
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({ env: { META_GRAPH_API_VERSION: 'v25.0' } }))
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: () => fake }))
 vi.mock('@/lib/meta-capi', () => ({
-  sendMetaEvent: (...args: unknown[]) => sendMetaEvent(...(args as [])),
+  sendMetaEvent: (...args: unknown[]) => sendMetaEvent(...(args as [Record<string, unknown>])),
   redact: (s: string) => s,
 }))
 
@@ -53,7 +53,7 @@ describe('webhook-only attribution', () => {
 
     expect(res).toEqual({ recorded: true, attributed: true })
 
-    const [event] = fake.rows('ad_events')
+    const event = fake.rows('ad_events')[0]!
     expect(event.event_name).toBe('purchase')
     expect(event.utm_content).toBe('creative_a')
     expect(event.amount_cents).toBe(1200)
@@ -130,7 +130,7 @@ describe('the RM88 upgrade path', () => {
     })
 
     expect(res.attributed).toBe(true)
-    const [event] = fake.rows('ad_events')
+    const event = fake.rows('ad_events')[0]!
     expect(event.amount_cents).toBe(8800)
     expect(event.utm_content).toBe('creative_a')
   })
@@ -154,7 +154,7 @@ describe('purchases without captured attribution', () => {
     const res = await recordPurchase({ billId: 'orphan_bill', email: 'b@e.com', amountCents: 1200 })
 
     expect(res).toEqual({ recorded: true, attributed: false })
-    const [event] = fake.rows('ad_events')
+    const event = fake.rows('ad_events')[0]!
     expect(event.session_id).toBe('bill:orphan_bill')
     expect(event.utm_content).toBeNull()
     expect(event.amount_cents).toBe(1200)

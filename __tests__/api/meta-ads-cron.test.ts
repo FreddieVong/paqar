@@ -37,9 +37,11 @@ const alerts = vi.hoisted(() => ({
   alertPauseSucceeded:  vi.fn(async () => {}),
   // Returns an AlertDelivery now: the cron records WHERE the report went and
   // whether it landed, so a silent misroute shows up in the audit trail.
-  sendDailyReportEmail: vi.fn(async () => ({
-    ok: true as const, recipient: 'ops@example.com', id: 'em_test',
-  })),
+  sendDailyReportEmail: vi.fn(
+    async (_params: { subject: string; report: string }): Promise<import('@/lib/meta-ads/alerts').AlertDelivery> => ({
+      ok: true, recipient: 'ops@example.com', id: 'em_test',
+    }),
+  ),
 }))
 
 vi.mock('@/lib/meta-ads/client', async () => {
@@ -410,7 +412,7 @@ describe('daily report email', () => {
 
   it('titles the email with the day number', async () => {
     await call()
-    const arg = alerts.sendDailyReportEmail.mock.calls[0]![0] as { subject: string; report: string }
+    const arg = alerts.sendDailyReportEmail.mock.calls[0]![0]
     expect(arg.subject).toMatch(/Day 3/)
     expect(arg.report).toContain('PAQAR META ADS — DAY 3')
   })
@@ -523,7 +525,7 @@ describe('the total-spend stop enforces on reconciled spend, not the reset count
     const res = await call()
     expect(res.status).toBe(200)
     const paused = store.actions.some((a) =>
-      a.rule === 'total_spend_limit' && a.action.includes('pause'))
+      a.rule === 'total_spend_limit' && String(a.action).includes('pause'))
     expect(paused).toBe(true)
   })
 

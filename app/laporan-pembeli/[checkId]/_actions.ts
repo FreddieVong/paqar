@@ -16,6 +16,7 @@ import { createClient }           from '@/lib/supabase/server'
 import { currentAttribution }     from '@/lib/attribution-request'
 import { recordCheckoutAttribution, recordAdEvent, markCapiSent } from '@/lib/db/ad-attribution'
 import { eventId }                from '@/lib/attribution'
+import { normaliseMyMobile }      from '@/lib/phone-my'
 import { checkoutEventId }        from '@/lib/checkout-event-id'
 import { sendMetaEvent }          from '@/lib/meta-capi'
 
@@ -110,10 +111,50 @@ async function captureCheckout(params: {
   }
 }
 
+/**
+ * createBill, with the guarantee the optional phone field is supposed to carry:
+ * a number Billplz will not accept costs us the number, never the sale.
+ *
+ * normaliseMyMobile already rejects everything it recognises as wrong, but it
+ * cannot know every rule Billplz enforces — a number with a valid 01X prefix
+ * can still be refused (unallocated range, a carrier Billplz does not accept,
+ * a future validation change). Without this the buyer sees "Ralat membuat
+ * pembayaran" and retrying with the same number fails identically, so the
+ * optional field becomes a hard block on checkout.
+ *
+ * Deliberately narrow:
+ *  - only retries when a mobile was actually attached, so a genuine failure
+ *    (bad credentials, collection missing, Billplz down) still surfaces on the
+ *    first attempt instead of being tried twice and reported late;
+ *  - retries exactly once, with the mobile removed and every other field
+ *    identical — same amount, same collection, same callback and redirect URLs;
+ *  - re-throws the SECOND error if the retry also fails, because at that point
+ *    the mobile was not the problem.
+ *
+ * The dropped number is logged (without the number itself) so a format Billplz
+ * systematically rejects is visible rather than silently eroding the follow-up
+ * channel this field exists to create.
+ */
+async function createBillDroppingBadMobile(
+  params: Parameters<typeof createBill>[0],
+): Promise<Awaited<ReturnType<typeof createBill>>> {
+  try {
+    return await createBill(params)
+  } catch (err) {
+    if (!params.mobile) throw err
+    console.error('[initiateBuyerReport] bill rejected with mobile; retrying without it', {
+      op: 'billplz_create_retry', error: String(err).slice(0, 200),
+    })
+    return await createBill({ ...params, mobile: null })
+  }
+}
+
 export async function initiateBuyerReport(params: {
   checkId:           string
   claimToken:        string
   buyerEmail:        string
+  /** Optional. Never validated strictly enough to block a payment. */
+  buyerPhone?:       string
   baseUrl:           string
   addJomCheck?:      boolean
   askingPriceRm?:    number
@@ -144,9 +185,14 @@ export async function initiateBuyerReport(params: {
       ? `Laporan Pembeli + Semakan Accident/Claim - ${params.checkId}`
       : `Laporan Pembeli Paqar - ${params.checkId}`
 
-    const bill = await createBill({
+    // Dropped silently when unrecognised: Billplz rejects a malformed number
+    // and losing the sale to a typo is worse than losing the number.
+    const mobile = normaliseMyMobile(params.buyerPhone)
+
+    const bill = await createBillDroppingBadMobile({
       email:        params.buyerEmail,
       name:         params.buyerEmail,
+      mobile,
       amountCents,
       description,
       callbackUrl:  `${params.baseUrl}/api/webhooks/billplz`,
@@ -158,6 +204,7 @@ export async function initiateBuyerReport(params: {
       checkId:          params.checkId,
       buyerEmail:       params.buyerEmail,
       billplzBillId:    bill.id,
+      buyerPhone:       mobile,
       amountCents,
       addJomCheck:      effectiveAddJomCheck,
       askingPriceRm:    params.askingPriceRm,

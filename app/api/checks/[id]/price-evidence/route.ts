@@ -115,6 +115,14 @@ export async function GET(
   const eligibility = evaluateVerdictEligibility(cohort, askingPrice)
 
   if (eligibility.suppressionReason === 'insufficient_data') {
+    // Re-scrape in the background so a thin or polluted cached row self-heals
+    // before its 7-day TTL expires. /api/price-check has always done this; the
+    // plate path did not, so a row that fell below the threshold once stayed
+    // below it for a week and every visitor on that model-year saw "belum
+    // cukup iklan" — including the ad traffic this journey exists to convert.
+    // Same call the `!cached` branch above makes; deduplicated by the cache
+    // upsert, not by request count.
+    waitUntil(fetchAndCacheMarketPrices(vehicle.make, modelKeyword, vehicle.registrationYear).catch(() => {}))
     return NextResponse.json({
       state: 'evidence', vehicle,
       verdict: null, verdictStatus: 'suppressed', verdictReason: 'insufficient_data',

@@ -47,7 +47,8 @@ describe('computeSpendSinceLastSync', () => {
 const creative = (o: Partial<CreativeResult> = {}): CreativeResult => ({
   label: 'A', adId: 'ad_1', deliveryStatus: 'available',
   spendCents: 0, impressions: 0, linkClicks: 0,
-  funnel: { landingViews: 0, valuationStarted: 0, valuationCompleted: 0,
+  funnel: { landingViews: 0, valuationStarted: 0, valuationStartedAnyPath: 0,
+            valuationCompleted: 0,
             purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0 },
   ...o,
 })
@@ -59,7 +60,8 @@ const input = (o: Partial<ReportInput> = {}): ReportInput => ({
   totalSpendCents: 5955,
   impressions: 2135,
   linkClicks: 184,
-  funnel: { landingViews: 45, valuationStarted: 23, valuationCompleted: 2,
+  funnel: { landingViews: 45, valuationStarted: 23, valuationStartedAnyPath: 23,
+            valuationCompleted: 2,
             purchasesRm12: 0, purchasesRm100: 0, revenueCents: 0 },
   creativeA: creative({ label: 'A' }),
   creativeB: creative({ label: 'B' }),

@@ -5,11 +5,11 @@ import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 
 export const metadata: Metadata = {
   title: 'Kereta Pertama Terbaik Bawah RM30k di Malaysia | Paqar',
-  description: 'Panduan pilih kereta pertama terpakai bawah RM30,000. Banding Perodua Myvi, Honda City dan Toyota Vios dengan harga pasaran sebenar dan tip pembeli.',
+  description: 'Panduan pilih kereta pertama terpakai bawah RM30,000. Banding Perodua Myvi, Honda City dan Toyota Vios — anggaran harga, tip pembeli, dan cara semak harga pasaran sebenar.',
   alternates: { canonical: 'https://paqar.my/faq/best-first-car-under-30k' },
   openGraph: {
     title: 'Kereta Pertama Terbaik Bawah RM30k di Malaysia',
-    description: 'Panduan jujur pilih kereta pertama: model mana pegang nilai, mana patut elak, dan harga pasaran sebenar.',
+    description: 'Panduan jujur pilih kereta pertama: model mana pegang nilai, mana patut elak, dan cara semak harga pasaran sebenar.',
     type: 'article',
   },
 }
@@ -32,7 +32,7 @@ export default function FirstCarUnder30k() {
         name: 'Berapa harga Perodua Myvi 2018 yang patut saya jangka?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Perodua Myvi 1.5 H tahun 2018 biasanya berharga RM24,000–RM28,000 bergantung pada jarak tempuh dan kondisi. Semak harga pasaran untuk nombor plat tertentu sebelum buat tawaran.',
+          text: 'Anggarkan sekitar RM24,000–RM28,000 untuk Perodua Myvi 1.5 H tahun 2018, bergantung pada varian, jarak tempuh dan kondisi. Ini anggaran panduan — semak harga pasaran untuk nombor plat tertentu sebelum buat tawaran.',
         },
       },
       {
@@ -72,11 +72,9 @@ export default function FirstCarUnder30k() {
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-[#111827] mb-3">Kereta Pertama Terbaik Bawah RM30k di Malaysia</h1>
             <p className="text-lg text-[#6B7280] mb-4">
-              Panduan lengkap memilih kereta pertama yang berpatutan dan boleh harap. Termasuk harga pasaran sebenar dan apa yang patut dielak.
+              Panduan lengkap memilih kereta pertama yang berpatutan dan boleh harap — anggaran harga, apa yang patut dielak, dan cara semak harga sebenar sebelum bayar deposit.
             </p>
             <div className="flex gap-4 text-sm text-[#6B7280]">
-              <span>Dikemas kini Julai 2026</span>
-              <span>•</span>
               <span>Bacaan 7 minit</span>
             </div>
           </div>
@@ -97,7 +95,7 @@ export default function FirstCarUnder30k() {
               <div className="border-l-4 border-[#064E4A] pl-4">
                 <h3 className="text-lg font-semibold text-[#111827] mb-2">1. Perodua Myvi (Terbaik Keseluruhan)</h3>
                 <p className="text-[#374151] mb-3">
-                  <strong>Julat harga:</strong> RM24,000–RM28,000 (model 2018, 80k km)
+                  <strong>Anggaran harga:</strong> RM24,000–RM28,000 (model 2018, 80k km)
                 </p>
                 <ul className="text-[#374151] space-y-2 mb-3">
                   <li>✅ Paling murah nak selenggara (alat ganti tempatan, ramai mekanik)</li>
@@ -114,7 +112,7 @@ export default function FirstCarUnder30k() {
               <div className="border-l-4 border-[#064E4A] pl-4">
                 <h3 className="text-lg font-semibold text-[#111827] mb-2">2. Honda City (Paling Selesa)</h3>
                 <p className="text-[#374151] mb-3">
-                  <strong>Julat harga:</strong> RM25,000–RM32,000 (model 2016, 100k km)
+                  <strong>Anggaran harga:</strong> RM25,000–RM30,000 (model 2016, 100k km)
                 </p>
                 <ul className="text-[#374151] space-y-2 mb-3">
                   <li>✅ Lebih luas dan selesa berbanding Myvi</li>
@@ -131,7 +129,7 @@ export default function FirstCarUnder30k() {
               <div className="border-l-4 border-[#064E4A] pl-4">
                 <h3 className="text-lg font-semibold text-[#111827] mb-2">3. Toyota Vios (Pilihan Selamat)</h3>
                 <p className="text-[#374151] mb-3">
-                  <strong>Julat harga:</strong> RM22,000–RM30,000 (model 2013, 120k km)
+                  <strong>Anggaran harga:</strong> RM22,000–RM26,000 (model 2013, 120k km)
                 </p>
                 <ul className="text-[#374151] space-y-2 mb-3">
                   <li>✅ Reputasi kebolehpercayaan Toyota</li>
@@ -163,9 +161,12 @@ export default function FirstCarUnder30k() {
 
           {/* Price Expectations */}
           <section className="mb-10">
-            <h2 className="text-2xl font-bold text-[#111827] mb-4">Harga Pasaran Sebenar (Julai 2026)</h2>
+            <h2 className="text-2xl font-bold text-[#111827] mb-4">Anggaran harga untuk tiga pilihan ini</h2>
             <p className="text-[#374151] mb-4">
-              Ini adalah <strong>harga pasaran</strong> berdasarkan listing sebenar. Harga berbeza mengikut jarak tempuh dan kondisi.
+              Ini <strong>anggaran panduan</strong> untuk beri anda titik permulaan, bukan harga
+              pasaran yang dikira untuk kereta tertentu. Harga sebenar bergantung kepada varian,
+              jarak tempuh dan kondisi — semak harga sebenar untuk kereta yang anda minat sebelum
+              buat tawaran.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">

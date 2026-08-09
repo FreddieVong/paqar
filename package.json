@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "seo:check": "node scripts/seo-check.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "warm-market-cache": "npx tsx scripts/warm-market-cache.ts",

@@ -1,7 +1,10 @@
 import 'server-only'
-import { createServiceClient }  from '@/lib/supabase/server'
+import { createServiceClient, createCachedServiceClient } from '@/lib/supabase/server'
 import { env }                  from '@/lib/env'
 import { extractYearFromTitle } from '@/lib/price-stats'
+import { buildMarketYearStats, type MarketYearStats } from '@/lib/comparables'
+
+export type { MarketYearStats }
 
 export interface MarketListing {
   price:   number
@@ -20,9 +23,17 @@ export interface CachedMarketPrices {
 const CACHE_TTL_DAYS = 7
 
 export async function getCachedMarketPrices(
-  make: string, model: string, year: string
+  make: string, model: string, year: string,
+  /**
+   * Set by the public ISR price pages so the read participates in the Data
+   * Cache instead of forcing dynamic rendering. Omitted everywhere else, which
+   * keeps the default no-store behaviour for per-request reads.
+   */
+  revalidateSeconds?: number,
 ): Promise<CachedMarketPrices | null> {
-  const supabase = createServiceClient()
+  const supabase = revalidateSeconds != null
+    ? createCachedServiceClient(revalidateSeconds)
+    : createServiceClient()
   const { data } = await supabase
     .from('market_price_cache')
     .select('listings, fetched_at, search_url')
@@ -38,6 +49,150 @@ export async function getCachedMarketPrices(
     fetchedAt: data.fetched_at as string,
     searchUrl: (data.search_url as string) ?? '',
   }
+}
+
+/**
+ * Every warm year for one model in ONE query, for the model hub's price table.
+ *
+ * One query, not one per year: a hub renders up to five years and a per-year
+ * round trip would turn each ISR regeneration into five sequential Supabase
+ * calls for data that lives in the same table under the same make/model.
+ *
+ * Returns only years clearing the canonical eligibility gate, in the order the
+ * caller asked for them. A year with too little evidence is simply absent —
+ * the hub must not render a row it cannot put a real range on.
+ *
+ * A Supabase failure returns [] like a genuinely empty result: both end at the
+ * page's "data sedang dikemaskini" fallback, and a transient DB error must
+ * never fail a build, an ISR regeneration, or hand a visitor a 500. The two
+ * cases are distinguishable in the logs, which is where it matters.
+ */
+export async function getModelYearCohorts(
+  make: string, model: string, years: string[],
+  /** ISR window for the hub that renders these rows. See createCachedServiceClient. */
+  revalidateSeconds: number,
+): Promise<MarketYearStats[]> {
+  if (years.length === 0) return []
+
+  const supabase = createCachedServiceClient(revalidateSeconds)
+  // Cache keys are stored lowercase by upsertMarketPrices. Querying with the
+  // display casing ('Honda', 'HR-V') matches nothing and looks exactly like
+  // "no data yet", so normalise here the way getCachedMarketPrices does.
+  const { data, error } = await supabase
+    .from('market_price_cache')
+    .select('year, listings, fetched_at')
+    .eq('make', make.toLowerCase())
+    .eq('model', model.toLowerCase())
+    .in('year', years)
+    .gte('fetched_at', new Date(Date.now() - CACHE_TTL_DAYS * 86_400_000).toISOString())
+
+  if (error) {
+    console.error('[market-prices:getModelYearCohorts] query failed', {
+      make, model, years, error: error.message,
+    })
+    return []
+  }
+
+  const byYear = new Map(
+    (data ?? []).map(row => [
+      row.year as string,
+      { listings: (row.listings as MarketListing[]) ?? [], fetchedAt: row.fetched_at as string },
+    ]),
+  )
+
+  return years.flatMap(year => {
+    const row = byYear.get(year)
+    if (!row) return []
+    const stats = buildMarketYearStats(row.listings, year, row.fetchedAt)
+    return stats ? [stats] : []
+  })
+}
+
+/**
+ * The overall price span of a model across every warm year, for the summary
+ * lines on the brand hubs and the model index ("Perodua Myvi — RM26k – RM50k").
+ *
+ * WHY THIS EXISTS
+ *
+ * Those six pages each carried a hand-typed `range: 'RM33k – RM74k'` string.
+ * Nothing ever updated them and by August 2026 every one overstated the market,
+ * most by RM15k–RM25k at the top: Myvi was advertised RM33k–RM74k against a real
+ * RM25.8k–RM49.8k, Saga RM20k–RM48k against RM13k–RM35.8k. On a site whose
+ * promise is "do not overpay", a summary that inflates the ceiling tells a buyer
+ * an overpriced car is normal — the exact harm the product exists to prevent.
+ *
+ * ONE query for all fourteen models, not one per model: the index page renders
+ * every covered model, and a per-model round trip would make each ISR
+ * regeneration fourteen sequential Supabase calls against one small table.
+ * Supabase cannot filter on (make, model) tuples, so this over-fetches by make
+ * and model separately and narrows to the exact declared pairs in memory.
+ *
+ * The span is min-of-mins to max-of-maxes across the years that CLEAR the
+ * eligibility gate — every figure therefore comes from a cohort that was
+ * allowed to produce one. A model with no qualifying year is absent from the
+ * map, and callers must render the row without a range rather than invent one.
+ */
+export interface ModelPriceSpan {
+  min:       number
+  max:       number
+  /** Years that contributed, ascending. Fewer than declared when data is thin. */
+  years:     string[]
+  /** Oldest contributing scrape — never the newest; see oldestFetchedAt. */
+  fetchedAt: string
+}
+
+export async function getCoverageModelSpans(
+  models: readonly { make: string; model: string; yearKey: string; years: string[] }[],
+  /** ISR window for the page rendering these. See createCachedServiceClient. */
+  revalidateSeconds: number,
+): Promise<Map<string, ModelPriceSpan>> {
+  const out = new Map<string, ModelPriceSpan>()
+  if (models.length === 0) return out
+
+  const supabase = createCachedServiceClient(revalidateSeconds)
+  const { data, error } = await supabase
+    .from('market_price_cache')
+    .select('make, model, year, listings, fetched_at')
+    .in('make',  [...new Set(models.map(m => m.make.toLowerCase()))])
+    .in('model', [...new Set(models.map(m => m.model.toLowerCase()))])
+    .gte('fetched_at', new Date(Date.now() - CACHE_TTL_DAYS * 86_400_000).toISOString())
+
+  if (error) {
+    console.error('[market-prices:getCoverageModelSpans] query failed', { error: error.message })
+    return out
+  }
+
+  const key = (make: string, model: string, year: string) =>
+    `${make.toLowerCase()}|${model.toLowerCase()}|${year}`
+
+  const rows = new Map(
+    (data ?? []).map(r => [
+      key(r.make as string, r.model as string, r.year as string),
+      { listings: (r.listings as MarketListing[]) ?? [], fetchedAt: r.fetched_at as string },
+    ]),
+  )
+
+  for (const m of models) {
+    const stats = m.years.flatMap(year => {
+      const row = rows.get(key(m.make, m.model, year))
+      if (!row) return []
+      const s = buildMarketYearStats(row.listings, year, row.fetchedAt)
+      return s ? [s] : []
+    })
+    if (stats.length === 0) continue
+
+    let oldest = stats[0]!.fetchedAt
+    for (const s of stats) if (new Date(s.fetchedAt) < new Date(oldest)) oldest = s.fetchedAt
+
+    out.set(m.yearKey, {
+      min:       Math.min(...stats.map(s => s.min)),
+      max:       Math.max(...stats.map(s => s.max)),
+      years:     stats.map(s => s.year).sort(),
+      fetchedAt: oldest,
+    })
+  }
+
+  return out
 }
 
 /** Call Railway scraper for one keyword. Returns listings found (empty if none). */

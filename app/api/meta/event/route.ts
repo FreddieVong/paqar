@@ -28,11 +28,35 @@ const limiter = new Ratelimit({
   timeout: 1000,
 })
 
+/**
+ * Stages that describe one offer for one check: free price evidence, the
+ * verdict (or its suppression), and the RM12 CTA.
+ *
+ * These were declared in lib/meta-events.ts (BrowserEvent), lib/attribution.ts
+ * (AdEventName) and lib/funnel-stages.ts (FUNNEL_STAGES) — but NOT in the enum
+ * below, so every call from FreePriceEvidence and PaidReportCtaTracker was
+ * rejected with 400 and dropped. PostHog kept receiving them; ad_events, the
+ * documented source of truth for the Meta experiment, received none. The
+ * experiment they exist to measure — does proving capability before the ask
+ * change conversion? — could not be read at all.
+ *
+ * __tests__/lib/ad-event-coverage.test.ts ties this list to the call sites so
+ * the gap cannot reopen.
+ */
+const PER_CHECK_STAGES = [
+  'plate_price_evidence_viewed',
+  'plate_verdict_viewed',
+  'plate_verdict_suppressed',
+  'paid_report_cta_viewed',
+  'paid_report_cta_clicked',
+] as const
+
 const schema = z.object({
   event: z.enum([
     'landing_page_view', 'valuation_started', 'valuation_completed',
     'plate_submitted', 'plate_result_poll_timed_out',
     'paywall_viewed', 'payment_form_focused',
+    ...PER_CHECK_STAGES,
   ]),
   url:    z.string().max(2000),
   // Per-submit id held in a client ref so a retry reuses it. Doubles as the
@@ -148,9 +172,19 @@ export async function POST(request: NextRequest) {
     id = derive.pollTimedOut(checkId)
     errorStage = 'plate_result_polling'
     errorCode  = 'poll_timeout'
-  } else {
+  } else if ((PER_CHECK_STAGES as readonly string[]).includes(event)) {
+    if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
+    id = derive.perCheckStage(event, sessionId, checkId)
+  } else if (event === 'valuation_completed') {
     if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
     id = derive.valuationCompleted(sessionId, checkId)
+  } else {
+    // Every member of the enum above is handled explicitly. This branch is
+    // unreachable and exists so that ADDING a name to the enum without giving
+    // it a derivation fails loudly here, instead of silently inheriting
+    // valuation_completed's id — which is exactly what the old trailing
+    // `else` would have done to the five stages added above.
+    return NextResponse.json({ error: 'Unhandled event' }, { status: 400 })
   }
 
   const result = await recordAdEvent({

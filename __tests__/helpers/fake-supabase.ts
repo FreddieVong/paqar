@@ -11,7 +11,11 @@
 
 type Row = Record<string, unknown>
 
-interface Filter { kind: 'eq' | 'is' | 'gte'; column: string; value: unknown }
+interface Filter {
+  kind: 'eq' | 'is' | 'gte' | 'gt' | 'in' | 'notNull'
+  column: string
+  value: unknown
+}
 
 export class FakeSupabase {
   tables = new Map<string, Row[]>()
@@ -38,6 +42,14 @@ export class FakeSupabase {
         if (f.kind === 'eq')  return row[f.column] === f.value
         if (f.kind === 'is')  return row[f.column] == null
         if (f.kind === 'gte') return String(row[f.column]) >= String(f.value)
+        // Timestamps are compared as ISO strings, which sort lexicographically
+        // in the same order as chronologically — the same thing PostgREST does
+        // with a timestamptz column.
+        if (f.kind === 'gt')  return String(row[f.column]) > String(f.value)
+        if (f.kind === 'in')  return (f.value as unknown[]).includes(row[f.column])
+        // `.not(col, 'is', null)`: SQL three-valued logic means a missing key
+        // and an explicit null are both "is null", so both fail this.
+        if (f.kind === 'notNull') return row[f.column] != null
         return true
       })
 
@@ -103,13 +115,33 @@ export class FakeSupabase {
         return builder
       },
       eq(column: string, value: unknown)  { filters.push({ kind: 'eq', column, value }); return builder },
+      in(column: string, value: unknown[]) { filters.push({ kind: 'in', column, value }); return builder },
       is(column: string, value: unknown)  { filters.push({ kind: 'is', column, value }); return builder },
       gte(column: string, value: unknown) { filters.push({ kind: 'gte', column, value }); return builder },
+      gt(column: string, value: unknown)  { filters.push({ kind: 'gt', column, value }); return builder },
+      not(column: string, op: string, value: unknown) {
+        // Only `.not(col, 'is', null)` is modelled — the single form the code
+        // uses. Anything else must fail loudly rather than silently match all.
+        if (op !== 'is' || value !== null) {
+          throw new Error(`FakeSupabase: unsupported .not(${column}, ${op}, ${String(value)})`)
+        }
+        filters.push({ kind: 'notNull', column, value: null })
+        return builder
+      },
       order() { return builder },
       limit() { return builder },
       async maybeSingle() {
         const res = run()
         return { data: res.data?.[0] ?? null, error: res.error }
+      },
+      // PostgREST's .single() differs from .maybeSingle(): no row is the error
+      // PGRST116, which callers check for by code rather than treating as a
+      // failure. Modelling that distinction matters — lib/db code branches on it.
+      async single() {
+        const res = run()
+        const row = res.data?.[0] ?? null
+        if (!res.error && !row) return { data: null, error: { code: 'PGRST116', message: 'no rows' } }
+        return { data: row, error: res.error }
       },
       then(resolve: (v: ReturnType<typeof run>) => unknown) {
         return Promise.resolve(run()).then(resolve)

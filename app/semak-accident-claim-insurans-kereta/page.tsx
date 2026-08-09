@@ -4,13 +4,39 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 
+/**
+ * The add-on is behind a deploy flag. When it is off, nothing in the app can
+ * sell it: PaymentForm renders no bundle checkbox and initiateJomCheckUpgrade
+ * refuses outright. This page is in the sitemap at priority 0.9 and quoted
+ * "RM100" unconditionally — a priority-0.9 promise of a product with no route
+ * to purchase.
+ *
+ * Only the OFFER is gated, never the page. The explanatory content is what
+ * ranks and what makes the page worth having; removing the URL would cost
+ * indexed coverage to fix a pricing claim. When the flag is off the page still
+ * explains what a claim check is and points at the RM12 report that does exist.
+ *
+ * Read at build time, which is correct: this is a deploy-time Vercel flag, so
+ * turning it on is a redeploy either way.
+ */
+const JOMCHECK_ON = process.env.JOMCHECK_ENABLED === 'true'
+
+// The description is the search-result snippet. Naming a price there is the
+// same promise as naming it on the page, made to people who never open it.
+const DESCRIPTION_BASE =
+  'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan.'
+
 export const metadata: Metadata = {
   title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia | Paqar',
-  description: 'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan. Paqar Semakan Accident/Claim Insurans RM100 sebelum bayar deposit.',
+  description: JOMCHECK_ON
+    ? `${DESCRIPTION_BASE} Paqar Semakan Accident/Claim Insurans RM100 sebelum bayar deposit.`
+    : `${DESCRIPTION_BASE} Ketahui apa yang boleh dan tidak boleh disemak sebelum bayar deposit.`,
   alternates: { canonical: 'https://paqar.my/semak-accident-claim-insurans-kereta' },
   openGraph: {
     title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia',
-    description: 'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan. RM100 sebelum bayar deposit.',
+    description: JOMCHECK_ON
+      ? `${DESCRIPTION_BASE} RM100 sebelum bayar deposit.`
+      : `${DESCRIPTION_BASE} Sebelum bayar deposit.`,
     url: 'https://paqar.my/semak-accident-claim-insurans-kereta',
     images: [{ url: '/api/og?title=Semak%20Rekod%20Claim%20Insurans%20Kereta&subtitle=Sebelum%20bayar%20deposit', width: 1200, height: 630 }],
   },
@@ -42,7 +68,11 @@ export default function SemakAccidentClaimInsuransPage() {
         description: 'Semak rekod claim insurans kereta terpakai seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum bayar deposit.',
         provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
         areaServed: { '@type': 'Country', name: 'Malaysia' },
-        offers: { '@type': 'Offer', price: '100', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
+        // No Offer node when the add-on cannot be bought: an InStock price in
+        // structured data is a promise Google may surface in a result.
+        ...(JOMCHECK_ON
+          ? { offers: { '@type': 'Offer', price: '100', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' } }
+          : {}),
       },
       {
         '@type': 'FAQPage',
@@ -62,11 +92,11 @@ export default function SemakAccidentClaimInsuransPage() {
             name: 'Apa jenis rekod yang boleh dijumpai dalam Semakan Accident/Claim Insurans?',
             acceptedAnswer: { '@type': 'Answer', text: 'Rekod yang mungkin dijumpai termasuk: own damage (kerosakan kereta sendiri akibat kemalangan), banjir, windscreen, dan total loss (kereta diputuskan tidak boleh dibaiki). Ini adalah rekod tuntutan insurans, bukan laporan polis.' },
           },
-          {
+          ...(JOMCHECK_ON ? [{
             '@type': 'Question',
             name: 'Berapa harga Semakan Accident/Claim Insurans?',
             acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli + Semakan Accident/Claim Insurans berharga RM100 (satu bayaran). Atau tambah +RM88 kepada Laporan Pembeli RM12 sedia ada.' },
-          },
+          }] : []),
           {
             '@type': 'Question',
             name: 'Adakah rekod claim bersih bermakna kereta selamat dibeli?',
@@ -163,7 +193,8 @@ export default function SemakAccidentClaimInsuransPage() {
             </ul>
           </div>
 
-          {/* What's included */}
+          {/* What's included — only when the add-on can actually be bought. */}
+          {JOMCHECK_ON ? (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
             <div className="bg-[#14453d] px-5 py-4">
               <p className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/45 mb-1">
@@ -205,6 +236,27 @@ export default function SemakAccidentClaimInsuransPage() {
               </p>
             </div>
           </div>
+          ) : (
+            // The add-on is not on sale. Say so plainly and point at the
+            // product that IS buyable, rather than quoting a price with no
+            // route to purchase.
+            <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+              <p className="font-heading font-bold text-[14px] text-[#111827] mb-1.5">
+                Semakan Accident/Claim Insurans belum dibuka
+              </p>
+              <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mb-3">
+                Kami belum membuka semakan rekod claim insurans untuk tempahan. Sementara
+                itu, Laporan Pembeli RM12 memberi anda keputusan harga pasaran, skrip
+                rundingan dan checklist sebelum bayar deposit.
+              </p>
+              <Link
+                href="/laporan-pembeli-kereta-terpakai"
+                className="inline-block bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
+              >
+                Lihat Laporan Pembeli RM12 →
+              </Link>
+            </div>
+          )}
 
           {/* Disclaimer */}
           <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[14px] p-4">

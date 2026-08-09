@@ -103,10 +103,17 @@ export async function POST(request: NextRequest) {
 
   const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1'
 
-  // Cache check — skip if already paid (prevent others accessing paid report for free)
   const plateHash = hash(plate)
-  const cached    = await getCachedCheck(plateHash)
   const sessionId = request.cookies.get(SESSION_COOKIE)?.value ?? null
+
+  // Reuse this visitor's OWN earlier check for the plate, never a stranger's:
+  // the claim_token that comes with it is the credential the paid report
+  // authorises on. See getCachedCheck and migration 027.
+  //
+  // checkHasPaidReport stays as defence in depth. It covers the same-session
+  // case — one visitor who paid and then re-checks the same plate gets a fresh
+  // check rather than being handed back into a paid one.
+  const cached = await getCachedCheck(plateHash, sessionId)
 
   if (cached && !(await checkHasPaidReport(cached.id))) {
     triggerVehicleLookup(plate, ip, {
@@ -127,6 +134,7 @@ export async function POST(request: NextRequest) {
       plateHash,
       claimToken,
       idempotencyKey,
+      sessionId,
       expiresAt,
     })
     await setCheckComplete(checkId)

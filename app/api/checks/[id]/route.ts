@@ -5,6 +5,7 @@ import { getCheck }  from '@/lib/db/checks'
 import { createClient } from '@/lib/supabase/server'
 import { decrypt } from '@/lib/crypto'
 import { getCachedVehicleData, getCachedLookupStatus } from '@/lib/db/plate-lookups'
+import type { PollCheckResponse } from '@/types/api'
 
 const ratelimit = new Ratelimit({
   redis:   Redis.fromEnv(),
@@ -62,7 +63,7 @@ export async function GET(
   // Terminal status lets the client tell "still looking" from "no such
   // vehicle" from "provider failed" — previously it could only tell whether a
   // preview existed, so a not-found rendered as silence.
-  let lookupStatus: string | null = null
+  let lookupStatus: PollCheckResponse['lookupStatus'] = null
   if (row.check.plate_encrypted) {
     try {
       const plate = decrypt(row.check.plate_encrypted)
@@ -79,5 +80,15 @@ export async function GET(
     } catch { /* teaser is best-effort */ }
   }
 
-  return NextResponse.json({ ...row, vehiclePreview, lookupStatus })
+  // An explicit projection, never a spread of the row. `getCheck` selects '*',
+  // so `{ ...row }` shipped plate_encrypted, plate_hash, ic_encrypted, ic_hash,
+  // user_id, claim_token and lead_email to the browser. Because checks are
+  // shared between visitors by plate hash, that last one disclosed one
+  // stranger's email address to another. See CheckStatusView in types/api.ts.
+  const response: PollCheckResponse = {
+    check: { id: row.check.id, status: row.check.status },
+    vehiclePreview,
+    lookupStatus,
+  }
+  return NextResponse.json(response)
 }

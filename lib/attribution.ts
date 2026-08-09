@@ -108,6 +108,17 @@ export const eventId = {
   paymentFormFocused: (sessionId: string, checkId: string) =>
     digest(['payment_form_focused', sessionId, checkId]),
 
+  /**
+   * The free-evidence and CTA stages, all keyed on (session, check) for the
+   * same reason paywallViewed is: they describe one offer for one check, so a
+   * refresh or a return within the session is the same viewing, not a second
+   * opportunity. Taking the event name as an argument keeps five identical
+   * derivations from drifting apart, while still giving each event its own id
+   * space — two different events on the same check never collide.
+   */
+  perCheckStage: (stage: string, sessionId: string, checkId: string) =>
+    digest([stage, sessionId, checkId]),
+
   // Keyed on the bill alone: the webhook and /selesai both derive it without
   // needing the session, and Billplz retries collapse onto one row.
   checkoutStarted: (billId: string) => digest(['checkout_started', billId]),

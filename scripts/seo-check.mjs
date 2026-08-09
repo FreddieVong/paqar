@@ -57,10 +57,29 @@ function walk(dir, acc = []) {
   return acc
 }
 
+/**
+ * Rewrites from next.config.mjs, applied in reverse: build output is keyed by
+ * the INTERNAL route, but canonicals (correctly) name the PUBLIC URL.
+ *
+ * Without this, every prerendered year page reads as a canonical mismatch —
+ * .next/server/app/harga-model/city-2021.html canonicalises to
+ * /harga-city-2021, which is exactly right and what the sitemap declares.
+ * The check only started seeing these once the route gained
+ * generateStaticParams and began emitting HTML at build time.
+ */
+const REWRITES = [
+  { internal: /^\/harga-model\/(.+)$/, public: (m) => `/harga-${m[1]}` },
+]
+
 function fileToRoute(file) {
   const rel = relative(APP_DIR, file).replace(/\.html$/, '')
   if (rel === 'index') return '/'
-  return '/' + rel
+  const route = '/' + rel
+  for (const rw of REWRITES) {
+    const m = route.match(rw.internal)
+    if (m) return rw.public(m)
+  }
+  return route
 }
 
 const pages = walk(APP_DIR)
