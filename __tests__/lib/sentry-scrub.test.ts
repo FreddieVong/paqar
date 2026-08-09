@@ -1,5 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { scrubUrl, scrubEvent } from '@/lib/sentry-scrub'
 import type { ErrorEvent } from '@sentry/nextjs'
 
@@ -131,5 +133,35 @@ describe('both Sentry configs use the shared scrubber', () => {
       expect(src, f).toContain('beforeSend: scrubEvent')
       expect(src, f).not.toMatch(/beforeSend\(event\)\s*\{/)
     }
+  })
+})
+
+describe('the server SDK is actually initialised', () => {
+  /**
+   * @sentry/nextjs v8+ stopped injecting sentry.server.config.ts through
+   * webpack. The file is loaded ONLY because instrumentation.ts imports it, and
+   * its absence is completely silent: Sentry.init() never runs, captureException
+   * becomes a no-op, Sentry.flush() resolves false, and every server-side
+   * exception vanishes. Confirmed in production on 2026-08-09 — the scrubber was
+   * present in 2 client bundles and 0 server bundles, so the payment webhook,
+   * receipt delivery and report-page errors had never reached Sentry.
+   *
+   * The client config is still auto-detected, which is exactly why the gap was
+   * invisible: browser errors worked the whole time.
+   */
+  it('instrumentation.ts imports the server config', () => {
+    const src = readFileSync(join(__dirname, '..', '..', 'instrumentation.ts'), 'utf-8')
+    expect(src).toMatch(/import\(['"]\.\/sentry\.server\.config['"]\)/)
+  })
+
+  it('imports it inside the nodejs runtime guard', () => {
+    const src = readFileSync(join(__dirname, '..', '..', 'instrumentation.ts'), 'utf-8')
+    const block = src.split("NEXT_RUNTIME === 'nodejs'")[1] ?? ''
+    expect(block).toContain('sentry.server.config')
+  })
+
+  it('initialises Sentry before validating env, so a startup failure is reportable', () => {
+    const src = readFileSync(join(__dirname, '..', '..', 'instrumentation.ts'), 'utf-8')
+    expect(src.indexOf('sentry.server.config')).toBeLessThan(src.indexOf('./lib/env'))
   })
 })
