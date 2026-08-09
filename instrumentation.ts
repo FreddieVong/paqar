@@ -20,4 +20,12 @@ export async function register() {
     // Only runs in Node.js runtime (not Edge), which is where we need server secrets validated.
     await import('./lib/env')
   }
+
+  // Edge: middleware.ts and any route declaring runtime = 'edge'. Loaded the
+  // same way and for the same reason as the server config above — nothing
+  // imports it implicitly, so without this line middleware exceptions are
+  // silently discarded.
+  if (process.env.NEXT_RUNTIME === 'edge') {
+    await import('./sentry.edge.config')
+  }
 }
