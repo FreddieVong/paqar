@@ -132,3 +132,38 @@ describe('an X3 M buyer is not priced against ordinary X3s', () => {
     expect(evaluateVerdictEligibility(cohort, 300_000).suppressionReason).toBe('mixed_variants')
   })
 })
+
+describe('the lookalike filter sees exactly what the matcher sees', () => {
+  /**
+   * variantRegex and isLookalike each carry a leading boundary, and they must
+   * be the same one. They drifted: variantRegex began allowing a leading hyphen
+   * so "Civic TYPE-R" would match, while isLookalike kept the older "no hyphen"
+   * rule and so could not see the token at all.
+   *
+   * The result was a bodykit car with a typo — "2020 Honda CIVIC 1.8 S (A)
+   * TRPE-R KIT & SPORT RIM", RM69,800, verbatim from the cache — entering the
+   * Civic Type R cohort past a filter written to stop exactly that, taking the
+   * median from RM199,800 to RM137,800.
+   */
+  const trpe = listing('Mfg Year VerifiedRM 69,8002020 Honda CIVIC 1.8 S (A) TRPE-R KIT & SPORT RIM', 69_800)
+
+  it('a hyphen-preceded badge followed by KIT is still a lookalike', () => {
+    expect(matchListingsByVariant([trpe], 'R')).toEqual([])
+  })
+
+  it('the real Civic Type R cohort keeps only genuine cars', () => {
+    const cohort = buildComparableCohort([
+      trpe,
+      listing('FEATUREDWith Car GrantRM 75,8002020Auto120k-130kOTR Honda CIVIC 1.5 TC-P Turbo TC PREMIUM TYPE R', 75_800),
+      listing('FEATUREDWith Car GrantRM 199,8002020Manual30k-35k2020 Honda CIVIC TYPE R 2.0 FK8(M) GT', 199_800),
+      listing('With Car GrantRM 199,8002020/22 Honda CIVIC TYPE R 2.0 (M) GT EDITION2020Manual', 199_800),
+    ], { year: '2020', officialVariant: 'TYPE R', model: 'CIVIC', isSpecialVariant: true })
+
+    expect(cohort.count).toBe(3)
+    expect(cohort.median).toBe(199_800)
+  })
+
+  it('the genuine hyphenated spelling still matches', () => {
+    expect(matchListingsByVariant([listing('2020 Honda CIVIC 2.0 TYPE-R FK8 GT', 199_800)], 'R')).toHaveLength(1)
+  })
+})

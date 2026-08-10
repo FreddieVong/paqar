@@ -209,7 +209,14 @@ const KIT_WORD         = /^(?:BODY-?KIT|KIT|LOOK|LOOKALIKE)\b/i
 function isLookalike(title: string, token: string): boolean {
   if (LOOKALIKE_MARKER.test(title)) return true
   // Badge immediately followed by a kit word: "M3 BODYKIT", "AMG Bodykit".
-  const re = new RegExp(`(?<![A-Za-z0-9_-])${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(\\S+)`, 'i')
+  //
+  // The leading guard MUST match variantRegex's. It did not: this kept the old
+  // "no hyphen before" rule after variantRegex started allowing one for
+  // "TYPE-R", so a token variantRegex had matched was invisible here. A real
+  // 2020 Civic — "1.8 S (A) TRPE-R KIT & SPORT RIM", RM69,800, a bodykit car
+  // with a typo — therefore entered the Civic Type R cohort and pulled its
+  // median from RM199,800 to RM137,800.
+  const re = new RegExp(`(?<![^\\s-])${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(\\S+)`, 'i')
   const after = re.exec(title)?.[1]
   return after != null && KIT_WORD.test(after)
 }
