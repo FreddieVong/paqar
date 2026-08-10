@@ -218,9 +218,85 @@ async function scrapeMarketPrices(
  * 3 listings, retries with the first word of the model (e.g. "GOLF GTI" → "GOLF").
  * Always caches under the original key so future lookups are instant.
  */
+// ── Refresh coalescing ─────────────────────────────────────────────────────
+//
+// A refresh is expensive and easy to trigger far too often. fetchAndCacheMarketPrices
+// makes up to THREE scraper requests (exact keyword, first-token fallback,
+// broad no-year fallback) against a single Puppeteer instance — the same
+// instance the warm-cache cron deliberately limits to three concurrent workers
+// because firing everything at once overwhelms it.
+//
+// Nothing throttled the callers. The plate path is the worst: while the market
+// row is missing, price-evidence returns `pending_market` and fires a refresh,
+// and FreePriceEvidence polls it every 2.5s up to twelve times. One buyer
+// waiting for one price could therefore launch up to 36 scrapes, and a scraper
+// outage turned every visitor into another 36.
+//
+// Two guards, both in-process:
+//
+//   single-flight  concurrent callers for the same key await ONE scrape
+//   cooldown       after a scrape that produced nothing, the key is left alone
+//                  briefly instead of being retried on the very next request
+//
+// In-process is the right scope here. It costs nothing, needs no schema, and
+// the case that actually hurts — one visitor's poll loop, one page's burst — is
+// served by a single warm instance. A cross-instance lock would need a table
+// and a lease, which is a great deal of machinery for a problem this shape.
+//
+// The cooldown is deliberately SHORT. A scraper outage must not be cached as
+// "this model has no data": 60 seconds stops a poll loop dead while letting the
+// next visitor a minute later retry normally.
+const COOLDOWN_MS = 60_000
+/** Bounded so a long-lived instance cannot accumulate keys without limit. */
+const MAX_TRACKED = 500
+
+const inFlight      = new Map<string, Promise<void>>()
+const cooldownUntil = new Map<string, number>()
+
+function refreshKey(make: string, model: string, year: string): string {
+  return `${make.toLowerCase()}|${model.toLowerCase()}|${year}`
+}
+
+function prune(map: Map<string, unknown>): void {
+  if (map.size <= MAX_TRACKED) return
+  for (const k of map.keys()) {
+    map.delete(k)
+    if (map.size <= MAX_TRACKED) break
+  }
+}
+
+/**
+ * Refresh one cache row, at most once at a time and not immediately after a
+ * scrape that found nothing. Never throws — every caller treats it as
+ * best-effort background work.
+ */
 export async function fetchAndCacheMarketPrices(
   make: string, model: string, year: string
 ): Promise<void> {
+  const key = refreshKey(make, model, year)
+
+  if ((cooldownUntil.get(key) ?? 0) > Date.now()) return
+
+  const existing = inFlight.get(key)
+  if (existing) return existing
+
+  const run = scrapeAndStore(make, model, year)
+    .then(stored => {
+      // Nothing found: back off briefly rather than let the next poll retry.
+      if (!stored) { cooldownUntil.set(key, Date.now() + COOLDOWN_MS); prune(cooldownUntil) }
+    })
+    .catch(() => { cooldownUntil.set(key, Date.now() + COOLDOWN_MS); prune(cooldownUntil) })
+    .finally(() => { inFlight.delete(key) })
+
+  inFlight.set(key, run)
+  prune(inFlight)
+  return run
+}
+
+/** Returns true when fresh listings were actually written. */
+async function scrapeAndStore(
+  make: string, model: string, year: string
+): Promise<boolean> {
   let { listings, searchUrl } = await scrapeMarketPrices(make, model, year)
 
   // First fallback: simpler model keyword (e.g. "GOLF GTI" → "GOLF")
@@ -253,8 +329,12 @@ export async function fetchAndCacheMarketPrices(
     }
   }
 
-  if (!listings.length) return
+  // An empty result must never overwrite a good historical row with nothing,
+  // and must never refresh fetched_at — that would present a failed scrape as
+  // current data. Returning false puts the key on cooldown instead.
+  if (!listings.length) return false
   await upsertMarketPrices(make, model, year, listings, searchUrl)
+  return true
 }
 
 export async function upsertMarketPrices(
