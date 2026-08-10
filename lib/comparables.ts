@@ -9,35 +9,104 @@ import { filterListingsByYear, filterOutlierPrices } from './price-stats'
 const PERFORMANCE_TOKENS = new Set([
   'GTI', 'R', 'RS', 'TYPER', 'AMG', 'M', 'N', 'ST', 'GTD', 'GTE',
   'TRD', 'GR', 'NISMO', 'ABARTH', 'JCW', 'MUGEN', 'CTR',
+  // R3 is Proton's performance sub-brand (Saga R3). PERFORMANCE_MODEL_MARKER
+  // already recognised it; without it here the two detectors disagreed and a
+  // genuine R3 was priced against ordinary Sagas.
+  'R3',
 ])
+
+/**
+ * Every manufacturer sells a cosmetic package named after its performance
+ * sub-brand: AMG Line, M Sport, N Line, R Line, GR Sport. The car underneath is
+ * an ordinary model with a body kit — a 330i M Sport is not an M3, and a C300
+ * Coupé AMG Line is not a C63.
+ *
+ * The written form is always "<token> Line" or "<token> Sport", so one rule
+ * covers every brand, including ones not sold here yet. Applied at all three
+ * places the token is read, which previously disagreed with each other:
+ * PERFORMANCE_MODEL_MARKER, extractVariantToken and variantRegex.
+ *
+ * Matches a trailing "(CKD)"/"(CBU)" with no space, as NVIC writes it.
+ */
+const PACKAGE_SUFFIX = /^(?:LINE|SPORT)\b/i
 
 // Pull the discriminating performance token out of the NVIC variant string
 // ("Golf GTi" → "GTi", "Golf R" → "R", base "Golf 1.4 TSI" → null). Whitespace
 // tokenised, so "R-Line" is its own token and never collapses to "R".
+//
+// DO NOT REMOVE the PACKAGE_SUFFIX check. variantRegex had always refused to
+// match "M Sport" LISTINGS, but nothing stopped the buyer's OWN variant from
+// being read that way, so a "330i M Sport" was classified an M car and then
+// compared against the only listings the matcher accepts — genuine M3s and M4s.
+// With fewer than three of those on Mudah the verdict is suppressed outright,
+// so the usual outcome was a paying customer getting no verdict at all.
+// 192 of the 909 production NVIC rows that reach this function (21%) are
+// packages: BMW 110, Mercedes-Benz 73, Hyundai 5, Toyota 4.
+// Guarded by __tests__/lib/variant-package-designation.test.ts.
 export function extractVariantToken(
   officialVariant: string | null | undefined,
   model: string | null | undefined,
 ): string | null {
-  if (!officialVariant) return null
+  return classifyVariantToken(officialVariant, model).token
+}
+
+/**
+ * Why there is no token, which is not the same question as whether there is one.
+ *
+ *   'found'    a real performance token
+ *   'package'  a performance badge used as a styling package — POSITIVE evidence
+ *              the car is an ordinary model, not merely absence of evidence
+ *   'none'     nothing recognised either way
+ *
+ * The distinction changes the cohort. 'none' has to fall back to a mixed one,
+ * because a special variant Paqar cannot name is still special. 'package' has
+ * been positively identified as mainstream, so it belongs in the normal cohort
+ * WITH the performance models excluded — otherwise a C200 AMG Line keeps a real
+ * C43 AMG as a comparable and publishes a ceiling of RM410,000 against its own
+ * RM230,000 median, which is the same shape of harm as the recon contamination.
+ */
+export function classifyVariantToken(
+  officialVariant: string | null | undefined,
+  model: string | null | undefined,
+): { token: string | null; reason: 'found' | 'package' | 'none' } {
+  if (!officialVariant) return { token: null, reason: 'none' }
   const modelTokens = new Set((model ?? '').toUpperCase().split(/\s+/).filter(Boolean))
-  for (const tok of officialVariant.split(/\s+/).filter(Boolean)) {
-    const up = tok.toUpperCase()
+  const tokens = officialVariant.split(/\s+/).filter(Boolean)
+  let sawPackage = false
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i]!
+    const up  = tok.toUpperCase()
     if (modelTokens.has(up)) continue
-    if (PERFORMANCE_TOKENS.has(up)) return tok
+    if (!PERFORMANCE_TOKENS.has(up)) continue
+    if (PACKAGE_SUFFIX.test(tokens[i + 1] ?? '')) { sawPackage = true; continue }
+    return { token: tok, reason: 'found' }
   }
-  return null
+  return { token: null, reason: sawPackage ? 'package' : 'none' }
 }
 
 function variantRegex(token: string): RegExp {
   const esc = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   // Single-letter tokens (Golf "R") demand strict isolation — no adjacent
-  // alphanumeric or hyphen — so "R-Line", "R18", "Rim", "WRRTY" never match.
-  // Also reject a following "Line"/"Sport" so the cosmetic "R Line" / "M Sport"
-  // trims (written with a space) aren't read as the performance variant.
+  // alphanumeric, hyphen or UNDERSCORE — so "R-Line", "R18", "Rim", "WRRTY"
+  // never match.
+  //
+  // The underscore is not cosmetic. Scraped Mudah titles carry CSS/JS fragments
+  // in their tail ("...Verified Dealer.__m__-_R_5mpmr8eqmrd5fivbnb"), and with
+  // `_` outside the guard that stray R read as a variant badge. It put two
+  // ordinary 2020 Civics — RM70,800 and RM83,800 — into a Civic Type R cohort
+  // alongside genuine RM199,800 cars, dragging the median to RM199,800 and the
+  // floor to RM70,800 on a car worth three times that.
+  //
   // Multi-letter tokens use alphabetic boundaries so "2.0GTI" still matches.
+  //
+  // Both then reject a following "Line"/"Sport": those are cosmetic packages
+  // (see PACKAGE_SUFFIX), so an ordinary "C200 AMG Line" must not be priced as
+  // a comparable for a real AMG. This guard used to apply to single-letter
+  // tokens only, which let every "AMG Line" listing into an AMG cohort.
+  const notAPackage = `(?![\\s-]+(?:line|sport)\\b)`
   return token.length === 1
-    ? new RegExp(`(?<![A-Za-z0-9-])${esc}(?![A-Za-z0-9-])(?![\\s-]+(?:line|sport)\\b)`, 'i')
-    : new RegExp(`(?<![A-Za-z])${esc}(?![A-Za-z])`, 'i')
+    ? new RegExp(`(?<![A-Za-z0-9_-])${esc}(?![A-Za-z0-9_-])${notAPackage}`, 'i')
+    : new RegExp(`(?<![A-Za-z])${esc}(?![A-Za-z])${notAPackage}`, 'i')
 }
 
 // Keep listings whose TITLE mentions the variant token. A title is the seller's
@@ -62,8 +131,39 @@ export function matchListingsByVariant<T extends PricedListing>(listings: T[], t
 // GR SPORT is deliberately absent: Toyota sells a cosmetic "GR Sport" trim of
 // the Vios and Yaris that is an ordinary car at an ordinary price. Only the
 // GR Yaris — a different vehicle on a different platform — is named.
+// The trailing lookahead keeps the cosmetic packages out (see PACKAGE_SUFFIX):
+// "C200 AMG Line" is an ordinary C200 and belongs in the mainstream C-Class
+// cohort. Until now only the >=1.5x-median half of excludePerformanceModels
+// stopped it being dropped, which is a coincidence rather than a guarantee —
+// in a thin, cheap cohort an AMG Line can clear 1.5x and be excluded wrongly.
 const PERFORMANCE_MODEL_MARKER =
-  /(?:\bGR[\s-]*YARIS\b|\bTYPE[\s-]*R\b|\bTYPER\b|\bR3\b|\bNISMO\b|\bMUGEN\b|\bABARTH\b|\bJCW\b|\bAMG\b|\bGTI\b|\bCTR\b)/i
+  /(?:\bGR[\s-]*YARIS\b|\bTYPE[\s-]*R\b|\bTYPER\b|\bR3\b|\bNISMO\b|\bMUGEN\b|\bABARTH\b|\bJCW\b|\bAMG\b|\bGTI\b|\bCTR\b)(?![\s-]+(?:line|sport)\b)/i
+
+/**
+ * Is this FREE TEXT naming a performance model?
+ *
+ * The counterpart to extractVariantToken, and deliberately not the same rule.
+ * extractVariantToken reads a STRUCTURED NVIC variant field, where "RS" and "M"
+ * and "R" are unambiguous because the manufacturer put them there. Applied to
+ * arbitrary text — what a buyer typed, or a JPJ description — the same tokens
+ * are wrong far more often than they are right. Measured against a corpus of
+ * real Malaysian names:
+ *
+ *   extractVariantToken     4 wrong out of 19
+ *   this marker             0 wrong out of 19
+ *
+ * The four it got wrong were not academic. "Civic RS" and "Vios GR Sport" are
+ * mainstream trims, and treating them as special variants pushed the cohort
+ * into mixed_variants mode, which SUPPRESSES the verdict outright — the buyer
+ * saw "varian khas, no price verdict" while fifteen good comparables sat
+ * unused. No verdict means no proof of value before the RM12 ask.
+ *
+ * Conversely "Saga R3" was missed, so a genuine performance edition was priced
+ * against ordinary Sagas.
+ */
+export function isPerformanceModelText(text: string | null | undefined): boolean {
+  return PERFORMANCE_MODEL_MARKER.test(text ?? '')
+}
 
 /**
  * How far above the cohort median a marked listing must sit before it is read
@@ -455,7 +555,19 @@ export function buildComparableCohort<T extends PricedListing>(
     })
   }
 
-  const token = extractVariantToken(officialVariant, model)
+  const { token, reason } = classifyVariantToken(officialVariant, model)
+
+  // A styling package identified positively: the 1.3x family-floor ratio that
+  // set isSpecialVariant was reading a body-style or powertrain premium, not a
+  // performance model. Treat it as the mainstream car it is, which also strips
+  // the genuine performance models back out of its cohort.
+  if (!token && reason === 'package') {
+    return assemble(trimListings(excludePerformanceModels(yearMatched)), {
+      mode: 'normal', matchBasis: null, variantToken: null,
+      fallback: false, fallbackReason: null,
+    })
+  }
+
   if (!token) {
     return assemble(trimListings(yearMatched), {
       mode: 'mixed_variants', matchBasis: null, variantToken: null,

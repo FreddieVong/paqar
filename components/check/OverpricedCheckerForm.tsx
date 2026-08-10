@@ -6,6 +6,7 @@ import type { CreateCheckResponse, Verdict, PriceCheckResult } from '@/types/api
 import { analytics }   from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
 import { trackAdEvent } from '@/lib/meta-events'
+import { BRANDS, MODELS_BY_BRAND } from '@/lib/model-catalog'
 
 // Shared by the verdict and the suppressed-verdict branches: a mixed-variant
 // cohort still has a real, useful range, and the buyer deserves to know how
@@ -36,51 +37,6 @@ function ConfidenceChip({ level }: { level: 'low' | 'medium' | 'high' }) {
 }
 
 type FormState = 'idle' | 'loading' | 'result' | 'error'
-
-const BRANDS = [
-  'Perodua', 'Proton', 'Toyota', 'Honda', 'Mazda',
-  'BMW', 'Mercedes-Benz', 'Volkswagen', 'Mitsubishi', 'Nissan',
-  'Hyundai', 'Kia', 'Suzuki', 'Subaru', 'Daihatsu', 'Ford',
-  'Peugeot', 'Chevrolet', 'MG',
-  'Volvo', 'Audi', 'MINI', 'Lexus', 'Land Rover', 'Jaguar', 'Porsche',
-  'Isuzu', 'Chery', 'BYD', 'Tesla',
-]
-
-// Known models per brand — shown as autocomplete suggestions. Consistent
-// spelling matters: the market-price cache is keyed on the model string, so
-// "Myvi" hits cached data while "myvi se" misses it. Free text still allowed.
-const MODELS_BY_BRAND: Record<string, string[]> = {
-  Perodua:    ['Myvi', 'Axia', 'Bezza', 'Alza', 'Ativa', 'Aruz', 'Kancil', 'Viva'],
-  Proton:     ['Saga', 'Persona', 'Iriz', 'X50', 'X70', 'X90', 'S70', 'Exora', 'Wira'],
-  Toyota:     ['Vios', 'Yaris', 'Corolla', 'Camry', 'Hilux', 'Fortuner', 'Innova', 'Avanza', 'Alphard', 'Vellfire'],
-  Honda:      ['City', 'Civic', 'Jazz', 'HR-V', 'CR-V', 'BR-V', 'Accord', 'WR-V'],
-  Nissan:     ['Almera', 'X-Trail', 'Serena', 'Navara', 'Grand Livina'],
-  Mazda:      ['CX-5', 'CX-3', 'CX-30', 'Mazda 2', 'Mazda 3', 'CX-8'],
-  Mitsubishi: ['Xpander', 'Triton', 'ASX', 'Outlander', 'Attrage'],
-  Hyundai:    ['Elantra', 'Tucson', 'Santa Fe', 'i30', 'Sonata'],
-  Kia:        ['Picanto', 'Cerato', 'Sportage', 'Seltos', 'Carnival'],
-  Suzuki:     ['Swift', 'Jimny', 'Vitara'],
-  Volkswagen: ['Polo', 'Golf', 'Passat', 'Tiguan', 'Vento'],
-  BMW:        ['3 Series', '5 Series', 'X1', 'X3', 'X5', '1 Series'],
-  'Mercedes-Benz': ['C-Class', 'E-Class', 'A-Class', 'GLC', 'CLA'],
-  Ford:       ['Ranger', 'Everest', 'Fiesta', 'Focus'],
-  Subaru:     ['Forester', 'XV', 'Impreza', 'WRX', 'Outback', 'BRZ'],
-  Daihatsu:   ['Gran Max', 'Hijet', 'Terios', 'Materia'],
-  Volvo:      ['XC40', 'XC60', 'XC90', 'S60', 'V40', 'S90'],
-  Audi:       ['A3', 'A4', 'A5', 'A6', 'Q3', 'Q5', 'Q7'],
-  MINI:       ['Cooper', 'Countryman', 'Clubman', 'Cooper S'],
-  Lexus:      ['ES', 'NX', 'RX', 'IS', 'UX', 'LX'],
-  Peugeot:    ['3008', '5008', '2008', '208', '408', '508'],
-  Chevrolet:  ['Cruze', 'Colorado', 'Sonic', 'Captiva', 'Orlando', 'Trailblazer'],
-  MG:         ['ZS', 'HS', 'MG5', 'MG4'],
-  'Land Rover': ['Range Rover Evoque', 'Range Rover Sport', 'Range Rover Velar', 'Discovery Sport', 'Defender', 'Range Rover'],
-  Jaguar:     ['XE', 'XF', 'F-Pace', 'E-Pace', 'F-Type'],
-  Porsche:    ['Macan', 'Cayenne', '911', 'Panamera', 'Taycan', 'Boxster'],
-  Isuzu:      ['D-Max', 'MU-X'],
-  Chery:      ['Omoda 5', 'Tiggo 8 Pro', 'Tiggo 7 Pro'],
-  BYD:        ['Atto 3', 'Dolphin', 'Seal'],
-  Tesla:      ['Model 3', 'Model Y', 'Model S', 'Model X'],
-}
 
 /** One qualitative sentence per verdict. Deliberately free of figures: the
  *  numbers are what RM12 sells. */

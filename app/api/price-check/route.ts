@@ -6,8 +6,9 @@ import {
   buildComparableCohort,
   evaluateVerdictEligibility,
   comparableConfidence,
-  extractVariantToken,
+  isPerformanceModelText,
 }                                                             from '@/lib/comparables'
+import { canonicalModelKeyword }                              from '@/lib/model-catalog'
 import type { Verdict }                                       from '@/types/api'
 
 const schema = z.object({
@@ -55,11 +56,21 @@ export async function POST(request: NextRequest) {
 
   const { brand, model, year, askingPrice } = parsed.data
 
+  // The model field is free text, so the cache key was whatever the buyer
+  // typed. "Civic 1.8S" and "Civic" became different rows, and the qualified
+  // one held five listings where the plain one held fifteen — a LOW-confidence
+  // answer, or none at all below three, for the same car. Resolve to the
+  // catalogue spelling first so a variant-qualified name reaches the warm row.
+  //
+  // Unrecognised input passes through unchanged, so this can only ever widen a
+  // cohort that a known model already owns.
+  const modelKeyword = canonicalModelKeyword(brand, model)
+
   // DB layer uses 'make' — same value, different naming convention
-  const cached = await getCachedMarketPrices(brand, model, year).catch(() => null)
+  const cached = await getCachedMarketPrices(brand, modelKeyword, year).catch(() => null)
 
   if (!cached || cached.listings.length === 0) {
-    waitUntil(fetchAndCacheMarketPrices(brand, model, year).catch(() => {}))
+    waitUntil(fetchAndCacheMarketPrices(brand, modelKeyword, year).catch(() => {}))
     return NextResponse.json({ hasData: false, verdictReason: 'insufficient_data' })
   }
 
@@ -69,8 +80,13 @@ export async function POST(request: NextRequest) {
   // plain sight. Without this the free tool would confidently price a GTI
   // against base-Golf listings, which is precisely the failure the paid report
   // goes to lengths to prevent.
-  const variantToken     = extractVariantToken(model, null)
-  const isSpecialVariant = variantToken != null
+  const variantSource    = model
+  // Marker-based, NOT the presence of a token. extractVariantToken is tuned for
+  // the structured NVIC variant field; on free text its short tokens ("RS",
+  // "M", "GR") match mainstream Malaysian trims and pushed the cohort into
+  // mixed_variants, which suppresses the verdict entirely. See
+  // isPerformanceModelText.
+  const isSpecialVariant = isPerformanceModelText(variantSource)
 
   // Same cohort builder as the paid report — one pipeline, so year filtering,
   // outlier trimming, variant matching and any future de-duplication apply
@@ -88,7 +104,7 @@ export async function POST(request: NextRequest) {
   // Too thin to say anything. Refetch in the background so a polluted or
   // sparse cached row self-heals before its TTL expires.
   if (eligibility.suppressionReason === 'insufficient_data') {
-    waitUntil(fetchAndCacheMarketPrices(brand, model, year).catch(() => {}))
+    waitUntil(fetchAndCacheMarketPrices(brand, modelKeyword, year).catch(() => {}))
     return NextResponse.json({ hasData: false, verdictReason: 'insufficient_data' })
   }
 
