@@ -30,6 +30,31 @@ const PERFORMANCE_TOKENS = new Set([
  */
 const PACKAGE_SUFFIX = /^(?:LINE|SPORT)\b/i
 
+/**
+ * Families that ARE the performance model, rather than families that contain
+ * one. Read from the NVIC family field, never from a listing title.
+ *
+ * Derived from the production NVIC dataset on 2026-08-10, not assumed. BMW has
+ * 3,178 rows across 43 families and encodes its M cars as dedicated families —
+ * M2, M3, M4, M5, M6, M8, XM — whose median new prices (RM721k to RM1.45m)
+ * stand far above the make median of RM386k. Their VARIANT strings are things
+ * like "MY23 G87" and "MY22 FACELIFT", carrying no performance token at all,
+ * which is why extractVariantToken could never see them and a genuine M3 came
+ * back mixed_variants with a 330i M Sport still in its cohort.
+ *
+ * Mercedes-Benz does the same for its standalone AMG models (family "AMG",
+ * median RM1.56m); its C43/C63 keep family "C" and are already found through
+ * the variant string.
+ *
+ * Nothing else needs this. Honda, Toyota, Proton and Hyundai all carry their
+ * performance models in the variant field (Civic "TYPE R", Yaris "GR YARIS",
+ * Saga "1.3 R3", Ioniq "5 N"), and none of them has a dedicated family.
+ *
+ * Deliberately NOT a title pattern. All eleven cached listings with a bare
+ * M2-M8 badge are cosmetic conversions — see isLookalike.
+ */
+const PERFORMANCE_FAMILY = /^(?:M[2-8]|XM|AMG)$/i
+
 // Pull the discriminating performance token out of the NVIC variant string
 // ("Golf GTi" → "GTi", "Golf R" → "R", base "Golf 1.4 TSI" → null). Whitespace
 // tokenised, so "R-Line" is its own token and never collapses to "R".
@@ -69,6 +94,12 @@ export function classifyVariantToken(
   officialVariant: string | null | undefined,
   model: string | null | undefined,
 ): { token: string | null; reason: 'found' | 'package' | 'none' } {
+  // The family itself names the performance model (BMW M3, Mercedes AMG). This
+  // is structured NVIC data about the buyer's own car — the strongest evidence
+  // available — so it outranks anything the variant string does or does not say.
+  const family = (model ?? '').trim()
+  if (PERFORMANCE_FAMILY.test(family)) return { token: family, reason: 'found' }
+
   if (!officialVariant) return { token: null, reason: 'none' }
   const modelTokens = new Set((model ?? '').toUpperCase().split(/\s+/).filter(Boolean))
   const tokens = officialVariant.split(/\s+/).filter(Boolean)
@@ -112,10 +143,55 @@ function variantRegex(token: string): RegExp {
 // Keep listings whose TITLE mentions the variant token. A title is the seller's
 // claim, not verification — callers must frame results as "labelled", never as
 // confirmed-genuine variants.
+/**
+ * Words that mean "made to look like", not "is".
+ *
+ * Counted across all 3,368 cached listings on 2026-08-10: CONVERT 18, BODYKIT
+ * 15, KIT 8, BODY KIT 3, COVERT 1, CONCEPT 1. LOOK and REPLICA appear zero
+ * times and are deliberately NOT listed — this set is what the corpus actually
+ * contains, not what one might imagine it contains.
+ *
+ * CONVERT/COVERT/CONCEPT are decisive anywhere in a title: no one selling a
+ * genuine M3 writes "convert". KIT words are not, because a real Golf GTI can
+ * wear a bodykit ("GOLF GTI MK6 F/B.KIT MK7 HEADLAMP" is a genuine GTI), so
+ * those only disqualify when they sit immediately beside the badge.
+ */
+const LOOKALIKE_MARKER = /\b(?:CONVERT|COVERT|CONCEPT|REPLICA)\b/i
+const KIT_WORD         = /^(?:BODY-?KIT|KIT|LOOK|LOOKALIKE)\b/i
+
+/**
+ * Is this title claiming the badge, or claiming to resemble it?
+ *
+ * WHY THIS EXISTS
+ *
+ * Title matching is documented as "labelled, not verified", which was fine
+ * while a label was merely weak evidence. It stops being fine for special
+ * cohorts, because those are tiny: every one of the eleven listings in the
+ * production cache carrying a bare M2-M8 badge is an ordinary BMW wearing M
+ * cosmetics — six 530e "CONVERT M5" at RM63,800, a 330i "M3 CONCEPT", a 330E
+ * "M3 BODYKIT", a 318i "CONVERT M3", a 320i "COVERT M3". Not one is a real M
+ * car. Matching a genuine M3 buyer against that set would report a median of
+ * about RM63,800 for a car worth several hundred thousand.
+ *
+ * The same shape appears on every performance family: "C200 AMG Bodykit",
+ * "GLC250 AMG CONVERT GLC63", "A200 CONVERT A45S AMG", "GR BODYKIT" on a
+ * Vellfire, "OFFER R3" on a Preve.
+ */
+function isLookalike(title: string, token: string): boolean {
+  if (LOOKALIKE_MARKER.test(title)) return true
+  // Badge immediately followed by a kit word: "M3 BODYKIT", "AMG Bodykit".
+  const re = new RegExp(`(?<![A-Za-z0-9_-])${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(\\S+)`, 'i')
+  const after = re.exec(title)?.[1]
+  return after != null && KIT_WORD.test(after)
+}
+
 export function matchListingsByVariant<T extends PricedListing>(listings: T[], token: string): T[] {
   if (!token) return listings
   const re = variantRegex(token)
-  return listings.filter(l => re.test(l.title ?? ''))
+  return listings.filter(l => {
+    const title = l.title ?? ''
+    return re.test(title) && !isLookalike(title, token)
+  })
 }
 
 // ── Performance MODELS in a mainstream cohort ──────────────────────────────
