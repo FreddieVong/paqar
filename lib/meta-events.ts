@@ -27,6 +27,9 @@ type BrowserEvent =
   | 'plate_verdict_suppressed'
   | 'paid_report_cta_viewed'
   | 'paid_report_cta_clicked'
+  | 'billplz_navigation_started'
+  | 'model_result_shown'
+  | 'model_result_no_data'
 
 export type ValuationPathKey = 'plate_report' | 'model_price' | 'plate_check'
 
@@ -37,6 +40,8 @@ export function trackAdEvent(
     attemptId?: string
     checkId?: string
     valuationPath?: ValuationPathKey
+    /** Billplz bill this event is about. Required by billplz_navigation_started. */
+    billId?: string
   } = {}
 ): void {
   if (typeof window === 'undefined') return

@@ -167,7 +167,7 @@ async function createBillDroppingBadMobile(
  * A cross-instance lock would need a DB constraint, which is a larger change
  * than the observed behaviour justifies.
  */
-const checkoutInFlight = new Map<string, Promise<{ error: string | null; billUrl?: string }>>()
+const checkoutInFlight = new Map<string, Promise<{ error: string | null; billUrl?: string; billId?: string }>>()
 
 export interface InitiateBuyerReportParams {
   checkId:           string
@@ -183,7 +183,7 @@ export interface InitiateBuyerReportParams {
 
 export async function initiateBuyerReport(
   params: InitiateBuyerReportParams,
-): Promise<{ error: string | null; billUrl?: string }> {
+): Promise<{ error: string | null; billUrl?: string; billId?: string }> {
   const key = `${params.checkId}|${params.addJomCheck ? 'bundle' : 'base'}`
   const running = checkoutInFlight.get(key)
   if (running) return running
@@ -195,7 +195,7 @@ export async function initiateBuyerReport(
 
 async function initiateBuyerReportImpl(
   params: InitiateBuyerReportParams,
-): Promise<{ error: string | null; billUrl?: string }> {
+): Promise<{ error: string | null; billUrl?: string; billId?: string }> {
   if (!params.buyerEmail.includes('@')) {
     return { error: 'Alamat e-mel tidak sah' }
   }
@@ -269,7 +269,7 @@ async function initiateBuyerReportImpl(
     // due_at from last month is still payable, and that is exactly the buyer
     // this reuse exists for: the one who left yesterday and came back today.
     if (!existing || existing.state === 'due') {
-      return { error: null, billUrl: reusable.billUrl }
+      return { error: null, billUrl: reusable.billUrl, billId: reusable.billId }
     }
 
     // Conclusively dead (deleted/expired). Fall through to a replacement. The
@@ -347,7 +347,7 @@ async function initiateBuyerReportImpl(
     const plate = decrypt(row.check.plate_encrypted as string).toUpperCase()
     void prewarmReportData(plate, report.id)
 
-    return { error: null, billUrl: bill.url }
+    return { error: null, billUrl: bill.url, billId: bill.id }
   } catch (err) {
     console.error('[initiateBuyerReport]', err)
     return { error: 'Ralat membuat pembayaran — sila cuba semula' }
@@ -360,7 +360,7 @@ export async function initiateJomCheckUpgrade(params: {
   checkId:    string
   claimToken: string
   baseUrl:    string
-}): Promise<{ error: string | null; billUrl?: string }> {
+}): Promise<{ error: string | null; billUrl?: string; billId?: string }> {
   if (process.env.JOMCHECK_ENABLED !== 'true') {
     return { error: 'Semakan Accident/Claim belum tersedia' }
   }
@@ -424,7 +424,7 @@ export async function initiateJomCheckUpgrade(params: {
 
     // Reuse while payable, and also when Billplz could not be reached.
     if (!existing || existing.state === 'due') {
-      return { error: null, billUrl: report.upgrade_bill_url }
+      return { error: null, billUrl: report.upgrade_bill_url, billId: report.upgrade_bill_id ?? undefined }
     }
 
     // Conclusively not payable. Fall through and replace it. Info: this is the
@@ -456,7 +456,7 @@ export async function initiateJomCheckUpgrade(params: {
       amountCents:   8800,
       buyerEmail:    report.buyer_email,
     })
-    return { error: null, billUrl: bill.url }
+    return { error: null, billUrl: bill.url, billId: bill.id }
   } catch (err) {
     console.error('[initiateJomCheckUpgrade]', err)
     return { error: 'Ralat membuat pembayaran — sila cuba semula' }

@@ -101,7 +101,31 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
         claimedMileageKm: mileage ? parseInt(mileage, 10) : undefined,
       })
       if (result.error) { setError(result.error); return }
-      if (result.billUrl) window.location.href = result.billUrl
+      if (result.billUrl) {
+        // WHAT THIS EVENT MEANS, EXACTLY:
+        //   Paqar received a Billplz URL and the browser is about to navigate.
+        //
+        // It does NOT mean Billplz's page loaded, and it must never be read
+        // that way. It exists to split one specific ambiguity: 7 of the 12
+        // external bills have ZERO Billplz transactions, and today we cannot
+        // tell "the browser never left Paqar" from "it reached Billplz and the
+        // buyer left before choosing a channel". This answers only the first.
+        //
+        // Fire-and-forget on purpose. trackAdEvent is `void fetch(...)` with
+        // keepalive:true, so it survives the navigation on the very next line
+        // and cannot delay it — awaiting here would put analytics in front of
+        // a payment, which is the wrong trade in every case.
+        //
+        // Bill-derived id, so a buyer clicking pay repeatedly on a REUSED bill
+        // records once. The question is "did this bill ever try to leave", not
+        // "how many times did they click".
+        trackAdEvent('billplz_navigation_started', {
+          checkId,
+          billId: result.billId,
+          valuationPath,
+        })
+        window.location.href = result.billUrl
+      }
     })
   }
 
