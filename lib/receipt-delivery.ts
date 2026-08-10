@@ -5,6 +5,7 @@ import { buildBuyerReportAccessUrl, describeAccessFailure } from '@/lib/report-a
 import {
   claimReceiptSend, markReceiptSent, markReceiptFailed,
 }                                      from '@/lib/db/buyer-reports'
+import { reportMoneyPathFailure }      from '@/lib/observability'
 import type { BuyerReport }            from '@/types/domain'
 
 export type ReceiptDeliveryResult =
@@ -47,7 +48,7 @@ export async function deliverBuyerReportReceipt(
   } catch (err) {
     const reason = `check_lookup_failed: ${String(err).slice(0, 120)}`
     await markReceiptFailed(buyerReportId, reason)
-    console.error('[receipt-delivery] check lookup failed', { buyerReportId, checkId })
+    reportMoneyPathFailure('receipt_check_lookup_failed', { buyerReportId, checkId, reason })
     return { ok: false, status: 'failed', reason }
   }
 
@@ -55,10 +56,8 @@ export async function deliverBuyerReportReceipt(
   if (!reportUrl) {
     const reason = describeAccessFailure({ checkId, claimToken }) ?? 'no_access_url'
     await markReceiptFailed(buyerReportId, reason)
-    // No token value in the log — only the fact that one is absent.
-    console.error('[receipt-delivery] no valid access URL; receipt withheld', {
-      buyerReportId, checkId, reason,
-    })
+    // No token value anywhere here — only the fact that one is absent.
+    reportMoneyPathFailure('receipt_no_access_url', { buyerReportId, checkId, reason })
     return { ok: false, status: 'failed', reason }
   }
 
@@ -72,9 +71,7 @@ export async function deliverBuyerReportReceipt(
       // single send, so we withhold rather than risk mailing the buyer twice.
       // An operator resolves this with a deliberate retry.
       const reason = 'claim_failed'
-      console.error('[receipt-delivery] claim failed; send withheld', {
-        op: 'receipt', buyerReportId, checkId,
-      })
+      reportMoneyPathFailure('receipt_claim_failed', { buyerReportId, checkId, reason })
       return { ok: false, status: 'failed', reason }
     }
   }
@@ -104,7 +101,9 @@ export async function deliverBuyerReportReceipt(
     // prefix so no token or address reaches the column.
     const reason = `send_failed: ${String(err).slice(0, 160)}`
     await markReceiptFailed(buyerReportId, reason)
-    console.error('[receipt-delivery] send failed', { buyerReportId, checkId })
+    // The buyer has paid and has no link to what they bought. Whatever else is
+    // noisy, this one is worth an alert.
+    reportMoneyPathFailure('receipt_send_failed', { buyerReportId, checkId, reason })
     return { ok: false, status: 'failed', reason }
   }
 }

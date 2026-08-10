@@ -17,6 +17,9 @@ import { getValuationByNvic }                    from '@/lib/db/vehicle-valuatio
 import { getCachedMarketPrices,
          fetchAndCacheMarketPrices }             from '@/lib/db/market-prices'
 import { buildMarketModelKeyword }               from '@/lib/market-keyword'
+import { reportMoneyPathFailure }                from '@/lib/observability'
+import { getCheckoutAttribution }                from '@/lib/db/ad-attribution'
+import { markUpgradePaidByReportId }             from '@/lib/db/buyer-reports'
 
 // A paid JomCheck add-on in manual mode → alert the owner to fulfil it, and set
 // the buyer's expectation with an interim email. Best-effort: swallows its own
@@ -37,6 +40,76 @@ async function notifyManualJomCheckOrder(o: {
   }
   await sendJomCheckPendingEmail({ toEmail: o.email, plate: o.plate, reportUrl: o.reportUrl })
     .catch(err => console.error('[jomcheck-pending-email]', err))
+}
+
+/**
+ * Last-resort reconciliation for a paid bill no column points at any more.
+ *
+ * upgrade_bill_id holds ONE bill. Before migration 028 a retry overwrote it, so
+ * an earlier bill could stay payable at Billplz while Paqar forgot it — pay it
+ * and the lookup finds nothing. Reuse now prevents new instances, but bills
+ * created before the fix still exist and are still payable.
+ *
+ * checkout_attributions is the durable record: billplz_bill_id is UNIQUE and a
+ * row is written at bill creation, so a superseded bill keeps its own row
+ * naming the report and the product. That is enough to finish the job.
+ *
+ * Deliberately narrow. It grants ONLY the +RM88 upgrade, only when the
+ * attribution row names that exact product AND a buyer_report_id — it must
+ * never be able to invent an entitlement from a bill of some other kind, and it
+ * must never grant the base report, which markReportPaid alone may do.
+ *
+ * Idempotent: markUpgradePaidByReportId flips add_jomcheck false->true
+ * atomically, so a duplicate or out-of-order webhook grants once.
+ *
+ * Returns true only when this call actually granted the entitlement.
+ */
+async function reconcileOrphanedUpgrade(billId: string, paidAt: string): Promise<boolean> {
+  let attribution
+  try {
+    attribution = await getCheckoutAttribution(billId)
+  } catch (err) {
+    reportMoneyPathFailure('upgrade_reconcile_lookup_failed', {
+      billId, reason: String(err).slice(0, 120),
+    })
+    return false
+  }
+
+  if (!attribution) return false
+  if (attribution.product !== 'claim_check_upgrade') return false
+  const reportId = attribution.buyer_report_id
+  if (!reportId) return false
+
+  const granted = await markUpgradePaidByReportId(reportId).catch(err => {
+    reportMoneyPathFailure('upgrade_reconcile_write_failed', {
+      billId, buyerReportId: reportId, reason: String(err).slice(0, 120),
+    })
+    return false
+  })
+
+  // Reported either way. Granting is the right outcome, but a bill reaching
+  // this path at all means a superseded bill was paid, which is worth knowing.
+  //
+  // Warning, not error, when it grants: the customer has what they paid for and
+  // nobody needs to act tonight — though a superseded bill being paid at all is
+  // worth a look. Info when it was already granted: that is a pure no-op.
+  reportMoneyPathFailure('upgrade_reconciled_from_attribution', {
+    billId, buyerReportId: reportId, amountCents: 8800,
+    reason: granted ? 'entitlement granted from checkout_attributions' : 'already granted',
+  }, granted ? 'warning' : 'info')
+
+  if (granted) {
+    waitUntil(
+      recordPurchase({
+        billId, email: '', amountCents: 8800,
+        checkId: attribution.check_id ?? null, buyerReportId: reportId,
+      }).catch(err => console.error('[post-payment:attribution] reconciled upgrade', {
+        billId, error: String(err),
+      })),
+    )
+    void paidAt
+  }
+  return true
 }
 
 export async function POST(request: NextRequest) {
@@ -107,6 +180,26 @@ export async function POST(request: NextRequest) {
             })
           } catch (err) { console.error('[jomcheck-notify:upgrade]', err) }
         }
+      } else if (await reconcileOrphanedUpgrade(billId, paidAt)) {
+        // Recovered through checkout_attributions — see the helper.
+      } else {
+        // A PAID bill matching neither table. Money has been taken and no
+        // entitlement exists anywhere in the database.
+        //
+        // This branch returned ok with no log at all, which made it the one
+        // money-losing outcome that was invisible in every system: nothing in
+        // Vercel, nothing in Sentry, and a 200 that tells Billplz to stop
+        // retrying. Reachable if a bill is created and the buyer_reports insert
+        // then fails, if a row is deleted (scripts/delete-report.ts exists), or
+        // if a bill is raised outside this flow.
+        //
+        // Still returns 200 deliberately: there is nothing for Billplz to
+        // retry into, and a 500 would loop forever against a row that will
+        // never appear. The alert is what makes it actionable.
+        reportMoneyPathFailure('paid_bill_no_report', {
+          billId,
+          reason: 'billplz reported paid but no buyer_report or upgrade row matches',
+        })
       }
       return NextResponse.json({ ok: true })
     }

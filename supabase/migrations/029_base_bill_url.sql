@@ -1,0 +1,54 @@
+-- Keep the base RM12/RM100 checkout to ONE outstanding Billplz bill per check.
+--
+-- THE DEFECT
+--
+-- initiateBuyerReport minted a fresh Billplz bill on every attempt. Two real
+-- external buyers did exactly that in production:
+--
+--   ch_IIdRO_f9NT   2 bills, 87 seconds apart      (RM100)
+--   ch_dMZPklIrDW   3 bills, across ~4 minutes     (RM12)
+--
+-- Neither was paid, so NOBODY WAS CHARGED TWICE. This is not a customer
+-- incident. It is a surface: each extra bill stays independently payable at
+-- Billplz, and a buyer holding several live payment links can pay more than
+-- one of them.
+--
+-- Unlike the +RM88 upgrade (migration 028), the base path never overwrote
+-- anything — each bill got its own buyer_reports row, so every bill always
+-- remained reconcilable through getBuyerReportByBillId. That property is
+-- preserved: reuse adds no row and rewrites no id.
+--
+-- WHY A COLUMN IS NEEDED
+--
+-- Billplz returns the payment URL once, at creation, and there is no way to
+-- rebuild it later without guessing their URL format. buyer_reports already
+-- stores billplz_bill_id but discarded the URL, so a repeat checkout had
+-- nothing to hand back and could only mint another bill. Same reasoning as
+-- upgrade_bill_url in 028; a separate column because the two products have
+-- separate lifecycles and overloading one field would make a base bill and an
+-- upgrade bill indistinguishable.
+--
+-- SAFETY
+--
+-- Additive: nullable TEXT, no DEFAULT, no NOT NULL, no backfill, no
+-- constraint. A catalogue-only change in PostgreSQL — no table rewrite.
+-- Re-runnable.
+--
+-- Existing rows keep NULL. getReusableBaseBill requires a non-null URL, so
+-- those rows are simply not reusable and behave exactly as they do today: a
+-- new bill is minted, and their old bill keeps its own row and stays
+-- reconcilable. Nothing is orphaned by applying this.
+--
+-- DEPLOY ORDER: this migration MUST be applied before the code. createBuyerReport
+-- writes the column, and against an older schema PostgREST answers 42703 AFTER
+-- the Billplz bill already exists — which is the orphan case the same change
+-- adds an alert for. Rolling the CODE back afterwards needs no migration
+-- change; the previous release never references the column.
+--
+-- TO REVERSE:
+--   ALTER TABLE buyer_reports DROP COLUMN IF EXISTS billplz_bill_url;
+ALTER TABLE buyer_reports
+  ADD COLUMN IF NOT EXISTS billplz_bill_url TEXT;
+
+COMMENT ON COLUMN buyer_reports.billplz_bill_url IS
+  'Billplz payment URL for the bill named by billplz_bill_id. Stored so a repeat checkout hands back the SAME payable bill instead of minting another — see migration 029. NULL on rows predating the column, which are not reusable.';

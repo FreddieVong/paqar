@@ -8,6 +8,83 @@ export interface BillplzBill {
   url: string
 }
 
+/**
+ * What Billplz says about a bill we created earlier.
+ *
+ * `state` is Billplz's own lifecycle value — 'due', 'paid', 'deleted'. It is
+ * kept as a raw string rather than a union: a value we have not seen before
+ * must not be silently coerced into one we have, and the caller decides what
+ * to do with an unrecognised one.
+ */
+export interface BillplzBillState {
+  id:    string
+  paid:  boolean
+  state: string
+  url:   string | null
+  /**
+   * Billplz's due date, e.g. "2026-8-9". INFORMATIONAL ONLY.
+   *
+   * NEVER treat this as an expiry. The Billplz API documentation is explicit:
+   * "The due_at value does not affect the bill's payability and is only for
+   * informational reference." A bill at state 'due' with a due_at months in
+   * the past is still payable.
+   *
+   * This field is kept, unused for control flow, precisely because the
+   * opposite assumption is easy to make: Paqar never sends a due_at, so
+   * Billplz defaults it to the bill's own creation day, and every unpaid bill
+   * therefore looks "overdue" within a day. An earlier version of the reuse
+   * logic read that as expiry and would have minted a second bill for a buyer
+   * whose first one still worked.
+   *
+   * The only thing that stops a bill being payable is state 'deleted', which
+   * requires an explicit merchant DELETE that Paqar does not perform.
+   */
+  dueAt: string | null
+}
+
+/**
+ * Reads a bill back from Billplz.
+ *
+ * Needed because the +RM88 upgrade now hands a returning buyer the SAME bill
+ * instead of minting another. That is only safe while the bill is still
+ * payable — reusing a deleted or already-paid bill would leave the buyer on a
+ * dead page with no way forward, which is exactly the trap the reuse was meant
+ * to avoid.
+ *
+ * Returns null on ANY failure — network, auth, non-2xx, unparseable body. The
+ * caller treats null as "cannot tell" and keeps the existing bill rather than
+ * spawning a duplicate on a transient blip.
+ */
+export async function getBill(billId: string): Promise<BillplzBillState | null> {
+  if (!env.BILLPLZ_API_KEY || !billId) return null
+
+  try {
+    const res = await fetch(`${BILLPLZ_BASE}/bills/${encodeURIComponent(billId)}`, {
+      method:  'GET',
+      headers: { Authorization: `Basic ${Buffer.from(`${env.BILLPLZ_API_KEY}:`).toString('base64')}` },
+      signal:  AbortSignal.timeout(8_000),
+    })
+    if (!res.ok) return null
+
+    const data = await res.json() as {
+      id?: string; paid?: boolean; state?: string; url?: string; due_at?: string | null
+    }
+    if (!data?.id) return null
+
+    return {
+      id:    String(data.id),
+      paid:  data.paid === true,
+      state: String(data.state ?? ''),
+      url:   data.url ? String(data.url) : null,
+      // Billplz keeps state:'due' after the due date passes, so state alone
+      // cannot tell a payable bill from a stale one. Format is "2026-8-9".
+      dueAt: data.due_at ? String(data.due_at) : null,
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function createBill(params: {
   email:        string
   name:         string

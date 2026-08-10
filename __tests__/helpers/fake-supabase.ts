@@ -36,6 +36,8 @@ export class FakeSupabase {
     let ignoreDuplicates = false
     let selected = false
     let countMode = false
+    let orderBy: { column: string; ascending: boolean } | null = null
+    let limitTo: number | null = null
 
     const matches = (row: Row): boolean =>
       filters.every((f) => {
@@ -84,8 +86,23 @@ export class FakeSupabase {
         return { data: selected ? updated : null, error: null }
       }
 
-      const found = store.filter(matches)
+      let found = store.filter(matches)
       if (countMode) return { data: null, error: null, count: found.length }
+
+      if (orderBy) {
+        const { column, ascending } = orderBy
+        found = [...found].sort((a, b) => {
+          const av = a[column], bv = b[column]
+          if (av === bv) return 0
+          // Nulls sort last in both directions, as PostgREST defaults to.
+          if (av == null) return 1
+          if (bv == null) return -1
+          const cmp = String(av) < String(bv) ? -1 : 1
+          return ascending ? cmp : -cmp
+        })
+      }
+      if (limitTo != null) found = found.slice(0, limitTo)
+
       return { data: found, error: null }
     }
 
@@ -128,8 +145,15 @@ export class FakeSupabase {
         filters.push({ kind: 'notNull', column, value: null })
         return builder
       },
-      order() { return builder },
-      limit() { return builder },
+      // Modelled, not stubbed. These were no-ops, which made every
+      // "newest row wins" query indistinguishable from "first row inserted" —
+      // and that is precisely the shape of the bug where a newer PENDING
+      // buyer_report hid an older PAID one from the report page.
+      order(column: string, opts?: { ascending?: boolean }) {
+        orderBy = { column, ascending: opts?.ascending ?? true }
+        return builder
+      },
+      limit(n: number) { limitTo = n; return builder },
       async maybeSingle() {
         const res = run()
         return { data: res.data?.[0] ?? null, error: res.error }
