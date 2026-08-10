@@ -62,6 +62,15 @@ export interface BuyerReport {
   jomcheck_status:     'not_requested' | 'pending' | 'success' | 'failed'
   jomcheck_data:       Record<string, unknown> | null
   jomcheck_checked_at: string | null
+  /**
+   * The outstanding +RM88 upgrade bill. Both fields were used by the DB layer
+   * without ever being declared here, so nothing type-checked the reuse path.
+   */
+  upgrade_bill_id?:    string | null
+  /** Its Billplz payment URL (migration 028). Null on rows predating it. */
+  upgrade_bill_url?:   string | null
+  upgrade_paid_at?:    string | null
+  upgrade_amount_cents?: number | null
   jomcheck_error:      string | null
   paid_at:            string | null
   // Receipt delivery (migration 026). receipt_status is null on rows that

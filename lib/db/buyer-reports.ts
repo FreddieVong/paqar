@@ -37,6 +37,25 @@ export async function createBuyerReport(params: {
   return data as BuyerReport
 }
 
+/**
+ * THE report for a check — the one that carries the entitlement.
+ *
+ * A paid row always wins, whatever its age. This used to take the newest row
+ * outright, which is only the same thing while a check has at most one report,
+ * and nothing guarantees that: an abandoned checkout, a retry, or a second tab
+ * all leave a `pending` row behind. A pending row created AFTER a payment then
+ * masked the paid one, and every consumer reads entitlement off this:
+ *
+ *   the report page        isPaid = false  -> the paywall, shown to a customer
+ *                                             who has already paid
+ *   initiateJomCheckUpgrade "Laporan belum dibayar"
+ *   the asking-price PATCH  404
+ *
+ * So one stray pending row locked a paying customer out of what they bought.
+ *
+ * Among paid rows the newest wins, which is the RM12 -> RM100 case: the later
+ * purchase is the larger entitlement.
+ */
 export async function getBuyerReport(checkId: string): Promise<BuyerReport | null> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
@@ -44,10 +63,14 @@ export async function getBuyerReport(checkId: string): Promise<BuyerReport | nul
     .select('*')
     .eq('check_id', checkId)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
+    // Bounded rather than 1: the decision needs to see the pending rows in
+    // order to look past them. A check accumulating more than this is itself a
+    // signal worth noticing, not a case worth paginating.
+    .limit(10)
   if (error && error.code !== 'PGRST116') throw error
-  return data as BuyerReport | null
+
+  const rows = (data ?? []) as BuyerReport[]
+  return rows.find(r => r.status === 'paid') ?? rows[0] ?? null
 }
 
 // Returns true if this call was the one that transitioned pending→paid.
@@ -143,13 +166,59 @@ export async function getBuyerReportByBillId(billId: string): Promise<BuyerRepor
 
 // ── JomCheck add-on upgrade (+RM88 on an existing paid RM12 report) ──────────
 
-export async function setUpgradeBillId(reportId: string, billId: string): Promise<void> {
+/**
+ * Records the outstanding upgrade bill AND the URL needed to return to it.
+ *
+ * The URL is the whole point. Billplz hands it over once, at creation, and it
+ * was being discarded — so a buyer who abandoned the payment page could only be
+ * given a NEW bill, which overwrote this column and orphaned the old one while
+ * it stayed payable at Billplz. Keeping the URL lets a retry hand back the same
+ * bill, so only one upgrade bill can ever be outstanding per report.
+ */
+export async function setUpgradeBillId(
+  reportId: string, billId: string, billUrl?: string | null,
+): Promise<void> {
   const supabase = createServiceClient()
   const { error } = await supabase
     .from('buyer_reports')
-    .update({ upgrade_bill_id: billId, updated_at: new Date().toISOString() })
+    .update({
+      upgrade_bill_id:  billId,
+      upgrade_bill_url: billUrl ?? null,
+      updated_at:       new Date().toISOString(),
+    })
     .eq('id', reportId)
   if (error) throw error
+}
+
+/**
+ * Grants the upgrade entitlement by REPORT id rather than by bill id.
+ *
+ * The reconciliation path. markUpgradePaid matches on upgrade_bill_id, which is
+ * exactly what a superseded bill no longer matches, so a bill created before
+ * migration 028 can still be paid and land nowhere. The webhook resolves such a
+ * bill through checkout_attributions — one durable, UNIQUE row per bill — and
+ * finishes here.
+ *
+ * Same atomic guard as markUpgradePaid: `.eq('add_jomcheck', false)` means one
+ * winner between a duplicate webhook, a retry and the redirect page. Returns
+ * true only for the call that actually flipped it.
+ */
+export async function markUpgradePaidByReportId(reportId: string): Promise<boolean> {
+  const supabase = createServiceClient()
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .update({
+      add_jomcheck:         true,
+      upgrade_paid_at:      now,
+      upgrade_amount_cents: 8800,
+      updated_at:           now,
+    })
+    .eq('id', reportId)
+    .eq('add_jomcheck', false)
+    .select('id')
+  if (error) throw error
+  return (data?.length ?? 0) > 0
 }
 
 export async function getBuyerReportByUpgradeBillId(billId: string): Promise<BuyerReport | null> {

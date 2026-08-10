@@ -31,6 +31,9 @@ vi.mock('@/lib/billplz', () => ({ createBill }))
 vi.mock('@/lib/db/buyer-reports', () => ({
   createBuyerReport,
   getBuyerReport:   vi.fn(async () => null),
+  // No paid report for this check — the double-charge guard must let a first
+  // payment through. Its own behaviour is covered in double-payment.test.ts.
+  checkHasPaidReport: vi.fn(async () => false),
   setUpgradeBillId: vi.fn(async () => {}),
   setVehicleApiData: vi.fn(async () => {}),
 }))

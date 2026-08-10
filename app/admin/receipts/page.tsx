@@ -73,6 +73,14 @@ export default async function AdminReceiptsPage() {
                     {' · '}attempts: {r.receipt_attempts ?? 0}
                     {r.paid_at ? ` · paid ${new Date(r.paid_at).toISOString().slice(0, 16).replace('T', ' ')}` : ''}
                   </p>
+                  {/* The reference that ties this row to Billplz's own
+                      dashboard. Without it, reconciling "did the money
+                      actually arrive" means searching by amount and time.
+                      A bill id is not a credential — it opens nothing. */}
+                  <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 break-all">
+                    bill: {r.billplz_bill_id ?? '—'}
+                    {r.upgrade_bill_id ? ` · upgrade bill: ${r.upgrade_bill_id}` : ''}
+                  </p>
                   {r.receipt_last_error && (
                     <p className="font-body text-[11px] text-[#B45309] mt-1 break-words">
                       {r.receipt_last_error}

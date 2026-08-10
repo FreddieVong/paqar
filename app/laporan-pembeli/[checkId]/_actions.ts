@@ -1,8 +1,10 @@
 'use server'
 
-import { createBill }             from '@/lib/billplz'
+import { createBill, getBill }    from '@/lib/billplz'
 import { createBuyerReport,
          getBuyerReport,
+         checkHasPaidReport,
+         markUpgradePaidByReportId,
          setUpgradeBillId,
          setVehicleApiData }      from '@/lib/db/buyer-reports'
 import { getCheck }               from '@/lib/db/checks'
@@ -19,6 +21,7 @@ import { eventId }                from '@/lib/attribution'
 import { normaliseMyMobile }      from '@/lib/phone-my'
 import { checkoutEventId }        from '@/lib/checkout-event-id'
 import { sendMetaEvent }          from '@/lib/meta-capi'
+import { reportMoneyPathFailure } from '@/lib/observability'
 
 /**
  * Persists attribution at BILL CREATION so a purchase can be attributed from
@@ -177,6 +180,21 @@ export async function initiateBuyerReport(params: {
   if (!row) return { error: 'Semakan tidak dijumpai' }
   if (row.check.status !== 'complete') return { error: 'Semakan belum selesai' }
 
+  // Never sell the same report twice.
+  //
+  // /check/[id] renders the payment form as soon as a check is complete and
+  // never asks whether it has already been bought, so a buyer with that URL in
+  // their history can be shown the paywall again after paying. Without this
+  // guard a second Billplz bill is created and a second buyer_reports row
+  // inserted — the buyer is charged twice for one entitlement, and the stray
+  // row used to hide the paid one from the report page as well.
+  //
+  // Checked server-side because that is the only place it cannot be bypassed
+  // by a stale tab, a back button, or a page that forgot to ask.
+  if (await checkHasPaidReport(params.checkId).catch(() => false)) {
+    return { error: 'Laporan ini sudah dibayar — buka laporan anda dari pautan asal atau e-mel resit.' }
+  }
+
   try {
     const jomcheckEnabled  = process.env.JOMCHECK_ENABLED === 'true'
     const effectiveAddJomCheck = jomcheckEnabled && !!params.addJomCheck
@@ -258,6 +276,63 @@ export async function initiateJomCheckUpgrade(params: {
   if (!report || report.status !== 'paid') return { error: 'Laporan belum dibayar' }
   if (report.add_jomcheck) return { error: 'Semakan Accident/Claim sudah ditambah' }
 
+  // Send them back to the bill they already have — but only while it can
+  // actually still be paid.
+  //
+  // Every Billplz bill stays payable until it is paid, so minting a second one
+  // and overwriting upgrade_bill_id left the first alive but unrecognisable:
+  // pay it later and the webhook looks up an id the column no longer holds, and
+  // the entitlement never lands. Reuse removes that state entirely.
+  //
+  // Reusing BLINDLY creates the opposite trap. A bill that is deleted, or one
+  // already paid whose webhook we missed, would hand the buyer a dead page
+  // every time they click, forever. So the stored bill is verified first:
+  //
+  //   paid          the webhook was missed. Grant the entitlement here rather
+  //                 than send them to a page that will not take their money
+  //                 again — they have already paid.
+  //   due           still payable, reuse it.
+  //   anything else deleted, or a state Billplz has introduced since. Replace
+  //                 it. The superseded bill stays reconcilable through
+  //                 checkout_attributions, so a late payment still lands.
+  //   unknown       lookup failed. Keep the existing bill: a transient Billplz
+  //                 blip must not spawn duplicates, and if Billplz is down the
+  //                 payment page is down too. The next attempt re-checks, so
+  //                 nothing is permanent.
+  //
+  // Only reports predating migration 028 have an id with no URL; those fall
+  // through and mint a replacement, which reconciliation covers.
+  if (report.upgrade_bill_id && report.upgrade_bill_url) {
+    const existing = await getBill(report.upgrade_bill_id)
+
+    if (existing?.paid || existing?.state === 'paid') {
+      const granted = await markUpgradePaidByReportId(report.id).catch(() => false)
+      // Error only when this click is what granted the entitlement: the buyer
+      // had paid and did not have the product until they happened to click
+      // again, so the webhook needs investigating. If it was already granted,
+      // this is just a second click on a finished purchase.
+      reportMoneyPathFailure('upgrade_bill_already_paid_on_retry', {
+        billId: report.upgrade_bill_id, buyerReportId: report.id, amountCents: 8800,
+        reason: granted ? 'entitlement granted on retry — webhook was missed' : 'already granted',
+      }, granted ? 'error' : 'info')
+      return { error: 'Semakan Accident/Claim sudah ditambah' }
+    }
+
+    // Reuse while payable, and also when Billplz could not be reached.
+    if (!existing || existing.state === 'due') {
+      return { error: null, billUrl: report.upgrade_bill_url }
+    }
+
+    // Conclusively not payable. Fall through and replace it. Info: this is the
+    // designed escape from a dead bill, not a fault — the buyer is about to be
+    // handed a working payment link. Kept as a record so a spike in replaced
+    // bills is still visible.
+    reportMoneyPathFailure('upgrade_bill_unpayable_replaced', {
+      billId: report.upgrade_bill_id, buyerReportId: report.id,
+      reason: `billplz state=${existing.state}; minting a replacement`,
+    }, 'info')
+  }
+
   try {
     const bill = await createBill({
       email:        report.buyer_email,
@@ -268,7 +343,7 @@ export async function initiateJomCheckUpgrade(params: {
       redirectUrl:  `${params.baseUrl}/laporan-pembeli/${params.checkId}/selesai?claim_token=${params.claimToken}&upgrade=1`,
       collectionId: env.BILLPLZ_COLLECTION_ID_BUYER ?? env.BILLPLZ_COLLECTION_ID,
     })
-    await setUpgradeBillId(report.id, bill.id)
+    await setUpgradeBillId(report.id, bill.id, bill.url)
     await captureCheckout({
       billId:        bill.id,
       checkId:       params.checkId,

@@ -14,24 +14,12 @@ import { SUPPORT_REPLY_TO } from '@/lib/site'
  * reply.
  */
 
-/**
- * Addresses belonging to the team. Every "sale" before 2026-08-04 was one of
- * these testing, which is why historical conversion rates meant nothing.
- * Emailing yourself "was it useful?" is not research.
- */
-export const TEAM_EMAILS = new Set([
-  'invisible4v@gmail.com',
-  'test@example.com',
-  'lyethengchoo@gmail.com',
-  'liyingaun@gmail.com',
-  'freddie.vong@yahoo.com',
-])
-
-export function isTeamEmail(email: string | null | undefined): boolean {
-  if (!email) return true // unknown sender is never worth emailing
-  const e = email.trim().toLowerCase()
-  return TEAM_EMAILS.has(e) || e.startsWith('freddie')
-}
+// Re-exported so existing importers keep working; the list itself now lives in
+// lib/team-emails.ts so scripts can read it without pulling in `server-only`.
+// `export ... from` creates no local binding, hence the separate import — this
+// module calls isTeamEmail itself further down.
+import { isTeamEmail } from '@/lib/team-emails'
+export { TEAM_EMAILS, isTeamEmail } from '@/lib/team-emails'
 
 export type FeedbackSend =
   | { ok: true;  id: string | null }

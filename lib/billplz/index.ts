@@ -8,6 +8,59 @@ export interface BillplzBill {
   url: string
 }
 
+/**
+ * What Billplz says about a bill we created earlier.
+ *
+ * `state` is Billplz's own lifecycle value — 'due', 'paid', 'deleted'. It is
+ * kept as a raw string rather than a union: a value we have not seen before
+ * must not be silently coerced into one we have, and the caller decides what
+ * to do with an unrecognised one.
+ */
+export interface BillplzBillState {
+  id:    string
+  paid:  boolean
+  state: string
+  url:   string | null
+}
+
+/**
+ * Reads a bill back from Billplz.
+ *
+ * Needed because the +RM88 upgrade now hands a returning buyer the SAME bill
+ * instead of minting another. That is only safe while the bill is still
+ * payable — reusing a deleted or already-paid bill would leave the buyer on a
+ * dead page with no way forward, which is exactly the trap the reuse was meant
+ * to avoid.
+ *
+ * Returns null on ANY failure — network, auth, non-2xx, unparseable body. The
+ * caller treats null as "cannot tell" and keeps the existing bill rather than
+ * spawning a duplicate on a transient blip.
+ */
+export async function getBill(billId: string): Promise<BillplzBillState | null> {
+  if (!env.BILLPLZ_API_KEY || !billId) return null
+
+  try {
+    const res = await fetch(`${BILLPLZ_BASE}/bills/${encodeURIComponent(billId)}`, {
+      method:  'GET',
+      headers: { Authorization: `Basic ${Buffer.from(`${env.BILLPLZ_API_KEY}:`).toString('base64')}` },
+      signal:  AbortSignal.timeout(8_000),
+    })
+    if (!res.ok) return null
+
+    const data = await res.json() as { id?: string; paid?: boolean; state?: string; url?: string }
+    if (!data?.id) return null
+
+    return {
+      id:    String(data.id),
+      paid:  data.paid === true,
+      state: String(data.state ?? ''),
+      url:   data.url ? String(data.url) : null,
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function createBill(params: {
   email:        string
   name:         string

@@ -1,0 +1,68 @@
+-- Keep the +RM88 upgrade to ONE outstanding Billplz bill per report.
+--
+-- THE DEFECT
+--
+-- initiateJomCheckUpgrade created a fresh Billplz bill on every click and
+-- setUpgradeBillId OVERWROTE buyer_reports.upgrade_bill_id with it. The
+-- previous bill stayed alive and payable at Billplz while Paqar forgot it
+-- existed:
+--
+--   1. buyer pays RM12, clicks "add RM88"      -> bill A, upgrade_bill_id = A
+--   2. buyer abandons Billplz, clicks again    -> bill B, upgrade_bill_id = B
+--   3. buyer pays bill A from their history
+--   4. webhook: getBuyerReportByUpgradeBillId(A) -> null, the column holds B
+--   5. money received, premium entitlement never granted
+--
+-- Storing the URL lets the retry hand back the SAME bill instead of minting a
+-- second one, so the multi-bill state cannot arise. Billplz returns the URL
+-- once at creation and it was being discarded; there is no way to rebuild it
+-- later without guessing Billplz's URL format, which is why this column is
+-- needed rather than a code-only fix.
+--
+-- Paired with a webhook that reconciles an unmatched paid bill through
+-- checkout_attributions (billplz_bill_id UNIQUE, one durable row per bill), so
+-- bills created BEFORE this migration — which have an id but no URL and will
+-- therefore still mint a second bill — remain reconcilable.
+--
+-- LIMIT OF THAT CLAIM, measured 2026-08-10 rather than assumed.
+--
+-- It holds only for legacy bills that actually HAVE an attribution row. Two
+-- rows carry an upgrade_bill_id today and just one of them does:
+--
+--   fd9bbeac…  bill c503c3b2943bbff6  attribution present  -> reconcilable
+--   3d0c96be…  bill d96a6aeb217eb86b  attribution ABSENT   -> not reconcilable
+--                                                             through that path
+--
+-- The second is only exposed if that buyer clicks upgrade again (minting a
+-- replacement and overwriting the column) and THEN pays the old bill. Until the
+-- column is overwritten the webhook still matches it directly on
+-- upgrade_bill_id, so nothing is orphaned by applying this migration.
+-- If it ever did happen the webhook reports 'paid_bill_no_report' at error
+-- level — money in, entitlement manual — it is not silent.
+--
+-- Both rows belong to team addresses (internal testing), so the customer blast
+-- radius is zero and no backfill is warranted. Every bill created AFTER this
+-- migration stores its URL and never reaches the overwrite path at all.
+--
+-- SAFETY
+--
+-- Additive: nullable TEXT, no DEFAULT, no NOT NULL, no backfill, no constraint.
+-- A catalogue-only change in PostgreSQL — no table rewrite. Re-runnable.
+--
+-- Existing rows keep NULL, which the code reads as "no reusable bill" and
+-- handles by creating one, exactly as it does today. NULL is never treated as
+-- a valid bill.
+--
+-- DEPLOY ORDER: this migration MUST be applied before the code. setUpgradeBillId
+-- writes the column, and against an older schema PostgREST answers 42703, the
+-- write throws, and the upgrade returns "Ralat membuat pembayaran". Rolling the
+-- CODE back afterwards needs no migration change — the previous release never
+-- references the column.
+--
+-- TO REVERSE:
+--   ALTER TABLE buyer_reports DROP COLUMN IF EXISTS upgrade_bill_url;
+ALTER TABLE buyer_reports
+  ADD COLUMN IF NOT EXISTS upgrade_bill_url TEXT;
+
+COMMENT ON COLUMN buyer_reports.upgrade_bill_url IS
+  'Billplz payment URL for the outstanding +RM88 upgrade bill named by upgrade_bill_id. Reused on retry so only one upgrade bill can ever be outstanding per report — see migration 028. NULL on rows predating the column and on reports with no upgrade attempt.';
