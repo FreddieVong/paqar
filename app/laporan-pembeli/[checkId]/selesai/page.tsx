@@ -190,7 +190,14 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
       <Nav />
       <Shell>
         <div className="pt-10 pb-10 max-w-sm mx-auto space-y-5 text-center">
-          {displayState.state === 'verified_paid' && <AnalyticsEvent event="payment_completed" />}
+          {displayState.state === 'verified_paid' && (
+            // Keyed on the bill: a refresh, a bookmark or the back button
+            // must not report a second purchase.
+            <AnalyticsEvent
+              event="payment_completed"
+              dedupeKey={displayState.purchaseInfo.transactionId}
+            />
+          )}
           {displayState.state === 'verified_paid' && (
             <GA4PurchaseEvent
               transactionId={displayState.purchaseInfo.transactionId}

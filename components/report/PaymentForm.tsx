@@ -174,6 +174,12 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
           </label>
           <input
             type="email"
+            // Autofill at the one field that gates the sale. type=email
+            // already gives the right keyboard; autoComplete is what lets the
+            // browser fill it, which on mobile is the difference between a tap
+            // and typing an address on a phone keyboard.
+            autoComplete="email"
+            inputMode="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onFocus={trackFirstFocus}
