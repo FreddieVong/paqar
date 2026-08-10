@@ -115,8 +115,46 @@ export function classifyVariantToken(
   return { token: null, reason: sawPackage ? 'package' : 'none' }
 }
 
+function escapeToken(token: string): string {
+  return token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * WHERE "THIS TOKEN APPEARS AS A BADGE" IS DEFINED. ONE PLACE, ON PURPOSE.
+ *
+ * Two functions need this rule — variantRegex, which decides whether a listing
+ * mentions the badge, and isLookalike, which decides whether that same mention
+ * is a conversion. They each carried their own copy, and the copies drifted:
+ * variantRegex began allowing a leading hyphen so "Civic TYPE-R" would match,
+ * isLookalike did not, and "2020 Honda CIVIC 1.8 S (A) TRPE-R KIT & SPORT RIM"
+ * (RM69,800, verbatim from the cache) walked past the KIT rule written to stop
+ * it, taking the Civic Type R median from RM199,800 to RM137,800.
+ *
+ * A second copy was wrong in the other direction: isLookalike applied the
+ * single-letter boundary to every token, so a scraper-concatenated
+ * "C200AMG Bodykit" — which variantRegex matches — was never inspected at all.
+ *
+ * Anything that asks "is the token here?" must ask through this function.
+ * Guarded by __tests__/lib/token-boundary-consistency.test.ts, which fails if
+ * the matcher and the filter ever disagree about a boundary form again.
+ *
+ * SINGLE-LETTER tokens ("Golf R", "X3 M") must stand as their own word:
+ * whitespace either side, or a leading hyphen for "TYPE-R". A lone letter is
+ * usually notation in a Malaysian listing — "(M)" is manual transmission
+ * (172 titles), "F.S.R" is a service record, "R/CAM" a reverse camera — and a
+ * whitelist is the only thing that also survives CSS in the scraper tail.
+ *
+ * MULTI-LETTER tokens use alphabetic boundaries so "2.0GTI" still matches.
+ * They are not ambiguous the same way: nothing writes "AMG" as notation.
+ */
+function tokenBoundary(token: string): { lead: string; trail: string } {
+  return token.length === 1
+    ? { lead: `(?<![^\\s-])`,   trail: `(?![^\\s])` }
+    : { lead: `(?<![A-Za-z])`,  trail: `(?![A-Za-z])` }
+}
+
 function variantRegex(token: string): RegExp {
-  const esc = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const esc = escapeToken(token)
   // A single-letter badge ("Golf R", "X3 M") must stand as its OWN WORD.
   //
   // Word separators are whitespace, a string edge, or a leading hyphen — the
@@ -155,18 +193,10 @@ function variantRegex(token: string): RegExp {
   // field straight onto the title, so "M Sport2017Auto100k" has no boundary
   // after "Sport" and three ordinary 330e M Sports slipped through as M cars.
   // A following letter is what actually disqualifies it.
+  const { lead, trail } = tokenBoundary(token)
   const notAPackage = `(?![\\s-]+(?:line|sport)(?![A-Za-z]))`
 
-  // Whitelist, not blacklist. Enumerating the punctuation to reject was losing:
-  // "(M)" needed ( ), "F.S.R" needed ., "R/CAM" needed /, and then CSS survived
-  // in the scraper tail — "…_{align-items:center;}@m" matched on "@". Requiring
-  // the badge to be surrounded by whitespace (or a leading hyphen, for
-  // "TYPE-R") admits every real spelling and nothing else.
-  const startsWord = `(?<![^\\s-])`
-  const endsWord   = `(?![^\\s])`
-  return token.length === 1
-    ? new RegExp(`${startsWord}${esc}${endsWord}${notAPackage}`, 'i')
-    : new RegExp(`(?<![A-Za-z])${esc}(?![A-Za-z])${notAPackage}`, 'i')
+  return new RegExp(`${lead}${esc}${trail}${notAPackage}`, 'i')
 }
 
 // Keep listings whose TITLE mentions the variant token. A title is the seller's
@@ -210,13 +240,10 @@ function isLookalike(title: string, token: string): boolean {
   if (LOOKALIKE_MARKER.test(title)) return true
   // Badge immediately followed by a kit word: "M3 BODYKIT", "AMG Bodykit".
   //
-  // The leading guard MUST match variantRegex's. It did not: this kept the old
-  // "no hyphen before" rule after variantRegex started allowing one for
-  // "TYPE-R", so a token variantRegex had matched was invisible here. A real
-  // 2020 Civic — "1.8 S (A) TRPE-R KIT & SPORT RIM", RM69,800, a bodykit car
-  // with a typo — therefore entered the Civic Type R cohort and pulled its
-  // median from RM199,800 to RM137,800.
-  const re = new RegExp(`(?<![^\\s-])${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(\\S+)`, 'i')
+  // Same boundary the matcher used — see tokenBoundary. Never inline it here
+  // again; that is precisely how the TRPE-R regression happened.
+  const { lead, trail } = tokenBoundary(token)
+  const re = new RegExp(`${lead}${escapeToken(token)}${trail}\\s+(\\S+)`, 'i')
   const after = re.exec(title)?.[1]
   return after != null && KIT_WORD.test(after)
 }
