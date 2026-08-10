@@ -36,6 +36,8 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
   const searchParams = useSearchParams()
   const [preview, setPreview] = useState<VehiclePreview | null>(null)
   const [state, setState]     = useState<TeaserState>('searching')
+  // Guards button spam: one retry at a time, and the label says so.
+  const [retrying, setRetrying] = useState(false)
   const trackedRef = useRef(false)
 
   useEffect(() => {
@@ -181,10 +183,27 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
         </p>
         <button
           type="button"
-          onClick={() => window.location.reload()}
-          className="w-full font-heading font-bold text-[13px] rounded-[10px] py-2.5 bg-white border border-[#D1D5DB] text-[#374151]"
+          disabled={retrying}
+          onClick={async () => {
+            // Reloading was the old behaviour and it did nothing: the page it
+            // reloads polls a cache-read-only endpoint, so the provider was
+            // never re-asked. This calls the one route that actually retries,
+            // then reloads to pick up the new state.
+            if (retrying) return
+            setRetrying(true)
+            try {
+              await fetch(
+                `/api/checks/${checkId}/retry-lookup?claim_token=${encodeURIComponent(claimToken)}`,
+                { method: 'POST' },
+              )
+            } catch {
+              // Reload anyway — the lookup may still have landed server-side.
+            }
+            window.location.reload()
+          }}
+          className="w-full font-heading font-bold text-[13px] rounded-[10px] py-2.5 bg-white border border-[#D1D5DB] text-[#374151] disabled:opacity-60"
         >
-          Cuba semula
+          {retrying ? 'Mencuba semula…' : 'Cuba semula'}
         </button>
       </div>
     )
