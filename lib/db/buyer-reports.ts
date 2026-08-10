@@ -5,6 +5,9 @@ export async function createBuyerReport(params: {
   checkId:          string
   buyerEmail:       string
   billplzBillId:    string
+  /** Billplz returns the payment URL once, at creation. Stored so a repeat
+   *  checkout can hand back the SAME payable bill (migration 029). */
+  billplzBillUrl?:  string | null
   buyerPhone?:      string | null
   amountCents:      number
   addJomCheck?:     boolean
@@ -19,6 +22,7 @@ export async function createBuyerReport(params: {
       check_id:            params.checkId,
       buyer_email:         params.buyerEmail,
       billplz_bill_id:     params.billplzBillId,
+      billplz_bill_url:    params.billplzBillUrl ?? null,
       // Migration 026 added this column so an abandoned checkout can be
       // followed up on WhatsApp. It was accepted as a parameter but never
       // written, so every row was NULL and the whole feature was a no-op on
@@ -379,4 +383,55 @@ export async function getBuyerReportById(id: string): Promise<BuyerReport | null
     .from('buyer_reports').select('*').eq('id', id).single()
   if (error && error.code !== 'PGRST116') throw error
   return data as BuyerReport | null
+}
+
+/**
+ * The outstanding, still-unpaid base bill for this check, if one exists.
+ *
+ * WHY
+ *
+ * initiateBuyerReport minted a fresh Billplz bill on every attempt. Two real
+ * external buyers did this in production: one check produced 2 bills 87
+ * seconds apart, another produced 3 across about 4 minutes. None were paid, so
+ * nobody was charged twice — but each extra bill is independently payable, and
+ * a buyer holding several live payment links is a double-payment surface that
+ * only luck has kept closed.
+ *
+ * MATCHED ON AMOUNT, deliberately. A buyer who first chose RM12 and then chose
+ * the RM100 bundle must NOT be handed back the RM12 bill; that would take less
+ * money than the product they asked for. A differing amount falls through to a
+ * new bill.
+ *
+ * Only `pending` rows are considered. A paid row is handled earlier and much
+ * more bluntly by checkHasPaidReport.
+ *
+ * Rows predating migration 029 have an id but no URL. They cannot be reused —
+ * there is no way to rebuild a Billplz URL without guessing their format — so
+ * they fall through to a replacement, exactly as before this change. Their old
+ * bill keeps its own row, so a late payment still reconciles through
+ * getBuyerReportByBillId.
+ */
+export async function getReusableBaseBill(
+  checkId: string,
+  amountCents: number,
+): Promise<{ id: string; billId: string; billUrl: string } | null> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('buyer_reports')
+    .select('id, billplz_bill_id, billplz_bill_url')
+    .eq('check_id', checkId)
+    .eq('status', 'pending')
+    .eq('amount_cents', amountCents)
+    .not('billplz_bill_id', 'is', null)
+    .not('billplz_bill_url', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  const row = data?.[0]
+  if (!row?.billplz_bill_id || !row?.billplz_bill_url) return null
+  return {
+    id:      String(row.id),
+    billId:  String(row.billplz_bill_id),
+    billUrl: String(row.billplz_bill_url),
+  }
 }

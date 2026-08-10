@@ -21,6 +21,25 @@ export interface BillplzBillState {
   paid:  boolean
   state: string
   url:   string | null
+  /**
+   * Billplz's due date, e.g. "2026-8-9". INFORMATIONAL ONLY.
+   *
+   * NEVER treat this as an expiry. The Billplz API documentation is explicit:
+   * "The due_at value does not affect the bill's payability and is only for
+   * informational reference." A bill at state 'due' with a due_at months in
+   * the past is still payable.
+   *
+   * This field is kept, unused for control flow, precisely because the
+   * opposite assumption is easy to make: Paqar never sends a due_at, so
+   * Billplz defaults it to the bill's own creation day, and every unpaid bill
+   * therefore looks "overdue" within a day. An earlier version of the reuse
+   * logic read that as expiry and would have minted a second bill for a buyer
+   * whose first one still worked.
+   *
+   * The only thing that stops a bill being payable is state 'deleted', which
+   * requires an explicit merchant DELETE that Paqar does not perform.
+   */
+  dueAt: string | null
 }
 
 /**
@@ -47,7 +66,9 @@ export async function getBill(billId: string): Promise<BillplzBillState | null> 
     })
     if (!res.ok) return null
 
-    const data = await res.json() as { id?: string; paid?: boolean; state?: string; url?: string }
+    const data = await res.json() as {
+      id?: string; paid?: boolean; state?: string; url?: string; due_at?: string | null
+    }
     if (!data?.id) return null
 
     return {
@@ -55,6 +76,9 @@ export async function getBill(billId: string): Promise<BillplzBillState | null> 
       paid:  data.paid === true,
       state: String(data.state ?? ''),
       url:   data.url ? String(data.url) : null,
+      // Billplz keeps state:'due' after the due date passes, so state alone
+      // cannot tell a payable bill from a stale one. Format is "2026-8-9".
+      dueAt: data.due_at ? String(data.due_at) : null,
     }
   } catch {
     return null

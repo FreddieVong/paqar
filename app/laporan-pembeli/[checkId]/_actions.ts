@@ -3,6 +3,7 @@
 import { createBill, getBill }    from '@/lib/billplz'
 import { createBuyerReport,
          getBuyerReport,
+         getReusableBaseBill,
          checkHasPaidReport,
          markUpgradePaidByReportId,
          setUpgradeBillId,
@@ -152,7 +153,23 @@ async function createBillDroppingBadMobile(
   }
 }
 
-export async function initiateBuyerReport(params: {
+/**
+ * Collapses simultaneous checkout attempts for one (check, amount).
+ *
+ * The durable row is what stops a buyer accumulating bills MINUTES apart — the
+ * shape actually seen in production, 87 seconds and ~4 minutes. This closes the
+ * narrower same-instant window: two requests that both read "no reusable bill"
+ * before either has written one, and both mint.
+ *
+ * In-process only, and honestly so. Two requests served by different serverless
+ * instances at the same moment can still produce two bills; both would have
+ * their own row and stay reconcilable, and the next attempt reuses one of them.
+ * A cross-instance lock would need a DB constraint, which is a larger change
+ * than the observed behaviour justifies.
+ */
+const checkoutInFlight = new Map<string, Promise<{ error: string | null; billUrl?: string }>>()
+
+export interface InitiateBuyerReportParams {
   checkId:           string
   claimToken:        string
   buyerEmail:        string
@@ -162,7 +179,23 @@ export async function initiateBuyerReport(params: {
   addJomCheck?:      boolean
   askingPriceRm?:    number
   claimedMileageKm?: number
-}): Promise<{ error: string | null; billUrl?: string }> {
+}
+
+export async function initiateBuyerReport(
+  params: InitiateBuyerReportParams,
+): Promise<{ error: string | null; billUrl?: string }> {
+  const key = `${params.checkId}|${params.addJomCheck ? 'bundle' : 'base'}`
+  const running = checkoutInFlight.get(key)
+  if (running) return running
+
+  const run = initiateBuyerReportImpl(params).finally(() => { checkoutInFlight.delete(key) })
+  checkoutInFlight.set(key, run)
+  return run
+}
+
+async function initiateBuyerReportImpl(
+  params: InitiateBuyerReportParams,
+): Promise<{ error: string | null; billUrl?: string }> {
   if (!params.buyerEmail.includes('@')) {
     return { error: 'Alamat e-mel tidak sah' }
   }
@@ -195,10 +228,60 @@ export async function initiateBuyerReport(params: {
     return { error: 'Laporan ini sudah dibayar — buka laporan anda dari pautan asal atau e-mel resit.' }
   }
 
+  // Hoisted above the reuse check: which product the buyer is asking for
+  // decides which bill may be handed back. Pure computation, no side effects.
+  const jomcheckEnabled      = process.env.JOMCHECK_ENABLED === 'true'
+  const effectiveAddJomCheck = jomcheckEnabled && !!params.addJomCheck
+  const amountCents          = effectiveAddJomCheck ? 10000 : 1200
+
+  // ONE UNPAID INTENT, ONE PAYABLE BILL.
+  //
+  // Every attempt used to mint a fresh Billplz bill. Two real external buyers
+  // did exactly that: one check produced 2 bills 87 seconds apart, another 3
+  // across ~4 minutes. None were paid, so nobody was charged twice — but each
+  // extra bill stays independently payable, and a buyer holding several live
+  // links is a double-payment surface kept closed only by luck.
+  //
+  // Unlike the RM88 upgrade, the base path never overwrote anything: each bill
+  // got its OWN row, so old bills always remained reconcilable. That property
+  // is preserved here — reuse adds no row and rewrites no id.
+  const reusable = await getReusableBaseBill(params.checkId, amountCents).catch(() => null)
+  if (reusable) {
+    const existing = await getBill(reusable.billId)
+
+    if (existing?.paid || existing?.state === 'paid') {
+      // Paid, but this check has no paid row — checkHasPaidReport already said
+      // so. The webhook was missed. Say it loudly rather than quietly selling
+      // the same report again.
+      reportMoneyPathFailure('base_bill_already_paid_on_retry', {
+        billId: reusable.billId, buyerReportId: reusable.id, amountCents,
+        reason: 'billplz reports paid but no paid report row exists',
+      })
+      return { error: 'Pembayaran anda sedang disahkan — sila semak e-mel resit atau cuba sebentar lagi.' }
+    }
+
+    // Reuse while payable, and ALSO when Billplz cannot be reached: handing
+    // back a link that probably works beats minting a second live bill just
+    // because a status call timed out.
+    //
+    // `state` IS the whole test. due_at is explicitly NOT an expiry — see the
+    // note on BillplzBillState.dueAt. A bill sitting at state 'due' with a
+    // due_at from last month is still payable, and that is exactly the buyer
+    // this reuse exists for: the one who left yesterday and came back today.
+    if (!existing || existing.state === 'due') {
+      return { error: null, billUrl: reusable.billUrl }
+    }
+
+    // Conclusively dead (deleted/expired). Fall through to a replacement. The
+    // old row keeps its own bill id, so a late payment on it still resolves
+    // through getBuyerReportByBillId.
+    reportMoneyPathFailure('base_bill_unpayable_replaced', {
+      billId: reusable.billId, buyerReportId: reusable.id, amountCents,
+      reason: `billplz state=${existing.state}; minting a replacement`,
+    }, 'info')
+  }
+
   try {
-    const jomcheckEnabled  = process.env.JOMCHECK_ENABLED === 'true'
-    const effectiveAddJomCheck = jomcheckEnabled && !!params.addJomCheck
-    const amountCents      = effectiveAddJomCheck ? 10000 : 1200
     const description      = effectiveAddJomCheck
       ? `Laporan Pembeli + Semakan Accident/Claim - ${params.checkId}`
       : `Laporan Pembeli Paqar - ${params.checkId}`
@@ -218,16 +301,37 @@ export async function initiateBuyerReport(params: {
       collectionId: env.BILLPLZ_COLLECTION_ID_BUYER ?? env.BILLPLZ_COLLECTION_ID,
     })
 
-    const report = await createBuyerReport({
-      checkId:          params.checkId,
-      buyerEmail:       params.buyerEmail,
-      billplzBillId:    bill.id,
-      buyerPhone:       mobile,
-      amountCents,
-      addJomCheck:      effectiveAddJomCheck,
-      askingPriceRm:    params.askingPriceRm,
-      claimedMileageKm: params.claimedMileageKm,
-    })
+    let report
+    try {
+      report = await createBuyerReport({
+        checkId:          params.checkId,
+        buyerEmail:       params.buyerEmail,
+        billplzBillId:    bill.id,
+        billplzBillUrl:   bill.url,
+        buyerPhone:       mobile,
+        amountCents,
+        addJomCheck:      effectiveAddJomCheck,
+        askingPriceRm:    params.askingPriceRm,
+        claimedMileageKm: params.claimedMileageKm,
+      })
+    } catch (err) {
+      // THE ORPHAN INTERVAL. The Billplz bill already exists and is payable,
+      // and this is the write that was supposed to make it ours. Without a row
+      // the bill appears in no Paqar table, so reconcile-payments — which walks
+      // ids out of buyer_reports and checkout_attributions — cannot see it at
+      // all. If the buyer somehow pays it, the webhook finds no report either.
+      //
+      // Nothing here can undo the bill, so the only honest response is to make
+      // it loud: the id is the one piece of information that makes manual
+      // recovery possible later.
+      reportMoneyPathFailure('base_bill_orphaned', {
+        billId:      bill.id,
+        checkId:     params.checkId,
+        amountCents,
+        reason:      'billplz bill created but buyer_reports insert failed',
+      })
+      throw err
+    }
 
     await captureCheckout({
       billId:        bill.id,

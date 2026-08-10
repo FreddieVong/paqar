@@ -27,13 +27,16 @@ const createBuyerReport = vi.fn()
 vi.mock('server-only', () => ({}))
 vi.mock('next/headers', () => ({ cookies: () => ({ get: () => undefined }) }))
 
-vi.mock('@/lib/billplz', () => ({ createBill }))
+vi.mock('@/lib/billplz', () => ({ createBill, getBill: vi.fn(async () => null) }))
 vi.mock('@/lib/db/buyer-reports', () => ({
   createBuyerReport,
   getBuyerReport:   vi.fn(async () => null),
   // No paid report for this check — the double-charge guard must let a first
   // payment through. Its own behaviour is covered in double-payment.test.ts.
   checkHasPaidReport: vi.fn(async () => false),
+  // No outstanding bill to reuse, so these tests exercise the create path they
+  // were written for. Reuse has its own file, base-bill-reuse.test.ts.
+  getReusableBaseBill: vi.fn(async () => null),
   setUpgradeBillId: vi.fn(async () => {}),
   setVehicleApiData: vi.fn(async () => {}),
 }))
