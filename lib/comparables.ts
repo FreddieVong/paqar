@@ -117,26 +117,55 @@ export function classifyVariantToken(
 
 function variantRegex(token: string): RegExp {
   const esc = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  // Single-letter tokens (Golf "R") demand strict isolation — no adjacent
-  // alphanumeric, hyphen or UNDERSCORE — so "R-Line", "R18", "Rim", "WRRTY"
-  // never match.
+  // A single-letter badge ("Golf R", "X3 M") must stand as its OWN WORD.
   //
-  // The underscore is not cosmetic. Scraped Mudah titles carry CSS/JS fragments
-  // in their tail ("...Verified Dealer.__m__-_R_5mpmr8eqmrd5fivbnb"), and with
-  // `_` outside the guard that stray R read as a variant badge. It put two
-  // ordinary 2020 Civics — RM70,800 and RM83,800 — into a Civic Type R cohort
-  // alongside genuine RM199,800 cars, dragging the median to RM199,800 and the
-  // floor to RM70,800 on a car worth three times that.
+  // Word separators are whitespace, a string edge, or a leading hyphen — the
+  // last because "Civic TYPE-R" is a real spelling in the cache. Everything
+  // else disqualifies: alphanumerics and underscore (so "R-Line", "R18", "Rim",
+  // "WRRTY" and scraper tails like "Dealer.__m__-_R_5mpmr8eq" never match), and
+  // the punctuation that glues abbreviations together — ( ) . / ,
+  //
+  // That punctuation clause is the whole point, because a lone letter in a
+  // Malaysian listing is far more often notation than a badge. Measured across
+  // all 3,368 cached titles:
+  //
+  //   token M   208 matches, 171 of them "(M)" — MANUAL TRANSMISSION.
+  //             "(A)" appears 2,413 times, "(M)" 172. A genuine X3 M / X4 M /
+  //             Z4 M / X6 M buyer would have been matched against every manual
+  //             car of that model.
+  //   token R   42 matches; the neighbours are space 29/34 but also "." 9/5
+  //             ("F.S.R" = full service record), "/" 2/2 ("R/CAM" = reverse
+  //             camera), "," and ")". All abbreviation noise, no badge.
+  //   token N   3 matches, all of them "Buy N Drive" — "N" meaning "and".
+  //
+  // Genuine spellings all survive, verified against the same corpus: "TYPE R"
+  // 15, "TYPE-R" 1, "GOLF R" 5, "EURO R" 5, "X3 M"/"Z4 M" 2.
+  //
+  // Trailing hyphen stays disqualifying so "R-Line" cannot match.
   //
   // Multi-letter tokens use alphabetic boundaries so "2.0GTI" still matches.
+  // They are not ambiguous in the same way — no Malaysian listing writes "AMG"
+  // or "GTI" as notation — so they keep the looser rule deliberately.
   //
   // Both then reject a following "Line"/"Sport": those are cosmetic packages
   // (see PACKAGE_SUFFIX), so an ordinary "C200 AMG Line" must not be priced as
   // a comparable for a real AMG. This guard used to apply to single-letter
   // tokens only, which let every "AMG Line" listing into an AMG cohort.
-  const notAPackage = `(?![\\s-]+(?:line|sport)\\b)`
+  // \b cannot be used to close "line"/"sport": the scraper concatenates the next
+  // field straight onto the title, so "M Sport2017Auto100k" has no boundary
+  // after "Sport" and three ordinary 330e M Sports slipped through as M cars.
+  // A following letter is what actually disqualifies it.
+  const notAPackage = `(?![\\s-]+(?:line|sport)(?![A-Za-z]))`
+
+  // Whitelist, not blacklist. Enumerating the punctuation to reject was losing:
+  // "(M)" needed ( ), "F.S.R" needed ., "R/CAM" needed /, and then CSS survived
+  // in the scraper tail — "…_{align-items:center;}@m" matched on "@". Requiring
+  // the badge to be surrounded by whitespace (or a leading hyphen, for
+  // "TYPE-R") admits every real spelling and nothing else.
+  const startsWord = `(?<![^\\s-])`
+  const endsWord   = `(?![^\\s])`
   return token.length === 1
-    ? new RegExp(`(?<![A-Za-z0-9_-])${esc}(?![A-Za-z0-9_-])${notAPackage}`, 'i')
+    ? new RegExp(`${startsWord}${esc}${endsWord}${notAPackage}`, 'i')
     : new RegExp(`(?<![A-Za-z])${esc}(?![A-Za-z])${notAPackage}`, 'i')
 }
 
