@@ -10,7 +10,7 @@ import {
   buildComparableCohort,
   evaluateVerdictEligibility,
   comparableConfidence,
-  extractVariantToken,
+  isPerformanceModelText,
 }                                    from '@/lib/comparables'
 import type { Verdict }              from '@/types/api'
 
@@ -103,8 +103,13 @@ export async function GET(
   // string the user typed; here the equivalent signal is the registered
   // description ("Volkswagen Golf GTI"). The paid report uses the NVIC
   // family-floor ratio instead, because only it has the new-price data.
-  const variantToken     = extractVariantToken(vehicle.description || vehicle.model, null)
-  const isSpecialVariant = variantToken != null
+  const variantSource    = vehicle.description || vehicle.model
+  // Marker-based, NOT the presence of a token. extractVariantToken is tuned for
+  // the structured NVIC variant field; on free text its short tokens ("RS",
+  // "M", "GR") match mainstream Malaysian trims and pushed the cohort into
+  // mixed_variants, which suppresses the verdict entirely. See
+  // isPerformanceModelText.
+  const isSpecialVariant = isPerformanceModelText(variantSource)
 
   const cohort = buildComparableCohort(cached.listings, {
     year:            vehicle.registrationYear,
