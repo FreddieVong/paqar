@@ -371,6 +371,96 @@ export async function createAdSetPaused(
   return { id: res.id }
 }
 
+/**
+ * Effective states in which an ad set is provably not delivering.
+ *
+ * An allow-list, not a "not delivering" test, so a state Meta adds later is
+ * refused by default rather than silently permitted. Deliberately excludes
+ * IN_PROCESS and WITH_ISSUES: both can deliver.
+ */
+const NON_DELIVERING_EFFECTIVE = ['PAUSED', 'CAMPAIGN_PAUSED', 'ADSET_PAUSED'] as const
+
+/** The ONLY keys this verb accepts. Anything else is refused, not ignored. */
+const SCHEDULE_KEYS = ['adSetId', 'startTimeIso', 'endTimeIso'] as const
+
+export interface AdSetScheduleUpdate {
+  adSetId:      string
+  startTimeIso: string
+  endTimeIso:   string
+}
+
+/**
+ * Moves the start/end of a paused, never-delivered ad set. Nothing else.
+ *
+ * WHY THIS EXISTS AT ALL
+ *
+ * The two experiment arms were created 64 minutes apart, so their schedules
+ * differ — which is a rival explanation for whatever the test measures. Ads
+ * Manager would not let the owner edit the start date, and the alternative was
+ * abandoning both ad sets and rebuilding them.
+ *
+ * WHY IT IS NOT updateAdSet()
+ *
+ * A generic updater would hand back every capability the export surface exists
+ * to withhold: budget, targeting, optimisation, status. This verb can express
+ * exactly two fields. It cannot raise a budget, cannot start delivery, and
+ * cannot change what the ad set is pointed at, because there is no argument
+ * through which to say any of those things.
+ *
+ * WHY THE PRECONDITIONS ARE NOT PARANOIA
+ *
+ * Moving the schedule of an ad set that is ALREADY delivering could extend a
+ * spending window. So it refuses unless the ad set is in a non-delivering
+ * effective state AND has never spent a cent. Both are read from Meta at call
+ * time, not taken on trust from the caller.
+ */
+export async function updatePausedAdSetSchedule(
+  update: AdSetScheduleUpdate,
+): Promise<{ ok: true }> {
+  const asRecord = update as unknown as Record<string, unknown>
+  for (const key of Object.keys(asRecord)) {
+    if (!(SCHEDULE_KEYS as readonly string[]).includes(key)) {
+      throw new MetaApiError(`${key} is not accepted by updatePausedAdSetSchedule`, 0)
+    }
+  }
+  rejectCallerStatus(asRecord)
+
+  if (!isScheduleAllowed(update.startTimeIso, update.endTimeIso, new Date())) {
+    throw new MetaApiError(
+      `Schedule must be exactly ${TEST_DURATION_DAYS} days and start in the future`, 0)
+  }
+
+  // Read the live object; the caller's belief about its state is not evidence.
+  const before = await metaGet<{
+    status?: string; effective_status?: string
+  }>(update.adSetId, { fields: 'id,status,effective_status' })
+
+  if (before.status !== 'PAUSED') {
+    throw new MetaApiError(
+      `Ad set ${update.adSetId} is not paused (status=${before.status ?? 'unreadable'})`, 0)
+  }
+  if (!(NON_DELIVERING_EFFECTIVE as readonly string[]).includes(before.effective_status ?? '')) {
+    throw new MetaApiError(
+      `Ad set ${update.adSetId} may be delivering `
+      + `(effective_status=${before.effective_status ?? 'unreadable'})`, 0)
+  }
+
+  const insights = await metaGet<{ data?: Array<{ spend?: string }> }>(
+    `${update.adSetId}/insights`, { fields: 'spend', date_preset: 'maximum' })
+  const spent = Number(insights.data?.[0]?.spend ?? 0)
+  if (!Number.isFinite(spent) || spent > 0) {
+    throw new MetaApiError(
+      `Ad set ${update.adSetId} has already spent ${spent} — its schedule is history, not a draft`, 0)
+  }
+
+  // Exactly two fields leave this function. Not spread from the input.
+  await metaPost(update.adSetId, {
+    start_time: update.startTimeIso,
+    end_time:   update.endTimeIso,
+  })
+  return { ok: true }
+}
+
 export interface AdCreativeDraft {
   name:            string
   /** Same assets as an existing creative; a fresh spec, never the old object. */

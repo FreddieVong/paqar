@@ -61,6 +61,13 @@ const SOURCE = readFileSync(
 /** Exported, callable, and provably non-mutating. Listed so the surface below is exact. */
 const KNOWN_NON_MUTATING = ['metaGet', 'redactMeta', 'collectLinks']
 
+/**
+ * The complete approved surface. Every mutating export must match, and the
+ * word-blacklist below exempts only what matches this.
+ */
+const APPROVED_MUTATING_VERBS =
+  /^(pauseCampaign|createCampaignPaused|createAdSetPaused|createAdCreative|createAdPaused|updatePausedAdSetSchedule)$/
+
 const mutatingExports = () => Object.keys(client)
   .filter((k) => typeof (client as Record<string, unknown>)[k] === 'function')
   .filter((k) => k !== 'MetaApiError')
@@ -75,13 +82,14 @@ describe('Meta client export surface', () => {
       'createAdSetPaused',
       'createCampaignPaused',
       'pauseCampaign',
+      'updatePausedAdSetSchedule',
     ])
   })
 
   it('every mutating export matches the approved whitelist', () => {
     // Strictly stronger than a word blacklist: this is what fails when someone
     // adds updateAdSet, resumeCampaign or setBudget under any spelling.
-    const ALLOWED = /^(pauseCampaign|createCampaignPaused|createAdSetPaused|createAdCreative|createAdPaused)$/
+    const ALLOWED = APPROVED_MUTATING_VERBS
     for (const name of mutatingExports()) {
       expect(ALLOWED.test(name), `"${name}" is not an approved mutating verb`).toBe(true)
     }
@@ -103,7 +111,11 @@ describe('Meta client export surface', () => {
       'unpause', 'enable', 'launch', 'edit', 'increase', 'raise', 'budget',
       'duplicate', 'copy',
     ]
+    // The blacklist stays a tripwire for anything NOT explicitly approved.
+    // updatePausedAdSetSchedule contains 'update' and is exempt only because it
+    // is on the whitelist above — which is the assertion that actually binds.
     for (const name of Object.keys(client)) {
+      if (APPROVED_MUTATING_VERBS.test(name)) continue
       const lower = name.toLowerCase()
       for (const word of MUTATION_WORDS) {
         expect(
@@ -363,6 +375,76 @@ describe('createAdSetPaused is the money gate', () => {
       expectedCustomConversionId: 'cc_started',
     }, AUTH)).rejects.toThrow(/custom conversion/)
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('updatePausedAdSetSchedule can move dates and nothing else', () => {
+  const OK_START = '2026-08-12T12:00:00+08:00'
+  const OK_END   = '2026-08-19T12:00:00+08:00'
+  const now = new Date('2026-08-11T12:00:00+08:00')
+
+  /** GET status -> GET insights -> POST. Mocked in that order. */
+  const mockAdSet = (o: { status?: string; effective?: string; spend?: string } = {}) => {
+    fetchMock.mockReset()
+    fetchMock
+      .mockResolvedValueOnce(okJson({ id: 'as_1', status: o.status ?? 'PAUSED', effective_status: o.effective ?? 'PAUSED' }))
+      .mockResolvedValueOnce(okJson({ data: o.spend != null ? [{ spend: o.spend }] : [] }))
+      .mockResolvedValueOnce(okJson({ success: true }))
+  }
+  const call = (extra: Record<string, unknown> = {}) =>
+    client.updatePausedAdSetSchedule({
+      adSetId: 'as_1', startTimeIso: OK_START, endTimeIso: OK_END, ...extra,
+    } as never)
+
+  beforeEach(() => { vi.setSystemTime(now) })
+
+  it('sends EXACTLY start_time and end_time', async () => {
+    mockAdSet()
+    await call()
+    const post = fetchMock.mock.calls.at(-1)!
+    expect(post[1].method).toBe('POST')
+    const body = JSON.parse(post[1].body as string)
+    expect(Object.keys(body).sort()).toEqual(['end_time', 'start_time'])
+    expect(body.start_time).toBe(OK_START)
+  })
+
+  it('cannot carry a status, a budget, or anything else', async () => {
+    // Not "ignores them" — refuses. An attempt to raise a budget through the
+    // schedule verb must surface, not be quietly dropped.
+    for (const key of ['status', 'lifetime_budget', 'daily_budget', 'targeting',
+                       'promoted_object', 'bid_strategy', 'optimization_goal', 'creative']) {
+      mockAdSet()
+      await expect(call({ [key]: 'x' }), `${key} was accepted`).rejects.toThrow()
+      const posts = fetchMock.mock.calls.filter((c) => c[1]?.method === 'POST')
+      expect(posts, `${key} reached the network`).toHaveLength(0)
+    }
+  })
+
+  it('refuses an ad set that is not paused', async () => {
+    mockAdSet({ status: 'DELIVERING' })
+    await expect(call()).rejects.toThrow(/not paused/)
+    expect(fetchMock.mock.calls.filter((c) => c[1]?.method === 'POST')).toHaveLength(0)
+  })
+
+  it('refuses an ad set whose effective state is not provably stopped', async () => {
+    // Allow-list, so a state Meta invents later is refused by default.
+    mockAdSet({ effective: 'WITH_ISSUES' })
+    await expect(call()).rejects.toThrow(/may be delivering/)
+    expect(fetchMock.mock.calls.filter((c) => c[1]?.method === 'POST')).toHaveLength(0)
+  })
+
+  it('refuses an ad set that has ever spent — its schedule is history', async () => {
+    mockAdSet({ spend: '0.01' })
+    await expect(call()).rejects.toThrow(/already spent/)
+    expect(fetchMock.mock.calls.filter((c) => c[1]?.method === 'POST')).toHaveLength(0)
+  })
+
+  it('still enforces the approved duration', async () => {
+    mockAdSet()
+    await expect(client.updatePausedAdSetSchedule({
+      adSetId: 'as_1', startTimeIso: OK_START, endTimeIso: '2026-09-30T12:00:00+08:00',
+    })).rejects.toThrow(/exactly 7 days/)
+    expect(fetchMock.mock.calls.filter((c) => c[1]?.method === 'POST')).toHaveLength(0)
   })
 })
 
