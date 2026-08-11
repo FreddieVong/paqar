@@ -118,6 +118,15 @@ export const APPROVED_OPTIMISATION_GOAL = 'OFFSITE_CONVERSIONS'
 export const APPROVED_BILLING_EVENT     = 'IMPRESSIONS'
 export const APPROVED_BID_STRATEGY      = 'LOWEST_COST_WITHOUT_CAP'
 
+/**
+ * Advantage+ Audience state both experiment arms must hold: 1 = ON.
+ *
+ * A pinned value rather than a free choice. Either state could be defended for
+ * a single campaign, but the arms must agree, and an unrestricted setting would
+ * let them silently diverge.
+ */
+export const ADVANTAGE_AUDIENCE_REQUIRED = 1
+
 export const MAX_DAILY_BUDGET_CENTS = MAX_DAILY_BUDGET_MYR * 100
 export const MAX_TOTAL_SPEND_CENTS  = MAX_TOTAL_SPEND_MYR * 100
 export const MAX_ADSET_LIFETIME_BUDGET_CENTS = MAX_ADSET_LIFETIME_BUDGET_MYR * 100
@@ -450,12 +459,23 @@ export function isTargetingAllowed(t: TargetingSpec | null | undefined): boolean
   if ('genders' in t && t.genders != null) return false
   if ('excluded_geo_locations' in t && t.excluded_geo_locations != null) return false
   if ('publisher_platforms' in t && t.publisher_platforms != null) return false
-  // Advantage+ Audience lets Meta deliver OUTSIDE the stated audience when it
-  // predicts better results. Meta turns it on by default. Each arm would then
-  // expand independently, driven by its own early performance — so the two
-  // arms could end up in front of different people, which is precisely the
-  // rival explanation this whole campaign is built to exclude. Absent or 0.
-  if (t.targeting_automation?.advantage_audience === 1) return false
+  // Advantage+ Audience must be ON, and identically on both arms.
+  //
+  // The experiment requires identical audience CONFIGURATION, not identical
+  // realised demographic delivery. If one creative performs differently among
+  // people inside the same broad eligible audience, that IS part of the
+  // creative treatment's performance — not a confound to be engineered away.
+  // And the creatives are being judged on how they would behave in the
+  // environment we would actually run them in afterwards, which has this on.
+  //
+  // Expansion has little room to act here anyway: Malaysia, 23-65, all
+  // genders, no language restriction, no interests and no custom audiences
+  // already reaches 24.4M-28.7M.
+  //
+  // Deliberately NOT unrestricted. Requiring an exact value is what makes the
+  // two arms comparable — the cross-arm equality check lives in
+  // experiment-preflight, and this pins the value each arm must hold.
+  if (t.targeting_automation?.advantage_audience !== ADVANTAGE_AUDIENCE_REQUIRED) return false
   return true
 }
 
