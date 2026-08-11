@@ -19,6 +19,11 @@ import { analytics } from '@/lib/analytics'
  * Opens in a new tab ON PURPOSE. This renders inside a live checkout — a
  * same-tab navigation would discard the check the buyer just completed and
  * make "see what it looks like" cost them their place in the flow.
+ *
+ * "penuh" carries a distinction, not decoration. CollapsibleSampleReport still
+ * sits below the payment form and expands an inline PREVIEW; this one opens the
+ * COMPLETE /contoh-laporan page. Two controls a screen apart both reading
+ * "Lihat contoh laporan" would look like the same thing twice.
  */
 export function SampleReportLink({ source }: { source: 'paywall' }) {
   return (
@@ -29,7 +34,7 @@ export function SampleReportLink({ source }: { source: 'paywall' }) {
       onClick={() => analytics.sampleReportClicked({ source })}
       className="font-body text-[11px] text-[#14453d] font-semibold hover:underline underline-offset-2"
     >
-      Lihat contoh laporan &rarr;
+      Lihat contoh laporan penuh &rarr;
     </a>
   )
 }
