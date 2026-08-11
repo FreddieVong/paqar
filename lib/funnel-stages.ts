@@ -51,6 +51,14 @@ export const FUNNEL_STAGES = [
   'plate_verdict_suppressed',
   'paid_report_cta_viewed',
   'paid_report_cta_clicked',
+  // Paqar handed the browser a Billplz URL and is about to navigate. It does
+  // NOT mean Billplz's page loaded — see the note at the call site.
+  'billplz_navigation_started',
+  // The model journey's OUTCOME. It is 60% of all starts and until now emitted
+  // nothing after valuation_started, so whether those users saw a price, saw
+  // "no data", or hit an error was invisible in durable data.
+  'model_result_shown',
+  'model_result_no_data',
   // Between completion and checkout sat a blind spot. 14 Meta visitors
   // completed a valuation and 1 reached the payment form, but nothing recorded
   // WHERE the other 13 went — never saw the offer, saw it and left, or engaged

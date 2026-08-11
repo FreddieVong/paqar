@@ -55,7 +55,8 @@ const schema = z.object({
   event: z.enum([
     'landing_page_view', 'valuation_started', 'valuation_completed',
     'plate_submitted', 'plate_result_poll_timed_out',
-    'paywall_viewed', 'payment_form_focused',
+    'paywall_viewed', 'payment_form_focused', 'billplz_navigation_started',
+    'model_result_shown', 'model_result_no_data',
     ...PER_CHECK_STAGES,
   ]),
   url:    z.string().max(2000),
@@ -64,6 +65,7 @@ const schema = z.object({
   attemptId: z.string().max(100).optional(),
   checkId:   z.string().max(100).optional(),
   valuationPath: z.enum(['plate_report', 'model_price', 'plate_check']).optional(),
+  billId:    z.string().max(100).optional(),
 })
 
 // Paqar funnel step → Meta standard event. valuation_started is also tracked
@@ -125,7 +127,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
   }
 
-  const { event, url, attemptId, checkId } = parsed.data
+  const { event, url, attemptId, checkId, billId } = parsed.data
   const attribution = attributionFromRequest({
     url,
     fbcCookie: request.cookies.get('_fbc')?.value ?? null,
@@ -178,6 +180,17 @@ export async function POST(request: NextRequest) {
   } else if (event === 'valuation_completed') {
     if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
     id = derive.valuationCompleted(sessionId, checkId)
+  } else if (event === 'billplz_navigation_started') {
+    // Bill-derived, so a buyer clicking pay repeatedly on a REUSED bill
+    // produces one row. Without a bill there is nothing to answer the
+    // question, so the event is dropped rather than recorded against nothing.
+    if (!billId) return NextResponse.json({ ok: true, skipped: 'no_bill_id' })
+    id = derive.billplzNavigationStarted(billId)
+  } else if (event === 'model_result_shown' || event === 'model_result_no_data') {
+    // Keyed on the submission, so the form's own 25s auto-retry does not
+    // record the same enquiry twice.
+    if (!attemptId) return NextResponse.json({ ok: true, skipped: 'no_attempt_id' })
+    id = derive.modelResult(event, attemptId)
   } else {
     // Every member of the enum above is handled explicitly. This branch is
     // unreachable and exists so that ADDING a name to the enum without giving
@@ -194,6 +207,7 @@ export async function POST(request: NextRequest) {
     checkId:       checkId ?? null,
     path,
     valuationPath: parsed.data.valuationPath ?? null,
+    billId:        billId ?? null,
     journeyId:     attemptId ?? null,
     errorStage:    errorStage ?? null,
     errorCode:     errorCode  ?? null,

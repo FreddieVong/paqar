@@ -41,6 +41,9 @@ export type AdEventName =
   | 'plate_verdict_suppressed'
   | 'paid_report_cta_viewed'
   | 'paid_report_cta_clicked'
+  | 'billplz_navigation_started'
+  | 'model_result_shown'
+  | 'model_result_no_data'
   | 'checkout_started'
   | 'purchase'
 
@@ -122,6 +125,14 @@ export const eventId = {
   // Keyed on the bill alone: the webhook and /selesai both derive it without
   // needing the session, and Billplz retries collapse onto one row.
   checkoutStarted: (billId: string) => digest(['checkout_started', billId]),
+  // Keyed on the BILL, deliberately. The question is "did this bill ever try to
+  // leave Paqar", so repeated clicks on a reused bill collapse to one row —
+  // recordAdEvent dedupes on eventId. Attempt-level counting would need a
+  // different key and answers a different question.
+  billplzNavigationStarted: (billId: string) => digest(['billplz_navigation_started', billId]),
+  // attemptId is derived from brand|model|year|price and reused across the
+  // form's own retry, so one submission records one outcome.
+  modelResult: (stage: string, attemptId: string) => digest([stage, attemptId]),
   purchase:        (billId: string) => digest(['purchase', billId]),
 
   // Keyed on the JOURNEY, not the session: a user checking three cars creates

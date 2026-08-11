@@ -210,6 +210,21 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
       const data = await res.json() as PriceCheckResult
       setResult(data)
       setFormState('result')
+
+      // The model journey's outcome, in durable data for the first time. It is
+      // 60% of all valuation starts and previously emitted nothing after
+      // valuation_started, so a user who asked for a price and was told "no
+      // data" looked identical to one who simply stopped reading.
+      //
+      // Two names rather than one flag, because the question asked of this
+      // funnel is "how often does this path produce an answer at all" and a
+      // stage name is what the existing reporting counts.
+      //
+      // Diagnostic only: never forwarded to Meta. valuation_completed remains
+      // the plate-report path's event and Meta's ViewContent, untouched.
+      trackAdEvent(data.hasData ? 'model_result_shown' : 'model_result_no_data', {
+        attemptId, valuationPath: 'model_price',
+      })
       analytics.verdictViewed(
         data.hasData
           ? { verdict: data.verdict ?? 'suppressed', confidence: data.confidence, has_data: true }
@@ -218,6 +233,8 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
     } catch {
       setCheckError('Semakan gagal — sila cuba semula.')
       setFormState('error')
+      // A hard failure is not "no data" — the request never produced an answer.
+      trackAdEvent('model_result_no_data', { attemptId, valuationPath: 'model_price' })
     }
   }
 
