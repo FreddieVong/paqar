@@ -306,8 +306,18 @@ export async function runExperimentPreflight(
               `The link's value wins at click time: ${duplicated.join(', ')}`)
       )
 
-      const contamination = HISTORICAL_UTMS.filter(
-        (h) => (creative.url_tags ?? '').includes(h) || links.some((l) => l.includes(h)))
+      // Compared as exact PARAMETER VALUES, never as substrings. Substring
+      // matching flagged creative_b_aug26 as carrying `creative_b` and
+      // mudah_carousel_aug26 as carrying `mudah_carousel` — both correct tags,
+      // reported as contamination. A check that cries wolf on the right answer
+      // is worse than no check, because it trains you to skim past it.
+      const presentValues = new Set<string>()
+      for (const [, v] of new URLSearchParams(creative.url_tags ?? '')) presentValues.add(v)
+      for (const raw of links) {
+        try { for (const [, v] of new URL(raw).searchParams) presentValues.add(v) }
+        catch { /* unparseable — reported by the link check */ }
+      }
+      const contamination = HISTORICAL_UTMS.filter((h) => presentValues.has(h))
       checks.push(
         contamination.length === 0
           ? pass(`arm_${arm.name}_no_history`, `${arm.name} carries no historical UTM`,

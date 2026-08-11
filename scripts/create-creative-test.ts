@@ -202,6 +202,11 @@ async function main() {
     geo_locations: { countries: [guards.ALLOWED_COUNTRY] },
     age_min: guards.APPROVED_AGE_MIN,
     age_max: guards.APPROVED_AGE_MAX,
+    // Meta enables Advantage+ Audience by default, which lets it deliver
+    // OUTSIDE the stated audience. Each arm would expand independently on its
+    // own early performance, so the arms could end up in front of different
+    // people — the exact rival explanation this campaign exists to exclude.
+    targeting_automation: { advantage_audience: 0 },
   }
 
   console.log('\nad set configuration, identical for both arms')

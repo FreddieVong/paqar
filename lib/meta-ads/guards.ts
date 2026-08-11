@@ -434,6 +434,7 @@ export interface TargetingSpec {
   genders?:                unknown
   excluded_geo_locations?: unknown
   publisher_platforms?:    unknown
+  targeting_automation?:   { advantage_audience?: number }
 }
 
 /**
@@ -449,6 +450,12 @@ export function isTargetingAllowed(t: TargetingSpec | null | undefined): boolean
   if ('genders' in t && t.genders != null) return false
   if ('excluded_geo_locations' in t && t.excluded_geo_locations != null) return false
   if ('publisher_platforms' in t && t.publisher_platforms != null) return false
+  // Advantage+ Audience lets Meta deliver OUTSIDE the stated audience when it
+  // predicts better results. Meta turns it on by default. Each arm would then
+  // expand independently, driven by its own early performance — so the two
+  // arms could end up in front of different people, which is precisely the
+  // rival explanation this whole campaign is built to exclude. Absent or 0.
+  if (t.targeting_automation?.advantage_audience === 1) return false
   return true
 }
 
