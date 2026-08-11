@@ -241,6 +241,87 @@ describe('every create verb creates PAUSED, and cannot be talked out of it', () 
   })
 })
 
+describe('the two arms cannot share budget', () => {
+  it('createCampaignPaused disables ad set budget sharing explicitly', async () => {
+    // Meta REQUIRES this field when the campaign carries no budget and rejects
+    // creation without it (error_subcode 4834011). false is not a formality:
+    // true lets Meta move 20% of budget between ad sets based on its own read
+    // of which is winning, making spend a FUNCTION of the outcome being
+    // measured. Each arm must get exactly RM90 regardless of how it performs.
+    await client.createCampaignPaused(campaignDraft)
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body as string)
+    expect(body.is_adset_budget_sharing_enabled).toBe(false)
+  })
+
+  it('a caller cannot turn budget sharing on', () => {
+    // Absent from CampaignDraft for the same reason optimization_goal is.
+    const draft: Record<string, unknown> = { ...campaignDraft }
+    expect(Object.keys(draft)).not.toContain('is_adset_budget_sharing_enabled')
+  })
+
+  it('the campaign still carries no budget of its own', async () => {
+    await client.createCampaignPaused(campaignDraft)
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body as string)
+    for (const k of ['daily_budget', 'lifetime_budget', 'spend_cap']) {
+      expect(body, `campaign must not carry ${k}`).not.toHaveProperty(k)
+    }
+  })
+})
+
+describe('Meta error detail survives', () => {
+  it('surfaces error_user_title and error_user_msg, not just "Invalid parameter"', async () => {
+    // A real creation failure returned nothing but "Invalid parameter"; the
+    // actual cause was only reachable by re-issuing the request by hand
+    // outside this client. Discarding the detail made the failure
+    // undiagnosable, which is the defect this guards.
+    fetchMock.mockResolvedValue({
+      ok: false, status: 400,
+      text: async () => JSON.stringify({
+        error: {
+          message: 'Invalid parameter', code: 100, error_subcode: 4834011,
+          error_user_title: 'Must specify True or False in is_adset_budget_sharing_enabled field',
+          error_user_msg:   'You must specify True or False in the field is_adset_budget_sharing_enabled.',
+        },
+      }),
+    } as unknown as Response)
+
+    await expect(client.createCampaignPaused(campaignDraft)).rejects.toThrow(
+      /is_adset_budget_sharing_enabled/)
+    try { await client.createCampaignPaused(campaignDraft) } catch (e) {
+      const err = e as InstanceType<typeof client.MetaApiError>
+      expect(err.code).toBe(100)
+      expect(err.subcode).toBe(4834011)
+      expect(err.message).toContain('Invalid parameter')
+      expect(err.message).toContain('Must specify True or False')
+    }
+  })
+
+  it('does not repeat an identical message three times', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false, status: 400,
+      text: async () => JSON.stringify({
+        error: { message: 'Same text', error_user_title: 'Same text', error_user_msg: 'Same text' },
+      }),
+    } as unknown as Response)
+    try { await client.createCampaignPaused(campaignDraft) } catch (e) {
+      expect((e as Error).message).toBe('Same text')
+    }
+  })
+
+  it('still redacts the token in the detail fields', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false, status: 400,
+      text: async () => JSON.stringify({
+        error: { message: 'boom', error_user_msg: 'failed for access_token=SECRET_SYSTEM_TOKEN_VALUE' },
+      }),
+    } as unknown as Response)
+    try { await client.createCampaignPaused(campaignDraft) } catch (e) {
+      expect((e as Error).message).not.toContain('SECRET_SYSTEM_TOKEN_VALUE')
+      expect((e as Error).message).toContain('[REDACTED_TOKEN]')
+    }
+  })
+})
+
 describe('createAdSetPaused is the money gate', () => {
   it('refuses without a real SpendAuthorisation', async () => {
     await expect(client.createAdSetPaused({
