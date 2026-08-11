@@ -1,5 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({
@@ -7,48 +9,100 @@ vi.mock('@/lib/env', () => ({
     META_GRAPH_API_VERSION:        'v25.0',
     META_SYSTEM_USER_ACCESS_TOKEN: 'SECRET_SYSTEM_TOKEN_VALUE',
     META_AD_ACCOUNT_ID:            'act_123',
+    META_PIXEL_OR_DATASET_ID:      'pixel_123',
+    META_VALUATION_STARTED_CUSTOM_CONVERSION_ID: 'cc_started',
   },
 }))
 
 import * as client from '@/lib/meta-ads/client'
 import {
   isDailyBudgetAllowed, isSpendCapAllowed, isCountryAllowed, isTotalSpendExceeded,
-  checkMutationAllowed, isOperatorLive,
-  MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, MAX_ACTIVE_ADS, MAX_CAMPAIGNS, MAX_ADSETS,
+  checkMutationAllowed, checkCreationAllowed, isOperatorLive,
+  isLifetimeBudgetAllowed, isScheduleAllowed, isTargetingAllowed,
+  isPromotedObjectAllowed, isDestinationAllowed, isUrlTagsAllowed, authoriseNewSpend,
+  MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, MAX_ACTIVE_CAMPAIGNS,
+  MAX_EXPERIMENT_ADSETS, MAX_DELIVERABLE_ADS_PER_ADSET, MAX_DELIVERABLE_ADS_PER_CAMPAIGN,
+  MAX_ADSET_LIFETIME_BUDGET_MYR, TEST_DURATION_DAYS,
   ALLOW_BUDGET_INCREASE, ALLOW_NEW_CAMPAIGNS, ALLOW_NEW_ADSETS, ALLOW_NEW_CREATIVES,
-  ALLOW_AUTOMATIC_RESTART,
+  ALLOW_AUTOMATIC_RESTART, ALLOW_PAUSED_CREATION,
+  CAMPAIGNS, META_SOURCE_MACRO,
+  type SpendAuthorisation,
 } from '@/lib/meta-ads/guards'
 
 /**
  * The most important test in the suite.
  *
- * Almost every safety rule in the brief — never create a second campaign,
- * never add an ad set, never activate a third ad, never raise a budget, never
- * restart a manually paused object — is guaranteed by the ABSENCE of code, not
- * by a runtime check. This asserts that absence.
+ * WHAT IT GUARANTEES, AND WHY THE CLAIM CHANGED
  *
- * If someone adds a mutation to the client, this fails. That is the point.
+ * Until 2026-08-11 the rule was "this codebase cannot create anything", proven
+ * by a one-verb export surface. That rule was a PROXY: an object that cannot
+ * exist cannot spend. The creative-treatment test needed ad creatives carrying
+ * correct destination URLs, and the only alternative was editing the historical
+ * creatives — which would have silently rewritten ads that already ran.
+ *
+ * So the surface widened and the guarantee was restated as the thing that
+ * actually protects money:
+ *
+ *     this codebase cannot START OR INCREASE SPEND.
+ *
+ * That is weaker in what it forbids and STRONGER in what it proves, because it
+ * is now asserted three independent ways rather than inferred from an absence:
+ *
+ *   1. an exact export whitelist          (a new verb fails the suite)
+ *   2. a behavioural proof per create verb (PAUSED is unforgeable at runtime)
+ *   3. a source-text proof                 (one status literal in the file)
+ *
+ * If you are here to add a mutation, this fails. That is the point.
  */
+
+const SOURCE = readFileSync(
+  join(__dirname, '..', '..', 'lib', 'meta-ads', 'client.ts'), 'utf-8')
+
+/** Exported, callable, and provably non-mutating. Listed so the surface below is exact. */
+const KNOWN_NON_MUTATING = ['metaGet', 'redactMeta', 'collectLinks']
+
+const mutatingExports = () => Object.keys(client)
+  .filter((k) => typeof (client as Record<string, unknown>)[k] === 'function')
+  .filter((k) => k !== 'MetaApiError')
+  .filter((k) => !KNOWN_NON_MUTATING.includes(k))
+  .sort()
+
 describe('Meta client export surface', () => {
-  const MUTATION_WORDS = [
-    'create', 'update', 'delete', 'remove', 'activate', 'resume', 'start',
-    'unpause', 'enable', 'set', 'edit', 'increase', 'budget', 'duplicate', 'copy',
-  ]
+  it('exports exactly the five approved mutating verbs, and no others', () => {
+    expect(mutatingExports()).toEqual([
+      'createAdCreative',
+      'createAdPaused',
+      'createAdSetPaused',
+      'createCampaignPaused',
+      'pauseCampaign',
+    ])
+  })
 
-  it('exports exactly one mutating verb: pauseCampaign', () => {
-    const functions = Object.keys(client).filter(
-      (k) => typeof (client as Record<string, unknown>)[k] === 'function'
-    )
+  it('every mutating export matches the approved whitelist', () => {
+    // Strictly stronger than a word blacklist: this is what fails when someone
+    // adds updateAdSet, resumeCampaign or setBudget under any spelling.
+    const ALLOWED = /^(pauseCampaign|createCampaignPaused|createAdSetPaused|createAdCreative|createAdPaused)$/
+    for (const name of mutatingExports()) {
+      expect(ALLOWED.test(name), `"${name}" is not an approved mutating verb`).toBe(true)
+    }
+  })
 
-    const mutating = functions.filter((name) => {
-      if (name === 'metaGet' || name === 'redactMeta') return false // reads / helpers
-      return true
-    }).filter((name) => name !== 'MetaApiError')
-
-    expect(mutating).toEqual(['pauseCampaign'])
+  it('does not export a generic POST', () => {
+    // metaPost would restore exactly the unbounded capability the module exists
+    // to withhold — every guarantee here would decay into a convention.
+    expect(Object.keys(client)).not.toContain('metaPost')
   })
 
   it('exposes no function whose name suggests a forbidden mutation', () => {
+    // 'create' was removed: creation is permitted, but only through the
+    // whitelist above, which is a tighter constraint than this list ever was.
+    // 'set' was removed because it false-positives on createAdSetPaused;
+    // setBudget and setStatus are already blocked by the whitelist.
+    const MUTATION_WORDS = [
+      'update', 'delete', 'remove', 'activate', 'reactivate', 'resume', 'restart',
+      'unpause', 'enable', 'launch', 'edit', 'increase', 'raise', 'budget',
+      'duplicate', 'copy',
+    ]
     for (const name of Object.keys(client)) {
       const lower = name.toLowerCase()
       for (const word of MUTATION_WORDS) {
@@ -61,8 +115,6 @@ describe('Meta client export surface', () => {
   })
 
   it('cannot express an un-pause: pauseCampaign takes only a campaign id', () => {
-    // A status parameter would make reactivation reachable. One argument means
-    // 'PAUSED' is hard-coded in the body and there is no other call shape.
     expect(client.pauseCampaign.length).toBe(1)
   })
 
@@ -79,6 +131,208 @@ describe('Meta client export surface', () => {
     expect(leaked).not.toContain('EAAsomeOtherToken123')
   })
 })
+
+describe('the source itself cannot express a delivering status', () => {
+  it('contains exactly one status literal, and it is PAUSED', () => {
+    // Enforces the design: every write funnels through pausedBody(). A second
+    // literal means some verb sets its own status.
+    expect(SOURCE.match(/status:\s*'[A-Z_]+'/g) ?? []).toEqual(["status: 'PAUSED'"])
+  })
+
+  it('the string ACTIVE appears nowhere in the file', () => {
+    expect(SOURCE).not.toContain('ACTIVE')
+  })
+})
+
+// --- Behavioural proof ------------------------------------------------------
+
+const fetchMock = vi.fn()
+const okJson = (body: unknown) => ({
+  ok: true, status: 200, text: async () => JSON.stringify(body),
+}) as unknown as Response
+
+const iso = (msFromNow: number) => new Date(Date.now() + msFromNow).toISOString()
+
+const AUTH = {
+  __brand: 'SpendAuthorisation',
+  cumulativeSpentCents: 38_399,
+  commitmentCents:      18_000,
+} as SpendAuthorisation
+
+const TARGETING = {
+  geo_locations: { countries: ['MY'] },
+  age_min: 23,
+  age_max: 65,
+}
+
+/** Keys pausedBody() refuses outright. Kept in step with client.ts by design. */
+const FORBIDDEN_KEYS = ['status', 'effective_status', 'configured_status', 'execution_options']
+
+const campaignDraft = { name: 'PAQAR_Creative_Test_Aug26', objective: 'OUTCOME_SALES' as const }
+const adSetDraft = {
+  name: 'Creative_Test_Control',
+  campaignId: 'c_1',
+  lifetimeBudgetCents: 9_000,
+  startTimeIso: iso(60_000),
+  endTimeIso:   iso(60_000 + TEST_DURATION_DAYS * 86_400_000),
+  promotedObject: { custom_conversion_id: 'cc_started', pixel_id: 'pixel_123' },
+  targeting: TARGETING,
+  expectedCustomConversionId: 'cc_started',
+}
+const adDraft = { name: 'ad', adSetId: 'as_1', creativeId: 'cr_1' }
+
+const validDrafts: Record<string, () => Promise<unknown>> = {
+  createCampaignPaused: () => client.createCampaignPaused(campaignDraft),
+  createAdSetPaused:    () => client.createAdSetPaused(adSetDraft, AUTH),
+  createAdPaused:       () => client.createAdPaused(adDraft),
+}
+
+const poisonedDrafts: Record<string, (key: string) => Promise<unknown>> = {
+  createCampaignPaused: (k) => client.createCampaignPaused({ ...campaignDraft, [k]: 'x' } as never),
+  createAdSetPaused:    (k) => client.createAdSetPaused({ ...adSetDraft, [k]: 'x' } as never, AUTH),
+  createAdPaused:       (k) => client.createAdPaused({ ...adDraft, [k]: 'x' } as never),
+}
+
+beforeEach(() => {
+  fetchMock.mockReset()
+  fetchMock.mockResolvedValue(okJson({ id: 'new_1' }))
+  vi.stubGlobal('fetch', fetchMock)
+})
+
+describe('every create verb creates PAUSED, and cannot be talked out of it', () => {
+  it('covers every createPaused verb the module exports', () => {
+    // Meta-test: a new create verb added without a proof below fails here
+    // automatically, so this table can never silently fall behind the surface.
+    const paused = mutatingExports().filter((n) => /^create.*Paused$/.test(n)).sort()
+    expect(Object.keys(validDrafts).sort()).toEqual(paused)
+  })
+
+  for (const name of Object.keys(validDrafts)) {
+    it(`${name} sends status PAUSED`, async () => {
+      await validDrafts[name]!()
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const body = JSON.parse(fetchMock.mock.calls[0]![1].body as string)
+      expect(body.status).toBe('PAUSED')
+    })
+
+    it(`${name} throws on a smuggled status, and never calls fetch`, async () => {
+      // The draft types have no status field, so requesting one needs a cast —
+      // which is exactly the shape of the future mistake worth catching at
+      // runtime. Every key pausedBody() refuses is exercised, not just `status`.
+      for (const key of FORBIDDEN_KEYS) {
+        fetchMock.mockReset()
+        fetchMock.mockResolvedValue(okJson({ id: 'x' }))
+        await expect(
+          poisonedDrafts[name]!(key),
+          `${name} accepted a caller-supplied ${key}`
+        ).rejects.toThrow(/not caller-controllable/)
+        expect(
+          fetchMock,
+          `${name} reached the network before rejecting ${key}`
+        ).not.toHaveBeenCalled()
+      }
+    })
+  }
+
+  it('pauseCampaign itself goes through the same single status literal', async () => {
+    await client.pauseCampaign('c_1')
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body as string)
+    expect(body).toEqual({ status: 'PAUSED' })
+  })
+})
+
+describe('createAdSetPaused is the money gate', () => {
+  it('refuses without a real SpendAuthorisation', async () => {
+    await expect(client.createAdSetPaused({
+      name: 'x', campaignId: 'c', lifetimeBudgetCents: 9_000,
+      startTimeIso: iso(60_000),
+      endTimeIso: iso(60_000 + TEST_DURATION_DAYS * 86_400_000),
+      promotedObject: { custom_conversion_id: 'cc_started' },
+      targeting: TARGETING,
+      expectedCustomConversionId: 'cc_started',
+    }, {} as SpendAuthorisation)).rejects.toThrow(/SpendAuthorisation is required/)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses a budget larger than the authorised commitment', async () => {
+    await expect(client.createAdSetPaused({
+      name: 'x', campaignId: 'c', lifetimeBudgetCents: 9_000,
+      startTimeIso: iso(60_000),
+      endTimeIso: iso(60_000 + TEST_DURATION_DAYS * 86_400_000),
+      promotedObject: { custom_conversion_id: 'cc_started' },
+      targeting: TARGETING,
+      expectedCustomConversionId: 'cc_started',
+    }, { ...AUTH, commitmentCents: 5_000 } as SpendAuthorisation))
+      .rejects.toThrow(/exceeds the authorised commitment/)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses a promoted_object pointing at a different conversion', async () => {
+    await expect(client.createAdSetPaused({
+      name: 'x', campaignId: 'c', lifetimeBudgetCents: 9_000,
+      startTimeIso: iso(60_000),
+      endTimeIso: iso(60_000 + TEST_DURATION_DAYS * 86_400_000),
+      // The valuation_completed conversion — the exact silent default to avoid.
+      promotedObject: { custom_conversion_id: '4496672967256461' },
+      targeting: TARGETING,
+      expectedCustomConversionId: 'cc_started',
+    }, AUTH)).rejects.toThrow(/custom conversion/)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('createAdCreative validates every link before it POSTs', () => {
+  const good = {
+    name: 'creative_b_aug26',
+    urlTags: `utm_source=${META_SOURCE_MACRO}&utm_medium=paid_social`
+      + `&utm_campaign=creative_test_aug26&utm_content=creative_b_aug26`,
+    expectedCampaign: 'creative_test_aug26',
+    expectedContent:  'creative_b_aug26',
+  }
+
+  it('accepts a clean spec', async () => {
+    await client.createAdCreative({
+      ...good,
+      objectStorySpec: { video_data: { call_to_action: { value: { link: 'https://paqar.my/' } } } },
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects a link carrying utm params — the creative_b defect', async () => {
+    await expect(client.createAdCreative({
+      ...good,
+      objectStorySpec: { video_data: { call_to_action: { value: {
+        link: 'https://paqar.my/?utm_campaign=paqar_first_paid_test&utm_content=creative_b',
+      } } } },
+    })).rejects.toThrow(/untagged paqar.my/)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('checks EVERY carousel child, not just the first', async () => {
+    await expect(client.createAdCreative({
+      ...good,
+      expectedContent: 'mudah_carousel_aug26',
+      urlTags: good.urlTags.replace('creative_b_aug26', 'mudah_carousel_aug26'),
+      objectStorySpec: { link_data: { link: 'https://paqar.my/', child_attachments: [
+        { link: 'https://paqar.my/' },
+        { link: 'https://paqar.my/?utm_source=meta' },
+      ] } },
+    })).rejects.toThrow(/untagged paqar.my/)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('rejects url_tags naming a retired creative tag', async () => {
+    await expect(client.createAdCreative({
+      ...good,
+      expectedContent: 'creative_b',
+      urlTags: good.urlTags.replace('creative_b_aug26', 'creative_b'),
+      objectStorySpec: { video_data: { call_to_action: { value: { link: 'https://paqar.my/' } } } },
+    })).rejects.toThrow(/url_tags/)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+// --- Guards -----------------------------------------------------------------
 
 describe('budget guards', () => {
   it(`rejects a daily budget above RM${MAX_DAILY_BUDGET_MYR}`, () => {
@@ -103,7 +357,37 @@ describe('budget guards', () => {
   it(`stops at or above RM${MAX_TOTAL_SPEND_MYR}`, () => {
     expect(isTotalSpendExceeded(MAX_TOTAL_SPEND_MYR * 100 - 1)).toBe(false)
     expect(isTotalSpendExceeded(MAX_TOTAL_SPEND_MYR * 100)).toBe(true)
-    expect(isTotalSpendExceeded(MAX_TOTAL_SPEND_MYR * 100 + 4000)).toBe(true)
+  })
+
+  it('a lifetime budget must satisfy the DAILY ceiling too', () => {
+    // RM90 over 7 days is RM12.86/day. The same RM90 over 2 days is RM45/day,
+    // which blows the RM30 ceiling while looking identical at the total.
+    expect(isLifetimeBudgetAllowed(9000, 7)).toBe(true)
+    expect(isLifetimeBudgetAllowed(9001, 7)).toBe(false)
+    expect(isLifetimeBudgetAllowed(9000, 2)).toBe(false)
+    expect(isLifetimeBudgetAllowed(null, 7)).toBe(false)
+    expect(isLifetimeBudgetAllowed(0, 7)).toBe(false)
+  })
+})
+
+describe('authoriseNewSpend', () => {
+  it('authorises the real figures for this test', () => {
+    // RM383.99 already spent + RM180 committed = RM563.99, under RM625.
+    expect(authoriseNewSpend({ status: 'verified', cumulativeCents: 38_399 }, 18_000)).not.toBeNull()
+  })
+
+  it('refuses to authorise against an UNVERIFIED reconciliation', () => {
+    // The entire reason budget.ts exists: never commit money against a spend
+    // figure that could be hiding a Meta counter reset.
+    expect(authoriseNewSpend({ status: 'unverified' }, 18_000)).toBeNull()
+  })
+
+  it('refuses a commitment that would breach the total allowance', () => {
+    expect(authoriseNewSpend({ status: 'verified', cumulativeCents: 55_000 }, 18_000)).toBeNull()
+  })
+
+  it('refuses a commitment larger than one creation run may make', () => {
+    expect(authoriseNewSpend({ status: 'verified', cumulativeCents: 0 }, 25_000)).toBeNull()
   })
 })
 
@@ -117,6 +401,69 @@ describe('targeting guard', () => {
     expect(isCountryAllowed(['MY', 'SG'])).toBe(false)
     expect(isCountryAllowed([])).toBe(false)
     expect(isCountryAllowed(null)).toBe(false)
+  })
+
+  it('pins the approved spec so the two arms cannot differ', () => {
+    expect(isTargetingAllowed(TARGETING)).toBe(true)
+    expect(isTargetingAllowed({ ...TARGETING, age_min: 18 })).toBe(false)
+    expect(isTargetingAllowed({ ...TARGETING, genders: [1] })).toBe(false)
+    // Automatic placements means the field is ABSENT, not empty.
+    expect(isTargetingAllowed({ ...TARGETING, publisher_platforms: ['facebook'] })).toBe(false)
+    expect(isTargetingAllowed(null)).toBe(false)
+  })
+
+  it('requires exactly the test duration, starting in the future', () => {
+    const now = new Date('2026-08-11T00:00:00Z')
+    const start = '2026-08-12T00:00:00.000Z'
+    expect(isScheduleAllowed(start, '2026-08-19T00:00:00.000Z', now)).toBe(true)
+    expect(isScheduleAllowed(start, '2026-08-18T00:00:00.000Z', now)).toBe(false)
+    expect(isScheduleAllowed('2026-08-01T00:00:00.000Z', '2026-08-08T00:00:00.000Z', now)).toBe(false)
+    expect(isScheduleAllowed(null, null, now)).toBe(false)
+  })
+})
+
+describe('destination and UTM guards', () => {
+  it('accepts a bare paqar.my URL', () => {
+    expect(isDestinationAllowed('https://paqar.my/')).toBe(true)
+  })
+
+  it('rejects ANY utm param in the link, whichever it is', () => {
+    // Meta appends url_tags to the link, so a key in both appears twice and the
+    // LINK wins at click time — while preflight's merge order would report the
+    // tags as correct. Forbidding utm_* in the link removes the disagreement.
+    expect(isDestinationAllowed('https://paqar.my/?utm_source=meta')).toBe(false)
+    expect(isDestinationAllowed('https://paqar.my/?utm_campaign=x')).toBe(false)
+    expect(isDestinationAllowed('https://paqar.my/?ref=ok')).toBe(true)
+  })
+
+  it('rejects another host or plain http', () => {
+    expect(isDestinationAllowed('https://evil.com/')).toBe(false)
+    expect(isDestinationAllowed('http://paqar.my/')).toBe(false)
+    expect(isDestinationAllowed(null)).toBe(false)
+  })
+
+  it('requires every UTM the funnel reads', () => {
+    const ok = `utm_source=${META_SOURCE_MACRO}&utm_medium=paid_social`
+      + `&utm_campaign=creative_test_aug26&utm_content=creative_b_aug26`
+    const expected = { campaign: 'creative_test_aug26', content: 'creative_b_aug26' }
+    expect(isUrlTagsAllowed(ok, expected)).toBe(true)
+    expect(isUrlTagsAllowed(ok.replace('paid_social', 'cpc'), expected)).toBe(false)
+    expect(isUrlTagsAllowed(ok.replace(META_SOURCE_MACRO, 'meta'), expected)).toBe(false)
+    expect(isUrlTagsAllowed(ok, { ...expected, campaign: 'other' })).toBe(false)
+    expect(isUrlTagsAllowed(null, expected)).toBe(false)
+  })
+
+  it('refuses a retired creative tag, which would merge cohorts', () => {
+    const tags = `utm_source=${META_SOURCE_MACRO}&utm_medium=paid_social`
+      + `&utm_campaign=creative_test_aug26&utm_content=creative_b`
+    expect(isUrlTagsAllowed(tags, { campaign: 'creative_test_aug26', content: 'creative_b' })).toBe(false)
+  })
+
+  it('fails closed when no custom conversion is configured', () => {
+    expect(isPromotedObjectAllowed({ custom_conversion_id: 'cc_started' }, undefined)).toBe(false)
+    expect(isPromotedObjectAllowed({ custom_conversion_id: 'cc_started' }, 'cc_started')).toBe(true)
+    expect(isPromotedObjectAllowed({ custom_conversion_id: '4496672967256461' }, 'cc_started')).toBe(false)
+    expect(isPromotedObjectAllowed(null, 'cc_started')).toBe(false)
   })
 })
 
@@ -142,6 +489,11 @@ describe('operator gate', () => {
     expect(checkMutationAllowed({ operator_enabled: true, kill_switch: true, manual_pause: false }))
       .toBe('kill_switch_active')
   })
+
+  it('creation passes the same gate, plus its own switch', () => {
+    expect(checkCreationAllowed(base)).toBeNull()
+    expect(checkCreationAllowed({ ...base, kill_switch: true })).toBe('kill_switch_active')
+  })
 })
 
 describe('declared limits match the brief', () => {
@@ -150,18 +502,43 @@ describe('declared limits match the brief', () => {
     // Pinned so the allowance can only move as a deliberate, reviewed edit.
     // 210 -> 265 (2026-08-02, bounded RM50 creative test)
     // 265 -> 445 (2026-08-04, RM180 Carlist vs Mudah on top of RM217.86 spent)
-    expect(MAX_TOTAL_SPEND_MYR).toBe(445)
-    expect(MAX_CAMPAIGNS).toBe(1)
-    expect(MAX_ADSETS).toBe(1)
-    expect(MAX_ACTIVE_ADS).toBe(2)
+    // 445 -> 625 (2026-08-11, RM180 creative-treatment test; RM383.99 spent
+    //             + RM1.37 still committed + RM180 = RM565.36 projected)
+    expect(MAX_TOTAL_SPEND_MYR).toBe(625)
+    expect(MAX_ADSET_LIFETIME_BUDGET_MYR).toBe(90)
+    expect(TEST_DURATION_DAYS).toBe(7)
   })
 
-  it('keeps every permissive flag off', () => {
+  it('bounds each object count in the unit it actually counts', () => {
+    // The old MAX_ACTIVE_ADS = 2 was checked PER AD SET in a campaign that had
+    // one. Reused unchanged across two arms it would have permitted four
+    // deliverable ads while still reading as two, so the campaign total is now
+    // stated explicitly and the per-ad-set bound is 1.
+    expect(MAX_ACTIVE_CAMPAIGNS).toBe(1)
+    expect(MAX_EXPERIMENT_ADSETS).toBe(2)
+    expect(MAX_DELIVERABLE_ADS_PER_ADSET).toBe(1)
+    expect(MAX_DELIVERABLE_ADS_PER_CAMPAIGN).toBe(2)
+    expect(MAX_EXPERIMENT_ADSETS * MAX_DELIVERABLE_ADS_PER_ADSET)
+      .toBe(MAX_DELIVERABLE_ADS_PER_CAMPAIGN)
+  })
+
+  it('keeps every flag that would let an object DELIVER switched off', () => {
     expect(ALLOW_BUDGET_INCREASE).toBe(false)
     expect(ALLOW_NEW_CAMPAIGNS).toBe(false)
     expect(ALLOW_NEW_ADSETS).toBe(false)
     expect(ALLOW_NEW_CREATIVES).toBe(false)
     expect(ALLOW_AUTOMATIC_RESTART).toBe(false)
+  })
+
+  it('paused creation is the ONLY permission that is on', () => {
+    expect(ALLOW_PAUSED_CREATION).toBe(true)
+  })
+
+  it('the test campaign does not reuse a retired creative tag', () => {
+    // creative_b is retired; reusing it would hard-fail preflight and merge this
+    // cohort into 192 historical video events.
+    expect(CAMPAIGNS.creativeTestAug26.creatives)
+      .toEqual(['creative_b_aug26', 'mudah_carousel_aug26'])
   })
 })
 

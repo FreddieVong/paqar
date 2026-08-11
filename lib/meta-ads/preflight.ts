@@ -6,7 +6,7 @@ import {
 } from '@/lib/meta-ads/insights'
 import { MetaApiError, redactMeta } from '@/lib/meta-ads/client'
 import {
-  MAX_ACTIVE_ADS, MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR,
+  MAX_DELIVERABLE_ADS_PER_CAMPAIGN, MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR,
   REQUIRED_CURRENCY, REQUIRED_UTM, ACTIVE_CREATIVE_TAGS, isRetiredCreativeTag,
   ACTIVE_CAMPAIGN, META_SOURCE_MACRO, isMetaUtmSource, META_UTM_SOURCES,
   CARLIST_INTEREST,
@@ -344,24 +344,30 @@ export async function runPreflight(input: PreflightInput): Promise<PreflightResu
     const ads = await listAdsInAdSet(input.adSetId)
     const configured = new Set([input.creativeAAdId, input.creativeBAdId])
 
-    // The guard is "no more than MAX_ACTIVE_ADS can DELIVER", not "only that
-    // many rows exist". Retired creatives are deliberately kept in the ad set,
+    // The guard is "no more than this many can DELIVER", not "only that many
+    // rows exist". Retired creatives are deliberately kept in the ad set,
     // paused: deleting them would destroy the baseline the retired-creative
     // report compares against. Counting every row made that retention
     // permanently unpassable.
+    //
+    // The unit here is PER CAMPAIGN, and it is correct to apply it against a
+    // single ad set only because this campaign has exactly one. The former
+    // MAX_ACTIVE_ADS said "per ad set", which read the same at 2 but would have
+    // permitted four deliverable ads once a second ad set existed. Campaigns
+    // with more than one ad set go through runExperimentPreflight instead.
     const configuredPresent = [input.creativeAAdId, input.creativeBAdId]
       .filter((id) => ads.some((a) => a.id === id))
     const others       = ads.filter((a) => !configured.has(a.id))
     const othersActive = others.filter((a) => a.status === 'ACTIVE')
 
     checks.push(
-      configuredPresent.length === MAX_ACTIVE_ADS && othersActive.length === 0
-        ? pass('ad_count', `Exactly ${MAX_ACTIVE_ADS} deliverable ads`,
+      configuredPresent.length === MAX_DELIVERABLE_ADS_PER_CAMPAIGN && othersActive.length === 0
+        ? pass('ad_count', `Exactly ${MAX_DELIVERABLE_ADS_PER_CAMPAIGN} deliverable ads`,
             `${configuredPresent.length} configured creative(s) present`
             + (others.length ? `; ${others.length} retired ad(s) present and paused` : ''))
-        : fail('ad_count', `Exactly ${MAX_ACTIVE_ADS} deliverable ads`,
-            configuredPresent.length !== MAX_ACTIVE_ADS
-              ? `Only ${configuredPresent.length} of the ${MAX_ACTIVE_ADS} configured ads are in this ad set.`
+        : fail('ad_count', `Exactly ${MAX_DELIVERABLE_ADS_PER_CAMPAIGN} deliverable ads`,
+            configuredPresent.length !== MAX_DELIVERABLE_ADS_PER_CAMPAIGN
+              ? `Only ${configuredPresent.length} of the ${MAX_DELIVERABLE_ADS_PER_CAMPAIGN} configured ads are in this ad set.`
               : `Unconfigured ad(s) are ACTIVE and would deliver: ${othersActive.map((a) => a.id).join(', ')}`)
     )
 
