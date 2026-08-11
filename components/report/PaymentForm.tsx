@@ -234,21 +234,37 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
         </button>
 
         {/*
-          Two fixes at the exact point where every real buyer has been lost.
+          The line at the exact point where every real buyer has been lost.
 
-          1. This line used to promise "Kad Kredit/Debit". The Billplz
-             collection (dptd0er6) offers FPX online banking ONLY — no cards,
-             no e-wallets. Anyone who arrived intending to pay by card found
-             no way to do it, after committing an email and generating a bill.
+          NAMING THE MERCHANT stays. Clicking pay leaves paqar.my for a Billplz
+          page headed TENTEC SDN BHD, with no logo, asking for bank
+          credentials. An unfamiliar company name at the moment money is due
+          reads as a scam; naming it here turns that surprise into a
+          confirmation.
 
-          2. Clicking pay leaves paqar.my for a Billplz page headed TENTEC SDN
-             BHD, with no logo, asking for bank credentials. An unfamiliar
-             company name at the moment money is due reads as a scam. Naming
-             it HERE turns that surprise into a confirmation.
+          THE PAYMENT METHODS ARE CORRECTED. 0489d0b removed the card mention
+          on the belief that collection dptd0er6 "offers FPX online banking
+          ONLY — no cards". That belief was wrong, and saying so cost sales:
+
+            2026-08-11  a controlled RM12 purchase COMPLETED on BILLPLZ::CARD,
+                        collection dptd0er6 — bill eeb4bdf4edb83eea,
+                        transaction 218CEC4C0222CF762B0B, entitlement granted,
+                        receipt sent.
+            2026-08-09  an external buyer selected CARD unprompted on the same
+                        collection, so Billplz clearly presents it.
+
+          Every bill Paqar has ever created is on dptd0er6, so this is not a
+          new-collection effect: card was available all along while this line
+          told buyers it was not. A buyer without online banking read "FPX
+          online banking" and had no reason to continue — after committing an
+          email and generating a bill.
+
+          Deliberately lists what Billplz offers, without ranking them or
+          promising a specific card network, which is not ours to guarantee.
         */}
         <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
           Bayar sekali · Tiada langganan<br />
-          Pembayaran diproses oleh Billplz (TENTEC SDN BHD) melalui perbankan online FPX.
+          Pembayaran diproses oleh Billplz (TENTEC SDN BHD) — perbankan online FPX atau kad kredit/debit.
         </p>
 
         {supportUrl && (
