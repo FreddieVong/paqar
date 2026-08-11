@@ -31,9 +31,16 @@ export interface CampaignInfo {
 export interface AdSetInfo {
   id:           string
   campaign_id:  string
+  name?:        string
   status:       string
   effective_status: string
   daily_budget?: string
+  /** The experiment arms are lifetime-budgeted, so this is their real ceiling. */
+  lifetime_budget?: string
+  start_time?:  string
+  end_time?:    string
+  bid_strategy?: string
+  billing_event?: string
   optimization_goal?: string
   promoted_object?: {
     pixel_id?:            string
@@ -94,12 +101,58 @@ export async function getCampaign(campaignId: string): Promise<CampaignInfo> {
   })
 }
 
+const ADSET_FIELDS =
+  'id,campaign_id,name,status,effective_status,daily_budget,lifetime_budget,' +
+  'start_time,end_time,bid_strategy,billing_event,optimization_goal,promoted_object,' +
+  'targeting{geo_locations,publisher_platforms,facebook_positions,instagram_positions,' +
+  'interests,flexible_spec,targeting_automation}'
+
 export async function getAdSet(adSetId: string): Promise<AdSetInfo> {
-  return metaGet<AdSetInfo>(adSetId, {
-    fields:
-      'id,campaign_id,status,effective_status,daily_budget,optimization_goal,promoted_object,' +
-      'targeting{geo_locations,publisher_platforms,facebook_positions,instagram_positions,' +
-      'interests,flexible_spec,targeting_automation}',
+  return metaGet<AdSetInfo>(adSetId, { fields: ADSET_FIELDS })
+}
+
+/**
+ * Every ad set in a campaign, with the SAME fields getAdSet returns.
+ *
+ * Sharing ADSET_FIELDS is deliberate: the two-arm preflight diffs arms against
+ * each other, and a field present in one read but not the other would show up
+ * as a difference in configuration rather than a difference in the query.
+ */
+export async function listAdSetsInCampaign(campaignId: string): Promise<AdSetInfo[]> {
+  const res = await metaGet<{ data: AdSetInfo[] }>(`${campaignId}/adsets`, {
+    fields: ADSET_FIELDS,
+    limit:  '50',
+  })
+  return res.data ?? []
+}
+
+/** Every campaign on the account — used to prove only one is live. */
+export async function listCampaigns(): Promise<CampaignInfo[]> {
+  const res = await metaGet<{ data: CampaignInfo[] }>(`${accountPath()}/campaigns`, {
+    fields: 'id,name,account_id,status,effective_status,objective,spend_cap,daily_budget,lifetime_budget',
+    limit:  '100',
+  })
+  return res.data ?? []
+}
+
+export interface AdCreativeInfo {
+  id:                 string
+  name?:              string
+  url_tags?:          string
+  object_story_spec?: Record<string, unknown>
+  effective_object_story_id?: string
+}
+
+/**
+ * Read a creative back after creation.
+ *
+ * Creation is not trusted to have stored what it was sent: url_tags and the
+ * destination links are the only thing standing between this test and the
+ * historical UTMs that creative_b still carries.
+ */
+export async function getAdCreative(creativeId: string): Promise<AdCreativeInfo> {
+  return metaGet<AdCreativeInfo>(creativeId, {
+    fields: 'id,name,url_tags,object_story_spec,effective_object_story_id',
   })
 }
 
