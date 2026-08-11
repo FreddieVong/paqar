@@ -297,6 +297,8 @@ export async function getFunnelCounts(opts: {
     .select('id, event_name, amount_cents, check_id, journey_id, valuation_path, session_id')
     // Meta expands {{site_source_name}} to a placement source, so the stored
     // value is fb/ig/an/msg — never the literal "meta" the old filter demanded.
+    // The unexpanded macro itself is in the family too, because expansion is
+    // not guaranteed and those rows are still paid traffic.
     .in('utm_source', META_UTM_SOURCES)
     .eq('utm_medium', REQUIRED_UTM.utm_medium)
     .eq('utm_campaign', resolveCampaign(opts.campaign))
