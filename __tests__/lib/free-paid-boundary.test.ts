@@ -151,6 +151,100 @@ describe('CTA copy is true now that figures are paid', () => {
   })
 })
 
+/**
+ * The UI moved before the PROSE did.
+ *
+ * The homepage card dropped "Harga tengah & julat pasaran" from the free list
+ * and the test above locked that in — but two surfaces kept describing the old
+ * product in sentences, which no assertion read:
+ *
+ *   /tentang          "bagi keputusan: murah, wajar, atau mahal — dengan
+ *                      jurang RM dari harga tengah pasaran"
+ *   homepage JSON-LD  "Semakan percuma beri keputusan harga dan jurang RM dari
+ *                      harga tengah pasaran"
+ *
+ * The JSON-LD one is the worse of the two: it is a FAQPage answer, so it was
+ * shipped to Google as the canonical description of what free includes, while
+ * the page it sits on said otherwise.
+ *
+ * These read the free-tier passage only — both files legitimately describe the
+ * PAID tier in the very next sentence, and a file-wide ban would forbid that.
+ */
+describe('prose describing the free tier promises no paid figure', () => {
+  const FREE_CLAIMS = [/jurang RM/i, /harga tengah/i, /julat pasaran/i, /iklan setanding/i]
+
+  it('/tentang describes free as a verdict, not a gap', () => {
+    const src = read('app/tentang/page.tsx')
+    // The free block runs from its heading to the RM12 heading below it.
+    const block = src.split('Semak harga pasaran — percuma')[1]!.split('Laporan Pembeli — RM12')[0]!
+    for (const claim of FREE_CLAIMS) {
+      expect(block, `/tentang free block still claims ${claim}`).not.toMatch(claim)
+    }
+    expect(block).toMatch(/murah, wajar, atau mahal/)
+  })
+
+  it('EVERY copy of the homepage answer is corrected, not just the first', () => {
+    // The homepage asks this question TWICE: once in the JSON-LD FAQPage graph
+    // and once in the visible "Ada soalan?" accordion. A first-occurrence split
+    // passed while the accordion still said "jurang RM dari harga tengah
+    // pasaran" — caught by grepping the BUILT output, not the source. Hence
+    // iterating every occurrence.
+    const src = read('app/page.tsx')
+    const answers = src.split('Apakah beza semakan percuma dan laporan RM12?').slice(1)
+    expect(answers.length, 'expected both the JSON-LD and the visible FAQ').toBe(2)
+
+    for (const [i, raw] of answers.entries()) {
+      const answer = raw.split('},')[0]!
+      // Everything before "Laporan Pembeli (RM12)" is the free description.
+      const freeHalf = answer.split('Laporan Pembeli (RM12)')[0]!
+      for (const claim of FREE_CLAIMS) {
+        expect(freeHalf, `homepage answer #${i + 1} still describes free as ${claim}`).not.toMatch(claim)
+      }
+      // The paid half must still carry them — that is what RM12 sells.
+      expect(answer, `homepage answer #${i + 1} lost the paid figures`).toMatch(/harga tengah dan julat/)
+    }
+  })
+})
+
+describe('the paywall shows the product before asking for money', () => {
+  it('the RM12 pitch links to the sample report', () => {
+    const src = read('components/report/BuyerReportPitch.tsx')
+    expect(src).toContain('SampleReportLink')
+  })
+
+  it('the link opens in a new tab so checkout state survives', () => {
+    const src = read('components/report/SampleReportLink.tsx')
+    expect(src).toContain('/contoh-laporan')
+    expect(src).toContain("target=\"_blank\"")
+    expect(src).toContain('rel="noopener noreferrer"')
+  })
+
+  it('it fires one diagnostic event and never reaches Meta', () => {
+    const src = read('components/report/SampleReportLink.tsx')
+    expect(src).toContain('analytics.sampleReportClicked')
+    // Meta CAPI needs an explicit trackAdEvent call — this must not have one,
+    // or the sample click becomes a conversion signal in the ad account.
+    expect(src).not.toContain('trackAdEvent')
+    expect(read('lib/analytics.ts')).toContain("posthog.capture('sample_report_clicked'")
+  })
+})
+
+describe('nav does not contradict "Tanpa daftar"', () => {
+  it('the logged-out nav link names the reports, not an account', () => {
+    const src = code(read('components/layout/NavAuthLink.tsx'))
+    expect(src).toContain('Laporan Saya')
+    expect(src, 'nav still offers a login the product does not have').not.toContain('Log Masuk')
+  })
+
+  it('/auth promises no notification the product does not send', () => {
+    // Document-EXPIRY mail ships (/api/cron/check-expiries). "Notifikasi jika
+    // ada perubahan" — price/listing change alerts — does not exist anywhere.
+    const src = code(read('components/auth/AuthShell.tsx'))
+    expect(src).not.toMatch(/notifikasi jika ada perubahan/i)
+    expect(src).toContain('Tiada kata laluan diperlukan')
+  })
+})
+
 describe('confidence carries the provisional signal', () => {
   it.each(FREE_UI)('%s has no separate provisional caution', (path) => {
     const src = code(read(path))

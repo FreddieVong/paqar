@@ -1,17 +1,19 @@
 /**
  * Sells the NEXT DECISION, not the verdict.
  *
- * The verdict, the market range, the comparable count and the confidence are
- * now shown free on this page, immediately above. Listing "Harga pasaran
- * sebenar — tahu sama ada mahal, wajar atau berbaloi" as an RM12 benefit would
- * be charging for something the buyer can already see two inches higher, which
- * reads as either a lie or a bait.
+ * The VERDICT and the CONFIDENCE are shown free on this page, immediately
+ * above. The market range and the comparable count are NOT — they moved to the
+ * paid tier, and this comment used to say otherwise, which is exactly the kind
+ * of drift that puts a paid figure back into a free surface by hand. Free
+ * answers WHETHER the price is right; RM12 answers WHAT TO DO about it. See
+ * __tests__/lib/free-paid-boundary.test.ts.
  *
- * What RM12 still uniquely delivers is the ACTION: what to offer, what to say,
- * what the registry holds, and what to check before the deposit leaves. The
- * free block proves Paqar can price the car; this block sells what to do about
- * it.
+ * So the free block proves Paqar can judge the car, and this block sells the
+ * ACTION plus the numbers behind it: what to offer, what to say, what the
+ * registry holds, and what to check before the deposit leaves.
  */
+import { SampleReportLink } from './SampleReportLink'
+
 const STACK = [
   { title: 'Anggaran rundingan',          desc: 'Sasaran harga untuk mula tawar, dikira dari harga tengah pasaran.' },
   { title: 'Skrip bercakap dengan penjual', desc: 'Ayat siap untuk WhatsApp, dengan angka pasaran kereta ini.' },
@@ -64,6 +66,14 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Sits directly under the value stack, while the buyer is still reading
+          what RM12 contains — and above the add-on block, so the last thing
+          before the price anchor is proof rather than an upsell. Low-emphasis
+          text on purpose: it must not compete with the payment CTA below. */}
+      <div className="px-[18px] py-2.5 text-right border-b border-[#F3F4F6]">
+        <SampleReportLink source="paywall" />
       </div>
 
       {/*
