@@ -84,6 +84,13 @@ export const analytics = {
     has_data: boolean
   }) => posthog.capture('verdict_viewed', props),
 
+  // Diagnostic only: of the buyers who reach the paywall, how many open the
+  // sample report? Deliberately NOT forwarded to Meta CAPI (which needs an
+  // explicit trackAdEvent call) — it is not a conversion signal and must not
+  // be mapped onto Lead/ViewContent/Purchase.
+  sampleReportClicked: (props: { source: 'paywall' }) =>
+    posthog.capture('sample_report_clicked', props),
+
   tabSelected: (props: { tab: 'model' | 'plate' }) =>
     posthog.capture('tab_selected', props),
 

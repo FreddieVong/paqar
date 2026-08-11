@@ -62,7 +62,7 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Apakah beza semakan percuma dan laporan RM12?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar deposit.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri keputusan harga — murah, wajar atau mahal — dengan penjelasan dan tahap keyakinan data. Laporan Pembeli (RM12) tambah angka pasaran penuh iaitu harga tengah dan julat, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar deposit.' },
         },
         {
           '@type': 'Question',
@@ -378,7 +378,7 @@ export default async function HomePage() {
             {[
               {
                 q: 'Apakah beza semakan percuma dan laporan RM12?',
-                a: 'Semakan percuma beri keputusan harga dan jurang RM dari harga tengah pasaran. Laporan Pembeli (RM12) tambah harga pasaran penuh, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — termasuk meter ketika claim dan amaran kalau meter mungkin dipusing balik — sebelum bayar deposit.',
+                a: 'Semakan percuma beri keputusan harga — murah, wajar atau mahal — dengan penjelasan dan tahap keyakinan data. Laporan Pembeli (RM12) tambah angka pasaran penuh iaitu harga tengah dan julat, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — termasuk meter ketika claim dan amaran kalau meter mungkin dipusing balik — sebelum bayar deposit.',
               },
               {
                 q: 'Adakah saya perlu daftar akaun?',
