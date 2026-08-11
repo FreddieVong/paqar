@@ -104,8 +104,13 @@ export async function getCampaign(campaignId: string): Promise<CampaignInfo> {
 const ADSET_FIELDS =
   'id,campaign_id,name,status,effective_status,daily_budget,lifetime_budget,' +
   'start_time,end_time,bid_strategy,billing_event,optimization_goal,promoted_object,' +
-  'targeting{geo_locations,publisher_platforms,facebook_positions,instagram_positions,' +
-  'interests,flexible_spec,targeting_automation}'
+  // age_min/age_max are REQUESTED EXPLICITLY. Meta omits them from a
+  // targeting{...} subfield selection that does not name them, so the previous
+  // list made isTargetingAllowed read undefined ages and fail a correctly
+  // configured ad set — a false alarm on the check that guards comparability.
+  'targeting{geo_locations,age_min,age_max,genders,targeting_automation,' +
+  'publisher_platforms,facebook_positions,instagram_positions,' +
+  'interests,flexible_spec}'
 
 export async function getAdSet(adSetId: string): Promise<AdSetInfo> {
   return metaGet<AdSetInfo>(adSetId, { fields: ADSET_FIELDS })

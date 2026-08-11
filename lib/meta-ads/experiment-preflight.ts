@@ -7,7 +7,7 @@ import { collectLinks, redactMeta } from '@/lib/meta-ads/client'
 import {
   MAX_ACTIVE_CAMPAIGNS, MAX_EXPERIMENT_ADSETS,
   MAX_DELIVERABLE_ADS_PER_ADSET, MAX_DELIVERABLE_ADS_PER_CAMPAIGN,
-  MAX_ADSET_LIFETIME_BUDGET_CENTS, TEST_DURATION_DAYS,
+  MAX_ADSET_LIFETIME_BUDGET_CENTS, TEST_DURATION_DAYS, ADVANTAGE_AUDIENCE_REQUIRED,
   CAMPAIGNS, REQUIRED_UTM, META_SOURCE_MACRO,
   isDestinationAllowed, isUrlTagsAllowed, isLifetimeBudgetAllowed, isTargetingAllowed,
 } from '@/lib/meta-ads/guards'
@@ -188,6 +188,24 @@ export async function runExperimentPreflight(
       adSets.find((s) => s.id === input.arms[1].adSetId),
     ]
     if (a && b) {
+      // Stated as its own check, not left to the wholesale targeting diff.
+      // Two arms could agree on the value and both be wrong, or differ on it
+      // inside a targeting blob that reports one long unreadable mismatch. The
+      // invariant is: A is ON, B is ON, and they match.
+      const advA = a.targeting?.targeting_automation?.advantage_audience
+      const advB = b.targeting?.targeting_automation?.advantage_audience
+      const bothOn   = advA === ADVANTAGE_AUDIENCE_REQUIRED && advB === ADVANTAGE_AUDIENCE_REQUIRED
+      const bothSame = advA === advB
+      checks.push(
+        bothOn && bothSame
+          ? pass('advantage_audience', 'Advantage+ Audience ON and identical on both arms',
+              `both arms advantage_audience=${ADVANTAGE_AUDIENCE_REQUIRED}`)
+          : fail('advantage_audience', 'Advantage+ Audience ON and identical on both arms',
+              !bothSame
+                ? `Arms differ: ${input.arms[0].name}=${advA ?? 'unset'} vs ${input.arms[1].name}=${advB ?? 'unset'}`
+                : `Both arms are ${advA ?? 'unset'}, expected ${ADVANTAGE_AUDIENCE_REQUIRED}`)
+      )
+
       const differences = EQUALITY_FIELDS
         .filter((f) => norm(f.read(a)) !== norm(f.read(b)))
         .map((f) => `${f.label}: ${norm(f.read(a))} vs ${norm(f.read(b))}`)
@@ -306,8 +324,18 @@ export async function runExperimentPreflight(
               `The link's value wins at click time: ${duplicated.join(', ')}`)
       )
 
-      const contamination = HISTORICAL_UTMS.filter(
-        (h) => (creative.url_tags ?? '').includes(h) || links.some((l) => l.includes(h)))
+      // Compared as exact PARAMETER VALUES, never as substrings. Substring
+      // matching flagged creative_b_aug26 as carrying `creative_b` and
+      // mudah_carousel_aug26 as carrying `mudah_carousel` — both correct tags,
+      // reported as contamination. A check that cries wolf on the right answer
+      // is worse than no check, because it trains you to skim past it.
+      const presentValues = new Set<string>()
+      for (const [, v] of new URLSearchParams(creative.url_tags ?? '')) presentValues.add(v)
+      for (const raw of links) {
+        try { for (const [, v] of new URL(raw).searchParams) presentValues.add(v) }
+        catch { /* unparseable — reported by the link check */ }
+      }
+      const contamination = HISTORICAL_UTMS.filter((h) => presentValues.has(h))
       checks.push(
         contamination.length === 0
           ? pass(`arm_${arm.name}_no_history`, `${arm.name} carries no historical UTM`,

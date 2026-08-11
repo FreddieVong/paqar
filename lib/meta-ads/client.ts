@@ -108,15 +108,30 @@ function parseMetaError(text: string, status: number): MetaApiError {
   let message = redactMeta(text).slice(0, 500)
   try {
     const parsed = JSON.parse(text) as {
-      error?: { message?: string; code?: number; error_subcode?: number }
+      error?: {
+        message?: string; code?: number; error_subcode?: number
+        error_user_title?: string; error_user_msg?: string
+      }
     }
     if (parsed.error) {
       code    = parsed.error.code
       subcode = parsed.error.error_subcode
-      message = redactMeta(parsed.error.message ?? message)
+      // `message` is very often the useless generic "Invalid parameter", while
+      // the actionable reason sits in error_user_title / error_user_msg. A
+      // campaign creation failed with nothing but "Invalid parameter" and the
+      // real cause — a required is_adset_budget_sharing_enabled field — was
+      // only reachable by re-issuing the request by hand outside this client.
+      // Keeping the detail is what makes a creation failure diagnosable.
+      const parts = [
+        parsed.error.message,
+        parsed.error.error_user_title,
+        parsed.error.error_user_msg,
+      ].filter((p): p is string => typeof p === 'string' && p.length > 0)
+      // Deduped: Meta frequently repeats message inside error_user_msg.
+      message = redactMeta([...new Set(parts)].join(' — ') || message)
     }
   } catch { /* non-JSON error body — keep the redacted text */ }
-  return new MetaApiError(message, status, code, subcode)
+  return new MetaApiError(message.slice(0, 1000), status, code, subcode)
 }
 
 /**
@@ -267,6 +282,20 @@ export async function createCampaignPaused(draft: CampaignDraft): Promise<{ id: 
     objective:             draft.objective,
     special_ad_categories: [],
     buying_type:           'AUCTION',
+    // Meta REQUIRES this field on a campaign with no campaign budget, and
+    // rejects creation outright without it (error_subcode 4834011).
+    //
+    // false is not a formality. Setting it true lets ad sets "share 20% of
+    // their budget to optimize overall performance" — Meta would move money
+    // between the two arms based on its own read of which is winning. The
+    // whole point of this campaign is that the arms are identical apart from
+    // the creative and each gets exactly RM90; budget sharing would make the
+    // spend a FUNCTION of the outcome being measured, so the cheaper arm would
+    // look better partly because Meta had already decided it was better.
+    //
+    // Hardcoded rather than exposed on CampaignDraft for the same reason
+    // optimization_goal is: a caller must not be able to turn it on.
+    is_adset_budget_sharing_enabled: false,
   }))
   return { id: res.id }
 }

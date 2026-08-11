@@ -22,7 +22,7 @@ import {
   isPromotedObjectAllowed, isDestinationAllowed, isUrlTagsAllowed, authoriseNewSpend,
   MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, MAX_ACTIVE_CAMPAIGNS,
   MAX_EXPERIMENT_ADSETS, MAX_DELIVERABLE_ADS_PER_ADSET, MAX_DELIVERABLE_ADS_PER_CAMPAIGN,
-  MAX_ADSET_LIFETIME_BUDGET_MYR, TEST_DURATION_DAYS,
+  MAX_ADSET_LIFETIME_BUDGET_MYR, TEST_DURATION_DAYS, ADVANTAGE_AUDIENCE_REQUIRED,
   ALLOW_BUDGET_INCREASE, ALLOW_NEW_CAMPAIGNS, ALLOW_NEW_ADSETS, ALLOW_NEW_CREATIVES,
   ALLOW_AUTOMATIC_RESTART, ALLOW_PAUSED_CREATION,
   CAMPAIGNS, META_SOURCE_MACRO,
@@ -159,11 +159,15 @@ const AUTH = {
   commitmentCents:      18_000,
 } as SpendAuthorisation
 
+/** Without targeting_automation, so the advantage-audience test can add it. */
 const TARGETING = {
   geo_locations: { countries: ['MY'] },
   age_min: 23,
   age_max: 65,
 }
+
+/** What a valid ad set actually sends: the same, plus the required flag. */
+const TARGETING_OK = { ...TARGETING, targeting_automation: { advantage_audience: 1 } }
 
 /** Keys pausedBody() refuses outright. Kept in step with client.ts by design. */
 const FORBIDDEN_KEYS = ['status', 'effective_status', 'configured_status', 'execution_options']
@@ -176,7 +180,7 @@ const adSetDraft = {
   startTimeIso: iso(60_000),
   endTimeIso:   iso(60_000 + TEST_DURATION_DAYS * 86_400_000),
   promotedObject: { custom_conversion_id: 'cc_started', pixel_id: 'pixel_123' },
-  targeting: TARGETING,
+  targeting: TARGETING_OK,
   expectedCustomConversionId: 'cc_started',
 }
 const adDraft = { name: 'ad', adSetId: 'as_1', creativeId: 'cr_1' }
@@ -241,6 +245,87 @@ describe('every create verb creates PAUSED, and cannot be talked out of it', () 
   })
 })
 
+describe('the two arms cannot share budget', () => {
+  it('createCampaignPaused disables ad set budget sharing explicitly', async () => {
+    // Meta REQUIRES this field when the campaign carries no budget and rejects
+    // creation without it (error_subcode 4834011). false is not a formality:
+    // true lets Meta move 20% of budget between ad sets based on its own read
+    // of which is winning, making spend a FUNCTION of the outcome being
+    // measured. Each arm must get exactly RM90 regardless of how it performs.
+    await client.createCampaignPaused(campaignDraft)
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body as string)
+    expect(body.is_adset_budget_sharing_enabled).toBe(false)
+  })
+
+  it('a caller cannot turn budget sharing on', () => {
+    // Absent from CampaignDraft for the same reason optimization_goal is.
+    const draft: Record<string, unknown> = { ...campaignDraft }
+    expect(Object.keys(draft)).not.toContain('is_adset_budget_sharing_enabled')
+  })
+
+  it('the campaign still carries no budget of its own', async () => {
+    await client.createCampaignPaused(campaignDraft)
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body as string)
+    for (const k of ['daily_budget', 'lifetime_budget', 'spend_cap']) {
+      expect(body, `campaign must not carry ${k}`).not.toHaveProperty(k)
+    }
+  })
+})
+
+describe('Meta error detail survives', () => {
+  it('surfaces error_user_title and error_user_msg, not just "Invalid parameter"', async () => {
+    // A real creation failure returned nothing but "Invalid parameter"; the
+    // actual cause was only reachable by re-issuing the request by hand
+    // outside this client. Discarding the detail made the failure
+    // undiagnosable, which is the defect this guards.
+    fetchMock.mockResolvedValue({
+      ok: false, status: 400,
+      text: async () => JSON.stringify({
+        error: {
+          message: 'Invalid parameter', code: 100, error_subcode: 4834011,
+          error_user_title: 'Must specify True or False in is_adset_budget_sharing_enabled field',
+          error_user_msg:   'You must specify True or False in the field is_adset_budget_sharing_enabled.',
+        },
+      }),
+    } as unknown as Response)
+
+    await expect(client.createCampaignPaused(campaignDraft)).rejects.toThrow(
+      /is_adset_budget_sharing_enabled/)
+    try { await client.createCampaignPaused(campaignDraft) } catch (e) {
+      const err = e as InstanceType<typeof client.MetaApiError>
+      expect(err.code).toBe(100)
+      expect(err.subcode).toBe(4834011)
+      expect(err.message).toContain('Invalid parameter')
+      expect(err.message).toContain('Must specify True or False')
+    }
+  })
+
+  it('does not repeat an identical message three times', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false, status: 400,
+      text: async () => JSON.stringify({
+        error: { message: 'Same text', error_user_title: 'Same text', error_user_msg: 'Same text' },
+      }),
+    } as unknown as Response)
+    try { await client.createCampaignPaused(campaignDraft) } catch (e) {
+      expect((e as Error).message).toBe('Same text')
+    }
+  })
+
+  it('still redacts the token in the detail fields', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false, status: 400,
+      text: async () => JSON.stringify({
+        error: { message: 'boom', error_user_msg: 'failed for access_token=SECRET_SYSTEM_TOKEN_VALUE' },
+      }),
+    } as unknown as Response)
+    try { await client.createCampaignPaused(campaignDraft) } catch (e) {
+      expect((e as Error).message).not.toContain('SECRET_SYSTEM_TOKEN_VALUE')
+      expect((e as Error).message).toContain('[REDACTED_TOKEN]')
+    }
+  })
+})
+
 describe('createAdSetPaused is the money gate', () => {
   it('refuses without a real SpendAuthorisation', async () => {
     await expect(client.createAdSetPaused({
@@ -248,7 +333,7 @@ describe('createAdSetPaused is the money gate', () => {
       startTimeIso: iso(60_000),
       endTimeIso: iso(60_000 + TEST_DURATION_DAYS * 86_400_000),
       promotedObject: { custom_conversion_id: 'cc_started' },
-      targeting: TARGETING,
+      targeting: TARGETING_OK,
       expectedCustomConversionId: 'cc_started',
     }, {} as SpendAuthorisation)).rejects.toThrow(/SpendAuthorisation is required/)
     expect(fetchMock).not.toHaveBeenCalled()
@@ -260,7 +345,7 @@ describe('createAdSetPaused is the money gate', () => {
       startTimeIso: iso(60_000),
       endTimeIso: iso(60_000 + TEST_DURATION_DAYS * 86_400_000),
       promotedObject: { custom_conversion_id: 'cc_started' },
-      targeting: TARGETING,
+      targeting: TARGETING_OK,
       expectedCustomConversionId: 'cc_started',
     }, { ...AUTH, commitmentCents: 5_000 } as SpendAuthorisation))
       .rejects.toThrow(/exceeds the authorised commitment/)
@@ -274,7 +359,7 @@ describe('createAdSetPaused is the money gate', () => {
       endTimeIso: iso(60_000 + TEST_DURATION_DAYS * 86_400_000),
       // The valuation_completed conversion — the exact silent default to avoid.
       promotedObject: { custom_conversion_id: '4496672967256461' },
-      targeting: TARGETING,
+      targeting: TARGETING_OK,
       expectedCustomConversionId: 'cc_started',
     }, AUTH)).rejects.toThrow(/custom conversion/)
     expect(fetchMock).not.toHaveBeenCalled()
@@ -404,12 +489,33 @@ describe('targeting guard', () => {
   })
 
   it('pins the approved spec so the two arms cannot differ', () => {
-    expect(isTargetingAllowed(TARGETING)).toBe(true)
-    expect(isTargetingAllowed({ ...TARGETING, age_min: 18 })).toBe(false)
-    expect(isTargetingAllowed({ ...TARGETING, genders: [1] })).toBe(false)
+    expect(isTargetingAllowed(TARGETING_OK)).toBe(true)
+    expect(isTargetingAllowed({ ...TARGETING_OK, age_min: 18 })).toBe(false)
+    expect(isTargetingAllowed({ ...TARGETING_OK, genders: [1] })).toBe(false)
     // Automatic placements means the field is ABSENT, not empty.
-    expect(isTargetingAllowed({ ...TARGETING, publisher_platforms: ['facebook'] })).toBe(false)
+    expect(isTargetingAllowed({ ...TARGETING_OK, publisher_platforms: ['facebook'] })).toBe(false)
     expect(isTargetingAllowed(null)).toBe(false)
+  })
+
+  it('requires Advantage+ Audience ON, and is not merely unrestricted', () => {
+    // The experiment needs identical audience CONFIGURATION, not identical
+    // realised delivery: if one creative performs differently among people
+    // inside the same broad eligible audience, that IS the creative's
+    // performance. The creatives are also being judged in the environment we
+    // would actually run them in afterwards, which has this on.
+    //
+    // Pinned rather than free. Unrestricted would let the two arms silently
+    // diverge, and the arms agreeing is what makes the comparison mean anything.
+    expect(ADVANTAGE_AUDIENCE_REQUIRED).toBe(1)
+    expect(isTargetingAllowed({
+      ...TARGETING, targeting_automation: { advantage_audience: 1 },
+    })).toBe(true)
+    expect(isTargetingAllowed({
+      ...TARGETING, targeting_automation: { advantage_audience: 0 },
+    })).toBe(false)
+    // Absent is not the same as ON — Meta defaults it on, but an ad set whose
+    // value we cannot read is one we cannot prove matches the other arm.
+    expect(isTargetingAllowed(TARGETING)).toBe(false)
   })
 
   it('requires exactly the test duration, starting in the future', () => {

@@ -3,6 +3,7 @@
  *
  *   npx tsx scripts/create-creative-test.ts            # dry run, POSTs nothing
  *   npx tsx scripts/create-creative-test.ts --confirm  # creates
+ *   ... --confirm --resume                            # continues a part-way run
  *
  * Requires NODE_OPTIONS="--conditions=react-server" so `server-only` resolves
  * to its empty module. That is not a bypass: it makes the script import the
@@ -21,7 +22,8 @@
  *   - META_VALUATION_STARTED_CUSTOM_CONVERSION_ID unset
  *   - that conversion not readable, or not actually a valuation_started rule
  *   - reconciled spend + RM180 over the allowance
- *   - a campaign of this name already exists
+ *   - a campaign of this name already exists (unless --resume, which is
+ *     refused the moment any ad exists)
  *   - any source creative unreadable
  */
 import { readFileSync } from 'fs'
@@ -36,11 +38,12 @@ try {
 } catch { /* env already exported */ }
 
 const CONFIRM = process.argv.includes('--confirm')
+const RESUME  = process.argv.includes('--resume')
 
 async function main() {
   const [
     { createCampaignPaused, createAdSetPaused, createAdCreative, createAdPaused, collectLinks },
-    { getCampaignSpendCents, listCampaigns, metaGetRaw },
+    { getCampaignSpendCents, listCampaigns, listAdSetsInCampaign, listAdsInAdSet, metaGetRaw },
     guards,
     { runExperimentPreflight },
   ] = await Promise.all([
@@ -94,8 +97,38 @@ async function main() {
 
   // --- 2. Spend, reconciled from insights rather than Meta's counter -------
   const campaigns = await listCampaigns()
-  if (campaigns.some((c) => c.name === CAMPAIGN_NAME)) {
-    stop(`a campaign named ${CAMPAIGN_NAME} already exists — this script is not a duplicator`)
+  const existing = campaigns.find((c) => c.name === CAMPAIGN_NAME)
+
+  /**
+   * RESUME, bounded deliberately.
+   *
+   * Creation spans seven objects and Meta can reject the fourth after
+   * accepting the third, which is exactly what happened once. Without this the
+   * only ways forward are a delete verb — which this codebase must never have —
+   * or hand-deleting in Ads Manager.
+   *
+   * The bound is what makes it safe: a campaign is only reused if it holds
+   * ZERO ads. An ad set with no ad cannot deliver at any budget, so resuming
+   * onto one can never restart something that was already spending. The moment
+   * a single ad exists, this refuses and the operator has to look.
+   */
+  let campaignId: string | null = null
+  if (existing) {
+    if (!RESUME) {
+      stop(`a campaign named ${CAMPAIGN_NAME} already exists (${existing.id}).\n`
+        + '  This script is not a duplicator. If a previous run failed part-way,\n'
+        + '  re-run with --resume; it will refuse if any ad already exists.')
+    }
+    const sets = await listAdSetsInCampaign(existing.id)
+    let ads = 0
+    for (const s of sets) ads += (await listAdsInAdSet(s.id)).length
+    if (ads > 0) {
+      stop(`${CAMPAIGN_NAME} (${existing.id}) already holds ${ads} ad(s).\n`
+        + '  Resume only continues a run that never got as far as an ad.')
+    }
+    campaignId = existing.id
+    console.log(`\nRESUMING ${CAMPAIGN_NAME} (${campaignId}) — `
+      + `${sets.length} ad set(s) present, 0 ads, nothing can deliver.`)
   }
 
   let cumulativeCents = 0
@@ -124,7 +157,15 @@ async function main() {
   }
 
   // --- 3. Fresh creative specs from the same assets ------------------------
-  /** Rewrites every destination to the bare URL, preserving all asset fields. */
+  /**
+   * Rewrites every destination to the bare URL, preserving all asset fields.
+   *
+   * Also drops image_url wherever image_hash is present. Meta RETURNS both when
+   * you read a creative but REJECTS both on create — "ObjectStorySpecRedundant:
+   * Only one of image_url and image_hash should be specified". image_hash is
+   * the one kept: it is a stable reference to the already-uploaded asset, while
+   * image_url is a rendered CDN link that can expire.
+   */
   const cleanSpec = (node: unknown): unknown => {
     if (Array.isArray(node)) return node.map(cleanSpec)
     if (!node || typeof node !== 'object') return node
@@ -133,6 +174,7 @@ async function main() {
       if ((k === 'link' || k === 'link_url') && typeof v === 'string') out[k] = DESTINATION
       else out[k] = cleanSpec(v)
     }
+    if ('image_hash' in out && 'image_url' in out) delete out.image_url
     return out
   }
 
@@ -160,6 +202,10 @@ async function main() {
     geo_locations: { countries: [guards.ALLOWED_COUNTRY] },
     age_min: guards.APPROVED_AGE_MIN,
     age_max: guards.APPROVED_AGE_MAX,
+    // ON, identically on both arms. The experiment needs identical audience
+    // CONFIGURATION, not identical realised delivery — and these creatives are
+    // being judged in the environment we would actually run them in.
+    targeting_automation: { advantage_audience: guards.ADVANTAGE_AUDIENCE_REQUIRED },
   }
 
   console.log('\nad set configuration, identical for both arms')
@@ -188,14 +234,24 @@ async function main() {
    */
   const announce = (what: string) => console.log(`  -> POST ${what}`)
 
-  announce(`campaign ${CAMPAIGN_NAME}`)
-  const campaign = await createCampaignPaused({ name: CAMPAIGN_NAME, objective: 'OUTCOME_SALES' })
-  console.log(`\ncampaign  ${campaign.id}  PAUSED`)
+  let campaign: { id: string }
+  if (campaignId) {
+    campaign = { id: campaignId }
+    console.log(`\ncampaign  ${campaign.id}  PAUSED  (reused)`)
+  } else {
+    announce(`campaign ${CAMPAIGN_NAME}`)
+    campaign = await createCampaignPaused({ name: CAMPAIGN_NAME, objective: 'OUTCOME_SALES' })
+    console.log(`\ncampaign  ${campaign.id}  PAUSED`)
+  }
+  // Ad sets already present from an interrupted run, matched by cell name.
+  const existingSets = campaignId ? await listAdSetsInCampaign(campaign.id) : []
 
   const created: Array<{ arm: typeof ARMS[number]; adSetId: string; creativeId: string; adId: string }> = []
   for (const arm of ARMS) {
-    announce(`ad set ${arm.name}`)
-    const adSet = await createAdSetPaused({
+    const already = existingSets.find((s) => s.name === arm.name)
+    if (already) console.log(`  ${arm.name.padEnd(24)} ad set reused ${already.id}`)
+    else announce(`ad set ${arm.name}`)
+    const adSet = already ? { id: already.id } : await createAdSetPaused({
       name: arm.name,
       campaignId: campaign.id,
       lifetimeBudgetCents: guards.MAX_ADSET_LIFETIME_BUDGET_CENTS,
