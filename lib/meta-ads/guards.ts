@@ -62,21 +62,48 @@ export const MAX_TOTAL_SPEND_CENTS  = MAX_TOTAL_SPEND_MYR * 100
 export const SPEND_FAILURE_THRESHOLD = 2
 
 /**
+ * The literal, pre-expansion macro as it sits in the ad's stored URL.
+ *
+ * Meta USUALLY expands it at click time, but not always: when it does not, the
+ * literal lands in ad_events verbatim. Confirmed in production — 3 sessions on
+ * 2026-08-07 (×2) and 2026-08-09, all carlist_vs_mudah_aug26.
+ */
+export const META_SOURCE_MACRO = '{{site_source_name}}'
+
+/**
  * Meta expands the {{site_source_name}} macro at click time, so the value that
  * actually lands in ad_events is a placement source, never the literal "meta".
  *
  * The old exact filter `utm_source = 'meta'` therefore excluded every click
  * from any campaign using the macro: the rows were written correctly and then
  * dropped by every read. Membership of this family is the test.
+ *
+ * META_SOURCE_MACRO is a MEMBER because expansion can fail. Those rows are just
+ * as much paid Meta traffic as any other, and excluding them was not merely
+ * lossy: countPaqarLandingViews() would report 0 against real Meta-side views,
+ * which detectTrackingFailure() reads as `tracking_broken` and answers by
+ * AUTO-PAUSING a perfectly healthy campaign. One list, so all three read sites
+ * in db.ts widen together and no future read can pick a narrower variant.
  */
-export const META_UTM_SOURCES = ['meta', 'fb', 'ig', 'an', 'msg'] as const
+export const META_UTM_SOURCES = ['meta', 'fb', 'ig', 'an', 'msg', META_SOURCE_MACRO] as const
 export type MetaUtmSource = typeof META_UTM_SOURCES[number]
-
-/** The literal, pre-expansion macro as it sits in the ad's stored URL. */
-export const META_SOURCE_MACRO = '{{site_source_name}}'
 
 export function isMetaUtmSource(value: string | null | undefined): boolean {
   return value != null && (META_UTM_SOURCES as readonly string[]).includes(value)
+}
+
+/**
+ * Included in the reads, but NEVER folded into a placement.
+ *
+ * An unexpanded macro tells us the click was paid Meta traffic and tells us
+ * nothing about where it was shown. Reporting it as fb, ig or meta would invent
+ * a placement that was never observed — the same fabricate-by-bucketing defect
+ * as blending two creatives under one tag. It stays its own category.
+ */
+export const UNEXPANDED_META_SOURCE_LABEL = 'unexpanded / unknown Meta source'
+
+export function isUnexpandedMetaSource(value: string | null | undefined): boolean {
+  return value === META_SOURCE_MACRO
 }
 
 /**
