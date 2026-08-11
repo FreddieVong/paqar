@@ -2,16 +2,31 @@ import 'server-only'
 import { env } from '@/lib/env'
 
 /**
- * Deterministic safety constants for the RM210 experiment.
+ * Deterministic safety constants for the Meta experiments.
  *
- * Most of these are enforced STRUCTURALLY rather than by checking: the Meta
- * client exports no create, update, delete, reactivate, budget-edit or per-ad
- * pause verb, so there is no code path that could raise a budget or add a
- * campaign. The values below exist so preflight can reject a manually
- * misconfigured campaign, and so the cron knows when to stop.
+ * THE INVARIANT CHANGED ON 2026-08-11. It did not weaken.
  *
- * Meta's own RM210 campaign spending limit is the primary protection. This
- * module is the secondary backstop.
+ *   Before: the codebase cannot CREATE anything.
+ *   Now:    the codebase cannot START OR INCREASE SPEND. It may create objects,
+ *           but only ever PAUSED, and no verb anywhere can activate one or
+ *           raise a budget.
+ *
+ * The old property was a proxy. An object that cannot deliver cannot cost
+ * money, so what actually protects the account is the absence of any path to
+ * ACTIVE — which is the property now stated and tested directly, in
+ * __tests__/lib/meta-ads-safety.test.ts. Creation had to become possible
+ * because the creative-treatment test needs ad creatives whose destination URLs
+ * are correct, and editing the historical creatives to get them would corrupt
+ * the ads that already ran.
+ *
+ * Most of this is still enforced STRUCTURALLY rather than by checking: the Meta
+ * client exports no update, delete, reactivate, budget-edit, activate or
+ * per-ad pause verb, and its create verbs accept no status argument. The values
+ * below exist so preflight can reject a manually misconfigured campaign, and so
+ * the cron knows when to stop.
+ *
+ * Meta's own spending limits remain the primary protection. This module is the
+ * secondary backstop.
  */
 
 export const MAX_DAILY_BUDGET_MYR  = 30
@@ -24,6 +39,14 @@ export const MAX_DAILY_BUDGET_MYR  = 30
  *   445 — 2026-08-04, funding the RM180 Carlist vs Mudah carousel test
  *         (RM90 lifetime per ad set) on top of RM217.86 already spent.
  *         RM397.86 committed, so RM445 leaves headroom without being open-ended.
+ *   625 — 2026-08-11, funding the RM180 creative-treatment test (RM90 lifetime
+ *         per ad set). Arithmetic, reconciled from the Graph API rather than
+ *         from Meta's counter:
+ *             RM383.99  lifetime spend across both existing campaigns
+ *           + RM  1.37  still committed by ad sets that were ACTIVE
+ *           + RM180.00  this test's maximum
+ *           = RM565.36  projected, so RM566 is the minimum that fits.
+ *         RM625 was authorised, leaving deliberate headroom.
  *
  * Every raise here is an explicit decision to spend new money. None of them is
  * a re-reading of Meta's amount_spent counter, which RESETS when the spending
@@ -37,20 +60,68 @@ export const MAX_DAILY_BUDGET_MYR  = 30
  * cannot pause the Carlist vs Mudah campaign. For that campaign, Meta's
  * account limit is the ONLY backstop.
  */
-export const MAX_TOTAL_SPEND_MYR   = 445
-export const MAX_CAMPAIGNS         = 1
-export const MAX_ADSETS            = 1
-export const MAX_ACTIVE_ADS        = 2
+export const MAX_TOTAL_SPEND_MYR   = 625
+
+/**
+ * Object-count limits, each named for the unit it actually counts.
+ *
+ * WHY THE OLD NAMES ARE GONE. `MAX_CAMPAIGNS = 1` and `MAX_ADSETS = 1` counted
+ * nothing: no runtime code path ever read either one. They were imported by a
+ * single test and asserted there, which is why the account could sit at 2
+ * campaigns and 2 ad sets for a week against declared maxima of 1 without
+ * anything failing. A constant that is never enforced is a comment with a type.
+ *
+ * `MAX_ACTIVE_ADS = 2` WAS enforced — but per ad set, in a campaign that had
+ * exactly one. Reusing it unchanged for a two-ad-set experiment would have
+ * demanded two ads in EACH arm: four deliverable ads against a limit that reads
+ * like two. The money-relevant invariant is the campaign total, so that is the
+ * one stated at campaign level.
+ */
+export const MAX_ACTIVE_CAMPAIGNS            = 1
+export const MAX_EXPERIMENT_ADSETS           = 2
+export const MAX_DELIVERABLE_ADS_PER_ADSET   = 1
+export const MAX_DELIVERABLE_ADS_PER_CAMPAIGN = 2
+
 export const ALLOWED_COUNTRY       = 'MY'
 export const REQUIRED_CURRENCY     = 'MYR'
+
+/**
+ * Permissions. Every one of these governs bringing an object into a state where
+ * it can DELIVER, or raising spend on one that already can. None of them is
+ * relaxed by paused creation, which is why they all stay false.
+ */
 export const ALLOW_BUDGET_INCREASE = false
 export const ALLOW_NEW_CREATIVES   = false
 export const ALLOW_NEW_CAMPAIGNS   = false
 export const ALLOW_NEW_ADSETS      = false
 export const ALLOW_AUTOMATIC_RESTART = false
 
+/**
+ * The single permission that changed on 2026-08-11, and the only kill switch
+ * for the creation capability. Set it false and every create verb throws.
+ *
+ * It is deliberately separate from ALLOW_NEW_CAMPAIGNS / ALLOW_NEW_ADSETS /
+ * ALLOW_NEW_CREATIVES rather than flipping them: those three mean "may an
+ * object that can spend come into existence", which is still no.
+ */
+export const ALLOW_PAUSED_CREATION = true
+
+/** Lifetime budget ceiling for ONE experiment ad set. */
+export const MAX_ADSET_LIFETIME_BUDGET_MYR = 90
+/** Total new money any single creation run may commit. */
+export const MAX_NEW_COMMITMENT_MYR        = 180
+export const TEST_DURATION_DAYS            = 7
+
+export const APPROVED_AGE_MIN           = 23
+export const APPROVED_AGE_MAX           = 65
+export const APPROVED_OPTIMISATION_GOAL = 'OFFSITE_CONVERSIONS'
+export const APPROVED_BILLING_EVENT     = 'IMPRESSIONS'
+export const APPROVED_BID_STRATEGY      = 'LOWEST_COST_WITHOUT_CAP'
+
 export const MAX_DAILY_BUDGET_CENTS = MAX_DAILY_BUDGET_MYR * 100
 export const MAX_TOTAL_SPEND_CENTS  = MAX_TOTAL_SPEND_MYR * 100
+export const MAX_ADSET_LIFETIME_BUDGET_CENTS = MAX_ADSET_LIFETIME_BUDGET_MYR * 100
+export const MAX_NEW_COMMITMENT_CENTS        = MAX_NEW_COMMITMENT_MYR * 100
 
 /**
  * Consecutive failed spend reads before the operator fails closed.
@@ -136,6 +207,25 @@ export const CAMPAIGNS = {
     utm:       'carlist_vs_mudah_aug26',
     creatives: ['carlist_carousel', 'mudah_carousel'],
   },
+  /**
+   * The creative-treatment test: the same video and the same carousel that
+   * already ran, under identical delivery conditions for the first time.
+   *
+   * The tags carry an _aug26 suffix rather than reusing `creative_b` and
+   * `mudah_carousel` because `creative_b` is a RETIRED tag. Reusing it would
+   * hard-fail preflight, and the cron's retired-baseline loop reads
+   * getFunnelCounts({ utmContent }) with no campaign scope — so this test's
+   * rows would have merged into the 192 historical video events. Same creative,
+   * new cohort, new tag.
+   *
+   * NOT a promise test. The arms differ in message (market price vs CLAIM
+   * BESAR), in format (single vs carousel) AND in media type (video vs image).
+   * It can only answer which existing treatment produces more valuation starts.
+   */
+  creativeTestAug26: {
+    utm:       'creative_test_aug26',
+    creatives: ['creative_b_aug26', 'mudah_carousel_aug26'],
+  },
 } as const satisfies Record<string, CampaignConfig>
 
 /** The one campaign live reporting describes. Changing this is a decision. */
@@ -207,8 +297,9 @@ export function isActiveCreativeTag(tag: string | null | undefined): boolean {
  */
 export interface ActiveSlot { slot: 1 | 2; tag: ActiveCreativeTag; adId: string | null }
 
-// A fixed pair, not an array: MAX_ACTIVE_ADS is 2, and a tuple lets callers
-// destructure both slots without undefined checks that could never fire.
+// A fixed pair, not an array: MAX_DELIVERABLE_ADS_PER_CAMPAIGN is 2, and a
+// tuple lets callers destructure both slots without undefined checks that
+// could never fire.
 export function activeSlots(experiment: {
   creative_a_ad_id: string | null
   creative_b_ad_id: string | null
@@ -296,4 +387,174 @@ export function isCountryAllowed(countries: string[] | null | undefined): boolea
 
 export function isTotalSpendExceeded(spentCents: number): boolean {
   return spentCents >= MAX_TOTAL_SPEND_CENTS
+}
+
+// ---------------------------------------------------------------------------
+// Creation path. Every predicate here runs BEFORE a POST, and again against
+// what Meta actually stored afterwards. All are pure and individually tested.
+// ---------------------------------------------------------------------------
+
+/**
+ * A lifetime budget is only safe if BOTH the total and the implied daily rate
+ * are. RM90 over 7 days is RM12.86/day; the same RM90 over 2 days is RM45/day,
+ * which blows the RM30 daily ceiling while looking identical at the total.
+ */
+export function isLifetimeBudgetAllowed(
+  cents: number | null | undefined,
+  days:  number | null | undefined,
+): boolean {
+  if (cents == null || days == null) return false     // unreadable is never safe
+  if (!Number.isFinite(cents) || !Number.isFinite(days)) return false
+  if (cents <= 0 || days <= 0) return false
+  if (cents > MAX_ADSET_LIFETIME_BUDGET_CENTS) return false
+  return cents / days <= MAX_DAILY_BUDGET_CENTS
+}
+
+/** Exactly TEST_DURATION_DAYS, starting now or later, ending within 30 days. */
+export function isScheduleAllowed(
+  startIso: string | null | undefined,
+  endIso:   string | null | undefined,
+  now:      Date,
+): boolean {
+  if (!startIso || !endIso) return false
+  const start = Date.parse(startIso)
+  const end   = Date.parse(endIso)
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return false
+  if (end <= start) return false
+  // A minute of slack: the payload is built slightly before it is sent.
+  if (start < now.getTime() - 60_000) return false
+  if (end > now.getTime() + 30 * 86_400_000) return false
+  return Math.round((end - start) / 86_400_000) === TEST_DURATION_DAYS
+}
+
+export interface TargetingSpec {
+  geo_locations?:          { countries?: string[] } | null
+  age_min?:                number
+  age_max?:                number
+  genders?:                unknown
+  excluded_geo_locations?: unknown
+  publisher_platforms?:    unknown
+}
+
+/**
+ * The arms must be indistinguishable to Meta apart from the creative, so
+ * targeting is pinned rather than merely bounded. `genders` and
+ * `publisher_platforms` must be ABSENT: present-but-empty is a different
+ * delivery configuration, and automatic placements means the field is not set.
+ */
+export function isTargetingAllowed(t: TargetingSpec | null | undefined): boolean {
+  if (!t) return false
+  if (!isCountryAllowed(t.geo_locations?.countries)) return false
+  if (t.age_min !== APPROVED_AGE_MIN || t.age_max !== APPROVED_AGE_MAX) return false
+  if ('genders' in t && t.genders != null) return false
+  if ('excluded_geo_locations' in t && t.excluded_geo_locations != null) return false
+  if ('publisher_platforms' in t && t.publisher_platforms != null) return false
+  return true
+}
+
+export interface PromotedObject {
+  pixel_id?:             string
+  custom_conversion_id?: string
+  custom_event_type?:    string
+}
+
+/**
+ * Fails closed on the optimisation target.
+ *
+ * `expectedCustomConversionId` comes from configuration and is never defaulted:
+ * the account's other Custom Conversion optimises toward valuation_completed,
+ * which the model_price and plate_check journeys cannot reach, so a fallback
+ * would quietly point the test at an event most traffic cannot fire.
+ */
+export function isPromotedObjectAllowed(
+  promoted: PromotedObject | null | undefined,
+  expectedCustomConversionId: string | null | undefined,
+): boolean {
+  if (!promoted) return false
+  if (!expectedCustomConversionId) return false
+  if (promoted.custom_conversion_id !== expectedCustomConversionId) return false
+  if (env.META_PIXEL_OR_DATASET_ID && promoted.pixel_id) {
+    if (promoted.pixel_id !== env.META_PIXEL_OR_DATASET_ID) return false
+  }
+  return true
+}
+
+/**
+ * The destination must carry NO utm_* parameters at all.
+ *
+ * Meta APPENDS url_tags to the destination link, so a utm key present in both
+ * appears twice and the LINK's value wins at click time — while preflight's
+ * creativeParams() merges the other way and would report the tags as correct.
+ * Forbidding utm_* in the link removes the disagreement rather than resolving
+ * it. This is exactly how creative_b came to carry utm_campaign of a campaign
+ * that ended weeks ago.
+ */
+export function isDestinationAllowed(url: string | null | undefined): boolean {
+  if (!url) return false
+  let parsed: URL
+  try { parsed = new URL(url) } catch { return false }
+  if (parsed.protocol !== 'https:') return false
+  const host = parsed.hostname.toLowerCase()
+  if (host !== ALLOWED_DESTINATION_HOST && !host.endsWith(`.${ALLOWED_DESTINATION_HOST}`)) {
+    return false
+  }
+  for (const key of parsed.searchParams.keys()) {
+    if (key.toLowerCase().startsWith('utm_')) return false
+  }
+  return true
+}
+
+/** Every UTM the funnel reads, in the one place Meta will not overwrite. */
+export function isUrlTagsAllowed(
+  urlTags: string | null | undefined,
+  expected: { campaign: string; content: string },
+): boolean {
+  if (!urlTags) return false
+  const p = new URLSearchParams(urlTags)
+  if (p.get('utm_source')   !== META_SOURCE_MACRO) return false
+  if (p.get('utm_medium')   !== REQUIRED_UTM.utm_medium) return false
+  if (p.get('utm_campaign') !== expected.campaign) return false
+  if (p.get('utm_content')  !== expected.content) return false
+  // A retired tag here would merge this cohort into historical data.
+  if (isRetiredCreativeTag(expected.content)) return false
+  return true
+}
+
+/**
+ * Permission to commit new money, as a value that cannot be forged casually.
+ *
+ * createAdSetPaused is the only verb that can commit spend, so it demands one
+ * of these rather than a number. Obtaining one requires a VERIFIED budget
+ * reconciliation — never an unverified read, which is the whole reason
+ * budget.ts exists.
+ */
+export interface SpendAuthorisation {
+  readonly __brand: 'SpendAuthorisation'
+  readonly cumulativeSpentCents: number
+  readonly commitmentCents:      number
+}
+
+export function authoriseNewSpend(
+  reconciliation: { status: string; cumulativeCents?: number },
+  commitmentCents: number,
+): SpendAuthorisation | null {
+  if (reconciliation.status !== 'verified') return null
+  const cumulative = reconciliation.cumulativeCents
+  if (typeof cumulative !== 'number' || !Number.isFinite(cumulative)) return null
+  if (!Number.isFinite(commitmentCents) || commitmentCents <= 0) return null
+  if (commitmentCents > MAX_NEW_COMMITMENT_CENTS) return null
+  if (cumulative + commitmentCents > MAX_TOTAL_SPEND_CENTS) return null
+  return {
+    __brand: 'SpendAuthorisation',
+    cumulativeSpentCents: cumulative,
+    commitmentCents,
+  }
+}
+
+export type CreationFailure = GuardFailure | 'paused_creation_disabled'
+
+/** checkMutationAllowed plus the creation kill switch. */
+export function checkCreationAllowed(state: ExperimentState): CreationFailure | null {
+  if (!ALLOW_PAUSED_CREATION) return 'paused_creation_disabled'
+  return checkMutationAllowed(state)
 }

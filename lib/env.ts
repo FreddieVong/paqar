@@ -48,6 +48,13 @@ const schema = z.object({
   META_PAGE_ID:                 z.string().min(1).optional(),
   META_INSTAGRAM_ACCOUNT_ID:    z.string().min(1).optional(),
   META_PIXEL_OR_DATASET_ID:     z.string().min(1).optional(),
+  // The Custom Conversion the creative-treatment test optimises toward:
+  // Lead AND paqar_step=valuation_started. There is deliberately NO fallback —
+  // the account's other Custom Conversion fires on valuation_completed, which
+  // the model_price and plate_check journeys cannot reach at all, so silently
+  // defaulting to it would optimise both arms toward an event roughly 60% of
+  // traffic is structurally unable to produce. Absent means creation refuses.
+  META_VALUATION_STARTED_CUSTOM_CONVERSION_ID: z.string().min(1).optional(),
   // Configurable so a Graph version bump is a config change, not a rewrite.
   META_GRAPH_API_VERSION:       z.string().regex(/^v\d+\.\d+$/).default('v25.0'),
   ADS_OPERATOR_CRON_SECRET:     z.string().min(16).optional(),
