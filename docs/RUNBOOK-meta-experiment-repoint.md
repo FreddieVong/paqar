@@ -1,10 +1,29 @@
-# Runbook — repointing the Meta operator at the live experiment
+# Runbook — deploying the Meta reporting fix
 
-**Status: PREPARED, NOT EXECUTED. Production freeze is active.**
+**Status: PREPARED, NOT EXECUTED.**
+**Decision: production stays frozen until the Meta experiment ends.**
+
 Nothing in this document has been run. No code was pushed, no Meta object was
 touched, and `meta_ads_experiment` was not written.
 
-Prepared 2026-08-12 on branch `fix/meta-experiment-reporting`.
+Prepared 2026-08-12 on branch `fix/meta-experiment-reporting` (commit `108e100`).
+Amended 2026-08-12 to reflect the freeze decision.
+
+---
+
+## The decision this runbook now encodes
+
+The earlier draft of this document proposed setting `status='enabled'` and
+clearing `stopped_at` so the operator would supervise the v2 campaign after
+deployment. **That was wrong and has been removed.**
+
+Production is frozen until the experiment ends, which means deployment happens
+*after* the campaign has finished. A finished experiment must never be
+reactivated or supervised as though it were live: enabling the operator against
+it would restart daily supervision of a campaign that is over, and clearing
+`stopped_at` would erase the record of when it stopped.
+
+**The expected path therefore requires no database write at all.** See Path B.
 
 ---
 
@@ -14,35 +33,173 @@ Two defects, fixed together because deploying either alone leaves a bad state:
 
 1. **Reporting described a dead campaign.** `ACTIVE_CAMPAIGN` pointed at
    `carlist_vs_mudah_aug26` (stopped 2026-08-12 01:54 UTC) while the live
-   experiment was `creative_test_aug26`. Both live arms reported zero.
+   experiment was `creative_test_aug26`. Both arms reported zero.
 2. **The tracking detector auto-paused on a false comparison.** It compared
    Meta's **lifetime** landing-page views against Paqar's **rolling 24-hour**
    count. Once a campaign finished, that comparison could never stop being true.
 
-## The invariant that makes the order safe
+## The invariant that makes every path safe
 
 After this deploy, `resolveActiveExperiment()` compares
 `ACTIVE_CAMPAIGN.metaCampaignId` (code) against
 `meta_ads_experiment.meta_campaign_id` (database).
 
 - **They disagree →** the operator does nothing at all. No Meta reads, no
-  snapshots, no pause. It records `experiment_incoherent` and the admin page
+  snapshots, no pause. It records `experiment_incoherent` and `/admin/ads`
   shows an amber banner.
 - **Reporting is unaffected either way** — it reads `ACTIVE_CAMPAIGN` directly,
-  so the dashboard and daily email are correct the moment the code is live.
+  so the dashboard is correct the moment the code is live.
 
-This is what removes the dangerous window. Between the code deploy and the
-database update, the live campaign is **not** connected to any detector, broken
-or otherwise, because an incoherent configuration disables the operator
-entirely. There is no ordering in which the live campaign meets the old
-detector.
+This is what makes the frozen path safe. The production row names the old
+Carlist campaign, so after deploying the code the configuration is **incoherent
+by construction** and the operator is disabled without anyone having to disable
+it. Leaving the row untouched is not neglect — it is the mechanism.
 
 Throughout, Meta's **RM625 account spending limit** remains the primary
 protection and is independent of all of this.
 
 ---
 
-## Step 1 — Deploy the code FIRST
+## Which path applies
+
+Check the campaign before doing anything:
+
+```bash
+curl -s -G "https://graph.facebook.com/v21.0/120248441368300438" \
+  --data-urlencode "access_token=$META_SYSTEM_USER_ACCESS_TOKEN" \
+  --data-urlencode "fields=id,name,status,effective_status,start_time,stop_time" | jq
+```
+
+| `effective_status` | Path |
+|---|---|
+| `ACTIVE` | **Path A** — reference only, requires explicit authorization |
+| `PAUSED` / `CAMPAIGN_PAUSED` / `COMPLETED` / `ARCHIVED` | **Path B** — the expected path |
+
+As of 2026-08-12 17:16 MYT the campaign was `ACTIVE`, scheduled
+`2026-08-12T12:00:00+0800` → `2026-08-19T12:00:00+0800`. Under the freeze,
+deployment is expected on or after that end time, so **Path B is the expected
+path** and Path A should not be used without a separate decision.
+
+---
+
+# PATH A — experiment still active
+
+> **REFERENCE ONLY. DO NOT EXECUTE WITHOUT EXPLICIT AUTHORIZATION.**
+>
+> This path deploys code and repoints the database while the campaign is still
+> spending, so that the live experiment gains a working hard stop. It is
+> documented because it may become the right call if something goes wrong
+> mid-flight — for example if the account cap is approached and an automated
+> backstop is wanted.
+>
+> It contradicts the current freeze decision. Using it requires a named
+> decision to unfreeze, recorded before any step is taken.
+
+If authorized, the sequence is: deploy the code first; verify the incoherence
+banner appears; then repoint the row to the v2 objects with an optimistic lock
+(`and meta_campaign_id = '120248230297470438'`), setting `status='enabled'`,
+`stopped_at=null`, `launched_at='2026-08-12T04:00:00+00:00'`; then verify the
+operator runs clean via one manual cron call.
+
+Object ids for that repoint are in the reference table below. The ordering rule
+is identical to Path B: **code first, always** — repointing the database before
+the code is deployed hands the live campaign to the *old* detector, which is the
+fault being fixed.
+
+Do not use this path merely because the campaign happens to still be running
+when you reach this document. The default is to wait.
+
+---
+
+# PATH B — experiment finished (EXPECTED PATH)
+
+The campaign has reached its end time or been paused. Goal: get correct
+reporting deployed, capture the result, and leave the operator disabled.
+
+**Path B requires no database write.** Steps B1–B5 include no `update`
+statement, by design.
+
+## B1. Capture final Meta results
+
+Do this **before** deploying, and keep the output. After deployment the operator
+stays disabled, so no further snapshots or daily report emails will be written
+(see B5) — this capture is the durable Meta-side record.
+
+```bash
+curl -s -G "https://graph.facebook.com/v21.0/120248441368300438/insights" \
+  --data-urlencode "access_token=$META_SYSTEM_USER_ACCESS_TOKEN" \
+  --data-urlencode "fields=ad_id,ad_name,adset_name,spend,impressions,reach,clicks,cpm,actions" \
+  --data-urlencode "level=ad" \
+  --data-urlencode "date_preset=maximum" \
+  --data-urlencode "limit=50" | jq
+```
+
+`date_preset=maximum` is correct **here** — the campaign is over, so lifetime is
+the final total. It is only wrong inside the detector, where it was compared
+against a rolling window.
+
+Record per arm: spend, impressions, reach, clicks, `link_click`,
+`landing_page_view`, and the `offsite_conversion.custom.1785260352473011` count.
+
+- [ ] Meta figures captured and saved outside the ad account
+
+## B2. Capture final Paqar results
+
+Run in the Supabase SQL editor. This mirrors `getFunnelCounts()` de-duplication:
+landing visits are unique per session, journey stages unique per journey.
+
+```sql
+with ev as (
+  select *
+  from ad_events
+  where utm_campaign = 'creative_test_aug26'
+    and utm_medium   = 'paid_social'
+    and utm_source in ('meta','fb','ig','an','msg','{{site_source_name}}')
+)
+select
+  utm_content as arm,
+  count(distinct session_id)
+    filter (where event_name = 'landing_page_view')            as landing_visits,
+  count(distinct coalesce(check_id, journey_id, id::text))
+    filter (where event_name = 'valuation_started')            as started_any_path,
+  count(distinct coalesce(check_id, journey_id, id::text))
+    filter (where event_name = 'valuation_started'
+              and valuation_path = 'plate_report')             as started_report_path,
+  count(distinct coalesce(check_id, journey_id, id::text))
+    filter (where event_name = 'paywall_viewed')               as paywall_viewed,
+  count(distinct coalesce(check_id, journey_id, id::text))
+    filter (where event_name = 'valuation_completed')          as completed,
+  count(*) filter (where event_name = 'purchase')              as purchases,
+  coalesce(sum(amount_cents) filter (where event_name = 'purchase'), 0)
+                                                               as revenue_cents
+from ev
+group by utm_content
+order by utm_content;
+```
+
+Expect exactly two rows: `creative_b_aug26` and `mudah_carousel_aug26`.
+A missing row means that arm recorded nothing — investigate before interpreting
+anything.
+
+- [ ] Paqar figures captured and saved
+- [ ] Both arms present
+
+## B3. Confirm the Meta campaign is finished or paused
+
+```bash
+curl -s -G "https://graph.facebook.com/v21.0/120248441368300438" \
+  --data-urlencode "access_token=$META_SYSTEM_USER_ACCESS_TOKEN" \
+  --data-urlencode "fields=id,name,status,effective_status,stop_time" | jq
+```
+
+- [ ] `effective_status` is **not** `ACTIVE`
+
+**If it is still `ACTIVE`, stop.** Either wait for the end time, or pause it by
+hand in Ads Manager as a deliberate, recorded decision. Do not proceed into a
+finished-experiment path while the experiment is running, and do not pause it
+from code — nothing in this codebase can, and nothing should be added that can.
+
+## B4. Deploy the code
 
 ```bash
 git checkout fix/meta-experiment-reporting
@@ -50,48 +207,171 @@ git push -u origin fix/meta-experiment-reporting
 # open PR against main, merge, let Vercel deploy production
 ```
 
-**Do not update the database first.** Doing so would hand the live campaign to
-the *old* detector, which would compare its lifetime figures against a rolling
-window — the exact fault being fixed.
+**Blocked until the production build passes** — see *Outstanding* below.
 
-### Verify the deploy before touching anything else
+## B5. Verify reporting, and that the operator stayed disabled
 
 Open `/admin/ads`:
 
 - [ ] Amber banner: **"OPERATOR DISABLED — configuration incoherent"**
 - [ ] `Active campaign (UTM)` reads `creative_test_aug26`
 - [ ] `Config coherence` reads `INCOHERENT — operator disabled`
-- [ ] The funnel figures are **non-zero** and match the arms
-      (`creative_b_aug26`, `mudah_carousel_aug26`)
+- [ ] Funnel figures are **non-zero** and match what B2 returned
+- [ ] Both arms appear under "Active creatives"
+- [ ] Retired creatives still show their own historical numbers
 
-Seeing the banner is the success condition, not a problem: it proves the
-coherence gate is live and the operator is standing down.
+**The banner is the success condition, not a fault.** It is the operator
+standing down, exactly as intended.
+
+Confirm the operator is inert:
+
+```bash
+curl -sS -H "authorization: Bearer $ADS_OPERATOR_CRON_SECRET" \
+  https://paqar.my/api/cron/meta-ads | jq
+```
+
+- [ ] Response contains `"skipped": "experiment_incoherent"`
+- [ ] Response contains **no** `"rule": "tracking_broken"`
+- [ ] No new `tracking_broken` row in `meta_ads_actions`
+
+### Expected consequences of staying incoherent
+
+Understand these before signing off — they are intended, not faults:
+
+| Behaviour | While incoherent |
+|---|---|
+| `/admin/ads` funnel numbers | **Correct** — reporting reads the code config |
+| Meta reads, snapshots, pause | **None** — operator fully disabled |
+| **Daily report email** | **Stops.** The cron returns before the report block. This is why B1/B2 capture the final results manually. |
+| `meta_ads_actions` | One `experiment_incoherent` audit row per MYT day (idempotent). Expected; not an error. |
+
+## B6. What NOT to do in Path B
+
+- [ ] **Do not** set `status='enabled'`
+- [ ] **Do not** clear `stopped_at`
+- [ ] **Do not** set `meta_campaign_id` to the v2 campaign
+- [ ] **Do not** re-enable the operator
+- [ ] **Do not** reactivate, unpause, restart, re-budget or edit any Meta
+      campaign, ad set or ad
+- [ ] **Do not** activate campaign `120248437132210438` (abandoned v1 — its UTMs
+      collide with v2)
 
 ---
 
-## Step 2 — Pre-write values to verify
+## Deferred: recording v2 as completed in the database
 
-Before writing anything, confirm the row you are about to change.
+**DOCUMENTED FOR A LATER DECISION. DO NOT EXECUTE.**
+
+If the team later decides `meta_ads_experiment` should record the v2 campaign as
+the completed experiment rather than still naming Carlist, this is the exact
+safe transition. It is bookkeeping only — it grants no new capability.
 
 ```sql
--- Expect exactly one row.
-select id,
-       meta_campaign_id,
-       meta_adset_id,
-       creative_a_ad_id,
-       creative_b_ad_id,
-       status,
-       launched_at,
-       stopped_at,
-       opening_spend_cents,
-       graphic_ads_started_at
-from meta_ads_experiment
-order by created_at asc;
+-- NOT PART OF PATH B. Requires its own decision.
+update meta_ads_experiment
+set meta_campaign_id  = '120248441368300438',
+    meta_adset_id     = '120248441368430438',
+    creative_a_ad_id  = '120248441369150438',  -- slot 1 → creative_b_aug26
+    creative_b_ad_id  = '120248441369870438',  -- slot 2 → mudah_carousel_aug26
+    status            = 'completed',
+    operator_enabled  = false,                 -- stays off
+    stopped_at        = '2026-08-19T04:00:00+00:00',  -- REPLACE with the real end
+    launched_at       = '2026-08-12T04:00:00+00:00',
+    graphic_ads_started_at = null,
+    updated_at        = now()
+where id = '56a934d0-38a3-4f08-96b0-f7c236637853'
+  and meta_campaign_id = '120248230297470438';   -- optimistic lock
 ```
 
-Expected **current** values (verified read-only 2026-08-12 14:24 MYT):
+**Consequences that must be accepted first** — this write makes the
+configuration **coherent**, which changes behaviour:
 
-| Column | Current value |
+1. The amber banner disappears and the cron stops early-returning.
+2. The cron resumes reading Meta and writing snapshots daily for a finished
+   campaign, and the daily report email resumes.
+3. It remains safe from auto-pause on two independent grounds: `stopped_at` is
+   set, so the detector is skipped entirely; and even without that, detection
+   requires `effective_status === 'ACTIVE'`, which a finished campaign is not.
+4. It remains safe from any mutation because `operator_enabled = false` makes
+   `checkMutationAllowed()` return `operator_disabled`.
+
+`opening_spend_cents` is deliberately absent — it is the spend floor for
+reconciliation and changing it double-counts. See `reconcileBudget()`.
+
+If the noise in (2) is unwanted, **do nothing**. Leaving the row incoherent is a
+valid permanent resting state, and the dashboard stays correct either way.
+
+---
+
+## Launching the next campaign
+
+The sequence below is now a hard requirement, because the coherence gate
+enforces it. Getting it backwards cannot break production — the operator simply
+refuses to act — but it will waste a deploy cycle.
+
+**1. Code configuration first.** In `lib/meta-ads/guards.ts`:
+
+- add the new campaign to `CAMPAIGNS` with its `utm`, its two `creatives`, and
+  its `metaCampaignId`;
+- point `ACTIVE_CAMPAIGN` at it;
+- append the outgoing campaign's creatives to `RETIRED_CREATIVE_TAGS` so their
+  history stays readable under their own campaign via `campaignForCreative()`;
+- give the new creatives **fresh tags**. Never reuse a retired tag — it merges
+  two cohorts into one number, and `isUrlTagsAllowed()` will reject it anyway.
+
+Update `__tests__/lib/meta-ads-active-experiment.test.ts`, which pins the active
+campaign by name. The other suites derive from `ACTIVE_CAMPAIGN` and should not
+need changes; if one does, that is a signal it has re-acquired a hard-coded
+campaign.
+
+Deploy this before creating or starting anything on Meta.
+
+**2. Verify the gate is live.** `/admin/ads` must show the amber banner naming
+the **new** expected `metaCampaignId`, and `Active campaign (UTM)` must read the
+new UTM. This proves reporting has moved and the operator is standing down.
+
+**3. Database update, with an optimistic lock.** Only after the new campaign's
+Meta objects exist and their ids are known:
+
+```sql
+update meta_ads_experiment
+set meta_campaign_id  = '<new campaign id>',
+    meta_adset_id     = '<new ad set id>',
+    creative_a_ad_id  = '<new slot 1 ad id>',
+    creative_b_ad_id  = '<new slot 2 ad id>',
+    status            = 'enabled',
+    stopped_at        = null,
+    launched_at       = '<campaign start, UTC>',
+    graphic_ads_started_at = null,
+    updated_at        = now()
+where id = '56a934d0-38a3-4f08-96b0-f7c236637853'
+  and meta_campaign_id = '<the id it holds RIGHT NOW>';   -- optimistic lock
+```
+
+The `and meta_campaign_id = ...` clause is mandatory. If the row has moved since
+you read it, the update affects **0 rows** instead of silently overwriting
+someone else's change. Confirm the editor reports `UPDATE 1`; if it reports
+`UPDATE 0`, re-read the row and start this step again.
+
+**4. Operator verification.** Only after the update:
+
+- `/admin/ads` — amber banner gone, `Config coherence` reads `OK`
+- run preflight from the admin page; it must pass against the new objects
+- enable the operator (`Enable operator after preflight`)
+- one manual cron call returns `ok: true` with a real `spendCents`, **no**
+  `skipped`, and **no** `tracking_broken`
+- `meta_ads_actions` shows no `tracking_broken` row; any `tracking_*` evidence
+  names a date and `Asia/Kuala_Lumpur`, never "last 24h"
+
+---
+
+## Reference — object ids
+
+Verified read-only against the Graph API, 2026-08-12 14:24 MYT.
+
+**Current `meta_ads_experiment` row** (expected pre-write state):
+
+| Column | Value |
 |---|---|
 | `id` | `56a934d0-38a3-4f08-96b0-f7c236637853` |
 | `meta_campaign_id` | `120248230297470438` (Carlist — finished) |
@@ -102,156 +382,42 @@ Expected **current** values (verified read-only 2026-08-12 14:24 MYT):
 | `stopped_at` | `2026-08-12T01:54:06.277+00:00` |
 | `opening_spend_cents` | `17430` |
 
-**If `meta_campaign_id` is not `120248230297470438`, STOP.** Someone else has
+If `meta_campaign_id` is not `120248230297470438`, **stop** — someone has
 changed the row; re-read this runbook against the actual state first.
 
-Target Meta objects (verified read-only against the Graph API, same timestamp):
+**The v2 experiment's Meta objects:**
 
-| Object | Id | State |
-|---|---|---|
-| Campaign `PAQAR_Creative_Test_Aug26_v2` | `120248441368300438` | ACTIVE |
-| Ad set `Creative_Test_Control` | `120248441368430438` | ACTIVE, RM90 lifetime |
-| Ad set `Creative_Test_Mudah` | `120248441369560438` | ACTIVE, RM90 lifetime |
-| Ad `creative_b_aug26` | `120248441369150438` | ACTIVE |
-| Ad `mudah_carousel_aug26` | `120248441369870438` | ACTIVE |
+| Object | Id |
+|---|---|
+| Campaign `PAQAR_Creative_Test_Aug26_v2` | `120248441368300438` |
+| Ad set `Creative_Test_Control` | `120248441368430438` |
+| Ad set `Creative_Test_Mudah` | `120248441369560438` |
+| Ad `creative_b_aug26` | `120248441369150438` |
+| Ad `mudah_carousel_aug26` | `120248441369870438` |
 
 > **Never use `120248437132210438`.** That is the abandoned v1 campaign. It
-> never delivered, and its ads carry UTM tags **identical** to v2, so activating
-> or referencing it would make two cohorts indistinguishable in `ad_events`.
-
-`meta_adset_id` holds a single ad set but this experiment has two. Record the
-**Control** ad set; nothing in the operator path reads it for a spend decision,
-and the campaign-level id is what governs pause and spend.
-
----
-
-## Step 3 — The database update
-
-Supabase migrations are manual here: paste into the dashboard SQL editor.
-
-```sql
-update meta_ads_experiment
-set meta_campaign_id  = '120248441368300438',
-    meta_adset_id     = '120248441368430438',
-    creative_a_ad_id  = '120248441369150438',  -- slot 1 → creative_b_aug26
-    creative_b_ad_id  = '120248441369870438',  -- slot 2 → mudah_carousel_aug26
-    status            = 'enabled',
-    stopped_at        = null,
-    launched_at       = '2026-08-12T04:00:00+00:00',  -- 12:00 MYT, campaign start
-    graphic_ads_started_at = null,
-    updated_at        = now()
-where id = '56a934d0-38a3-4f08-96b0-f7c236637853'
-  and meta_campaign_id = '120248230297470438';   -- optimistic lock
-```
-
-The `and meta_campaign_id = ...` clause is the safety: if the row already moved,
-the update affects **0 rows** instead of overwriting someone else's change.
-Confirm the editor reports `UPDATE 1`.
-
-Notes on the individual columns:
-
-- `status`/`stopped_at` — the row still carries the false `tracking_broken`
-  pause from 2026-08-12 01:54. Left as-is, the new "already stopped" guard would
-  correctly refuse to supervise the live campaign forever.
-- `launched_at` — drives the daily report's day number. The v2 campaign started
-  12:00 MYT = 04:00 UTC on 2026-08-12.
-- `graphic_ads_started_at` — a cutoff for the *previous* creative swap. Null,
-  because this campaign's tags (`*_aug26`) are new and cannot collide with
-  history.
-- `opening_spend_cents` — **do not touch.** It is the spend floor for
-  reconciliation; changing it double-counts. See `reconcileBudget()`.
-
-### Alternative: the admin UI path (runs preflight)
-
-The SQL above is the exact, auditable change. The equivalent through the UI also
-runs `runPreflight()` against the new objects, which is worth having:
-
-1. `/admin/ads` → **Save Meta IDs** with the five ids from the table above.
-2. Review the preflight result. It now expects `utm_campaign=creative_test_aug26`
-   and the `*_aug26` creative tags, so it should pass against the v2 ads —
-   whereas against the old Carlist ads it would correctly fail.
-3. **Enable operator after preflight.**
-
-Note this path sets `status='enabled'` but preserves any existing `launched_at`
-(`experiment.launched_at ?? now`), so if the day number in the daily report
-matters, still set `launched_at` explicitly with the SQL above. It also does not
-clear `stopped_at`, which the detector gate reads — so clear that in SQL either
-way.
-
-### Do NOT run
-
-```sql
--- WRONG: v1 is abandoned and its UTMs collide with v2.
-update meta_ads_experiment set meta_campaign_id = '120248437132210438';
-```
-
----
-
-## Step 4 — Post-write verification
-
-**4a. The banner clears.** Reload `/admin/ads`:
-
-- [ ] Amber incoherence banner is **gone**
-- [ ] `Config coherence` reads `OK`
-- [ ] `Campaign spend (Meta)` shows a real figure for the v2 campaign
-- [ ] Both live arms appear under "Active creatives" with non-zero numbers
-- [ ] Retired creatives still show their historical numbers (they are now read
-      under their own campaigns, not the active one)
-
-**4b. Confirm the row.**
-
-```sql
-select meta_campaign_id, status, stopped_at, launched_at
-from meta_ads_experiment
-where id = '56a934d0-38a3-4f08-96b0-f7c236637853';
--- expect 120248441368300438 / enabled / null / 2026-08-12 04:00+00
-```
-
-**4c. Exercise the operator once, deliberately.**
-
-```bash
-curl -sS -H "authorization: Bearer $ADS_OPERATOR_CRON_SECRET" \
-  https://paqar.my/api/cron/meta-ads | jq
-```
-
-Expected: `ok: true`, a real `spendCents`, and **no** `skipped` field.
-
-- [ ] Response contains **no** `"skipped": "experiment_incoherent"`
-- [ ] Response contains **no** `"rule": "tracking_broken"`
-
-**4d. Confirm the false positive is dead.**
-
-```sql
-select occurred_at, rule, action, response_summary
-from meta_ads_actions
-order by occurred_at desc
-limit 10;
-```
-
-- [ ] No new `tracking_broken` row
-- [ ] If any `tracking_*` row appears, its evidence names a date and
-      `Asia/Kuala_Lumpur` — never the phrase "last 24h"
-
-**4e. Sanity-check the numbers against Ads Manager.** The detector now reports a
-named calendar day, so the Meta figure in any evidence string can be checked
-directly in Ads Manager with the date filter set to that day.
+> never delivered, and its ads carry UTM tags **identical** to v2, so
+> activating or referencing it would make two cohorts indistinguishable in
+> `ad_events`.
 
 ---
 
 ## Rollback
 
-**Rollback is safe at every point, and never requires touching Meta.**
+**Rollback never requires touching Meta.**
 
-### If Step 1 (code) looks wrong
-Revert the deploy in Vercel ("Promote" the previous production deployment), or:
+### Path B (the expected path)
+Path B writes nothing to the database, so rollback is purely the code: revert
+the deploy in Vercel ("Promote" the previous production deployment), or
 
 ```bash
 git revert -m 1 <merge-commit-sha>
 git push
 ```
-The database is untouched at this point, so this fully restores the prior state.
 
-### If Step 3 (database) looks wrong
+That restores the prior state completely.
+
+### If a database write was made (Path A, or the deferred transition)
 Restore the row exactly:
 
 ```sql
@@ -261,6 +427,7 @@ set meta_campaign_id  = '120248230297470438',
     creative_a_ad_id  = '120248239319430438',
     creative_b_ad_id  = '120248239320220438',
     status            = 'paused_by_operator',
+    operator_enabled  = false,
     stopped_at        = '2026-08-12T01:54:06.277+00:00',
     launched_at       = '2026-07-26T15:36:40.229+00:00',
     graphic_ads_started_at = '2026-08-03T16:35:41+00:00',
@@ -280,17 +447,34 @@ a safe resting state, not a broken one. Reporting stays correct.
 
 ---
 
-## Why there is no dangerous window
+## Outstanding — production build UNRESOLVED
 
-| Point in time | Live campaign supervised by | Reporting |
-|---|---|---|
-| Before deploy | nothing (operator watches the finished Carlist campaign) | wrong campaign |
-| After Step 1, before Step 3 | **nothing — operator disabled by incoherence** | **correct** |
-| After Step 3 | the **fixed** detector | correct |
+**The production build has not passed and is a blocker for B4.**
 
-The live campaign is never connected to the old detector, in any ordering.
-The one property that must hold — deploy code before touching the row — is the
-only sequencing requirement in this document.
+`npx next build` was OOM-killed (exit 137) on the development machine at heap
+sizes 1400 / 1900 / 2200 / 2400 MB, and with `experimental: { cpus: 1,
+workerThreads: false }`. That temporary config change was reverted and is not in
+commit `108e100`.
+
+The failure is **environmental, not caused by this change**: the unmodified base
+commit `7802ccb` was built in a separate worktree and fails identically at exit
+137. The machine had ~2.4 GB free of 6.5 GB.
+
+What did pass on `108e100`:
+
+| Check | Result |
+|---|---|
+| Full Vitest | 112 files, 1690 tests passed |
+| `npx tsc --noEmit` | exit 0 |
+| `npx next lint` | no warnings or errors |
+
+`tsc --noEmit` covers every changed runtime file including the admin page JSX,
+and the cron tests import the real route module — but neither substitutes for a
+build.
+
+- [ ] **Production build passes in CI or on a higher-memory machine**
+
+Do not merge or deploy until that box is ticked.
 
 ---
 
@@ -300,6 +484,7 @@ only sequencing requirement in this document.
   collide with v2.
 - **Do not change any budget, targeting, ad or campaign status** to complete
   this work. Nothing here requires it.
-- **Do not declare a creative winner.** As of 2026-08-12 14:24 MYT the test had
-  run 2h24m on RM12.45 of RM180, and the Mudah arm's four `valuation_started`
-  came from two sessions. That is insufficient data, not a result.
+- **Do not declare a creative winner from partial data.** At 2026-08-12
+  14:24 MYT the test had run 2h24m on RM12.45 of RM180, and the Mudah arm's
+  four `valuation_started` came from two sessions. Judge the result from the
+  final figures captured in B1 and B2, and only then.
