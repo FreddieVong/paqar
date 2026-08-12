@@ -205,16 +205,34 @@ export const REQUIRED_UTM = {
 export interface CampaignConfig {
   readonly utm:       string
   readonly creatives: readonly [string, string]
+  /**
+   * The Meta campaign this config describes.
+   *
+   * WHY IT LIVES HERE. Campaign identity used to be split across two places
+   * that could disagree with nothing checking: this module owned the ANALYTICS
+   * identity (utm_campaign + creative tags) while the meta_ads_experiment row
+   * owned the CONTROL-PLANE identity (Meta object ids). On 2026-08-12 the live
+   * experiment was PAQAR_Creative_Test_Aug26_v2 and neither had been repointed,
+   * so every reporting surface described a campaign that had already stopped
+   * and both live arms reported zero.
+   *
+   * Binding the Meta id to the UTM config makes the two identities comparable,
+   * which is what resolveActiveExperiment() checks before the operator is
+   * allowed to touch anything. See lib/meta-ads/active-experiment.ts.
+   */
+  readonly metaCampaignId: string
 }
 
 export const CAMPAIGNS = {
   firstPaidTest: {
     utm:       'paqar_first_paid_test',
     creatives: ['creative_c', 'creative_d'],
+    metaCampaignId: '120248030709090438',
   },
   carlistVsMudah: {
     utm:       'carlist_vs_mudah_aug26',
     creatives: ['carlist_carousel', 'mudah_carousel'],
+    metaCampaignId: '120248230297470438',
   },
   /**
    * The creative-treatment test: the same video and the same carousel that
@@ -234,11 +252,27 @@ export const CAMPAIGNS = {
   creativeTestAug26: {
     utm:       'creative_test_aug26',
     creatives: ['creative_b_aug26', 'mudah_carousel_aug26'],
+    /**
+     * The v2 campaign, created by hand in Ads Manager on 2026-08-11 and
+     * started 2026-08-12 12:00 MYT.
+     *
+     * NOT 120248437132210438. That is the abandoned v1 campaign, which holds
+     * ads carrying these IDENTICAL utm tags and never delivered. Pointing
+     * anything at it would make two cohorts indistinguishable in ad_events.
+     */
+    metaCampaignId: '120248441368300438',
   },
 } as const satisfies Record<string, CampaignConfig>
 
-/** The one campaign live reporting describes. Changing this is a decision. */
-export const ACTIVE_CAMPAIGN: CampaignConfig = CAMPAIGNS.carlistVsMudah
+/**
+ * The one campaign live reporting describes. Changing this is a decision.
+ *
+ * It is also only HALF the decision: the meta_ads_experiment row must be
+ * repointed to the same campaign before the operator will act on it. Until
+ * both agree, resolveActiveExperiment() reports the configuration incoherent
+ * and the operator does nothing at all.
+ */
+export const ACTIVE_CAMPAIGN: CampaignConfig = CAMPAIGNS.creativeTestAug26
 
 /**
  * Resolves a caller-supplied campaign to an exact utm_campaign value.
@@ -284,7 +318,32 @@ export function campaignCreatives(campaign?: string | null): readonly [string, s
 export const RETIRED_CREATIVE_TAGS = [
   'creative_a', 'creative_b',                 // videos
   ...CAMPAIGNS.firstPaidTest.creatives,       // creative_c, creative_d — graphics
+  ...CAMPAIGNS.carlistVsMudah.creatives,      // carlist_carousel, mudah_carousel
 ] as const
+
+/**
+ * The campaign a creative tag actually ran under.
+ *
+ * Retired creatives MUST be queried under their own campaign. Every funnel
+ * read defaults to ACTIVE_CAMPAIGN, so once the active campaign moved on, the
+ * retired baseline was being asked for `carlist_carousel` rows inside
+ * `creative_test_aug26` — a combination that cannot exist — and reported zero
+ * for creatives that really did run. Same defect as blending two cohorts,
+ * pointing the other way.
+ *
+ * Returns null rather than throwing: this feeds a reporting loop, and an
+ * unknown tag should cost one row, not the whole daily report.
+ */
+export function campaignForCreative(tag: string): string | null {
+  for (const c of Object.values(CAMPAIGNS)) {
+    if ((c.creatives as readonly string[]).includes(tag)) return c.utm
+  }
+  // creative_a / creative_b are the original videos. They predate the
+  // CAMPAIGNS table but ran under the first paid test, so they are named
+  // explicitly rather than reached by a fallback that would also swallow typos.
+  if (tag === 'creative_a' || tag === 'creative_b') return CAMPAIGNS.firstPaidTest.utm
+  return null
+}
 
 /** Derived from the active campaign, never hard-coded independently of it. */
 export const ACTIVE_CREATIVE_TAGS = ACTIVE_CAMPAIGN.creatives

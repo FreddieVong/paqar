@@ -39,23 +39,39 @@ import { getFunnelCounts } from '@/lib/meta-ads/db'
 import { META_UTM_SOURCES, CAMPAIGNS, ACTIVE_CAMPAIGN } from '@/lib/meta-ads/guards'
 import { VALUATION_PATHS } from '@/lib/funnel-stages'
 
-const NEW = CAMPAIGNS.carlistVsMudah.utm
+/**
+ * Derived from ACTIVE_CAMPAIGN, never pinned to a named campaign.
+ *
+ * This file is about the SCOPING RULES — source family, medium, campaign
+ * isolation — not about which campaign happens to be live. Pinning the live
+ * one here is what made six of these tests fail the moment the active campaign
+ * moved on, while the rules themselves had not changed at all. Which campaign
+ * is active is asserted once, in meta-ads-active-experiment.test.ts.
+ */
+const NEW = ACTIVE_CAMPAIGN.utm
 const OLD = CAMPAIGNS.firstPaidTest.utm
+const [ACTIVE_A, ACTIVE_B] = ACTIVE_CAMPAIGN.creatives
 
 const ev = (o: Partial<Record<string, unknown>> = {}) => ({
   id: `r${Math.random()}`, event_name: 'valuation_started', amount_cents: null,
   check_id: null, journey_id: null, session_id: null,
   valuation_path: VALUATION_PATHS.plateReport,
   utm_source: 'fb', utm_medium: 'paid_social', utm_campaign: NEW,
-  utm_content: 'carlist_carousel', occurred_at: '2026-08-03T00:00:00.000Z', ...o,
+  utm_content: ACTIVE_A, occurred_at: '2026-08-03T00:00:00.000Z', ...o,
 })
 
 beforeEach(() => { rows.data = []; applied.eq = {}; applied.inn = {} })
 
 describe('the Meta source family', () => {
-  it('defaults to the active campaign, which is Carlist vs Mudah', () => {
-    expect(ACTIVE_CAMPAIGN.utm).toBe('carlist_vs_mudah_aug26')
-    expect(ACTIVE_CAMPAIGN.creatives).toEqual(['carlist_carousel', 'mudah_carousel'])
+  it('defaults every read to the active campaign, whichever that is', () => {
+    // Deliberately not a named campaign: this asserts the WIRING, so it keeps
+    // holding across campaign switches instead of breaking on each one.
+    expect(ACTIVE_CAMPAIGN.creatives).toHaveLength(2)
+    expect(CAMPAIGNS[
+      Object.keys(CAMPAIGNS).find(
+        (k) => CAMPAIGNS[k as keyof typeof CAMPAIGNS].utm === ACTIVE_CAMPAIGN.utm
+      ) as keyof typeof CAMPAIGNS
+    ]).toBe(ACTIVE_CAMPAIGN)
   })
 
   it('accepts every value {{site_source_name}} expands to', async () => {
@@ -132,23 +148,23 @@ describe('campaigns are never blended', () => {
   })
 })
 
-describe('Carlist and Mudah are separate creatives', () => {
-  it('never merges the two carousels', async () => {
+describe('the two live arms are separate creatives', () => {
+  it('never merges the two arms', async () => {
     rows.data = [
-      ev({ journey_id: 'c1', utm_content: 'carlist_carousel' }),
-      ev({ journey_id: 'm1', utm_content: 'mudah_carousel' }),
-      ev({ journey_id: 'm2', utm_content: 'mudah_carousel' }),
+      ev({ journey_id: 'a1', utm_content: ACTIVE_A }),
+      ev({ journey_id: 'b1', utm_content: ACTIVE_B }),
+      ev({ journey_id: 'b2', utm_content: ACTIVE_B }),
     ]
     applied.eq = {}; applied.inn = {}
-    const carlist = await getFunnelCounts({
-      utmContent: 'carlist_carousel', valuationPath: VALUATION_PATHS.plateReport,
+    const armA = await getFunnelCounts({
+      utmContent: ACTIVE_A, valuationPath: VALUATION_PATHS.plateReport,
     })
     applied.eq = {}; applied.inn = {}
-    const mudah = await getFunnelCounts({
-      utmContent: 'mudah_carousel', valuationPath: VALUATION_PATHS.plateReport,
+    const armB = await getFunnelCounts({
+      utmContent: ACTIVE_B, valuationPath: VALUATION_PATHS.plateReport,
     })
-    expect(carlist.valuationStarted).toBe(1)
-    expect(mudah.valuationStarted).toBe(2)
+    expect(armA.valuationStarted).toBe(1)
+    expect(armB.valuationStarted).toBe(2)
   })
 
   it('excludes the retired graphic tags from the active campaign', async () => {
@@ -159,7 +175,7 @@ describe('Carlist and Mudah are separate creatives', () => {
       ev({ journey_id: 'graphic', utm_content: 'creative_c' }),
     ]
     const f = await getFunnelCounts({
-      utmContent: 'carlist_carousel', valuationPath: VALUATION_PATHS.plateReport,
+      utmContent: ACTIVE_A, valuationPath: VALUATION_PATHS.plateReport,
     })
     expect(f.valuationStarted).toBe(1)
   })

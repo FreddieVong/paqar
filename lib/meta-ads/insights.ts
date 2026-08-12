@@ -230,6 +230,22 @@ export interface DeliveryResult {
 }
 
 /**
+ * An inclusive calendar-day range in the AD ACCOUNT's timezone
+ * (Asia/Kuala_Lumpur), which is how Meta interprets `time_range`.
+ *
+ * Build it with myatDayWindow() so the Paqar-side query can be given the exact
+ * same interval as absolute instants. Comparing a Meta figure with a Paqar
+ * figure computed over a different window is the defect that auto-paused a
+ * campaign on 2026-08-12.
+ */
+export interface DeliveryWindow {
+  /** YYYY-MM-DD, account timezone. */
+  since: string
+  /** YYYY-MM-DD, account timezone, inclusive. */
+  until: string
+}
+
+/**
  * Per-ad delivery for the creative comparison.
  *
  * `ad_id` MUST be in `fields`. Meta only returns breakdown identifiers when
@@ -243,7 +259,8 @@ export interface DeliveryResult {
  */
 export async function getDeliveryMetrics(
   objectId: string,
-  level: 'campaign' | 'ad'
+  level: 'campaign' | 'ad',
+  window?: DeliveryWindow
 ): Promise<DeliveryResult> {
   const fields = level === 'ad'
     ? 'ad_id,ad_name,spend,impressions,reach,clicks,actions,video_play_actions'
@@ -252,9 +269,16 @@ export async function getDeliveryMetrics(
   const rows: DeliveryMetrics[] = []
   let res: { data?: Array<InsightRow & { ad_id?: string }>; paging?: { next?: string } }
 
+  // A window and date_preset are mutually exclusive: Meta ignores time_range
+  // when date_preset is also sent, which would silently return lifetime data
+  // to a caller that asked for one day.
+  const period: Record<string, string> = window
+    ? { time_range: JSON.stringify({ since: window.since, until: window.until }) }
+    : { date_preset: 'maximum' }
+
   try {
     res = await metaGet(`${objectId}/insights`, {
-      fields, date_preset: 'maximum', level, limit: '100',
+      fields, ...period, level, limit: '100',
     })
   } catch (err) {
     return { rows: [], status: 'unavailable', reason: err instanceof Error ? err.message : String(err) }

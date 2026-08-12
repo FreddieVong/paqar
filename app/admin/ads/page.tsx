@@ -8,7 +8,9 @@ import { buildDailyReport, computeSpendSinceLastSync, type CreativeResult } from
 import { reconcileBudget, describeBudget } from '@/lib/meta-ads/budget'
 import {
   MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, ACTIVE_CREATIVE_TAGS, RETIRED_CREATIVE_TAGS,
+  ACTIVE_CAMPAIGN, campaignForCreative,
 } from '@/lib/meta-ads/guards'
+import { resolveActiveExperiment } from '@/lib/meta-ads/active-experiment'
 import {
   adminLogin, saveMetaIds, acknowledgeManualItems, enableOperatorAfterPreflight,
   pauseEverything, disableOperator, setKillSwitch, clearKillSwitch,
@@ -72,6 +74,10 @@ export default async function AdminAdsPage() {
   }
 
   const experiment = await getExperiment()
+  // Reporting below reads ACTIVE_CAMPAIGN directly and is correct regardless.
+  // This only governs what the OPERATOR is allowed to do, and makes a stale
+  // experiment row visible instead of letting it look like a healthy setup.
+  const coherence = resolveActiveExperiment(experiment)
   // plate_report ONLY — see lib/funnel-stages.ts. Mixing entry points was the
   // original cause of the misleading 8.7% completion rate.
   const funnel     = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport }).catch(() => null)
@@ -88,13 +94,22 @@ export default async function AdminAdsPage() {
       }).catch(() => null),
     }))
   )
+  // Each retired tag is read under the campaign that actually ran it. Reading
+  // them under the ACTIVE campaign asks for rows that cannot exist and reports
+  // zero for creatives with real history.
   const retiredCreativeFunnels = await Promise.all(
-    RETIRED_CREATIVE_TAGS.map(async (tag) => ({
-      tag,
-      funnel: await getFunnelCounts({
-        utmContent: tag, valuationPath: VALUATION_PATHS.plateReport,
-      }).catch(() => null),
-    }))
+    RETIRED_CREATIVE_TAGS.map(async (tag) => {
+      // null campaign would fall back to the ACTIVE one — the very defect this
+      // scoping exists to close — so an unmappable tag reports nothing instead.
+      const campaign = campaignForCreative(tag)
+      if (!campaign) return { tag, funnel: null }
+      return {
+        tag,
+        funnel: await getFunnelCounts({
+          utmContent: tag, campaign, valuationPath: VALUATION_PATHS.plateReport,
+        }).catch(() => null),
+      }
+    })
   )
 
   const modelFunnel = await getFunnelCounts({ valuationPath: VALUATION_PATHS.modelPrice }).catch(() => null)
@@ -192,9 +207,32 @@ export default async function AdminAdsPage() {
           </div>
         )}
 
+        {!coherence.coherent && (
+          <div className="bg-[#FFFBEB] border-2 border-[#D97706] rounded-[14px] p-5">
+            <p className="font-heading font-extrabold text-[16px] text-[#B45309] mb-2">
+              OPERATOR DISABLED — configuration incoherent
+            </p>
+            <p className="text-[14px] text-[#78350F] leading-relaxed">
+              {coherence.reason}
+            </p>
+            <p className="text-[13px] text-[#78350F] leading-relaxed mt-2">
+              Funnel numbers below are for <strong>{ACTIVE_CAMPAIGN.utm}</strong> and are correct.
+              The operator will not read Meta, write snapshots or pause anything until
+              <strong> meta_campaign_id</strong> is set to <strong>{coherence.expectedMetaCampaignId}</strong>.
+              Meta&rsquo;s RM{MAX_TOTAL_SPEND_MYR} account spending limit remains the primary protection.
+            </p>
+          </div>
+        )}
+
         {/* ── Status ─────────────────────────────────────────────── */}
         <div className={CARD}>
           <p className={H2}>Status</p>
+          <Row label="Active campaign (UTM)" value={ACTIVE_CAMPAIGN.utm} strong />
+          <Row
+            label="Config coherence"
+            value={coherence.coherent ? 'OK' : 'INCOHERENT — operator disabled'}
+            strong={!coherence.coherent}
+          />
           <Row label="Operator" value={experiment?.operator_enabled ? 'ENABLED' : 'disabled'} strong />
           <Row label="Kill switch" value={experiment?.kill_switch ? 'ACTIVE' : 'off'} strong={experiment?.kill_switch} />
           <Row label="Manual pause" value={experiment?.manual_pause ? 'YES (sticky)' : 'no'} />

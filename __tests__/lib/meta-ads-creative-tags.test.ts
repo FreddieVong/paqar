@@ -10,17 +10,30 @@ import {
 } from '@/lib/meta-ads/guards'
 
 describe('retired video tags never become active graphic tags', () => {
-  it('active tags are the Carlist vs Mudah carousels', () => {
+  it('active tags are the Aug26 creative-treatment pair', () => {
     // The active pair follows ACTIVE_CAMPAIGN; it is never hard-coded apart
     // from it, so switching campaigns cannot leave the two out of step.
-    expect(ACTIVE_CREATIVE_TAGS).toEqual(['carlist_carousel', 'mudah_carousel'])
+    expect(ACTIVE_CREATIVE_TAGS).toEqual(['creative_b_aug26', 'mudah_carousel_aug26'])
   })
 
   it('retires every creative from earlier campaigns, in launch order', () => {
     // creative_a/b were the videos; creative_c/d the static graphics of
-    // paqar_first_paid_test. Both are history now the carousels are live.
-    expect(RETIRED_CREATIVE_TAGS).toEqual(
-      ['creative_a', 'creative_b', 'creative_c', 'creative_d'])
+    // paqar_first_paid_test; the bare carousels were Carlist vs Mudah. All are
+    // history now the creative-treatment test is live.
+    expect(RETIRED_CREATIVE_TAGS).toEqual([
+      'creative_a', 'creative_b', 'creative_c', 'creative_d',
+      'carlist_carousel', 'mudah_carousel',
+    ])
+  })
+
+  it('keeps a repeated creative in two separate cohorts', () => {
+    // mudah_carousel ran twice: once in Carlist vs Mudah, once in the Aug26
+    // test. Same artwork, different cohort — and summing them is precisely the
+    // blending defect the _aug26 suffix exists to prevent.
+    expect(isRetiredCreativeTag('mudah_carousel')).toBe(true)
+    expect(isActiveCreativeTag('mudah_carousel')).toBe(false)
+    expect(isActiveCreativeTag('mudah_carousel_aug26')).toBe(true)
+    expect(isRetiredCreativeTag('mudah_carousel_aug26')).toBe(false)
   })
 
   it('the two sets never overlap', () => {
@@ -47,15 +60,15 @@ describe('slots are positions, tags are identities', () => {
     // whichever ads are live. Conflating the column name with the tag is the
     // mistake this accessor exists to prevent.
     const [s1, s2] = activeSlots({ creative_a_ad_id: 'ad_1', creative_b_ad_id: 'ad_2' })
-    expect(s1).toEqual({ slot: 1, tag: 'carlist_carousel', adId: 'ad_1' })
-    expect(s2).toEqual({ slot: 2, tag: 'mudah_carousel', adId: 'ad_2' })
+    expect(s1).toEqual({ slot: 1, tag: 'creative_b_aug26', adId: 'ad_1' })
+    expect(s2).toEqual({ slot: 2, tag: 'mudah_carousel_aug26', adId: 'ad_2' })
   })
 
   it('survives an unconfigured slot without inventing a tag', () => {
     const [s1, s2] = activeSlots({ creative_a_ad_id: null, creative_b_ad_id: null })
     expect(s1.adId).toBeNull()
     expect(s2.adId).toBeNull()
-    expect(s1.tag).toBe('carlist_carousel')
+    expect(s1.tag).toBe('creative_b_aug26')
   })
 })
 

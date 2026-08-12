@@ -402,10 +402,17 @@ export async function getFunnelCounts(opts: {
  */
 export async function countPaqarLandingViews(
   since: Date,
-  campaign?: string | null
+  campaign?: string | null,
+  /**
+   * Exclusive upper bound. REQUIRED for any comparison against a Meta figure:
+   * without it this counts "everything since X" while Meta counts a bounded
+   * window, and the two are not the same measurement. An open-ended count was
+   * half of the evidence that auto-paused a campaign on 2026-08-12.
+   */
+  until?: Date
 ): Promise<number> {
   const supabase = createServiceClient()
-  const { count, error } = await supabase
+  let query = supabase
     .from('ad_events')
     .select('id', { count: 'exact', head: true })
     .eq('event_name', 'landing_page_view')
@@ -413,6 +420,8 @@ export async function countPaqarLandingViews(
     .eq('utm_medium', REQUIRED_UTM.utm_medium)
     .eq('utm_campaign', resolveCampaign(campaign))
     .gte('occurred_at', since.toISOString())
+  if (until) query = query.lt('occurred_at', until.toISOString())
+  const { count, error } = await query
   if (error) throw error
   return count ?? 0
 }

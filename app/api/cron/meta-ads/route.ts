@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { env } from '@/lib/env'
-import { sixHourBucket, myatDate } from '@/lib/attribution'
+import { sixHourBucket, myatDate, myatDayWindow } from '@/lib/attribution'
 import { pauseCampaign, MetaApiError, redactMeta } from '@/lib/meta-ads/client'
 import {
   getCampaignSpendCents, getDeliveryMetrics, getCampaign,
@@ -17,8 +17,9 @@ import { reconcileBudget } from '@/lib/meta-ads/budget'
 import { VALUATION_PATHS } from '@/lib/funnel-stages'
 import {
   checkMutationAllowed, isTotalSpendExceeded, SPEND_FAILURE_THRESHOLD,
-  MAX_TOTAL_SPEND_MYR, activeSlots, RETIRED_CREATIVE_TAGS,
+  MAX_TOTAL_SPEND_MYR, activeSlots, RETIRED_CREATIVE_TAGS, campaignForCreative,
 } from '@/lib/meta-ads/guards'
+import { resolveActiveExperiment } from '@/lib/meta-ads/active-experiment'
 import { alertPauseFailed, alertPauseSucceeded, sendDailyReportEmail } from '@/lib/meta-ads/alerts'
 
 /**
@@ -78,10 +79,41 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true, skipped: 'kill_switch_active' })
   }
 
-  const campaignId = experiment.meta_campaign_id
-  if (!campaignId) {
-    return NextResponse.json({ ok: true, skipped: 'campaign_not_configured' })
+  /**
+   * The configuration must agree with itself before anything else happens.
+   *
+   * The experiment row and the active campaign config are two halves of one
+   * identity, and when they disagreed the operator supervised a campaign that
+   * had already stopped while the live one ran unsupervised. Refusing to act is
+   * the only safe reading of a disagreement: we do not know which campaign is
+   * the experiment, so we must not read Meta as if we did, must not attach this
+   * campaign's funnel to that campaign's snapshots, and above all must not
+   * pause anything.
+   *
+   * This is not a silent skip — it is recorded, so an unrepointed row shows up
+   * in the action log and on the dashboard rather than looking like a quiet
+   * healthy run.
+   */
+  const active = resolveActiveExperiment(experiment)
+  if (!active.coherent) {
+    await recordAction({
+      experimentId:    experiment.id,
+      rule:            'experiment_incoherent',
+      action:          'operator_disabled',
+      success:         false,
+      responseSummary: active.reason,
+      idempotencyKey:  `experiment_incoherent:${experiment.id}:${myatDate(new Date())}`,
+    }).catch(() => false)
+    return NextResponse.json({
+      ok:       true,
+      skipped:  'experiment_incoherent',
+      expected: active.expectedMetaCampaignId,
+      actual:   active.actualMetaCampaignId,
+      reason:   active.reason,
+    })
   }
+
+  const campaignId = active.metaCampaignId
 
   const now    = new Date()
   const bucket = sixHourBucket(now)
@@ -218,8 +250,13 @@ export async function GET(request: NextRequest) {
       // summed with the active creatives.
       const retiredCreatives = (await Promise.all(
         RETIRED_CREATIVE_TAGS.map(async (tag) => {
+          // Scoped to the campaign that actually ran the creative. Without this
+          // every retired tag is queried inside the ACTIVE campaign — a
+          // combination that cannot exist — and the whole baseline reads zero.
+          const campaign = campaignForCreative(tag)
+          if (!campaign) return null
           const rf = await getFunnelCounts({
-            utmContent: tag, valuationPath: VALUATION_PATHS.plateReport,
+            utmContent: tag, campaign, valuationPath: VALUATION_PATHS.plateReport,
           }).catch(() => null)
           return rf ? buildCreative(tag, null, tag, rf) : null
         })
@@ -308,10 +345,20 @@ export async function GET(request: NextRequest) {
       rule:   'spend_unverifiable',
       detail: `Spend could not be verified for ${failures} consecutive checks. Failing closed. Last error: ${spendError ?? 'unknown'}`,
     }
-  } else {
-    const tracking = campaignDelivery
-      ? await detectTrackingFailure(campaignDelivery.landingPageViews, experiment.launched_at)
-      : null
+  } else if (!experiment.stopped_at && experiment.status !== 'paused_by_operator') {
+    // An experiment the operator already stopped cannot develop a new tracking
+    // fault worth pausing for — there is nothing left to pause. Re-deciding it
+    // every day only produces repeat CRITICAL alerts about a finished test.
+    //
+    // Note this no longer depends on campaignDelivery: that value is the
+    // LIFETIME read used for reporting, and letting it gate the detector was
+    // how a lifetime figure reached a decision it had no business in.
+    const tracking = await detectTrackingFailure({
+      campaignId,
+      utmCampaign: active.utmCampaign,
+      launchedAt:  experiment.launched_at,
+      now,
+    })
     if (tracking) hardStop = tracking
   }
 
@@ -340,33 +387,76 @@ function finish(result: Record<string, unknown>) {
  * ad produces zero conversions with perfectly healthy tracking. What is not
  * normal is Meta reporting real landing activity that Paqar never saw.
  */
-async function detectTrackingFailure(
-  metaLandingPageViews: number,
-  launchedAt: string | null
-): Promise<HardStop | null> {
-  if (!launchedAt) return null
+async function detectTrackingFailure(opts: {
+  campaignId:  string
+  utmCampaign: string
+  launchedAt:  string | null
+  now:         Date
+}): Promise<HardStop | null> {
+  if (!opts.launchedAt) return null
 
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  /**
+   * A campaign that is not delivering cannot demonstrate a tracking failure.
+   *
+   * This is the condition that was missing. Once the Carlist campaign finished,
+   * its 348 LIFETIME landing-page views stayed above the threshold forever
+   * while recent Paqar traffic was correctly zero, so the rule fired on
+   * 2026-08-12T01:54:06Z and paused it — a campaign that had already stopped,
+   * on evidence that described a period it was no longer running in.
+   *
+   * Unreadable status is treated as "not delivering": we act only on positive
+   * evidence that a live campaign is losing events.
+   */
+  const status = await getCampaign(opts.campaignId)
+    .then((c) => c.effective_status)
+    .catch(() => null)
+  if (status !== 'ACTIVE') return null
 
-  const paqarViews = await countPaqarLandingViews(since).catch(() => null)
+  /**
+   * ONE window, computed once, handed to both systems.
+   *
+   * The previous rule compared Meta's lifetime total against Paqar's rolling
+   * 24 hours — two different measurements of two different periods, whose
+   * difference was then read as a technical fault.
+   *
+   * Meta's insights are day-granular in the ad account's timezone, so an
+   * identical rolling-hour interval is not available on both sides. The last
+   * COMPLETE Asia/Kuala_Lumpur day is used instead: closed on both sides, past
+   * Meta's processing lag, and named in the evidence so the figures can be
+   * checked by hand against Ads Manager.
+   */
+  const window = myatDayWindow(opts.now, 1)
+  const label  = `${window.date} (Asia/Kuala_Lumpur)`
+
+  const delivery = await getDeliveryMetrics(opts.campaignId, 'campaign', {
+    since: window.date, until: window.date,
+  }).catch(() => null)
+  // status 'unavailable' means Meta did not answer. Zero is a real measurement;
+  // an absent one must never be rendered as zero.
+  if (!delivery || delivery.status !== 'available') return null
+  const metaLandingPageViews = delivery.rows[0]?.landingPageViews ?? 0
+
+  const paqarViews = await countPaqarLandingViews(
+    window.startUtc, opts.utmCampaign, window.endUtc
+  ).catch(() => null)
   if (paqarViews === null) return null // cannot gather evidence: do not act
 
   if (metaLandingPageViews >= 20 && paqarViews === 0) {
     return {
       rule:   'tracking_broken',
-      detail: `EVIDENCE: Meta reports ${metaLandingPageViews} landing-page views in the last 24h while Paqar recorded 0 landing_page_view rows for utm_source=meta. Attribution is not reaching the database.`,
+      detail: `EVIDENCE: on ${label} Meta reports ${metaLandingPageViews} landing-page views for campaign ${opts.campaignId} while Paqar recorded 0 landing_page_view rows for utm_campaign=${opts.utmCampaign} over that same window. Attribution is not reaching the database.`,
     }
   }
 
   // Events that worked and then stopped is a technical signal; events that
   // never worked is not (it may simply be a bad ad).
-  const lastStart = await lastValuationStartedAt().catch(() => null)
+  const lastStart = await lastValuationStartedAt(opts.utmCampaign).catch(() => null)
   if (lastStart && metaLandingPageViews >= 20) {
-    const hoursSince = (Date.now() - lastStart.getTime()) / (60 * 60 * 1000)
+    const hoursSince = (opts.now.getTime() - lastStart.getTime()) / (60 * 60 * 1000)
     if (hoursSince >= 24) {
       return {
         rule:   'tracking_stopped',
-        detail: `EVIDENCE: valuation_started last recorded ${hoursSince.toFixed(0)}h ago while Meta continues to report ${metaLandingPageViews} landing-page views. Events worked previously and have stopped.`,
+        detail: `EVIDENCE: valuation_started for utm_campaign=${opts.utmCampaign} last recorded ${hoursSince.toFixed(0)}h ago, while on ${label} Meta reported ${metaLandingPageViews} landing-page views. Events worked previously and have stopped.`,
       }
     }
   }
@@ -388,6 +478,27 @@ async function triggerHardStop(
   spendCents: number | null,
   bucketKey: string
 ): Promise<Record<string, unknown>> {
+  /**
+   * The operator may only ever pause the configured experiment.
+   *
+   * campaignId already comes from resolveActiveExperiment(), so reaching this
+   * with anything else means a caller was added that bypassed it. Refusing
+   * here keeps "we can only pause our own campaign" a property of the pause
+   * path itself rather than of the one call site that happens to be correct.
+   */
+  const target = resolveActiveExperiment(experiment)
+  if (!target.coherent || target.metaCampaignId !== campaignId) {
+    await recordAction({
+      experimentId:    experiment.id,
+      rule:            stop.rule,
+      action:          'pause_blocked',
+      success:         false,
+      responseSummary: `Refused to pause ${campaignId}: it is not the configured experiment campaign. ${stop.detail}`,
+      idempotencyKey:  `${stop.rule}:${experiment.id}:${bucketKey}:wrong_campaign`,
+    }).catch(() => false)
+    return { ok: true, rule: stop.rule, blocked: 'wrong_campaign' }
+  }
+
   const idempotencyKey = `${stop.rule}:${experiment.id}:${bucketKey}`
 
   // Evidence is written BEFORE the pause attempt, so the reasoning survives

@@ -91,7 +91,17 @@ vi.mock('@/lib/meta-ads/db', () => ({
 
 import { GET } from '@/app/api/cron/meta-ads/route'
 import { MetaApiError } from '@/lib/meta-ads/client'
-import { MAX_TOTAL_SPEND_MYR } from '@/lib/meta-ads/guards'
+import { MAX_TOTAL_SPEND_MYR, ACTIVE_CAMPAIGN } from '@/lib/meta-ads/guards'
+
+/**
+ * Derived, never a literal.
+ *
+ * The operator now refuses to act while meta_ads_experiment names a different
+ * campaign from the active config, so a hard-coded fixture id would silently
+ * turn this whole suite into an assertion about the incoherent path the day the
+ * active campaign moves on — which is exactly the drift being fixed.
+ */
+const LIVE_CAMPAIGN = ACTIVE_CAMPAIGN.metaCampaignId
 
 function call(auth: string | null = `Bearer ${SECRET}`) {
   const headers = new Headers()
@@ -102,7 +112,7 @@ function call(auth: string | null = `Bearer ${SECRET}`) {
 function seedExperiment(overrides: Record<string, unknown> = {}) {
   store.experiment = {
     id: 'exp_1',
-    meta_campaign_id: 'camp_1',
+    meta_campaign_id: LIVE_CAMPAIGN,
     meta_adset_id: 'set_1',
     creative_a_ad_id: 'ad_a',
     creative_b_ad_id: 'ad_b',
@@ -131,7 +141,13 @@ beforeEach(() => {
              linkClicks: 10, landingPageViews: 8, videoViews: 200 }],
     status: 'available', reason: null,
   })
-  meta.getCampaign.mockResolvedValue({ effective_status: 'PAUSED' })
+  // getCampaign serves two different questions in one run: "is it delivering?"
+  // (before the detector may act) and "did the pause land?" (after). A single
+  // fixed value cannot answer both, so the mock tracks the real transition.
+  meta.getCampaign.mockImplementation(async () => ({
+    id: LIVE_CAMPAIGN,
+    effective_status: meta.pauseCampaign.mock.calls.length > 0 ? 'PAUSED' : 'ACTIVE',
+  }))
   meta.pauseCampaign.mockResolvedValue({ ok: true })
 })
 
@@ -170,7 +186,7 @@ describe('total spend limit', () => {
 
     const body = await (await call()).json()
 
-    expect(meta.pauseCampaign).toHaveBeenCalledWith('camp_1')
+    expect(meta.pauseCampaign).toHaveBeenCalledWith(LIVE_CAMPAIGN)
     expect(body).toMatchObject({ rule: 'total_spend_limit', paused: true })
     expect(alerts.alertPauseSucceeded).toHaveBeenCalled()
   })

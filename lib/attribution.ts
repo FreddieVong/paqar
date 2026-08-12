@@ -75,6 +75,32 @@ export function myatDate(at: Date = new Date()): string {
   return new Date(at.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }
 
+/**
+ * One Asia/Kuala_Lumpur calendar day, expressed for BOTH systems at once.
+ *
+ * `date` is what Meta's insights `time_range` understands — Meta interprets it
+ * in the ad account's timezone, which is Asia/Kuala_Lumpur and permanently so.
+ * `startUtc`/`endUtc` are the identical interval as absolute instants, for
+ * querying ad_events. Returning them together is the point: the tracking
+ * detector compared Meta's LIFETIME total against Paqar's rolling 24 hours and
+ * auto-paused a campaign on the difference, and two separately-computed
+ * windows are exactly how that happens again.
+ *
+ * `daysAgo = 1` (the detector's choice) is the last COMPLETE MYT day: closed on
+ * both sides, and past Meta's reporting lag.
+ */
+export function myatDayWindow(
+  at: Date = new Date(),
+  daysAgo = 0
+): { date: string; startUtc: Date; endUtc: Date } {
+  const shifted = new Date(at.getTime() + 8 * 60 * 60 * 1000)
+  shifted.setUTCDate(shifted.getUTCDate() - daysAgo)
+  const date = shifted.toISOString().slice(0, 10)
+  // MYT is UTC+8 with no DST, so the day boundary is an exact fixed shift.
+  const startUtc = new Date(Date.parse(`${date}T00:00:00.000Z`) - 8 * 60 * 60 * 1000)
+  return { date, startUtc, endUtc: new Date(startUtc.getTime() + 86_400_000) }
+}
+
 /** Floors a timestamp to its six-hour bucket in MYT. */
 export function sixHourBucket(at: Date = new Date()): Date {
   const shifted = new Date(at.getTime() + 8 * 60 * 60 * 1000)
