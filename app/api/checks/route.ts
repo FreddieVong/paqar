@@ -28,6 +28,15 @@ const lookupLimit = new Ratelimit({
 })
 
 /**
+ * The lookup retries once on a transient provider failure, so the worst case
+ * is LOOKUP_TIME_BUDGET_MS (20.4s) — above Vercel's inherited default. Without
+ * an explicit ceiling the retry would be killed mid-flight, and on this route
+ * that kills the waitUntil that records the funnel event too: the lookup would
+ * fail AND leave no trace of having failed.
+ */
+export const maxDuration = 30
+
+/**
  * Background-fetch vehicle data so the free teaser is ready by the time the
  * results page polls. Best-effort: never blocks or fails the check itself.
  *
