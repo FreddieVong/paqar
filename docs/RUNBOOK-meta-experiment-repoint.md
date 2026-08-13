@@ -2,6 +2,42 @@
 
 **Status: PREPARED, NOT EXECUTED.**
 **Decision: production stays frozen until the Meta experiment ends.**
+**Amended 2026-08-13: one scoped exception. See "Amendment" below.**
+
+---
+
+## Amendment — 2026-08-13, scoped unfreeze (plate-lookup retry only)
+
+**Decision by Freddie Vong, 2026-08-13 ~13:47 MYT.** Recorded before any step
+was taken, as Path A requires.
+
+**What is unfrozen:** the plate-lookup retry on branch
+`fix/plate-lookup-retry`, branched from `main` so it carries nothing else.
+
+**What stays frozen:** this runbook's own subject. `108e100` and `7ebacd5` —
+the Meta reporting fix and this document — remain unmerged. The campaign is
+still `ACTIVE`, so Path B remains the expected path and nothing here has been
+executed.
+
+**Why the exception was made:** 16 of the last 116 plate lookups failed (13.8%)
+— 13 `provider_timeout`, 3 `provider_error` — and 3 of 8 on 2026-08-12, the
+first day of paid traffic. Each is a buyer who had already typed a plate, so
+the ad spend was already committed. Waiting until 19 Aug means six more days of
+paying for journeys that die after the click.
+
+**The cost of the exception, stated plainly:** the retry raises lookup success
+for BOTH arms, so it does not bias the creative comparison. It does move the
+campaign's absolute funnel numbers partway through the flight. When reading the
+final result on 19 Aug, treat 12–13 Aug as a different regime from 13–19 Aug
+for any absolute rate; the arm-vs-arm comparison is unaffected.
+
+**Build verification:** the local production build could not be run — killed
+with exit 137 (OOM) on four attempts, on a 6.5GB machine with no swap. This is
+the same constraint this runbook already records as "passes in CI or on a
+higher-memory machine". Vercel's build is therefore the gate. Local evidence:
+1702 tests pass, `tsc --noEmit` 0 app-code errors, `next lint` clean.
+
+**Deployment timestamp:** see "Deployment log" at the end of this document.
 
 Nothing in this document has been run. No code was pushed, no Meta object was
 touched, and `meta_ads_experiment` was not written.
