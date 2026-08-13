@@ -39,8 +39,12 @@ higher-memory machine". Vercel's build is therefore the gate. Local evidence:
 
 **Deployment timestamp:** see "Deployment log" at the end of this document.
 
-Nothing in this document has been run. No code was pushed, no Meta object was
-touched, and `meta_ads_experiment` was not written.
+Neither Path A nor Path B has been run. No Meta object was touched and
+`meta_ads_experiment` was not written, and `108e100`/`7ebacd5` remain unmerged.
+
+The 2026-08-13 amendment above is the single exception to the freeze. It
+deployed a *different* change — the plate-lookup retry, from a branch cut off
+`main` — and touched nothing this runbook governs. See the Deployment log.
 
 Prepared 2026-08-12 on branch `fix/meta-experiment-reporting` (commit `108e100`).
 Amended 2026-08-12 to reflect the freeze decision.
@@ -524,3 +528,47 @@ Do not merge or deploy until that box is ticked.
   14:24 MYT the test had run 2h24m on RM12.45 of RM180, and the Mudah arm's
   four `valuation_started` came from two sessions. Judge the result from the
   final figures captured in B1 and B2, and only then.
+
+---
+
+## Deployment log
+
+### 2026-08-13 — plate-lookup retry (scoped unfreeze)
+
+| | |
+|---|---|
+| **Deployed** | `7adfe09` — merge of `a1ee8a7` via PR #28 |
+| **Scope** | The plate-lookup retry ONLY. Branch cut from `main`, four files. |
+| **Merged to main** | 2026-08-13 13:52:38 MYT (`2026-08-13T05:52:38Z`) |
+| **Vercel Production deployment completed** | **2026-08-13 13:54:57 MYT (`2026-08-13T05:54:57Z`)** |
+| **Verified** | `https://paqar.my` → HTTP 200; Vercel status "Deployment has completed", environment Production |
+
+**Build gate.** The local production build could not be run — killed with exit
+137 (OOM) on four attempts across four heap settings, on a 6.5GB machine with
+no swap. Per this runbook's own criterion ("passes in CI or on a higher-memory
+machine"), CI was the gate: the Vercel build on `a1ee8a7` succeeded before the
+merge, and the production build on `7adfe09` succeeded after it.
+
+**Read the aggregate commit status carefully.** GitHub reports `7adfe09` as
+overall **failure**. That is NOT Vercel and NOT this change:
+
+| Check | Result |
+|---|---|
+| Vercel | success — deployment completed |
+| Railway `welcoming-quietude - paqar` | success |
+| Railway `motivated-balance - paqar` | **failure** |
+
+`motivated-balance` failed identically on `7802ccb` (the previous `main`) and on
+`15ba5be`, i.e. on every commit checked. It is a pre-existing broken Railway
+service, unrelated to the lookup retry, and it makes the aggregate status
+useless as a deploy signal until someone fixes or removes it. **Do not read a
+red tick on main as a failed Vercel deploy** — check the individual contexts.
+
+**Still frozen, deliberately.** `108e100` and `7ebacd5` — the Meta reporting fix
+and this document — remain unmerged. The campaign was not touched: no status,
+budget, targeting or creative change, and no database write.
+
+**What to watch.** The retry should cut the 13.8% plate-lookup failure rate. Re-run
+the daily breakdown after a week; if `provider_timeout` does not fall, the
+provider's outages last longer than 20s and the answer is a different provider,
+not more retries.
