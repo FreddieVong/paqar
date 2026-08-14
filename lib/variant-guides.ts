@@ -9,6 +9,14 @@ export type VariantVerdict = 'best-value' | 'ok' | 'avoid' | 'worth-it-if'
 
 export interface VariantInfo {
   name:            string
+  /**
+   * Short trim label, when the one derived from `name` would be wrong.
+   *
+   * Only needed where a single entry covers two trims — "S / E" — because
+   * variantLabel keeps the first of a slash pair, which is correct for one trim
+   * with two names ("Advance / AV") and wrong here. See lib/variant-label.ts.
+   */
+  label?:          string
   years?:          string     // only when availability differs from the generation span
   matchTokens?:    string[]   // uppercase whole tokens that identify this variant in
                               // official record strings; fallback derives from name
@@ -32,6 +40,23 @@ export interface VariantGuide {
   brand:      string
   question:   string
   answerLine: string   // the one-line answer under the H1
+  /**
+   * Purpose-written meta description.
+   *
+   * WHY THIS IS NOT COMPOSED FROM answerLine. It used to be, and the composed
+   * string ran 238-284 characters against a snippet Google renders at roughly
+   * 155 — so a third to a half was never shown. Clamping it fixed the length
+   * and created a worse problem: the clamp cut mid-thought, and what it cut was
+   * the buyer advice. Honda City lost "Hybrid berbaloi hanya dengan rekod
+   * servis Honda yang penuh"; Bezza lost the entire 1.0 G caveat; Alphard lost
+   * both its SC and Executive Lounge guidance.
+   *
+   * A description is a different job from an on-page answer line, so it gets
+   * its own sentence rather than a truncation of one. Each is complete, unique,
+   * leads with the trim letters people actually search ("beza honda city e dan
+   * v"), and states no price.
+   */
+  metaDescription: string
   bestValue:  string
   avoid:      string | null
   generations: VariantGeneration[]
@@ -47,6 +72,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
     make: 'Perodua', model: 'Myvi', brand: 'Perodua',
     question: 'Myvi varian mana patut anda beli?',
     answerLine: 'Untuk kebanyakan pembeli: 1.5 H — kit hampir penuh tanpa bayar harga AV. Bajet ketat? 1.3 X pun cukup.',
+    metaDescription: 'Beza varian Myvi G, X, H dan AV. Untuk kebanyakan pembeli: 1.5 H — kit hampir penuh tanpa bayar harga AV. Cara cam varian sebenar sebelum deposit.',
     bestValue: '1.5 H (2018–kini)',
     avoid: '1.3 G tanpa ASA · 1.0 EZ lama — enjin lemah',
     generations: [
@@ -291,6 +317,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
     make: 'Toyota', model: 'Alphard', brand: 'Toyota',
     question: 'Alphard varian mana patut anda beli?',
     answerLine: 'Untuk kebanyakan pembeli: 2.5 G — kerusi kapten dan kit cukup. SC berbaloi untuk rupa; Executive Lounge hanya jika bajet bukan isu.',
+    metaDescription: 'Beza varian Alphard X, G, SC dan Executive Lounge. Untuk kebanyakan pembeli: 2.5 G — kerusi kapten dan kit cukup. Cara sahkan varian sebenar.',
     bestValue: '2.5 G (AH30) · 240G (AH20)',
     avoid: 'Hybrid AH20 lama tanpa rekod bateri',
     generations: [
@@ -490,6 +517,7 @@ const BEZZA_GUIDE: VariantGuide = {
   make: 'Perodua', model: 'Bezza', brand: 'Perodua',
   question: 'Bezza varian mana patut anda beli?',
   answerLine: 'Untuk kebanyakan pembeli: 1.3 X — enjin 4 silinder yang lebih lancar dengan kit cukup. 1.0 G hanya jika bajet sangat ketat dan guna bandar sahaja.',
+  metaDescription: 'Beza varian Bezza G, X dan Advance. Untuk kebanyakan pembeli: 1.3 X — enjin 4 silinder lebih lancar. 1.0 G hanya jika bajet betul-betul ketat.',
   bestValue: '1.3 X',
   avoid: null,
   generations: [
@@ -580,6 +608,7 @@ const CITY_GUIDE: VariantGuide = {
   make: 'Honda', model: 'City', brand: 'Honda',
   question: 'Honda City varian mana patut anda beli?',
   answerLine: 'Untuk kebanyakan pembeli: varian E — kit harian cukup tanpa premium varian V. Hybrid berbaloi hanya dengan rekod servis Honda yang penuh.',
+  metaDescription: 'Beza varian Honda City S/E, V dan RS e:HEV. Untuk kebanyakan pembeli: varian E — kit harian cukup tanpa premium V. Hybrid perlu rekod servis penuh.',
   bestValue: 'E',
   avoid: null,
   generations: [
@@ -699,6 +728,9 @@ const CITY_GUIDE: VariantGuide = {
       variants: [
         {
           name: 'S / E',
+          // Two trims in one entry, so the derived label ("S") would hide the
+          // very variant this guide recommends.
+          label: 'S/E',
           matchTokens: ['S', 'E'],
           verdict: 'best-value',
           verdictNote: 'E adalah nilai terbaik generasi ini — beza dengan V kebanyakannya keselesaan, bukan keperluan.',

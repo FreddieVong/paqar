@@ -229,7 +229,14 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   const cfg = COMPARISONS[params.slug]
   if (!cfg) return {}
   return {
-    title: `${cfg.titleA} vs ${cfg.titleB} Terpakai — Harga & Perbandingan | Paqar`,
+    // Kept short enough that Google renders it whole. The previous template ran
+    // 65-69 characters and was cut mid-phrase in the SERP, losing the price
+    // intent that follows the model names — on pages that DO rank (Search
+    // Console, 3 months to 2026-08-14: /bandingkan/alza-vs-x50 sits at average
+    // position 8.8 yet draws 1.1% CTR, against roughly 2-2.5% typical there).
+    // Model names stay first because that is what the query matches
+    // ("saga vs bezza", "alza vs x50").
+    title: `${cfg.titleA} vs ${cfg.titleB} — Harga Terpakai | Paqar`,
     description: cfg.description,
     alternates: { canonical: `https://paqar.my/bandingkan/${params.slug}` },
     openGraph: {

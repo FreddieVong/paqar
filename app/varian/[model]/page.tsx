@@ -5,7 +5,8 @@ import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
 import { VARIANT_GUIDES, type VariantVerdict } from '@/lib/variant-guides'
-import { variantLabelList } from '@/lib/variant-label'
+import { variantLabelListFrom } from '@/lib/variant-label'
+import { clampMetaDescription } from '@/lib/meta-description'
 import { buildVariantLadder, ladderSpreadRm } from '@/lib/variant-ladder'
 import { getVariantLadderRows } from '@/lib/db/variant-ladder-query'
 
@@ -23,12 +24,15 @@ export function generateMetadata({ params }: Props): Metadata {
   // variants in a generation share a displacement, so the old first-token
   // extraction rendered "1.3 vs 1.3 vs 1.5 vs 1.5". See lib/variant-label.ts.
   const newestGen    = guide.generations[guide.generations.length - 1]
-  const variantNames = variantLabelList(newestGen?.variants.map(v => v.name) ?? [])
+  const variantNames = variantLabelListFrom(newestGen?.variants ?? [])
   const title = `${guide.model} Varian Mana Patut Beli? ${variantNames} | Paqar`
-  // "Beza" is how the query data shows people actually phrase this ("beza
-  // honda city e dan v"), and the description has room for it that the title
-  // does not.
-  const description = `Beza varian ${guide.brand} ${guide.model} terpakai — ${variantNames}. ${guide.answerLine} Nilai terbaik, varian untuk elak, cara cam varian sebenar, dan harga berpatutan.`
+  // Purpose-written, not composed — see VariantGuide.metaDescription for why
+  // truncating the on-page answer line produced worse copy than writing a
+  // description outright. Still passed through the clamp: that is a backstop
+  // against a future edit quietly reintroducing a 280-character description,
+  // and a no-op on every current value.
+  const description = clampMetaDescription(guide.metaDescription)
+
   return {
     title,
     description,
