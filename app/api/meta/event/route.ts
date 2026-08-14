@@ -9,6 +9,7 @@ import {
   type AdEventName,
 } from '@/lib/attribution'
 import { upsertAdSession, recordAdEvent, markCapiSent } from '@/lib/db/ad-attribution'
+import { normalizeReferrer } from '@/lib/traffic-source'
 import { sendMetaEvent, type MetaEventName } from '@/lib/meta-capi'
 
 /**
@@ -66,6 +67,11 @@ const schema = z.object({
   checkId:   z.string().max(100).optional(),
   valuationPath: z.enum(['plate_report', 'model_price', 'plate_check']).optional(),
   billId:    z.string().max(100).optional(),
+  // The sending page's document.referrer, already reduced to a hostname by the
+  // client. Nullable and optional so an older cached bundle that omits it keeps
+  // working unchanged. Only ever reaches ad_sessions.referrer, which is written
+  // on first touch alone — no Meta field is derived from it.
+  referrer:  z.string().max(2000).nullable().optional(),
 })
 
 // Paqar funnel step → Meta standard event. valuation_started is also tracked
@@ -127,7 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
   }
 
-  const { event, url, attemptId, checkId, billId } = parsed.data
+  const { event, url, attemptId, checkId, billId, referrer } = parsed.data
   const attribution = attributionFromRequest({
     url,
     fbcCookie: request.cookies.get('_fbc')?.value ?? null,
@@ -146,6 +152,15 @@ export async function POST(request: NextRequest) {
     sessionId,
     attribution,
     landingPath:      path,
+    // Written on first touch only, like landing_path — upsertAdSession's
+    // ignoreDuplicates means a later in-session event cannot overwrite it (R2).
+    //
+    // Normalised again here even though the client already did it (R4). The
+    // client is the browser: a bundle cached before that change shipped, or any
+    // other caller, could post a full URL with a query string. This is the last
+    // point before storage, so it is where "only a hostname is ever stored" has
+    // to be true rather than merely intended.
+    referrer:         normalizeReferrer(referrer, new URL(request.url).origin),
     authoritativeFbc: request.cookies.get('_fbc')?.value ?? null,
   })
 

@@ -1,5 +1,7 @@
 'use client'
 
+import { normalizeReferrer } from '@/lib/traffic-source'
+
 /**
  * Browser side of the funnel-event pipeline.
  *
@@ -46,10 +48,22 @@ export function trackAdEvent(
 ): void {
   if (typeof window === 'undefined') return
 
+  // The referrer has to come from the browser: the server sees only its own
+  // Referer header on this fetch — the Paqar page that made the call — which is
+  // never the site that sent the visitor.
+  //
+  // Reduced to a bare hostname BEFORE it leaves the browser. A search referrer
+  // carries the query the visitor typed and other sites carry their own
+  // parameters, including session tokens; none of that is needed to answer the
+  // channel question, so none of it is transmitted. Same-origin referrers —
+  // every internal navigation after the first page — become null here.
+  // See the attribution rules in lib/traffic-source.ts.
+  const referrer = normalizeReferrer(document.referrer, window.location.origin)
+
   void fetch('/api/meta/event', {
     method:   'POST',
     headers:  { 'Content-Type': 'application/json' },
-    body:     JSON.stringify({ event, url: window.location.href, ...opts }),
+    body:     JSON.stringify({ event, url: window.location.href, referrer, ...opts }),
     keepalive: true, // survives the navigation that follows a valuation start
   }).catch(() => { /* tracking must never break the funnel */ })
 }

@@ -401,3 +401,108 @@ describe('free-evidence and CTA stages are recorded', () => {
     expect(row.event_id).toBe(eventId.perCheckStage('plate_verdict_viewed', 'sid_1', 'ch_1'))
   })
 })
+
+// ── Referrer attribution ────────────────────────────────────────────────────
+//
+// ad_sessions.referrer was NULL on all 1,037 rows as of 2026-08-14: the column
+// and the upsertAdSession parameter both existed, and this route — their only
+// caller — never passed a value. Organic search and direct traffic were one
+// bucket.
+//
+// The rules are stated in full in lib/traffic-source.ts. These cover the two
+// that only the route can demonstrate: first touch survives later events (R2),
+// and nothing about Meta's events changes (R1, R6).
+
+const ORGANIC_URL = 'https://paqar.my/harga-myvi-2020'
+
+describe('referrer attribution', () => {
+  it('records a Google referrer on the landing event', async () => {
+    await post({ event: 'landing_page_view', url: ORGANIC_URL, referrer: 'google.com' })
+    expect(fake.rows('ad_sessions')[0]!.referrer).toBe('google.com')
+  })
+
+  it('stores only the hostname when a full search URL is posted', async () => {
+    // The client already normalises, but a bundle cached before that shipped
+    // could post a full URL. The query string is what the visitor typed.
+    await post({
+      event: 'landing_page_view',
+      url: ORGANIC_URL,
+      referrer: 'https://www.google.com/search?q=harga+myvi+2020&hl=en',
+    })
+    const stored = fake.rows('ad_sessions')[0]!.referrer as string
+    expect(stored).toBe('google.com')
+    expect(stored).not.toMatch(/harga\+myvi|[:/?#]/)
+  })
+
+  it('stores nothing for a same-origin referrer', async () => {
+    await post({ event: 'landing_page_view', url: ORGANIC_URL, referrer: 'https://paqar.my/varian/perodua-myvi' })
+    expect(fake.rows('ad_sessions')[0]!.referrer).toBeNull()
+  })
+
+  it('stores nothing when the referrer is absent or suppressed', async () => {
+    await post({ event: 'landing_page_view', url: ORGANIC_URL })
+    expect(fake.rows('ad_sessions')[0]!.referrer).toBeNull()
+
+    fake.tables.clear()
+    await post({ event: 'landing_page_view', url: ORGANIC_URL, referrer: null })
+    expect(fake.rows('ad_sessions')[0]!.referrer).toBeNull()
+  })
+
+  it('keeps working when an older bundle omits the field entirely', async () => {
+    const res = await post({ event: 'landing_page_view', url: ORGANIC_URL })
+    expect(res.status).toBe(200)
+    expect(fake.rows('ad_events')).toHaveLength(1)
+  })
+
+  // R2 — the rule that makes the column mean "where they came from" rather
+  // than "where they last were".
+  it('preserves the first referrer across every later event in the session', async () => {
+    await post({ event: 'landing_page_view', url: ORGANIC_URL, referrer: 'google.com' })
+
+    // Subsequent in-session events: the browser would now report a Paqar page,
+    // and normalizeReferrer drops it — but even a raw external value must not
+    // overwrite the first touch.
+    await post({ event: 'valuation_started', url: 'https://paqar.my/', attemptId: 'a1', valuationPath: 'model_price' })
+    await post({ event: 'paywall_viewed', url: 'https://paqar.my/laporan-pembeli/ch_1', checkId: 'ch_1', referrer: 'forum.lowyat.net' })
+
+    const sessions = fake.rows('ad_sessions')
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0]!.referrer).toBe('google.com')
+  })
+
+  it('does not create a second session row for a second event', async () => {
+    await post({ event: 'landing_page_view', url: ORGANIC_URL, referrer: 'google.com' })
+    await post({ event: 'valuation_started', url: ORGANIC_URL, attemptId: 'a1', valuationPath: 'model_price' })
+    expect(fake.rows('ad_sessions')).toHaveLength(1)
+  })
+
+  // R1 / R6 — the referrer must not touch Meta attribution or Meta events.
+  it('leaves Meta attribution untouched when a referrer accompanies a tagged arrival', async () => {
+    await post({ event: 'landing_page_view', url: LANDING_URL, referrer: 'google.com' })
+    const session = fake.rows('ad_sessions')[0]!
+    expect(session.utm_source).toBe('meta')
+    expect(session.utm_content).toBe('creative_a')
+    expect(session.fbclid).toBe('XYZ')
+    expect(session.referrer).toBe('google.com')   // recorded, but attribution unchanged
+  })
+
+  it('fires exactly one Meta event whether or not a referrer is present', async () => {
+    await post({ event: 'landing_page_view', url: LANDING_URL, referrer: 'google.com' })
+    expect(sendMetaEvent).toHaveBeenCalledTimes(1)
+    expect(fake.rows('ad_events')).toHaveLength(1)
+  })
+
+  it('does not double-fire when the same event repeats with a different referrer', async () => {
+    // event_id is derived from session + path, so a repeat collides on
+    // UNIQUE(event_name, event_id) regardless of what referrer accompanies it.
+    await post({ event: 'landing_page_view', url: ORGANIC_URL, referrer: 'google.com' })
+    await post({ event: 'landing_page_view', url: ORGANIC_URL, referrer: 'bing.com' })
+    expect(fake.rows('ad_events')).toHaveLength(1)
+    expect(sendMetaEvent).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects an over-long referrer rather than storing it', async () => {
+    const res = await post({ event: 'landing_page_view', url: ORGANIC_URL, referrer: 'x'.repeat(2001) })
+    expect(res.status).toBe(400)
+  })
+})
