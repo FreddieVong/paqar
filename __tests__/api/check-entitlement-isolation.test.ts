@@ -49,12 +49,19 @@ const { POST } = await import('@/app/api/checks/route')
 
 const PLATE = 'WXY1234'
 
-/** Submits a plate as a visitor identified by `sid` (omit for no cookie). */
+/**
+ * Submits a plate as a visitor identified by `sid` (omit for no cookie).
+ *
+ * askingPriceRm is required by the route — a check without one still bills the
+ * RM0.81 provider call but can only ever answer `needs_asking_price`. These
+ * tests are about entitlement isolation, so they send a valid price and say
+ * nothing about it; the gate itself is covered in checks-asking-price-gate.
+ */
 async function checkPlate(sid: string | null, plate = PLATE) {
   const req = new NextRequest('https://paqar.my/api/checks', {
     method:  'POST',
     headers: { 'content-type': 'application/json' },
-    body:    JSON.stringify({ plate }),
+    body:    JSON.stringify({ plate, askingPriceRm: 59_000 }),
   })
   if (sid) req.cookies.set('paqar_sid', sid)
   const res = await POST(req)

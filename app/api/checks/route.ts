@@ -18,12 +18,31 @@ import { recordAdEvent } from '@/lib/db/ad-attribution'
 import { eventId as derive, SESSION_COOKIE } from '@/lib/attribution'
 import { eventForLookupStatus, isTerminalLookupStatus, VALUATION_PATHS } from '@/lib/funnel-stages'
 
-// Vehicle lookups cost RM0.81/call — cap NEW-plate lookups per IP so the free
-// teaser can't be farmed. Already-cached plates never hit the API.
-const lookupLimit = new Ratelimit({
+// Vehicle lookups cost RM0.81/call — cap NEW-plate lookups so the free teaser
+// can't be farmed. Already-cached plates never hit the API.
+//
+// TWO DIMENSIONS, both of which must pass.
+//
+// IP alone is a weak key: it is shared by everyone behind one CGNAT or office
+// egress (so a legitimate second buyer can be refused) and it is trivially
+// rotated (so it barely constrains anyone determined). The session cookie is
+// the opposite — stable for one real browser, cheap for an attacker to discard.
+// Neither is sufficient; together they cover each other's failure mode.
+//
+// Deliberately NOT keyed on the plate hash: plate_lookup_cache already means a
+// repeat plate never bills a second time, so a plate limiter would save nothing
+// and would refuse two different buyers checking the same advertised car.
+const lookupLimitIp = new Ratelimit({
   redis:   Redis.fromEnv(),
   limiter: Ratelimit.slidingWindow(5, '1 d'),
   prefix:  'paqar:vlookup',
+  timeout: 1000,
+})
+
+const lookupLimitSession = new Ratelimit({
+  redis:   Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(3, '1 d'),
+  prefix:  'paqar:vlookup:sess',
   timeout: 1000,
 })
 
@@ -52,8 +71,16 @@ function triggerVehicleLookup(
 ) {
   waitUntil((async () => {
     try {
-      const { success } = await lookupLimit.limit(ip).catch(() => ({ success: true }))
-      if (!success) return
+      // Both limiters must allow the call. Each fails OPEN on its own error —
+      // an Upstash outage must not silently stop every lookup — but a limiter
+      // that answers "no" is always obeyed.
+      const [byIp, bySession] = await Promise.all([
+        lookupLimitIp.limit(ip).catch(() => ({ success: true })),
+        ctx.sessionId
+          ? lookupLimitSession.limit(ctx.sessionId).catch(() => ({ success: true }))
+          : Promise.resolve({ success: true }),
+      ])
+      if (!byIp.success || !bySession.success) return
       const outcome = await getOrFetchVehicleLookup(plate)
 
       // A legacy/unknown (null) or pending status is deliberately silent.
@@ -79,9 +106,27 @@ function triggerVehicleLookup(
   })())
 }
 
+/**
+ * askingPriceRm is REQUIRED, and is deliberately validated then DISCARDED.
+ *
+ * WHY REQUIRED. Creating a check triggers the RM0.81 provider lookup, and a
+ * check without an asking price cannot produce the thing the buyer came for —
+ * /api/checks/[id]/price-evidence answers `needs_asking_price` and stops. So a
+ * priceless check bills the provider to deliver a dead end. Enforcing it here
+ * rather than only in the form is the point: the client gate is bypassable and
+ * the call costs real money.
+ *
+ * WHY DISCARDED. The column is buyer_reports.asking_price_rm (migration 004),
+ * and a buyer_report does not exist yet at check creation. Persisting it here
+ * would need a new column on `checks` — a schema change this deliberately does
+ * not make. The existing path still owns storage: the form carries the value
+ * in the redirect query string and
+ * /api/laporan-pembeli/[checkId]/asking-price writes it via updateAskingPrice.
+ */
 const requestSchema = z.object({
   plate:           plateSchema,
   idempotencyKey:  z.string().uuid().optional(),
+  askingPriceRm:   z.number().int().min(1000).max(2_000_000),
 })
 
 export async function POST(request: NextRequest) {

@@ -7,11 +7,23 @@ import type { CreateCheckResponse } from '@/types/api'
 export function DualCheckForm() {
   const router = useRouter()
   const [plate,   setPlate]   = useState('')
+  const [price,   setPrice]   = useState('')
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // The asking price is required by /api/checks: a check without one still
+    // bills the RM0.81 provider call but can only ever answer
+    // `needs_asking_price`. This form sits on the SEO pages, so it asks for
+    // both rather than sending the buyer into that dead end.
+    const priceRm = parseInt(price, 10)
+    if (!Number.isFinite(priceRm) || priceRm < 1000 || priceRm > 2_000_000) {
+      setError('Masukkan harga yang penjual minta (RM1,000 – RM2,000,000).')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
@@ -22,6 +34,7 @@ export function DualCheckForm() {
         body:    JSON.stringify({
           plate,
           idempotencyKey: crypto.randomUUID(),
+          askingPriceRm:  priceRm,
         }),
       })
 
@@ -32,7 +45,9 @@ export function DualCheckForm() {
       }
 
       const { checkId, claimToken } = await res.json() as CreateCheckResponse
-      router.push(`/check/${checkId}?claim_token=${claimToken}`)
+      // Carry the price forward the same way PlateCheckerForm does — the
+      // report route is what persists it (buyer_reports.asking_price_rm).
+      router.push(`/check/${checkId}?claim_token=${claimToken}&asking_price=${priceRm}`)
     } catch {
       setError('Ralat rangkaian — sila cuba semula')
     } finally {
@@ -64,6 +79,31 @@ export function DualCheckForm() {
                        text-center uppercase
                        placeholder:text-[#D1D5DB] placeholder:font-normal
                        placeholder:text-[16px] placeholder:tracking-normal placeholder:normal-case
+                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       transition-all"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="dcf-price"
+            className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5"
+          >
+            Harga Yang Penjual Minta (RM)
+          </label>
+          <input
+            id="dcf-price"
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="cth: 59000"
+            min={1000}
+            max={2000000}
+            required
+            inputMode="numeric"
+            className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
+                       font-heading font-semibold text-[16px] text-[#111827]
+                       placeholder:text-[#D1D5DB] placeholder:font-normal
                        focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
                        transition-all"
           />

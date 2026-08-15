@@ -24,6 +24,8 @@ export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 90
 export type AdEventName =
   | 'landing_page_view'
   | 'valuation_started'
+  /** Plate form engaged, before submit — measures the required-price gate's cost. */
+  | 'plate_form_engaged'
   | 'plate_submitted'
   | 'plate_lookup_succeeded'
   | 'plate_lookup_not_found'

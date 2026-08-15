@@ -29,6 +29,8 @@ export function PlateCheckerForm() {
   // valuation_started rather than two; changing the plate starts a new
   // attempt. It doubles as the /api/checks idempotency key.
   const attemptRef = useRef<{ plate: string; id: string } | null>(null)
+  // Fires once per mount, not per keystroke.
+  const engagedRef = useRef(false)
 
   function submissionAttemptId(forPlate: string): string {
     if (attemptRef.current?.plate !== forPlate) {
@@ -37,9 +39,37 @@ export function PlateCheckerForm() {
     return attemptRef.current.id
   }
 
+  /**
+   * First engagement with the form, before anything is submitted.
+   *
+   * The asking price is required, so a buyer who types a plate and stops at the
+   * second field is a real loss that no existing event records —
+   * valuation_started and plate_submitted both fire in handleSubmit, so their
+   * ratio is always 1. engaged → plate_submitted is what makes the gate's cost
+   * visible instead of assumed.
+   */
+  function markEngaged(forPlate: string) {
+    if (engagedRef.current || !forPlate.trim()) return
+    engagedRef.current = true
+    trackAdEvent('plate_form_engaged', {
+      attemptId:     submissionAttemptId(forPlate.trim()),
+      valuationPath: 'plate_report',
+    })
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!plate.trim()) return
+
+    // Required, and validated against the same bounds as the server schema so
+    // the buyer is told what is wrong rather than shown a generic 400.
+    const priceRm = Number(askingPrice)
+    if (!askingPrice.trim() || !Number.isFinite(priceRm) || !Number.isInteger(priceRm)
+        || priceRm < 1000 || priceRm > 2_000_000) {
+      setError('Masukkan harga yang penjual minta (RM1,000 – RM2,000,000).')
+      return
+    }
+
     setBusy(true)
     setError(null)
 
@@ -70,7 +100,11 @@ export function PlateCheckerForm() {
       const res = await fetch('/api/checks', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: attemptId }),
+        // askingPriceRm is REQUIRED by the route. It is validated and
+        // discarded there — the RM0.81 provider call must not fire without it
+        // — and persisted later by /api/laporan-pembeli/[checkId]/asking-price,
+        // which owns the column (buyer_reports.asking_price_rm).
+        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: attemptId, askingPriceRm: priceRm }),
       })
       if (!res.ok) {
         const data = await res.json() as { error?: string }
@@ -98,7 +132,7 @@ export function PlateCheckerForm() {
               <input
                 type="text"
                 value={plate}
-                onChange={e => setPlate(e.target.value.toUpperCase())}
+                onChange={e => { const v = e.target.value.toUpperCase(); setPlate(v); markEngaged(v) }}
                 onFocus={() => setPlateFocused(true)}
                 onBlur={() => setPlateFocused(false)}
                 maxLength={10}
@@ -124,8 +158,7 @@ export function PlateCheckerForm() {
 
         <div>
           <label htmlFor="pc-price" className={LABEL_CLS}>
-            Harga Diminta (RM){' '}
-            <span className="font-normal text-[#9CA3AF]">— Pilihan</span>
+            Harga Yang Penjual Minta (RM)
           </label>
           <input
             id="pc-price"
@@ -135,10 +168,12 @@ export function PlateCheckerForm() {
             placeholder="cth: 59000"
             min={1000}
             max={2000000}
+            required
+            inputMode="numeric"
             className={INPUT_CLS}
           />
           <p className="font-body text-[11px] text-[#9CA3AF] mt-1.5 leading-relaxed">
-            Tambah ini untuk tahu sama ada harga penjual mahal atau berpatutan.
+            Diperlukan untuk kami semak sama ada harganya berpatutan.
           </p>
         </div>
 
