@@ -24,11 +24,11 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
-  description: 'Semak harga kereta terpakai dan dapatkan laporan pembeli sebelum bayar deposit. Keputusan harga percuma. Laporan Pembeli RM12. Semakan Accident/Claim Insurans RM100.',
+  description: 'Masukkan nombor plat dan harga yang penjual minta. Paqar semak maklumat kenderaan dan sama ada harganya berpatutan, sebelum anda bayar deposit. Semakan percuma. Laporan Pembeli RM12.',
   metadataBase: new URL('https://paqar.my'),
   openGraph: {
     title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
-    description: 'Semak harga kereta terpakai dan dapatkan laporan pembeli sebelum bayar deposit. Keputusan harga percuma. Laporan Pembeli RM12. Semakan Accident/Claim Insurans RM100.',
+    description: 'Masukkan nombor plat dan harga yang penjual minta. Paqar semak maklumat kenderaan dan sama ada harganya berpatutan, sebelum anda bayar deposit. Semakan percuma. Laporan Pembeli RM12.',
     url: 'https://paqar.my',
     siteName: 'Paqar',
     locale: 'ms_MY',
