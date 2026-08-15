@@ -32,6 +32,7 @@ export function AskingPriceInput({
   placeholder = '59,000',
   required = true,
   ariaLabel,
+  onFocus,
 }: {
   id?: string
   /** Digits only, e.g. "59000". */
@@ -42,6 +43,8 @@ export function AskingPriceInput({
   placeholder?: string
   required?: boolean
   ariaLabel?: string
+  /** Forwarded so callers can measure engagement with the field itself. */
+  onFocus?: () => void
 }) {
   return (
     <div className="relative">
@@ -64,6 +67,7 @@ export function AskingPriceInput({
         onChange={e => onChange(toDigits(e.target.value))}
         placeholder={placeholder}
         required={required}
+        onFocus={onFocus}
         aria-label={ariaLabel}
         className={className}
       />

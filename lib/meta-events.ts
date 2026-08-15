@@ -22,6 +22,7 @@ type BrowserEvent =
   | 'plate_result_poll_timed_out'
   | 'paywall_viewed'
   | 'payment_form_focused'
+  | 'seo_page_cta_engaged'
   // Free plate-path evidence, ahead of the paywall. Diagnostic only — the
   // route's own allowlist decides what reaches Meta, and none of these do.
   | 'plate_price_evidence_viewed'
