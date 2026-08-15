@@ -1,6 +1,7 @@
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
 import { buildComparableCohort, evaluateVerdictEligibility, comparableConfidence } from '@/lib/comparables'
+import { isIndividualListingUrl } from '@/lib/listing-url'
 import { InspectionCTA }   from './InspectionCTA'
 import { InsuranceCTA }    from './InsuranceCTA'
 import { CopyButton }      from './CopyButton'
@@ -564,13 +565,26 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       ? `Harga listing dijumpai (tahun ${vehicleData.registrationYear} sahaja):`
                       : 'Harga listing dijumpai:'}
                   </p>
+                  {/* A chip is a LINK only when the URL resolves to one advert.
+                      The scraper also stores search pages, category pages and a
+                      bare "/m/" stub (empty adid), and linking those sends a
+                      paying buyer somewhere that is not the advert the price
+                      came from. The price still renders — the row is real
+                      evidence and is counted in the median above — so
+                      withholding only the href keeps the displayed set
+                      identical to the measured one. See lib/listing-url.ts. */}
                   <div className="flex flex-wrap gap-1.5">
-                    {relevantListings.map((l, i) => (
-                      <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
-                        className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A] hover:bg-[#E0F2F1] transition-colors">
-                        RM{fmt(l.price)}
-                      </a>
-                    ))}
+                    {relevantListings.map((l, i) => {
+                      const chip = 'inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A]'
+                      return isIndividualListingUrl(l.url) ? (
+                        <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+                          className={`${chip} hover:bg-[#E0F2F1] transition-colors`}>
+                          RM{fmt(l.price)}
+                        </a>
+                      ) : (
+                        <span key={i} className={chip}>RM{fmt(l.price)}</span>
+                      )
+                    })}
                   </div>
 
                   {/* Methodology — states exactly which cohort was measured, so
