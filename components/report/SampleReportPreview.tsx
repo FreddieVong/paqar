@@ -10,9 +10,9 @@ const MARKET_PRICES = ['RM37,500', 'RM38,000', 'RM39,800', 'RM41,500', 'RM42,000
 
 const SAMPLE_SCRIPT = `Salam, saya berminat dengan Perodua Myvi 2019 yang tuan/puan jual.
 
-Saya dah semak 10 listing serupa di pasaran — harga tengah pasaran sekarang RM42,750, dalam julat RM37,500–RM47,000.
+Saya dah semak 10 iklan setanding — harga tengahnya RM42,750, dalam julat RM37,500–RM47,000.
 
-Harga RM55,000 agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM38,000–RM43,000?`
+Harga RM55,000 agak tinggi berbanding iklan-iklan itu. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM38,000–RM43,000?`
 
 const SELLER_QUESTIONS = [
   'Ada accident besar sebelum ini?',
@@ -188,7 +188,7 @@ export function SampleReportPreview() {
             ))}
           </div>
           <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
-            Berdasarkan 10 listing serupa di pasaran
+            Berdasarkan 10 iklan setanding yang kami jumpa
           </p>
           <div className="mb-3">
             <div className="flex items-center gap-1.5">
@@ -287,7 +287,7 @@ export function SampleReportPreview() {
             <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF]">
               Maklumat Kenderaan
             </p>
-            <span className="font-body text-[10px] text-[#9CA3AF]">Sumber: JPJ</span>
+            <span className="font-body text-[10px] text-[#9CA3AF]">Maklumat pendaftaran kenderaan</span>
           </div>
           <p className="font-heading font-extrabold text-[16px] text-[#111827] mb-3 leading-tight">
             PERODUA MYVI 1.3X AT

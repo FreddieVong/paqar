@@ -70,10 +70,10 @@ export async function GET(request: NextRequest) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <span style={{ color: 'white', fontWeight: 800, fontSize: '28px', lineHeight: 1.1 }}>
-              Lebih RM8,400 dari harga pasaran
+              Lebih RM8,400 dari harga tengah iklan setanding
             </span>
             <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '16px' }}>
-              Berdasarkan 23 listing serupa di pasaran
+              Berdasarkan 23 iklan setanding yang kami jumpa
             </span>
           </div>
           <div style={{

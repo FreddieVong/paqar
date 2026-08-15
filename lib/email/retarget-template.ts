@@ -279,7 +279,7 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
                 <tr>
                   <td colspan="2" class="gutter" style="padding:0 20px 16px;">
                     <div style="height:1px;background:${C.hair};font-size:0;line-height:0;">&nbsp;</div>
-                    <div class="t-dim" style="font-family:${BODY};font-size:11.5px;font-weight:400;color:${C.dim};line-height:1.55;padding-top:11px;">Berdasarkan ${insight.count} iklan model dan tahun yang sama di pasaran semasa.</div>
+                    <div class="t-dim" style="font-family:${BODY};font-size:11.5px;font-weight:400;color:${C.dim};line-height:1.55;padding-top:11px;">Berdasarkan ${insight.count} iklan model dan tahun yang sama yang kami jumpa.</div>
                   </td>
                 </tr>
               </table>
