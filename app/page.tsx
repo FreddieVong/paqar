@@ -188,6 +188,8 @@ export default async function HomePage() {
                 </span>
               </div>
 
+              {/* text-center here centres the toggle only — the expanded report
+                  resets to text-left inside CollapsibleSampleReport. */}
               <div className="px-5 py-3 border-t border-[#F3F4F6] text-center">
                 <CollapsibleSampleReport showVerdictCard={false} source="homepage_proof" />
               </div>
