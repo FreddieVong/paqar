@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import {
-  buildCohort, decide, wilson, REGIME_START, CONVERSION_WINDOW_DAYS,
+  buildCohort, decide, wilson, REGIME_START, CONVERSION_WINDOW_DAYS, REGIME_ANNOTATIONS,
   type CheckRow, type EventRow, type ReportRow, type SessionRow, type LookupRow,
 } from '@/lib/measurement/plate-first-cohort'
 
@@ -270,6 +270,52 @@ describe('output carries no identifiers', () => {
     const json = JSON.stringify(r)
     for (const id of ['s_a', 'p_a', 'a@', 'check_id']) {
       expect(json).not.toContain(id)
+    }
+  })
+})
+
+describe('regime annotations', () => {
+  /**
+   * Annotations are how a conversion shift gets attributed to a deployment
+   * rather than to chance. Three ways they mislead silently, so all three are
+   * pinned: an entry before the regime started describes a different product;
+   * an out-of-order list makes "what changed before this journey" wrong; and a
+   * malformed instant compares as a string against ISO timestamps elsewhere.
+   */
+  const parsed = REGIME_ANNOTATIONS.map(a => Date.parse(a.at))
+
+  it('are all valid instants', () => {
+    for (const [i, t] of parsed.entries()) {
+      expect(Number.isFinite(t), `annotation ${i} has an unparseable "at"`).toBe(true)
+    }
+  })
+
+  it('are all UTC, so they sort against the ISO timestamps in the data', () => {
+    for (const a of REGIME_ANNOTATIONS) expect(a.at).toMatch(/Z$/)
+  })
+
+  it('never predate the regime they annotate', () => {
+    const start = Date.parse(REGIME_START)
+    for (const a of REGIME_ANNOTATIONS) {
+      expect(Date.parse(a.at), `${a.note} predates REGIME_START`).toBeGreaterThanOrEqual(start)
+    }
+  })
+
+  it('are in chronological order', () => {
+    expect([...parsed].sort((x, y) => x - y)).toEqual(parsed)
+  })
+
+  it('say what changed, not merely that something did', () => {
+    for (const a of REGIME_ANNOTATIONS) expect(a.note.length).toBeGreaterThan(20)
+  })
+
+  it('are not in the future relative to the regime start', () => {
+    // A fabricated or mistyped instant tends to land years out; this catches
+    // that without pinning the suite to a wall clock.
+    const start = Date.parse(REGIME_START)
+    const year = 365 * 24 * 60 * 60 * 1000
+    for (const a of REGIME_ANNOTATIONS) {
+      expect(Date.parse(a.at)).toBeLessThan(start + year)
     }
   })
 })

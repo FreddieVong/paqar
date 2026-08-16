@@ -64,6 +64,15 @@ export const REGIME_ANNOTATIONS: { at: string; note: string }[] = [
   { at: '2026-08-16T04:47:22Z', note: 'plate-first journey live (regime start)' },
   { at: '2026-08-16T05:01:33Z', note: 'paywall provenance copy corrected' },
   { at: '2026-08-16T08:00:46Z', note: 'verdict wording rescoped; plate input 44px' },
+  // Instants below are the MERGE commits on main (git log --format=%cI, +08:00
+  // converted to UTC), not estimates. Vercel builds from main, and production
+  // was observed serving a new bundle ~160s after a push on 2026-08-16. Merge
+  // time is therefore the EARLIEST instant a change could be live, which is the
+  // conservative boundary for a regime annotation: it can only over-attribute
+  // journeys to the older layout, never the newer one.
+  { at: '2026-08-16T14:14:09Z', note: 'homepage proof beat live: sample verdict result shown directly after the form' },
+  { at: '2026-08-16T17:08:48Z', note: 'homepage trust pass: FAQ made visible, price input formatting, CTA "Semak Harga Percuma", AA contrast, expander/tab a11y' },
+  { at: '2026-08-16T17:11:36Z', note: 'listing-price terminology corrected in the paid report and its sample' },
 ]
 
 // ── Input rows. Field names mirror the columns exactly; nothing is invented. ──
