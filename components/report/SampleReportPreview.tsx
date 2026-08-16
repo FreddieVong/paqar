@@ -99,13 +99,13 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
                     : 'text-[#6B7280] hover:text-[#374151]'
                 }`}
               >
-                {t === 'asas' ? 'Laporan Pembeli RM12' : '+ Accident/Claim RM100'}
+                {t === 'asas' ? 'Laporan Pembeli RM12' : '+ Accident/Claim RM88'}
               </button>
             ))}
           </div>
           {tab === 'premium' && (
             <p className="font-body text-[11px] text-[#064E4A] font-semibold mt-2">
-              Termasuk semakan Accident/Claim Insurans
+              Termasuk semakan Accident/Claim Insurans · jumlah RM100
             </p>
           )}
         </div>

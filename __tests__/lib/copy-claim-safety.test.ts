@@ -159,3 +159,35 @@ describe('the homepage proof beat', () => {
     expect(tabs).not.toContain('Dapat keputusan harga serta-merta')
   })
 })
+
+describe('a plus sign means the add-on, never the total', () => {
+  /**
+   * The claim check costs RM88 on top of the RM12 report; RM100 is the TOTAL.
+   * So "+ ... RM100" states the sum as if it were the increment, and a buyer
+   * reading the sample's tabs would price the bundle at RM112.
+   *
+   * Every other surface already has this right — JomCheckUpsell, PaymentForm,
+   * the receipt email and the landing page all say "+RM88", and the pages that
+   * show RM100 show it without a plus. Only the sample's tab disagreed.
+   */
+  const SURFACES = [
+    'components/report/SampleReportPreview.tsx',
+    'components/report/JomCheckUpsell.tsx',
+    'components/report/PaymentForm.tsx',
+    'app/page.tsx',
+  ]
+
+  it.each(SURFACES)('%s never prefixes the bundle total with a plus', (path) => {
+    expect(code(read(path))).not.toMatch(/\+\s*Accident\/Claim\s*(Insurans\s*)?RM100/)
+  })
+
+  it('the sample tab charges the add-on price', () => {
+    const src = read('components/report/SampleReportPreview.tsx')
+    expect(src).toContain("'+ Accident/Claim RM88'")
+  })
+
+  it('the sample still states the total somewhere the tab is selected', () => {
+    // Naming only the increment leaves RM12 + RM88 as the buyer's arithmetic.
+    expect(read('components/report/SampleReportPreview.tsx')).toContain('jumlah RM100')
+  })
+})
