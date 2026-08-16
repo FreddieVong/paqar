@@ -3,6 +3,8 @@ import Link           from 'next/link'
 import { unstable_cache } from 'next/cache'
 import { Nav }           from '@/components/layout/Nav'
 import { HomeCheckerTabs } from '@/components/check/HomeCheckerTabs'
+import { SampleVerdictCard, SAMPLE_DISCLAIMER } from '@/components/report/SampleVerdictCard'
+import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
 import { SocialLinks }    from '@/components/layout/SocialLinks'
 import { getCheckCount } from '@/lib/db/checks'
 import { organizationSchema, whatsappUrl } from '@/lib/site'
@@ -153,6 +155,48 @@ export default async function HomePage() {
 
           <HomeCheckerTabs countDisplay={countDisplay} />
 
+          {/* ── PROOF BEAT ──
+              Directly after the form, because this is the first thing a buyer
+              scrolls to and the only chance to show what Paqar actually
+              produces before asking for a plate.
+
+              A RESULT, not a document. The full sample is one tap away below;
+              rendering 367 lines here would bury the form on a phone.
+
+              PRODUCT proof, not accuracy proof: it shows what a Laporan Pembeli
+              contains, never that a valuation is correct. */}
+          <div className="mt-8">
+            <div className="rounded-[16px] border border-[#E5E7EB] overflow-hidden bg-white">
+              <SampleVerdictCard showTierLabel />
+
+              {/* The tier boundary, shown INSIDE the artifact rather than as a
+                  second sample. "jika direkodkan" is required — not every
+                  accident produces a claim record. The total is spelled out
+                  because "+RM88" alone makes the buyer do the arithmetic. */}
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-3 border-t border-[#F3F4F6] bg-[#F9FAFB]">
+                <div className="flex items-start gap-2">
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true" className="mt-0.5 flex-shrink-0">
+                    <rect x="2.5" y="6" width="9" height="6" rx="1.2" stroke="#9CA3AF" strokeWidth="1.3" />
+                    <path d="M4.75 6V4.25a2.25 2.25 0 0 1 4.5 0V6" stroke="#9CA3AF" strokeWidth="1.3" />
+                  </svg>
+                  <p className="font-body text-[12px] text-[#6B7280] leading-snug">
+                    Semakan rekod tuntutan &amp; bacaan odometer, jika direkodkan
+                  </p>
+                </div>
+                <span className="font-heading font-bold text-[10px] whitespace-nowrap px-2 py-1 rounded-full bg-[#FFFBEB] text-[#B45309]">
+                  Tambah RM88 · jumlah RM100
+                </span>
+              </div>
+
+              <div className="px-5 py-3 border-t border-[#F3F4F6] text-center">
+                <CollapsibleSampleReport showVerdictCard={false} source="homepage_proof" />
+              </div>
+            </div>
+            <p className="font-body text-[10px] text-[#9CA3AF] text-center mt-2">
+              {SAMPLE_DISCLAIMER}
+            </p>
+          </div>
+
         </div>
       </section>
 
@@ -239,16 +283,6 @@ export default async function HomePage() {
                   Untuk pembelian kereta <span className="font-bold text-[#14453d]">bernilai ribuan ringgit</span>, Laporan Pembeli hanya{' '}
                   <span className="font-extrabold text-[13px] text-[#14453d]">RM12</span>.
                 </p>
-              </div>
-
-              {/* Sample report link */}
-              <div className="px-4 py-2.5 text-right">
-                <Link
-                  href="/contoh-laporan"
-                  className="font-body text-[11px] text-[#14453d] font-semibold hover:underline underline-offset-2"
-                >
-                  Lihat contoh laporan →
-                </Link>
               </div>
             </div>
           </div>

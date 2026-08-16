@@ -5,6 +5,7 @@ import { CopyButton } from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
 import { HistoryRiskBanner } from './HistoryRiskBanner'
 import type { JomCheckResult } from '@/lib/jomcheck/core'
+import { SampleVerdictCard } from './SampleVerdictCard'
 
 const MARKET_PRICES = ['RM37,500', 'RM38,000', 'RM39,800', 'RM41,500', 'RM42,000', 'RM43,000', 'RM44,500', 'RM45,000', 'RM46,200', 'RM47,000']
 
@@ -54,7 +55,12 @@ const SAMPLE_JOMCHECK: JomCheckResult = {
 }
 const SAMPLE_CURRENT_ODOMETER = 78_000  // below the 95,000 km claim → rollback flag fires
 
-export function SampleReportPreview() {
+/**
+ * @param showVerdictCard - false on the homepage, where the proof beat already
+ *   renders the card above the expander. Without this the card appears twice
+ *   the moment the buyer expands the full sample.
+ */
+export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCard?: boolean } = {}) {
   const [tab, setTab] = useState<'asas' | 'premium'>('asas')
   const topRef = useRef<HTMLDivElement>(null)
 
@@ -113,38 +119,13 @@ export function SampleReportPreview() {
           </div>
         )}
 
-        {/* 1. Keputusan Paqar */}
-        <div className="px-5 py-4 border-b border-[#F3F4F6] bg-[#FEF2F2]">
-          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
-            Keputusan Paqar
-          </p>
-          <p className="font-heading font-extrabold text-[20px] leading-tight text-[#DC2626] mb-0.5">
-            MAHAL
-          </p>
-          <p className="font-heading font-bold text-[13px] text-[#111827] mb-4">
-            Jangan bayar deposit dulu.
-          </p>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="font-body text-[12px] text-[#6B7280]">Seller minta</p>
-              <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="font-body text-[12px] text-[#6B7280]">Market semasa</p>
-              <p className="font-heading font-bold text-[13px] text-[#111827]">RM38,000 – RM46,000</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="font-body text-[12px] text-[#6B7280]">Anggaran lebih tinggi</p>
-              <p className="font-heading font-bold text-[13px] text-[#DC2626]">RM9,000+</p>
-            </div>
-            <div className="pt-2 border-t border-[#FECACA]">
-              <p className="font-body text-[11px] text-[#6B7280] mb-0.5">Cadangan</p>
-              <p className="font-heading font-bold text-[12px] text-[#111827]">
-                Target RM38,000–RM43,000. Kalau seller tak boleh turun, cari unit lain.
-              </p>
-            </div>
+        {/* 1. Keputusan Paqar — the shared card, so this preview and the
+            homepage proof beat can never disagree about the sample figures. */}
+        {showVerdictCard && (
+          <div className="border-b border-[#F3F4F6]">
+            <SampleVerdictCard />
           </div>
-        </div>
+        )}
 
         {/* 2. Rekod Accident / Claim Insurans — Premium only. Renders the REAL
             JomCheckSection so the preview is always identical to a paid report. */}

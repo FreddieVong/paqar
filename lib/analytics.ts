@@ -105,7 +105,9 @@ export const analytics = {
   // sample report? Deliberately NOT forwarded to Meta CAPI (which needs an
   // explicit trackAdEvent call) — it is not a conversion signal and must not
   // be mapped onto Lead/ViewContent/Purchase.
-  sampleReportClicked: (props: { source: 'paywall' }) =>
+  // 'homepage_proof' distinguishes the new above-the-fold proof beat from the
+  // paywall expander, so the two can be compared rather than summed.
+  sampleReportClicked: (props: { source: 'paywall' | 'homepage_proof' }) =>
     posthog.capture('sample_report_clicked', props),
 
   tabSelected: (props: { tab: 'model' | 'plate' }) =>
