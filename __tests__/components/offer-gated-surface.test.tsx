@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, cleanup } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { OfferGatedSurface } from '@/components/report/OfferGatedSurface'
 
 /**
@@ -124,5 +126,61 @@ describe('measurement', () => {
     surface()
     await new Promise(r => setTimeout(r, 50))
     expect(captured).toHaveLength(0)
+  })
+})
+
+describe('both selling surfaces keep the pay button inside the gate', () => {
+  /**
+   * The behavioural tests above prove children are hidden when the state is not
+   * sellable. That only protects the buyer if the pitch and the payment form
+   * ARE children — move PaymentForm one line out of the wrapper and every test
+   * above still passes while the pay button renders unconditionally again.
+   *
+   * Test B (a car with thin comparables) could not be run in a browser: it
+   * needs a plate whose cohort is too small, which cannot be conjured on
+   * demand. This is the structural half of that check.
+   */
+  const read = (p: string) =>
+    readFileSync(join(__dirname, '..', '..', p), 'utf8')
+
+  it('the paywall nests the pitch, the payment form and the sample inside the gate', () => {
+    const src = read('app/laporan-pembeli/[checkId]/page.tsx')
+    const open  = src.indexOf('<OfferGatedSurface')
+    const close = src.indexOf('</OfferGatedSurface>')
+    expect(open).toBeGreaterThan(-1)
+    expect(close).toBeGreaterThan(open)
+    const inside = src.slice(open, close)
+    for (const child of ['<PaidReportCtaTracker', '<BuyerReportPitch', '<PaymentForm', '<CollapsibleSampleReport']) {
+      expect(inside, `${child} escaped the gate`).toContain(child)
+    }
+  })
+
+  it('the paywall renders no payment form outside the gate', () => {
+    const src = read('app/laporan-pembeli/[checkId]/page.tsx')
+    const close = src.indexOf('</OfferGatedSurface>')
+    // The non-plate branch below has its own PaymentForm and is out of scope —
+    // this asserts only that nothing was left ABOVE the gate on the plate path.
+    expect(src.slice(0, src.indexOf('<OfferGatedSurface'))).not.toContain('<PaymentForm')
+    expect(close).toBeGreaterThan(-1)
+  })
+
+  it('/check/[id] guards its pitch with isSellable', () => {
+    const src = read('components/check/ResultsStream.tsx')
+    const guard = src.indexOf('{isSellable(offerState) && (')
+    expect(guard).toBeGreaterThan(-1)
+    const block = src.slice(guard, src.indexOf('</>', guard))
+    for (const child of ['<BuyerReportPitch', '<PaymentForm', '<CollapsibleSampleReport']) {
+      expect(block, `${child} is outside the isSellable guard`).toContain(child)
+    }
+  })
+
+  it('neither surface hides the pay button with CSS', () => {
+    // A hidden pay button is still in the DOM, still focusable and still
+    // clickable by anything that walks the tree.
+    for (const p of ['app/laporan-pembeli/[checkId]/page.tsx', 'components/check/ResultsStream.tsx']) {
+      const src = read(p)
+      expect(src).not.toMatch(/className=\{[^}]*isSellable[^}]*hidden/)
+      expect(src).not.toMatch(/isSellable\(offerState\) \? '' : 'hidden'/)
+    }
   })
 })
