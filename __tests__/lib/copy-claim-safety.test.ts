@@ -341,3 +341,65 @@ describe('no surface calls advertised prices "the market"', () => {
       .toContain('Berdasarkan 10 iklan setanding yang kami jumpa')
   })
 })
+
+/**
+ * THE SWEEP THAT WAS MISSED
+ *
+ * An earlier pass corrected three labels in the report and its sample and
+ * declared the job done. It was not: the paywall PITCH still described what
+ * RM12 buys as "harga tengah pasaran" while its own headline said "iklan
+ * setanding" — the card contradicted itself in a single view — and the same
+ * claim survived in the locked preview, the model form, /tentang, the RM12
+ * landing page, its JSON-LD, and three emails.
+ *
+ * Worst of all, a retargeting email sent by a live cron promised "data JPJ
+ * rasmi". That attribution was removed from the report in an earlier session
+ * because the lookup provider names no Malaysian source — and it went on being
+ * emailed to customers anyway.
+ *
+ * A CLAIM IS NOT A DISCLAIMER. The report still says "bukan harga pasaran
+ * semasa" and "Anggaran susut nilai bukan harga pasaran", and it must: those
+ * sentences use the phrase to say what a figure is NOT. Blind replacement
+ * would turn a disclaimer into nonsense, so the guard below is scoped to
+ * surfaces that ASSERT, and the disclaimers are pinned separately.
+ */
+describe('no surface promises "the market price" as what Paqar delivers', () => {
+  const ASSERTING_SURFACES = [
+    'components/report/BuyerReportPitch.tsx',
+    'components/report/LockedReportPreview.tsx',
+    'app/laporan-pembeli-kereta-terpakai/page.tsx',
+    'app/semak-accident-claim-insurans-kereta/page.tsx',
+    'app/tentang/page.tsx',
+    'lib/email/model-retarget.ts',
+    'lib/email/retarget.ts',
+    'lib/email/retarget-template.ts',
+  ]
+
+  it.each(ASSERTING_SURFACES)('%s describes evidence, not "the market"', (path) => {
+    const src = code(read(path))
+    expect(src).not.toMatch(/harga tengah pasaran/)
+    expect(src).not.toMatch(/julat (harga )?pasaran/)
+    expect(src).not.toMatch(/angka pasaran/)
+    expect(src).not.toMatch(/harga pasaran semasa/)
+  })
+
+  it('the paywall pitch no longer contradicts its own headline', () => {
+    const src = read('components/report/BuyerReportPitch.tsx')
+    expect(src).toContain('harga tengah iklan setanding')
+    expect(src).not.toContain('harga tengah pasaran')
+  })
+
+  it('no email attributes vehicle data to JPJ', () => {
+    // RegCheck names no Malaysian source. This one shipped on a cron.
+    for (const p of ['lib/email/model-retarget.ts', 'lib/email/retarget.ts', 'lib/email/retarget-template.ts']) {
+      expect(code(read(p))).not.toMatch(/JPJ/)
+    }
+  })
+
+  it('KEEPS the phrase where it is used to disclaim, not to promise', () => {
+    // These say what a figure is NOT. Replacing them would delete the warning.
+    const src = read('components/report/BuyerReportContent.tsx')
+    expect(src).toContain('bukan harga pasaran semasa')
+    expect(src).toContain('Anggaran susut nilai bukan harga pasaran')
+  })
+})

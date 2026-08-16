@@ -6,11 +6,11 @@ import { HomeCheckerTabs }     from '@/components/check/HomeCheckerTabs'
 
 export const metadata: Metadata = {
   title: 'Laporan Pembeli Kereta Terpakai Malaysia RM12 | Paqar',
-  description: 'Laporan Pembeli Paqar RM12 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
+  description: 'Laporan Pembeli Paqar RM12 — keputusan harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
   alternates: { canonical: 'https://paqar.my/laporan-pembeli-kereta-terpakai' },
   openGraph: {
     title: 'Laporan Pembeli Kereta Terpakai Malaysia RM12',
-    description: 'Laporan Pembeli Paqar RM12 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
+    description: 'Laporan Pembeli Paqar RM12 — keputusan harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
     url: 'https://paqar.my/laporan-pembeli-kereta-terpakai',
     images: [{ url: '/api/og?title=Laporan%20Pembeli%20Kereta%20Terpakai&subtitle=RM12%20%C2%B7%20Satu%20bayaran%20%C2%B7%20Tanpa%20akaun', width: 1200, height: 630 }],
   },
@@ -39,7 +39,7 @@ export default function LaporanPembelihPage() {
       {
         '@type': 'Service',
         name: 'Laporan Pembeli Kereta Terpakai',
-        description: 'Laporan Pembeli RM12 merangkumi keputusan harga pasaran, harga tengah dan julat harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
+        description: 'Laporan Pembeli RM12 merangkumi keputusan harga, harga tengah dan julat iklan setanding, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
         provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
         areaServed: { '@type': 'Country', name: 'Malaysia' },
         offers: { '@type': 'Offer', price: '12', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
@@ -50,7 +50,7 @@ export default function LaporanPembelihPage() {
           {
             '@type': 'Question',
             name: 'Apa yang ada dalam Laporan Pembeli RM12 Paqar?',
-            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM12 merangkumi: keputusan harga pasaran (murah/wajar/mahal), harga tengah dan julat harga berdasarkan listing semasa, anggaran trade-in, maklumat kenderaan (tahun daftar, enjin, jenis badan, nombor rangka), skrip rundingan harga siap pakai, soalan penting untuk penjual, dan checklist sebelum bayar deposit.' },
+            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM12 merangkumi: keputusan harga (murah/wajar/mahal), harga tengah dan julat harga berdasarkan listing semasa, anggaran trade-in, maklumat kenderaan (tahun daftar, enjin, jenis badan, nombor rangka), skrip rundingan harga siap pakai, soalan penting untuk penjual, dan checklist sebelum bayar deposit.' },
           },
           {
             '@type': 'Question',
@@ -105,12 +105,12 @@ export default function LaporanPembelihPage() {
             <div className="px-5 py-1">
               {[
                 {
-                  title: 'Keputusan harga pasaran',
+                  title: 'Keputusan harga',
                   desc: 'Murah, wajar, atau mahal — berdasarkan listing semasa untuk model dan tahun yang sama.',
                 },
                 {
-                  title: 'Harga tengah & julat harga pasaran',
-                  desc: 'Tahu harga tengah dan julat harga — bukan sekadar "harga pasaran dalam RM30k-50k".',
+                  title: 'Harga tengah & julat iklan setanding',
+                  desc: 'Tahu harga tengah dan julat harga — bukan sekadar "harga dalam RM30k-50k".',
                 },
                 {
                   title: 'Anggaran trade-in',

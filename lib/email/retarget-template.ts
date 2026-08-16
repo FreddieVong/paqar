@@ -312,7 +312,7 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
                   <td class="pad-lg" style="padding:20px;">
                     <div class="t-dim" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.14em;color:${C.dim};line-height:1;padding-bottom:14px;">DALAM LAPORAN</div>
                     ${benefit('Verdict harga &mdash; berbaloi, wajar atau mahal')}
-                    ${benefit('Julat dan harga tengah pasaran semasa')}
+                    ${benefit('Julat dan harga tengah iklan setanding')}
                     ${benefit('Skrip rundingan siap pakai')}
                     ${benefit('Checklist sebelum bayar deposit')}
                     <!-- Text link, not an embedded screenshot: images are blocked
