@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
 import { analytics } from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
@@ -17,7 +17,6 @@ const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.
 
 export function PlateCheckerForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [plate, setPlate]             = useState('')
   const [askingPrice, setAskingPrice] = useState('')
   const [plateFocused, setPlateFocused] = useState(false)
@@ -76,11 +75,27 @@ export function PlateCheckerForm() {
 
     const attemptId = submissionAttemptId(plate.trim())
 
+    // Read the query string from window, NOT useSearchParams().
+    //
+    // This form is now the homepage's default, so it renders during the static
+    // prerender of `/` and `/laporan-pembeli-kereta-terpakai`. useSearchParams()
+    // there forces a client-side bailout and fails the build outright
+    // ("should be wrapped in a suspense boundary"). Wrapping it in Suspense
+    // would build, but at the cost of client-rendering the hero input — the
+    // one element that must be present in the static HTML now that organic
+    // search is the acquisition channel.
+    //
+    // Nothing is lost: both values are read inside handleSubmit, which only
+    // ever runs from a real click, so window.location is always available and
+    // always current. HomeCheckerTabs reads ?tab= the same way, for the same
+    // reason.
+    const query = new URLSearchParams(window.location.search)
+
     // Determine entry point from entry_source parameter (set by FAQ CTA navigation)
     // or fall back to current pathname if user navigated directly
-    const entrySource = searchParams.get('entry_source')
+    const entrySource = query.get('entry_source')
     const entryPageType = entrySource === 'faq' ? 'faq' : 'home'
-    const trafficContext = getTrafficContext(searchParams)
+    const trafficContext = getTrafficContext(query)
 
     // Fire GA4 valuation_started event
     trackValuationStarted({
