@@ -8,18 +8,31 @@ import { analytics }             from '@/lib/analytics'
 type Tab = 'model' | 'plate'
 type FormState = 'idle' | 'loading' | 'result' | 'error'
 
+/**
+ * ONE journey, not two tabs.
+ *
+ * The tab selector defaulted to 'model', and the measured consequence was
+ * stark: the model journey took 65.3% of all journeys, answered "not enough
+ * data" 54.3% of the time, and produced ZERO purchases — every paid row Paqar
+ * has ever taken carries a check_id, which only the plate paths create.
+ *
+ * So the plate form is now the page's single input, and the model checker is a
+ * link rather than an equal choice. It is kept, not deleted: it is the honest
+ * fallback for a buyer who genuinely has no plate yet, and the only thing
+ * Paqar can offer them.
+ */
 export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null }) {
-  const [tab, setTab] = useState<Tab>('model')
+  const [tab, setTab] = useState<Tab>('plate')
 
-  // ?tab=plat preselects the plate form — used by the "Semak nombor plat"
-  // recovery action on a not-found report. Read after mount from
-  // window.location rather than useSearchParams(): this renders on the
-  // statically prerendered homepage, and the hook would force a client-side
-  // bailout for the whole page. Starting on 'model' and switching keeps
-  // server and first client render identical.
+  // ?tab=model opens the fallback directly. ?tab=plat is still honoured so the
+  // "Semak nombor plat" recovery action on a not-found report keeps working,
+  // and so any existing link or bookmark does not break — it simply asks for
+  // what is already the default. Read after mount from window.location rather
+  // than useSearchParams(): this renders on the statically prerendered
+  // homepage, and the hook would force a client-side bailout for the whole page.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('tab') === 'plat') {
-      setTab('plate')
+    if (new URLSearchParams(window.location.search).get('tab') === 'model') {
+      setTab('model')
     }
   }, [])
   const [modelFormState, setModelFormState] = useState<FormState>('idle')
@@ -29,53 +42,27 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
 
   return (
     <div>
-      {/* Segmented tab selector */}
-      <div className="grid grid-cols-2 gap-2 mb-5">
+      {/* The single journey. No tab bar — the plate form IS the page. */}
+      {tab === 'plate' ? <PlateCheckerForm /> : <OverpricedCheckerForm onStateChange={setModelFormState} />}
+
+      {/* The fallback, as one quiet link rather than an equal choice. */}
+      {tab === 'plate' ? (
         <button
           type="button"
           onClick={() => { setTab('model'); analytics.tabSelected({ tab: 'model' }) }}
-          className={`text-left rounded-[14px] px-4 py-3.5 transition-all duration-150 ${
-            tab === 'model'
-              ? 'bg-[#064E4A] shadow-sm'
-              : 'bg-white border border-[#E5E7EB] hover:border-[#064E4A]/30'
-          }`}
+          className="w-full min-h-[44px] py-3 inline-flex items-center justify-center font-body text-[12px] text-[#6B7280] underline underline-offset-2 mt-2 hover:text-[#064E4A] transition-colors"
         >
-          <p className={`font-heading font-extrabold text-[13px] leading-snug mb-0.5 ${
-            tab === 'model' ? 'text-white' : 'text-[#111827]'
-          }`}>
-            Saya tahu model kereta
-          </p>
-          <p className={`font-body text-[11px] ${
-            tab === 'model' ? 'text-white/70' : 'text-[#9CA3AF]'
-          }`}>
-            Semak sama ada harganya berpatutan — percuma
-          </p>
+          Tak ada nombor plat? Semak ikut model dan tahun →
         </button>
-
+      ) : (
         <button
           type="button"
           onClick={() => { setTab('plate'); analytics.tabSelected({ tab: 'plate' }) }}
-          className={`text-left rounded-[14px] px-4 py-3.5 transition-all duration-150 ${
-            tab === 'plate'
-              ? 'bg-[#064E4A] shadow-sm'
-              : 'bg-white border border-[#E5E7EB] hover:border-[#064E4A]/30'
-          }`}
+          className="w-full min-h-[44px] py-3 inline-flex items-center justify-center font-body text-[12px] text-[#6B7280] underline underline-offset-2 mt-2 hover:text-[#064E4A] transition-colors"
         >
-          <p className={`font-heading font-extrabold text-[13px] leading-snug mb-0.5 ${
-            tab === 'plate' ? 'text-white' : 'text-[#111827]'
-          }`}>
-            Saya ada nombor plat
-          </p>
-          <p className={`font-body text-[11px] ${
-            tab === 'plate' ? 'text-white/70' : 'text-[#9CA3AF]'
-          }`}>
-            Semak maklumat kereta sebelum bayar deposit · Laporan dari RM12
-          </p>
+          ← Dah ada nombor plat? Semak kereta itu sendiri
         </button>
-      </div>
-
-      {/* Active form */}
-      {tab === 'model' ? <OverpricedCheckerForm onStateChange={setModelFormState} /> : <PlateCheckerForm />}
+      )}
 
       {/* Soft social proof — below the form, not competing */}
       {countDisplay && (
@@ -89,9 +76,14 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
       {showSteps && (
         <div className="mt-6 flex flex-col gap-2">
           {[
-            'Masukkan kereta & harga seller',
+            // Step 1 names the plate, because the plate is now the journey.
+            // Kept accurate for the fallback too: the model form asks for the
+            // same asking price.
+            tab === 'plate'
+              ? 'Masukkan nombor plat & harga yang penjual minta'
+              : 'Masukkan model, tahun & harga yang penjual minta',
             'Dapat keputusan harga serta-merta',
-            'Nak skrip rundingan & data penuh? Dari RM12',
+            'Nak skrip rundingan & data penuh? RM12',
           ].map((step, i) => (
             <div key={i} className="flex items-center gap-2.5">
               <span className="w-[18px] h-[18px] rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-[#15803D] font-heading font-bold text-[10px] flex items-center justify-center flex-shrink-0">

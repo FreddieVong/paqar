@@ -37,16 +37,24 @@ vi.mock('@upstash/ratelimit', () => ({
   },
 }))
 
+// The spend guard FAILS CLOSED when Upstash is unconfigured, so these suites —
+// which are about entitlement/caching, not spend — must present a configured
+// environment or every lookup would be (correctly) suppressed.
+process.env.UPSTASH_REDIS_REST_URL   ??= 'https://fake.upstash.io'
+process.env.UPSTASH_REDIS_REST_TOKEN ??= 'fake-token'
+
 const { POST }     = await import('@/app/api/checks/route')
 const { getCheck, getCachedCheck } = await import('@/lib/db/checks')
 
 const PLATE = 'WXY1234'
 const FUTURE = () => new Date(Date.now() + 86_400_000).toISOString()
 
+// askingPriceRm is required by the route — see checks-asking-price-gate. These
+// tests are about session-scoped check reuse, so they always send a valid one.
 async function checkPlate(sid: string | null, plate = PLATE) {
   const req = new NextRequest('https://paqar.my/api/checks', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ plate }),
+    body: JSON.stringify({ plate, askingPriceRm: 59_000 }),
   })
   if (sid) req.cookies.set('paqar_sid', sid)
   return (await POST(req)).json() as Promise<{ checkId: string; claimToken: string }>

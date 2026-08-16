@@ -235,7 +235,7 @@ describe('the rest of the RM12 report is unchanged', () => {
     const text = container.textContent ?? ''
     expect(text).toContain('Harga tengah pasaran')
     expect(text).toContain('Anggaran trade-in')
-    expect(text).toMatch(/Berdasarkan \d+ listing/)
+    expect(text).toMatch(/Berdasarkan \d+ iklan/)
     expect(text).toMatch(/Keyakinan data|Data pasaran terhad/)
   })
 

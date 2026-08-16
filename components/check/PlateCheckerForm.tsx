@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
 import { analytics } from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
@@ -17,7 +17,6 @@ const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.
 
 export function PlateCheckerForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [plate, setPlate]             = useState('')
   const [askingPrice, setAskingPrice] = useState('')
   const [plateFocused, setPlateFocused] = useState(false)
@@ -29,6 +28,8 @@ export function PlateCheckerForm() {
   // valuation_started rather than two; changing the plate starts a new
   // attempt. It doubles as the /api/checks idempotency key.
   const attemptRef = useRef<{ plate: string; id: string } | null>(null)
+  // Fires once per mount, not per keystroke.
+  const engagedRef = useRef(false)
 
   function submissionAttemptId(forPlate: string): string {
     if (attemptRef.current?.plate !== forPlate) {
@@ -37,19 +38,64 @@ export function PlateCheckerForm() {
     return attemptRef.current.id
   }
 
+  /**
+   * First engagement with the form, before anything is submitted.
+   *
+   * The asking price is required, so a buyer who types a plate and stops at the
+   * second field is a real loss that no existing event records —
+   * valuation_started and plate_submitted both fire in handleSubmit, so their
+   * ratio is always 1. Paired with analytics.checkStarted (also PostHog, fired
+   * on submit) this measures the gate's cost inside one system.
+   *
+   * PostHog only, and no arguments: it never reaches ad_events, so it carries
+   * no session, check or journey id, and there is no parameter through which a
+   * plate or price could later be added.
+   */
+  function markEngaged(forPlate: string) {
+    if (engagedRef.current || !forPlate.trim()) return
+    engagedRef.current = true
+    analytics.plateFormEngaged()
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!plate.trim()) return
+
+    // Required, and validated against the same bounds as the server schema so
+    // the buyer is told what is wrong rather than shown a generic 400.
+    const priceRm = Number(askingPrice)
+    if (!askingPrice.trim() || !Number.isFinite(priceRm) || !Number.isInteger(priceRm)
+        || priceRm < 1000 || priceRm > 2_000_000) {
+      setError('Masukkan harga yang penjual minta (RM1,000 – RM2,000,000).')
+      return
+    }
+
     setBusy(true)
     setError(null)
 
     const attemptId = submissionAttemptId(plate.trim())
 
+    // Read the query string from window, NOT useSearchParams().
+    //
+    // This form is now the homepage's default, so it renders during the static
+    // prerender of `/` and `/laporan-pembeli-kereta-terpakai`. useSearchParams()
+    // there forces a client-side bailout and fails the build outright
+    // ("should be wrapped in a suspense boundary"). Wrapping it in Suspense
+    // would build, but at the cost of client-rendering the hero input — the
+    // one element that must be present in the static HTML now that organic
+    // search is the acquisition channel.
+    //
+    // Nothing is lost: both values are read inside handleSubmit, which only
+    // ever runs from a real click, so window.location is always available and
+    // always current. HomeCheckerTabs reads ?tab= the same way, for the same
+    // reason.
+    const query = new URLSearchParams(window.location.search)
+
     // Determine entry point from entry_source parameter (set by FAQ CTA navigation)
     // or fall back to current pathname if user navigated directly
-    const entrySource = searchParams.get('entry_source')
+    const entrySource = query.get('entry_source')
     const entryPageType = entrySource === 'faq' ? 'faq' : 'home'
-    const trafficContext = getTrafficContext(searchParams)
+    const trafficContext = getTrafficContext(query)
 
     // Fire GA4 valuation_started event
     trackValuationStarted({
@@ -70,7 +116,11 @@ export function PlateCheckerForm() {
       const res = await fetch('/api/checks', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: attemptId }),
+        // askingPriceRm is REQUIRED by the route. It is validated and
+        // discarded there — the RM0.81 provider call must not fire without it
+        // — and persisted later by /api/laporan-pembeli/[checkId]/asking-price,
+        // which owns the column (buyer_reports.asking_price_rm).
+        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: attemptId, askingPriceRm: priceRm }),
       })
       if (!res.ok) {
         const data = await res.json() as { error?: string }
@@ -98,7 +148,7 @@ export function PlateCheckerForm() {
               <input
                 type="text"
                 value={plate}
-                onChange={e => setPlate(e.target.value.toUpperCase())}
+                onChange={e => { const v = e.target.value.toUpperCase(); setPlate(v); markEngaged(v) }}
                 onFocus={() => setPlateFocused(true)}
                 onBlur={() => setPlateFocused(false)}
                 maxLength={10}
@@ -124,8 +174,7 @@ export function PlateCheckerForm() {
 
         <div>
           <label htmlFor="pc-price" className={LABEL_CLS}>
-            Harga Diminta (RM){' '}
-            <span className="font-normal text-[#9CA3AF]">— Pilihan</span>
+            Harga Yang Penjual Minta (RM)
           </label>
           <input
             id="pc-price"
@@ -135,10 +184,12 @@ export function PlateCheckerForm() {
             placeholder="cth: 59000"
             min={1000}
             max={2000000}
+            required
+            inputMode="numeric"
             className={INPUT_CLS}
           />
           <p className="font-body text-[11px] text-[#9CA3AF] mt-1.5 leading-relaxed">
-            Tambah ini untuk tahu sama ada harga penjual mahal atau berpatutan.
+            Diperlukan untuk kami semak sama ada harganya berpatutan.
           </p>
         </div>
 

@@ -48,21 +48,18 @@ const homeSchema = {
       areaServed: { '@type': 'Country', name: 'Malaysia' },
       offers: { '@type': 'Offer', price: '12', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
     },
-    {
-      '@type': 'Service',
-      name: 'Semakan Accident/Claim Insurans Kereta',
-      description: 'Semakan Accident/Claim Insurans RM100 merangkumi semua dalam Laporan Pembeli RM12 ditambah semakan rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum bayar deposit.',
-      provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-      areaServed: { '@type': 'Country', name: 'Malaysia' },
-      offers: { '@type': 'Offer', price: '100', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
-    },
+    // The RM100 Service node was removed with the visible RM100 row. Structured
+    // data must describe what this page actually shows, and the homepage no
+    // longer offers the add-on. /semak-accident-claim-insurans-kereta keeps the
+    // Service schema, where the offer is visible and its Offer node is emitted
+    // only when the add-on is genuinely buyable.
     {
       '@type': 'FAQPage',
       mainEntity: [
         {
           '@type': 'Question',
           name: 'Apakah beza semakan percuma dan laporan RM12?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri keputusan harga — murah, wajar atau mahal — dengan penjelasan dan tahap keyakinan data. Laporan Pembeli (RM12) tambah angka pasaran penuh iaitu harga tengah dan julat, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — sebelum bayar deposit.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri keputusan harga — murah, wajar atau mahal — dengan penjelasan dan tahap keyakinan data. Laporan Pembeli (RM12) tambah angka pasaran penuh iaitu harga tengah dan julat, anggaran trade-in, maklumat pendaftaran kenderaan, soalan untuk penjual dan skrip rundingan.' },
         },
         {
           '@type': 'Question',
@@ -71,13 +68,8 @@ const homeSchema = {
         },
         {
           '@type': 'Question',
-          name: 'Boleh semak rekod accident atau claim insurans kereta terpakai di Malaysia?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Ya. Paqar menyediakan Semakan Accident/Claim Insurans (RM100) yang semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan. Penting: tidak semua kemalangan mempunyai rekod claim insurans, dan rekod bersih tidak bermakna kereta tiada isu. Gunakan maklumat ini untuk bertanya soalan yang lebih tepat kepada penjual.' },
-        },
-        {
-          '@type': 'Question',
           name: 'Berapa harga semakan di Paqar?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Semakan harga percuma. Laporan Pembeli RM12 (satu bayaran, tanpa akaun). Laporan + Semakan Accident/Claim Insurans RM100. Atau tambah +RM88 kepada laporan RM12 sedia ada.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Semakan harga percuma. Laporan Pembeli RM12 — satu bayaran, tanpa akaun.' },
         },
         {
           '@type': 'Question',
@@ -138,21 +130,25 @@ export default async function HomePage() {
               green line at every width, and lets text-balance split the first
               sentence evenly on narrow screens instead of stranding "kereta."
               on a line by itself. */}
+          {/* The promise is scoped to what the free check can actually prove:
+              registration information and price fairness. NOT "rekod", which
+              reads as accident/claim history (that is RM100), and NOT a
+              proceed/walk-away verdict on the car — Paqar knows nothing about
+              its condition. */}
           <h1 className="font-heading font-extrabold text-[30px] md:text-[36px] leading-[1.1] tracking-[-0.03em] text-[#111827] mb-3">
-            <span className="block text-balance">Jangan tersalah beli kereta.</span>
-            <span className="block text-[#064E4A]">Semak dulu.</span>
+            <span className="block text-balance">Nak beli kereta ini?</span>
+            <span className="block text-[#064E4A] text-balance">Semak dulu sebelum bayar deposit.</span>
           </h1>
 
-          {/* text-balance on both: without it 375px strands "deposit." and
-              "odometer." alone on a final line — the two words carrying the message. */}
           <p className="font-body text-[15px] text-[#374151] mb-2 leading-relaxed text-balance">
-            Ketahui risiko tersembunyi sebelum anda bayar deposit.
+            Masukkan nombor plat dan harga yang penjual minta. Paqar semak maklumat
+            kenderaan dan sama ada harganya berpatutan.
           </p>
 
           {/* #6B7280 not #9CA3AF: gray-400 on white is 2.5:1 and fails WCAG AA.
               Size (13 vs 15px) and weight keep it subordinate to the subheadline. */}
           <p className="font-body text-[13px] text-[#6B7280] mb-7 leading-relaxed text-balance">
-            Harga pasaran percuma. Laporan bermula RM12, dengan pilihan semakan rekod kemalangan dan odometer.
+            Semakan percuma · Tanpa daftar · Laporan penuh RM12
           </p>
 
           <HomeCheckerTabs countDisplay={countDisplay} />
@@ -219,7 +215,10 @@ export default async function HomePage() {
                 {[
                   { title: 'Skrip rundingan harga',            desc: 'Bantu anda bincang berdasarkan data.' },
                   { title: 'Harga pasaran & anggaran trade-in', desc: 'Faham harga sebenar dan ruang rundingan anda.' },
-                  { title: 'Maklumat kenderaan (JPJ)',            desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
+                  // Not "(JPJ)" — the lookup provider names no Malaysian source,
+                  // so Paqar cannot attribute these fields to JPJ. Same
+                  // correction as the report's own provenance label.
+                  { title: 'Maklumat pendaftaran kenderaan',      desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
                   { title: 'Soalan penting untuk seller',      desc: 'Tanya soalan yang boleh dedahkan risiko.' },
                 ].map((item, i, arr) => (
                   <div key={item.title} className={`flex gap-2.5 items-start py-2.5 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
@@ -271,22 +270,19 @@ export default async function HomePage() {
             <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 text-[18px]">→</span>
           </Link>
 
-          {/* RM100 upgrade row */}
-          <Link
-            href="/semak-accident-claim-insurans-kereta"
-            className="mt-3 flex items-center justify-between gap-4 bg-white border-l-[3px] border-l-[#064E4A] border border-[#E5E7EB] rounded-[14px] px-4 py-4 hover:bg-[#F0FDF4] transition-colors group"
-          >
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-[#064E4A]">Semakan Accident/Claim Insurans</span>
-                <span className="font-heading font-bold text-[9px] px-2 py-0.5 rounded-full bg-[#F0FDF4] text-[#064E4A]">RM100</span>
-              </div>
-              <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
-                Semak sejarah kemalangan kenderaan — own damage, banjir, windscreen atau total loss jika direkodkan, termasuk meter ketika claim dan amaran kalau meter mungkin dipusing balik. Atau tambah +RM88 kepada Laporan Pembeli sedia ada.
-              </p>
-            </div>
-            <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 text-[18px]">→</span>
-          </Link>
+          {/* The RM100 accident/claim row was removed from the homepage
+              deliberately, and its JSON-LD Service entry with it.
+
+              It has never been bought by anyone outside the team, and the same
+              underlying MRC/JomCheck data is resold elsewhere at RM80 instantly
+              while Paqar fulfils it by hand within 24 hours. Leading with it
+              spends the homepage's attention on the weakest product.
+
+              It is NOT withdrawn: /semak-accident-claim-insurans-kereta still
+              sells it (and still owns the Service schema, with an Offer node
+              that appears only when the add-on is actually buyable), and it is
+              still offered inside the paid report where a buyer has context for
+              it. No competitor is linked in its place. */}
 
         </div>
       </section>
@@ -378,7 +374,7 @@ export default async function HomePage() {
             {[
               {
                 q: 'Apakah beza semakan percuma dan laporan RM12?',
-                a: 'Semakan percuma beri keputusan harga — murah, wajar atau mahal — dengan penjelasan dan tahap keyakinan data. Laporan Pembeli (RM12) tambah angka pasaran penuh iaitu harga tengah dan julat, anggaran trade-in, maklumat kenderaan JPJ, soalan untuk penjual dan skrip rundingan. Tambah Semakan Accident/Claim Insurans (+RM88) untuk semak rekod claim insurans seperti own damage, banjir atau total loss jika direkodkan — termasuk meter ketika claim dan amaran kalau meter mungkin dipusing balik — sebelum bayar deposit.',
+                a: 'Semakan percuma beri keputusan harga — murah, wajar atau mahal — dengan penjelasan dan tahap keyakinan data. Laporan Pembeli (RM12) tambah angka pasaran penuh iaitu harga tengah dan julat, anggaran trade-in, maklumat pendaftaran kenderaan, soalan untuk penjual dan skrip rundingan.',
               },
               {
                 q: 'Adakah saya perlu daftar akaun?',

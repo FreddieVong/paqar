@@ -241,6 +241,16 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
   async function handlePlateSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!plate.trim()) return
+
+    // /api/checks requires an asking price before it will spend the RM0.81
+    // provider call. On this path the model step has normally captured one
+    // already, so this is a guard rather than a new question for the buyer.
+    const priceRm = parseInt(askingPrice, 10)
+    if (!Number.isFinite(priceRm) || priceRm < 1000 || priceRm > 2_000_000) {
+      setPlateError('Masukkan harga yang penjual minta dahulu (RM1,000 – RM2,000,000).')
+      return
+    }
+
     setPlateBusy(true)
     setPlateError(null)
 
@@ -255,7 +265,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
       const res = await fetch('/api/checks', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: attemptId }),
+        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: attemptId, askingPriceRm: priceRm }),
       })
       if (!res.ok) {
         const data = await res.json() as { error?: string }

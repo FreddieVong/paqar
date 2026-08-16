@@ -110,7 +110,7 @@ describe('paid surfaces keep every figure', () => {
   it('the report still shows the median, the chips and the count', () => {
     expect(report).toContain('Harga tengah pasaran')
     expect(report).toContain('Anggaran trade-in')
-    expect(report).toMatch(/listing serupa di pasaran/)
+    expect(report).toMatch(/iklan setanding yang kami jumpa/)
   })
 
   it('the report keeps its own provisional caution with the count', () => {

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { waitUntil } from '@vercel/functions'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis }     from '@upstash/redis'
+import { mayLookupVehicle } from '@/lib/lookup-spend-guard'
 import { plateSchema } from '@/lib/validation/plate'
 import { encrypt, hash } from '@/lib/crypto'
 import {
@@ -18,14 +17,9 @@ import { recordAdEvent } from '@/lib/db/ad-attribution'
 import { eventId as derive, SESSION_COOKIE } from '@/lib/attribution'
 import { eventForLookupStatus, isTerminalLookupStatus, VALUATION_PATHS } from '@/lib/funnel-stages'
 
-// Vehicle lookups cost RM0.81/call — cap NEW-plate lookups per IP so the free
-// teaser can't be farmed. Already-cached plates never hit the API.
-const lookupLimit = new Ratelimit({
-  redis:   Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, '1 d'),
-  prefix:  'paqar:vlookup',
-  timeout: 1000,
-})
+// The RM0.81 spend guard lives in lib/lookup-spend-guard. It FAILS CLOSED in
+// every state — unconfigured, limiter error, timeout, rate-limited, missing
+// session — so a cache miss in any of them makes zero provider calls.
 
 /**
  * The lookup retries once on a transient provider failure, so the worst case
@@ -52,8 +46,11 @@ function triggerVehicleLookup(
 ) {
   waitUntil((async () => {
     try {
-      const { success } = await lookupLimit.limit(ip).catch(() => ({ success: true }))
-      if (!success) return
+      // FAILS CLOSED. Anything short of an explicit allow — no credentials, a
+      // limiter throw, a timeout, a refusal, or no session to key on — spends
+      // nothing. See lib/lookup-spend-guard for why that asymmetry is correct.
+      const decision = await mayLookupVehicle(ip, ctx.sessionId)
+      if (!decision.allowed) return
       const outcome = await getOrFetchVehicleLookup(plate)
 
       // A legacy/unknown (null) or pending status is deliberately silent.
@@ -79,9 +76,27 @@ function triggerVehicleLookup(
   })())
 }
 
+/**
+ * askingPriceRm is REQUIRED, and is deliberately validated then DISCARDED.
+ *
+ * WHY REQUIRED. Creating a check triggers the RM0.81 provider lookup, and a
+ * check without an asking price cannot produce the thing the buyer came for —
+ * /api/checks/[id]/price-evidence answers `needs_asking_price` and stops. So a
+ * priceless check bills the provider to deliver a dead end. Enforcing it here
+ * rather than only in the form is the point: the client gate is bypassable and
+ * the call costs real money.
+ *
+ * WHY DISCARDED. The column is buyer_reports.asking_price_rm (migration 004),
+ * and a buyer_report does not exist yet at check creation. Persisting it here
+ * would need a new column on `checks` — a schema change this deliberately does
+ * not make. The existing path still owns storage: the form carries the value
+ * in the redirect query string and
+ * /api/laporan-pembeli/[checkId]/asking-price writes it via updateAskingPrice.
+ */
 const requestSchema = z.object({
   plate:           plateSchema,
   idempotencyKey:  z.string().uuid().optional(),
+  askingPriceRm:   z.number().int().min(1000).max(2_000_000),
 })
 
 export async function POST(request: NextRequest) {
