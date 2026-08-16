@@ -136,19 +136,19 @@ export default async function HomePage() {
               proceed/walk-away verdict on the car — Paqar knows nothing about
               its condition. */}
           <h1 className="font-heading font-extrabold text-[30px] md:text-[36px] leading-[1.1] tracking-[-0.03em] text-[#111827] mb-3">
-            <span className="block text-balance">Nak beli kereta ini?</span>
-            <span className="block text-[#064E4A] text-balance">Semak dulu sebelum bayar deposit.</span>
+            <span className="block text-balance">Jangan tersalah beli kereta.</span>
+            <span className="block text-[#064E4A]">Semak dulu.</span>
           </h1>
 
           <p className="font-body text-[15px] text-[#374151] mb-2 leading-relaxed text-balance">
-            Masukkan nombor plat dan harga yang penjual minta. Paqar semak maklumat
-            kenderaan dan sama ada harganya berpatutan.
+            Semak harga, rekod tuntutan kemalangan dan bacaan odometer yang pernah
+            direkodkan&mdash;sebelum bayar deposit.
           </p>
 
           {/* #6B7280 not #9CA3AF: gray-400 on white is 2.5:1 and fails WCAG AA.
               Size (13 vs 15px) and weight keep it subordinate to the subheadline. */}
           <p className="font-body text-[13px] text-[#6B7280] mb-7 leading-relaxed text-balance">
-            Semakan percuma · Tanpa daftar · Laporan penuh RM12
+            Semakan harga percuma · Laporan pembeli RM12 · Rekod tuntutan +RM88
           </p>
 
           <HomeCheckerTabs countDisplay={countDisplay} />
