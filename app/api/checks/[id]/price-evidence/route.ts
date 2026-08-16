@@ -12,6 +12,7 @@ import {
   comparableConfidence,
   isPerformanceModelText,
 }                                    from '@/lib/comparables'
+import { evaluateOfferAvailability } from '@/lib/offer'
 import type { Verdict }              from '@/types/api'
 
 export const dynamic = 'force-dynamic'
@@ -119,6 +120,16 @@ export async function GET(
   })
   const eligibility = evaluateVerdictEligibility(cohort, askingPrice)
 
+  // Whether the PAID report will contain a negotiation target. The paywall
+  // needs this to promise honestly; checkout recomputes it server-side and
+  // never trusts what is sent here. A boolean and an enum only — no count,
+  // median, range, gap, ratio, threshold, offer value or listing price crosses,
+  // so the free/paid data boundary is unchanged.
+  const offer = evaluateOfferAvailability(cohort, askingPrice)
+  const offerFields = offer.available
+    ? { offerAvailable: true,  offerReason: null }
+    : { offerAvailable: false, offerReason: offer.reason }
+
   if (eligibility.suppressionReason === 'insufficient_data') {
     // Re-scrape in the background so a thin or polluted cached row self-heals
     // before its 7-day TTL expires. /api/price-check has always done this; the
@@ -129,7 +140,7 @@ export async function GET(
     // upsert, not by request count.
     waitUntil(fetchAndCacheMarketPrices(vehicle.make, modelKeyword, vehicle.registrationYear).catch(() => {}))
     return NextResponse.json({
-      state: 'evidence', vehicle,
+      state: 'evidence', vehicle, ...offerFields,
       verdict: null, verdictStatus: 'suppressed', verdictReason: 'insufficient_data',
       confidence: comparableConfidence(cohort.count),
       cohortMode: cohort.mode, variantToken: cohort.variantToken,
@@ -140,6 +151,7 @@ export async function GET(
   const base = {
     state:        'evidence' as const,
     vehicle,
+    ...offerFields,
     confidence:   comparableConfidence(cohort.count),
     cohortMode:   cohort.mode,
     variantToken: cohort.variantToken,
