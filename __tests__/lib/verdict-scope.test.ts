@@ -136,10 +136,20 @@ describe('the plate input is a real tap target', () => {
     expect(src).toMatch(/self-stretch min-h-\[44px\]/)
   })
 
-  it('keeps mobile text at or above 16px, so iOS does not zoom on focus', () => {
-    const src = read('components/check/PlateCheckerForm.tsx')
-    const m = src.match(/text-\[(\d+)px\]/)
-    expect(m).toBeTruthy()
-    expect(Number(m![1])).toBeGreaterThanOrEqual(16)
+  it.each([
+    ['the plate field', 'components/check/PlateCheckerForm.tsx', /text-\[22px\] sm:text-\[28px\]/],
+    ['the price field', 'components/check/AskingPriceInput.tsx', /text-\[16px\]/],
+  ])('%s stays at or above 16px, so iOS does not zoom on focus', (_label, path, pattern) => {
+    expect(read(path)).toMatch(pattern)
+  })
+
+  it('no asking-price field is below 16px', () => {
+    const src = read('components/check/AskingPriceInput.tsx')
+    const sizes = [...src.matchAll(/text-\[(\d+)px\]/g)]
+      .map(m => Number(m[1]))
+      // The RM prefix is not an editable field; only what the buyer types into
+      // can trigger the iOS zoom.
+      .filter((_, i) => i > 0)
+    for (const size of sizes) expect(size).toBeGreaterThanOrEqual(16)
   })
 })

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
+import { AskingPriceInput, PRICE_INPUT_CLS } from './AskingPriceInput'
 
 export function DualCheckForm() {
   const router = useRouter()
@@ -89,23 +90,13 @@ export function DualCheckForm() {
             htmlFor="dcf-price"
             className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5"
           >
-            Harga Yang Penjual Minta (RM)
+            Harga yang penjual minta
           </label>
-          <input
+          <AskingPriceInput
             id="dcf-price"
-            type="number"
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="cth: 59000"
-            min={1000}
-            max={2000000}
-            required
-            inputMode="numeric"
-            className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
-                       font-heading font-semibold text-[16px] text-[#111827]
-                       placeholder:text-[#D1D5DB] placeholder:font-normal
-                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
-                       transition-all"
+            onChange={setPrice}
+            className={PRICE_INPUT_CLS}
           />
         </div>
 

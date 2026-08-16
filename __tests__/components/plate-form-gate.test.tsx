@@ -46,14 +46,14 @@ function fill(plate: string, price?: string) {
   const plateInput = screen.getByLabelText('Nombor plat kenderaan')
   fireEvent.change(plateInput, { target: { value: plate } })
   if (price !== undefined) {
-    fireEvent.change(screen.getByLabelText(/Harga Yang Penjual Minta/i), { target: { value: price } })
+    fireEvent.change(screen.getByLabelText(/Harga yang penjual minta/i), { target: { value: price } })
   }
 }
 // fireEvent.submit, not click: jsdom enforces the native `required` attribute
 // on a click and never runs onSubmit, which would leave the component's OWN
 // validation untested. The browser-level block is asserted separately below.
 const submit = () => fireEvent.submit(
-  screen.getByRole('button', { name: /Semak Plat Percuma/i }).closest('form')!,
+  screen.getByRole('button', { name: /Semak Harga Percuma/i }).closest('form')!,
 )
 
 afterEach(() => cleanup())
@@ -98,7 +98,9 @@ describe('the buyer enters the asking price exactly once', () => {
     submit()
     await waitFor(() => expect(screen.getByText(/Ralat/)).toBeTruthy())
     // The fields still hold what the buyer typed; retry does not clear them.
-    expect((screen.getByLabelText(/Harga Yang Penjual Minta/i) as HTMLInputElement).value).toBe('59000')
+    // Displayed with the separator, submitted without it — see the payload
+    // assertions below and lib/price-input for why that split matters.
+    expect((screen.getByLabelText(/Harga yang penjual minta/i) as HTMLInputElement).value).toBe('59,000')
     submit()
     await waitFor(() => expect(push).toHaveBeenCalled())
     expect(push.mock.calls[0]![0]).toContain('asking_price=59000')
@@ -172,5 +174,63 @@ describe('source-level guarantees', () => {
     const route = read('app/api/meta/event/route.ts')
     const metaMap = route.slice(route.indexOf('const META_EVENT'), route.indexOf('const META_EVENT') + 900)
     expect(metaMap).not.toContain('plate_form_engaged')
+  })
+})
+
+describe('formatting the field never reaches the wire', () => {
+  /**
+   * The price field shows "59,000" so a buyer cannot misread 59000 as 590000.
+   * State stays digit-only, because parseInt('59,000') is 59 — and three call
+   * sites read that string: the API body, the asking_price URL parameter, and
+   * the idempotency key. All three are asserted here against a value that was
+   * typed WITH separators and currency, the way a buyer pastes it.
+   */
+  beforeEach(() => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true, json: async () => ({ checkId: 'ch_fmt', claimToken: 'tok' }),
+    }) as unknown as typeof fetch
+  })
+
+  it('shows separators while holding digits', () => {
+    render(<PlateCheckerForm />)
+    fill('WXY1234', '59000')
+    expect((screen.getByLabelText(/Harga yang penjual minta/i) as HTMLInputElement).value).toBe('59,000')
+  })
+
+  it.each(['59,000', 'RM 59,000', 'RM59000', '59000'])('accepts %s and sends 59000', async (typed) => {
+    render(<PlateCheckerForm />)
+    fill('WXY1234', typed)
+    submit()
+    await waitFor(() => expect(push).toHaveBeenCalled())
+    const body = JSON.parse((global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0]![1].body)
+    expect(body.askingPriceRm).toBe(59_000)
+    expect(push.mock.calls[0]![0]).toContain('asking_price=59000')
+  })
+
+  it('does not re-key the submission when the price is retyped in another format', async () => {
+    // This form keys its attempt id on the PLATE (OverpricedCheckerForm is the
+    // one that folds the price in), so the guarantee here is that re-entering
+    // the same price differently does not disturb the key a retry depends on.
+    render(<PlateCheckerForm />)
+    fill('WXY1234', '59000')
+    submit()
+    await waitFor(() => expect(push).toHaveBeenCalled())
+    const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls
+    const first = JSON.parse(calls[0]![1].body).idempotencyKey
+
+    fireEvent.change(screen.getByLabelText(/Harga yang penjual minta/i), { target: { value: 'RM 59,000' } })
+    submit()
+    await waitFor(() => expect(calls.length).toBeGreaterThan(1))
+    const body = JSON.parse(calls[1]![1].body)
+    expect(body.idempotencyKey).toBe(first)
+    expect(body.askingPriceRm).toBe(59_000)
+  })
+
+  it('still refuses a below-floor price typed with separators', async () => {
+    render(<PlateCheckerForm />)
+    fill('WXY1234', '999')
+    submit()
+    await waitFor(() => expect(screen.getByText(/Masukkan harga yang penjual minta/i)).toBeTruthy())
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 })

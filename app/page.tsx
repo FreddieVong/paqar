@@ -8,6 +8,7 @@ import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleRe
 import { SocialLinks }    from '@/components/layout/SocialLinks'
 import { getCheckCount } from '@/lib/db/checks'
 import { organizationSchema, whatsappUrl } from '@/lib/site'
+import { HOME_FAQ, faqMainEntity } from '@/lib/faq/home'
 
 // Only the canonical is declared here — title/description/openGraph are
 // inherited from the root layout, which describes the homepage anyway.
@@ -31,11 +32,6 @@ const homeSchema = {
       '@type': 'WebSite',
       name: 'Paqar',
       url: 'https://paqar.my',
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: { '@type': 'EntryPoint', urlTemplate: 'https://paqar.my/?q={search_term_string}' },
-        'query-input': 'required name=search_term_string',
-      },
     },
     // sameAs is what tells Google the site, the three social profiles and the
     // Google Business Profile are one entity. The ContactPoint that used to
@@ -55,45 +51,13 @@ const homeSchema = {
     // longer offers the add-on. /semak-accident-claim-insurans-kereta keeps the
     // Service schema, where the offer is visible and its Offer node is emitted
     // only when the add-on is genuinely buyable.
+    // Every structured question below is one a visitor can read on the page:
+    // both this and the accordion map the same array. They had drifted to 4
+    // visible vs 7 structured, and Google's FAQPage guidance requires the
+    // content to be visible — the three extras existed only for the crawler.
     {
       '@type': 'FAQPage',
-      mainEntity: [
-        {
-          '@type': 'Question',
-          name: 'Apakah beza semakan percuma dan laporan RM12?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Semakan percuma beri keputusan harga — murah, wajar atau mahal — dengan penjelasan dan tahap keyakinan data. Laporan Pembeli (RM12) tambah angka pasaran penuh iaitu harga tengah dan julat, anggaran trade-in, maklumat pendaftaran kenderaan, soalan untuk penjual dan skrip rundingan.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Apa yang ada dalam Laporan Pembeli RM12 Paqar?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM12 merangkumi: keputusan harga pasaran (murah/wajar/mahal), harga tengah dan julat harga berdasarkan listing semasa, anggaran trade-in, maklumat kenderaan (tahun daftar, enjin, jenis badan, nombor rangka), skrip rundingan harga siap pakai, soalan penting untuk penjual, dan checklist sebelum bayar deposit.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Berapa harga semakan di Paqar?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Semakan harga percuma. Laporan Pembeli RM12 — satu bayaran, tanpa akaun.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Adakah saya perlu daftar akaun?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Tidak. Tiada akaun diperlukan.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Boleh guna sebelum tengok kereta?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar deposit.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Adakah Paqar dari JPJ atau PDRM?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Paqar adalah perkhidmatan pihak ketiga — bukan afiliasi JPJ atau PDRM.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Apakah had atau limitasi Paqar?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Paqar tidak mengesahkan bacaan odometer sebenar. Tidak semua kemalangan mempunyai rekod claim insurans. Rekod claim bersih tidak bermaksud kereta tiada masalah. Pengguna tetap perlu buat inspection fizikal dan tanya penjual soalan yang tepat.' },
-        },
-      ],
+      mainEntity: faqMainEntity(),
     },
   ],
 }
@@ -147,7 +111,7 @@ export default async function HomePage() {
             direkodkan&mdash;sebelum bayar deposit.
           </p>
 
-          {/* #6B7280 not #9CA3AF: gray-400 on white is 2.5:1 and fails WCAG AA.
+          {/* #6B7280 not #6B7280: gray-400 on white is 2.5:1 and fails WCAG AA.
               Size (13 vs 15px) and weight keep it subordinate to the subheadline. */}
           <p className="font-body text-[13px] text-[#6B7280] mb-7 leading-relaxed text-balance">
             Semakan harga percuma · Laporan pembeli RM12 · Rekod tuntutan +RM88
@@ -176,8 +140,8 @@ export default async function HomePage() {
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-3 border-t border-[#F3F4F6] bg-[#F9FAFB]">
                 <div className="flex items-start gap-2">
                   <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true" className="mt-0.5 flex-shrink-0">
-                    <rect x="2.5" y="6" width="9" height="6" rx="1.2" stroke="#9CA3AF" strokeWidth="1.3" />
-                    <path d="M4.75 6V4.25a2.25 2.25 0 0 1 4.5 0V6" stroke="#9CA3AF" strokeWidth="1.3" />
+                    <rect x="2.5" y="6" width="9" height="6" rx="1.2" stroke="#6B7280" strokeWidth="1.3" />
+                    <path d="M4.75 6V4.25a2.25 2.25 0 0 1 4.5 0V6" stroke="#6B7280" strokeWidth="1.3" />
                   </svg>
                   <p className="font-body text-[12px] text-[#6B7280] leading-snug">
                     Semakan rekod tuntutan &amp; bacaan odometer, jika direkodkan
@@ -194,7 +158,7 @@ export default async function HomePage() {
                 <CollapsibleSampleReport showVerdictCard={false} source="homepage_proof" />
               </div>
             </div>
-            <p className="font-body text-[10px] text-[#9CA3AF] text-center mt-2">
+            <p className="font-body text-[12px] text-[#6B7280] text-center mt-2">
               {SAMPLE_DISCLAIMER}
             </p>
           </div>
@@ -273,7 +237,7 @@ export default async function HomePage() {
                     </span>
                     <div>
                       <p className="font-heading font-bold text-[12px] text-[#111827] leading-snug">{item.title}</p>
-                      <p className="font-body text-[11px] text-[#9CA3AF] leading-snug mt-0.5">{item.desc}</p>
+                      <p className="font-body text-[11px] text-[#6B7280] leading-snug mt-0.5">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -303,7 +267,7 @@ export default async function HomePage() {
                 Bayaran bulanan, jumlah faedah, roadtax dan anggaran insurans — tahu kos sebenar sebulan.
               </p>
             </div>
-            <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 text-[18px]">→</span>
+            <span className="font-body text-[#6B7280] group-hover:text-[#064E4A] transition-colors flex-shrink-0 text-[18px]">→</span>
           </Link>
 
           {/* The RM100 accident/claim row was removed from the homepage
@@ -383,7 +347,7 @@ export default async function HomePage() {
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <p className="font-heading font-bold text-[12px] text-[#111827]">{t.name}</p>
-                    <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5">{t.car}</p>
+                    <p className="font-body text-[11px] text-[#6B7280] mt-0.5">{t.car}</p>
                   </div>
                   <span className="font-heading font-bold text-[10px] bg-[#DCFCE7] text-[#15803D] px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0">
                     {t.outcome}
@@ -407,24 +371,7 @@ export default async function HomePage() {
           </h2>
 
           <div className="flex flex-col gap-2">
-            {[
-              {
-                q: 'Apakah beza semakan percuma dan laporan RM12?',
-                a: 'Semakan percuma beri keputusan harga — murah, wajar atau mahal — dengan penjelasan dan tahap keyakinan data. Laporan Pembeli (RM12) tambah angka pasaran penuh iaitu harga tengah dan julat, anggaran trade-in, maklumat pendaftaran kenderaan, soalan untuk penjual dan skrip rundingan.',
-              },
-              {
-                q: 'Adakah saya perlu daftar akaun?',
-                a: 'Tidak. Tiada akaun diperlukan.',
-              },
-              {
-                q: 'Boleh guna sebelum tengok kereta?',
-                a: 'Ya. Sesuai guna sebelum pergi tengok kereta atau sebelum bayar deposit.',
-              },
-              {
-                q: 'Adakah Paqar dari JPJ atau PDRM?',
-                a: 'Paqar adalah perkhidmatan pihak ketiga — bukan afiliasi JPJ atau PDRM.',
-              },
-            ].map((faq) => (
+            {HOME_FAQ.map((faq) => (
               <details key={faq.q} className="group bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
                 <summary className="flex items-center justify-between p-4 cursor-pointer list-none">
                   <span className="font-heading font-bold text-[14px] text-[#111827] pr-4">{faq.q}</span>
@@ -467,7 +414,7 @@ export default async function HomePage() {
 
           <div className="space-y-5">
             <div>
-              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280] mb-2">
                 Beza varian
               </p>
               <div className="flex flex-wrap gap-2">
@@ -489,7 +436,7 @@ export default async function HomePage() {
             </div>
 
             <div>
-              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280] mb-2">
                 Bandingkan model
               </p>
               <div className="flex flex-wrap gap-2">
@@ -538,34 +485,34 @@ export default async function HomePage() {
       {/* ── FOOTER ── */}
       <footer className="bg-white border-t border-[#E5E7EB] px-5 py-6 text-center">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-4">
-          <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Checklist</Link>
+          <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Checklist</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Cara Beli</Link>
+          <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Cara Beli</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Risiko</Link>
+          <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Risiko</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Harga Model</Link>
+          <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Harga Model</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Kira Ansuran</Link>
+          <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Kira Ansuran</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Bandingkan</Link>
+          <Link href="/bandingkan" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Bandingkan</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/panduan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Semua Panduan</Link>
+          <Link href="/panduan" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Semua Panduan</Link>
         </div>
         <p className="font-body text-[12px] text-[#D1D5DB] leading-relaxed mb-2">
           © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
         </p>
         <SocialLinks className="mb-2" />
         <div className="flex items-center justify-center gap-4">
-          <Link href="/tentang" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Tentang</Link>
+          <Link href="/tentang" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Tentang</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/privasi" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Privasi</Link>
+          <Link href="/privasi" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Privasi</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/terma" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Terma</Link>
+          <Link href="/terma" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Terma</Link>
           {contactHref && (
             <>
               <span className="text-[#E5E7EB]">·</span>
-              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Hubungi Kami</a>
+              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Hubungi Kami</a>
             </>
           )}
         </div>
