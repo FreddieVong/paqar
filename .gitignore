@@ -40,3 +40,7 @@ next-env.d.ts
 .superpowers/
 supabase/.temp/
 .gstack/
+
+.env
+**/.env
+node_modules/
