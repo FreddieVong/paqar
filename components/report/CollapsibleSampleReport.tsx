@@ -30,8 +30,13 @@ export function CollapsibleSampleReport({
       >
         {open ? 'Sembunyikan contoh laporan ▲' : 'Lihat contoh laporan ▼'}
       </button>
+      {/* text-left, unconditionally. The homepage centres this component's
+          wrapper to centre the toggle, and text-align inherits — which silently
+          centred every paragraph of the expanded report, including the claim
+          records and the odometer warning. A report is a document; its
+          alignment must not depend on where the expander happens to sit. */}
       {open && (
-        <div className="mt-2">
+        <div className="mt-2 text-left">
           <SampleReportPreview showVerdictCard={showVerdictCard} />
         </div>
       )}

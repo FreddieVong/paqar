@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
 import { SAMPLE_VERDICT, SAMPLE_TIER_LABEL } from '@/components/report/SampleVerdictCard'
 
@@ -63,5 +65,31 @@ describe('every other surface is unaffected', () => {
     render(<CollapsibleSampleReport />)
     toggle()
     expect(sampleReportClicked).toHaveBeenCalledWith({ source: 'paywall' })
+  })
+})
+
+describe('the expanded report is never centred by its surroundings', () => {
+  /**
+   * The homepage centres the expander's wrapper so the toggle sits in the
+   * middle of the card. text-align inherits, so before this reset every
+   * paragraph of the expanded sample — the claim records, the odometer
+   * warning, the price evidence — rendered centred. Nothing in the report's
+   * own markup asks for that, which is why source-reading it missed it.
+   */
+  it('resets alignment on the panel, whatever the caller does', () => {
+    const { container } = render(
+      <div style={{ textAlign: 'center' }}>
+        <CollapsibleSampleReport showVerdictCard={false} source="homepage_proof" />
+      </div>,
+    )
+    toggle()
+    const panel = container.querySelector('.mt-2')
+    expect(panel?.className).toContain('text-left')
+  })
+
+  it('the homepage centres the toggle, not the document', () => {
+    const src = readFileSync(join(__dirname, '..', '..', 'app', 'page.tsx'), 'utf8')
+    // The wrapper may centre — the panel's own reset is what makes that safe.
+    expect(src).toMatch(/text-center">\s*\n\s*<CollapsibleSampleReport/)
   })
 })
