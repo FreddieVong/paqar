@@ -73,6 +73,18 @@ export const REGIME_ANNOTATIONS: { at: string; note: string }[] = [
   { at: '2026-08-16T14:14:09Z', note: 'homepage proof beat live: sample verdict result shown directly after the form' },
   { at: '2026-08-16T17:08:48Z', note: 'homepage trust pass: FAQ made visible, price input formatting, CTA "Semak Harga Percuma", AA contrast, expander/tab a11y' },
   { at: '2026-08-16T17:11:36Z', note: 'listing-price terminology corrected in the paid report and its sample' },
+  // EXPECT A STEP DOWN IN PAYWALL VIEWS AND IN CHECKOUT STARTS FROM HERE.
+  //
+  // That is the change working, not a regression. Before this, a buyer whose
+  // car had too few or too mixed comparables was still shown the pitch and
+  // still billed RM12 for a report that could not produce the negotiation
+  // target the pitch promised. Both selling surfaces now hide the pitch, and
+  // checkout refuses the bill, when no offer resolves.
+  //
+  // The conversion RATE should hold or rise: the journeys removed are ones
+  // that could never have been fulfilled. A falling rate would mean the
+  // availability threshold is too strict and is refusing sellable journeys.
+  { at: '2026-08-16T18:01:05Z', note: 'offer gate live: no pitch and no bill when the report cannot produce a negotiation target' },
 ]
 
 // ── Input rows. Field names mirror the columns exactly; nothing is invented. ──
