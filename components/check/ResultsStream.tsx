@@ -6,6 +6,8 @@ import { Button }       from '@/components/ui/button'
 import { InspectionCTA }       from '@/components/report/InspectionCTA'
 import { PaymentForm }              from '@/components/report/PaymentForm'
 import { CollapsibleSampleReport }  from '@/components/report/CollapsibleSampleReport'
+import { useOfferState }            from '@/components/report/OfferGatedSurface'
+import { isSellable }               from '@/lib/offer-state'
 import { BuyerReportPitch }         from '@/components/report/BuyerReportPitch'
 import { createClient }  from '@/lib/supabase/client'
 import { analytics }     from '@/lib/analytics'
@@ -33,6 +35,11 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
   const [authedUser,   setAuthedUser]   = useState<string | null | undefined>(undefined)
   const previewPollsRef = useRef(0)
   const teaserTrackedRef = useRef(false)
+
+  // Whether the RM12 report can produce a negotiation target for this check.
+  // A hint for rendering only — checkout re-derives it server-side and ignores
+  // anything the browser believed.
+  const offerState = useOfferState(checkId, claimToken, askingPrice ? parseInt(askingPrice, 10) : null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -125,14 +132,35 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
         </div>
       )}
 
-      <BuyerReportPitch plate={plate ?? ''} />
-      <PaymentForm
-        valuationPath="plate_check"
-        checkId={checkId}
-        claimToken={claimToken}
-        defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
-      />
-      <CollapsibleSampleReport />
+      {/* The pitch only exists when the report behind it can produce a
+          negotiation target. Checkout enforces this again server-side and fails
+          closed; this is what stops a buyer reading a promise, tapping pay, and
+          being refused. Hidden while still resolving, because withdrawing a
+          pitch a second after showing it is worse than never showing it. */}
+      {isSellable(offerState) && (
+        <>
+          <BuyerReportPitch plate={plate ?? ''} />
+          <PaymentForm
+            valuationPath="plate_check"
+            checkId={checkId}
+            claimToken={claimToken}
+            defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
+          />
+          <CollapsibleSampleReport />
+        </>
+      )}
+
+      {offerState !== 'loading' && offerState !== 'needs_asking_price' && !isSellable(offerState) && (
+        <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[14px] p-4">
+          <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
+            Laporan Pembeli tidak dijual untuk semakan ini
+          </p>
+          <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
+            Iklan setanding yang Paqar jumpa untuk kereta ini tidak cukup untuk menghasilkan
+            sasaran tawaran yang boleh dipakai. Anda tidak dicaj apa-apa.
+          </p>
+        </div>
+      )}
 
       {authedUser != null && (
         <div className="border-[1.5px] border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">

@@ -101,3 +101,17 @@ export function isOfferAvailable(
 ): boolean {
   return evaluateOfferAvailability(cohort, askingPriceRm).available
 }
+
+/**
+ * Shown when the offer gate refuses.
+ *
+ * Deliberately says Paqar will NOT charge — a buyer who was about to pay
+ * deserves to know why the option vanished, not a generic failure.
+ *
+ * It lives here rather than beside the gate that returns it because that gate
+ * is in a `'use server'` module, and such a module may export nothing but async
+ * functions. Exporting this constant from there compiles under `tsc` and fails
+ * `next build`, which is how it went unnoticed.
+ */
+export const OFFER_UNAVAILABLE_MESSAGE =
+  'Paqar belum dapat menghasilkan sasaran tawaran untuk kereta ini, jadi laporan harga tidak dijual untuk semakan ini.'

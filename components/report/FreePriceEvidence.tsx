@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import { analytics }     from '@/lib/analytics'
 import { trackAdEvent }  from '@/lib/meta-events'
 import { VERDICT_LINE } from '@/lib/verdict-copy'
+import { resolveOfferState, measurementFor, type OfferState } from '@/lib/offer-state'
+import type { OfferUnavailableReason } from '@/lib/offer'
 
 type Verdict = 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
 
@@ -16,6 +18,13 @@ type Evidence = {
   variantToken:  string | null
   // No median, range or comparable count — see the API route. Free answers
   // WHETHER the price is right; RM12 answers what to do about it.
+  //
+  // These two are the exception, and they are not evidence: they are a
+  // RENDERING HINT saying whether the paid report could produce a negotiation
+  // target at all. Neither carries a figure, and checkout re-derives its own
+  // answer server-side — see lib/server/offer-for-check.
+  offerAvailable?: boolean
+  offerReason?:    OfferUnavailableReason | null
 }
 type Response =
   | Evidence
@@ -55,11 +64,18 @@ const CONFIDENCE = {
  * none of it can leak through this component.
  */
 export function FreePriceEvidence({
-  checkId, claimToken, initialAskingPrice,
+  checkId, claimToken, initialAskingPrice, onOfferState,
 }: {
   checkId: string
   claimToken: string
   initialAskingPrice?: number
+  /**
+   * Reports the resolved offer state upward so the commercial surface beside
+   * this component can hide itself when the report cannot produce a target.
+   * This component already polls the endpoint that answers it; a second fetch
+   * would just be a second chance to disagree.
+   */
+  onOfferState?: (state: OfferState) => void
 }) {
   const [asking, setAsking]   = useState<number | null>(initialAskingPrice ?? null)
   const [input, setInput]     = useState('')
@@ -96,6 +112,27 @@ export function FreePriceEvidence({
     load()
     return () => { stop = true }
   }, [asking, checkId, claimToken])
+
+  // Offer state, on every response — including the pending ones, so the
+  // commercial surface stays hidden while the lookup is still in flight rather
+  // than flashing a pitch that a moment later turns out to be unsellable.
+  useEffect(() => {
+    // "Not fetched yet" is LOADING, not an error. resolveOfferState treats a
+    // null RESPONSE as an error and rightly fails closed, but passing it the
+    // initial null would report an error before a request was even made — and
+    // would burn the one-shot analytics event on it.
+    const state: OfferState =
+      asking == null ? 'needs_asking_price'
+        : data == null ? 'loading'
+          : resolveOfferState(data)
+    onOfferState?.(state)
+    // Once per DISTINCT state: polling repeats nothing, but a genuine
+    // transition (offer_pending → offer_available after the cohort warms) is
+    // its own data point. 'loading' is not a resolution and is not reported.
+    if (state === 'loading') return
+    const reason = data && data.state === 'evidence' ? data.offerReason ?? null : null
+    once(`offer:${state}`, () => analytics.offerStateResolved(measurementFor(state, reason)))
+  }, [data, asking, onOfferState])
 
   useEffect(() => {
     if (!data || data.state !== 'evidence') return

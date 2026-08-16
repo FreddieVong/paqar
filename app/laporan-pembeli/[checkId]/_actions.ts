@@ -2,6 +2,7 @@
 
 import { createBill, getBill }    from '@/lib/billplz'
 import { resolveOfferForCheck }  from '@/lib/server/offer-for-check'
+import { OFFER_UNAVAILABLE_MESSAGE } from '@/lib/offer'
 import { createBuyerReport,
          getBuyerReport,
          getReusableBaseBill,
@@ -194,13 +195,6 @@ export async function initiateBuyerReport(
   return run
 }
 
-/**
- * Shown when the offer gate refuses. Deliberately says Paqar will NOT charge —
- * a buyer who was about to pay deserves to know why the option vanished, not a
- * generic failure.
- */
-export const OFFER_UNAVAILABLE_MESSAGE =
-  'Paqar belum dapat menghasilkan sasaran tawaran untuk kereta ini, jadi laporan harga tidak dijual untuk semakan ini.'
 
 async function initiateBuyerReportImpl(
   params: InitiateBuyerReportParams,
