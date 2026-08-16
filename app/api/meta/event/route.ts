@@ -55,7 +55,7 @@ const PER_CHECK_STAGES = [
 const schema = z.object({
   event: z.enum([
     'landing_page_view', 'valuation_started', 'valuation_completed',
-    'plate_form_engaged', 'plate_submitted', 'plate_result_poll_timed_out',
+    'plate_submitted', 'plate_result_poll_timed_out',
     'paywall_viewed', 'payment_form_focused', 'billplz_navigation_started',
     'model_result_shown', 'model_result_no_data',
     ...PER_CHECK_STAGES,

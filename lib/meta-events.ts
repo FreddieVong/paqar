@@ -17,8 +17,6 @@ import { normalizeReferrer } from '@/lib/traffic-source'
 type BrowserEvent =
   | 'landing_page_view'
   | 'valuation_started'
-  /** Plate form engaged, before submit. Diagnostic — not in META_EVENT. */
-  | 'plate_form_engaged'
   | 'plate_submitted'
   | 'valuation_completed'
   | 'plate_result_poll_timed_out'

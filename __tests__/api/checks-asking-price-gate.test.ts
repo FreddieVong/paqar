@@ -46,6 +46,12 @@ vi.mock('@upstash/ratelimit', () => ({
   },
 }))
 
+// The spend guard FAILS CLOSED when Upstash is unconfigured, so these suites —
+// which are about entitlement/caching, not spend — must present a configured
+// environment or every lookup would be (correctly) suppressed.
+process.env.UPSTASH_REDIS_REST_URL   ??= 'https://fake.upstash.io'
+process.env.UPSTASH_REDIS_REST_TOKEN ??= 'fake-token'
+
 const { POST } = await import('@/app/api/checks/route')
 
 const PLATE = 'WXY1234'

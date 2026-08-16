@@ -36,18 +36,6 @@ export function canComplete(path: ValuationPath | null | undefined): boolean {
 export const FUNNEL_STAGES = [
   'landing_page_view',
   'valuation_started',
-  // The buyer started filling the plate form. Fires once per attempt, on first
-  // engagement, BEFORE valuation_started.
-  //
-  // It exists because the asking price became REQUIRED: a two-field gate loses
-  // some buyers who would have submitted a plate alone, and that loss was
-  // invisible. valuation_started and plate_submitted both fire in the same
-  // handler, so their ratio is always 1 and can never measure it.
-  //
-  // engaged → plate_submitted is therefore the gate's real cost. Diagnostic
-  // only; deliberately absent from META_EVENT so nothing reaches Meta and the
-  // running experiment's optimisation event is untouched.
-  'plate_form_engaged',
   'plate_submitted',
   'plate_lookup_succeeded',
   'plate_lookup_not_found',

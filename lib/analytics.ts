@@ -48,6 +48,23 @@ export const analytics = {
   ctaClicked: (props: { cta: 'workshop' | 'bjak' | 'whatsapp_share' }) =>
     posthog.capture('cta_clicked', props),
 
+  /**
+   * The buyer started filling the plate form, before anything was submitted.
+   *
+   * WHY IT EXISTS. The asking price is required, and a two-field gate loses
+   * buyers who would have submitted a plate alone. Nothing recorded that:
+   * valuation_started and plate_submitted both fire in the same submit handler,
+   * so their ratio is always 1. Paired with check_started (fired on submit,
+   * also PostHog) this makes the gate's real cost measurable inside ONE system.
+   *
+   * DELIBERATELY POSTHOG-ONLY, AND DELIBERATELY PROPERTY-FREE. It is not a
+   * funnel stage: it never reaches ad_events, so it carries no session_id, no
+   * check_id and no journey_id, and it is not in META_EVENT so nothing reaches
+   * Meta. It takes no arguments at all — there is no parameter through which a
+   * plate, a price or an identifier could later be added by accident.
+   */
+  plateFormEngaged: () => posthog.capture('plate_form_engaged'),
+
   // ── Free plate-path evidence ───────────────────────────────────────────
   // Separate from verdictViewed, which belongs to the model tab. Keeping them
   // apart is the only way to compare the two journeys' conversion.

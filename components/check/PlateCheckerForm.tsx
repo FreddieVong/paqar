@@ -45,16 +45,17 @@ export function PlateCheckerForm() {
    * The asking price is required, so a buyer who types a plate and stops at the
    * second field is a real loss that no existing event records —
    * valuation_started and plate_submitted both fire in handleSubmit, so their
-   * ratio is always 1. engaged → plate_submitted is what makes the gate's cost
-   * visible instead of assumed.
+   * ratio is always 1. Paired with analytics.checkStarted (also PostHog, fired
+   * on submit) this measures the gate's cost inside one system.
+   *
+   * PostHog only, and no arguments: it never reaches ad_events, so it carries
+   * no session, check or journey id, and there is no parameter through which a
+   * plate or price could later be added.
    */
   function markEngaged(forPlate: string) {
     if (engagedRef.current || !forPlate.trim()) return
     engagedRef.current = true
-    trackAdEvent('plate_form_engaged', {
-      attemptId:     submissionAttemptId(forPlate.trim()),
-      valuationPath: 'plate_report',
-    })
+    analytics.plateFormEngaged()
   }
 
   async function handleSubmit(e: React.FormEvent) {

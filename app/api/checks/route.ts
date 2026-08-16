@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { waitUntil } from '@vercel/functions'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis }     from '@upstash/redis'
+import { mayLookupVehicle } from '@/lib/lookup-spend-guard'
 import { plateSchema } from '@/lib/validation/plate'
 import { encrypt, hash } from '@/lib/crypto'
 import {
@@ -18,33 +17,9 @@ import { recordAdEvent } from '@/lib/db/ad-attribution'
 import { eventId as derive, SESSION_COOKIE } from '@/lib/attribution'
 import { eventForLookupStatus, isTerminalLookupStatus, VALUATION_PATHS } from '@/lib/funnel-stages'
 
-// Vehicle lookups cost RM0.81/call — cap NEW-plate lookups so the free teaser
-// can't be farmed. Already-cached plates never hit the API.
-//
-// TWO DIMENSIONS, both of which must pass.
-//
-// IP alone is a weak key: it is shared by everyone behind one CGNAT or office
-// egress (so a legitimate second buyer can be refused) and it is trivially
-// rotated (so it barely constrains anyone determined). The session cookie is
-// the opposite — stable for one real browser, cheap for an attacker to discard.
-// Neither is sufficient; together they cover each other's failure mode.
-//
-// Deliberately NOT keyed on the plate hash: plate_lookup_cache already means a
-// repeat plate never bills a second time, so a plate limiter would save nothing
-// and would refuse two different buyers checking the same advertised car.
-const lookupLimitIp = new Ratelimit({
-  redis:   Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, '1 d'),
-  prefix:  'paqar:vlookup',
-  timeout: 1000,
-})
-
-const lookupLimitSession = new Ratelimit({
-  redis:   Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(3, '1 d'),
-  prefix:  'paqar:vlookup:sess',
-  timeout: 1000,
-})
+// The RM0.81 spend guard lives in lib/lookup-spend-guard. It FAILS CLOSED in
+// every state — unconfigured, limiter error, timeout, rate-limited, missing
+// session — so a cache miss in any of them makes zero provider calls.
 
 /**
  * The lookup retries once on a transient provider failure, so the worst case
@@ -71,16 +46,11 @@ function triggerVehicleLookup(
 ) {
   waitUntil((async () => {
     try {
-      // Both limiters must allow the call. Each fails OPEN on its own error —
-      // an Upstash outage must not silently stop every lookup — but a limiter
-      // that answers "no" is always obeyed.
-      const [byIp, bySession] = await Promise.all([
-        lookupLimitIp.limit(ip).catch(() => ({ success: true })),
-        ctx.sessionId
-          ? lookupLimitSession.limit(ctx.sessionId).catch(() => ({ success: true }))
-          : Promise.resolve({ success: true }),
-      ])
-      if (!byIp.success || !bySession.success) return
+      // FAILS CLOSED. Anything short of an explicit allow — no credentials, a
+      // limiter throw, a timeout, a refusal, or no session to key on — spends
+      // nothing. See lib/lookup-spend-guard for why that asymmetry is correct.
+      const decision = await mayLookupVehicle(ip, ctx.sessionId)
+      if (!decision.allowed) return
       const outcome = await getOrFetchVehicleLookup(plate)
 
       // A legacy/unknown (null) or pending status is deliberately silent.
