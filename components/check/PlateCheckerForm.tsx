@@ -154,7 +154,7 @@ export function PlateCheckerForm() {
                 maxLength={10}
                 required
                 aria-label="Nombor plat kenderaan"
-                className="w-full bg-transparent border-none outline-none text-center font-black text-[22px] sm:text-[28px] tracking-[.15em] sm:tracking-[.2em] text-white uppercase caret-white"
+                className="w-full self-stretch min-h-[44px] bg-transparent border-none outline-none text-center font-black text-[22px] sm:text-[28px] tracking-[.15em] sm:tracking-[.2em] text-white uppercase caret-white"
                 style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
               />
               {/* Fake placeholder with blinking caret — a plate-styled input reads as
