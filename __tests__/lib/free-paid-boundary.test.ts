@@ -108,7 +108,7 @@ describe('paid surfaces keep every figure', () => {
   const report = read('components/report/BuyerReportContent.tsx')
 
   it('the report still shows the median, the chips and the count', () => {
-    expect(report).toContain('Harga tengah pasaran')
+    expect(report).toContain('Harga tengah iklan setanding')
     expect(report).toContain('Anggaran trade-in')
     expect(report).toMatch(/iklan setanding yang kami jumpa/)
   })

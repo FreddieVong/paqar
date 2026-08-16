@@ -358,7 +358,7 @@ export default async function YearModelPage({ params }: Props) {
               Harga {info.model} {year} Terpakai di Malaysia
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              {info.description} Semak harga pasaran sebenar sebelum beli.
+              {info.description} Semak kedudukan harga berbanding iklan setanding sebelum beli.
             </p>
           </div>
 

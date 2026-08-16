@@ -77,7 +77,7 @@ describe('one-listing cohort', () => {
 
   it('shows no market median line', () => {
     const { container } = renderReport([45_000])
-    expect(container.textContent).not.toContain('Harga tengah pasaran')
+    expect(container.textContent).not.toContain('Harga tengah iklan setanding')
   })
 
   it('shows no trade-in estimate', () => {
@@ -90,7 +90,7 @@ describe('one-listing cohort', () => {
     // must not appear is one ad dressed up as "the market median".
     const { container } = renderReport([45_000])
     const text = container.textContent ?? ''
-    expect(text).not.toContain('Harga tengah pasaran')
+    expect(text).not.toContain('Harga tengah iklan setanding')
     expect(text).not.toContain('Anggaran trade-in')
   })
 
@@ -112,7 +112,7 @@ describe('one-listing cohort', () => {
     expect(text).toContain('Anggaran berdasarkan susut nilai')
     expect(text).toContain('Belum cukup iklan setanding untuk beri keputusan harga pasaran')
     expect(text).toContain('bukan harga pasaran semasa')
-    expect(text).not.toContain('Harga tengah pasaran')
+    expect(text).not.toContain('Harga tengah iklan setanding')
     expect(text).not.toContain('Anggaran trade-in')
     expect(zeroCurrency(text)).toEqual([])
   })
@@ -130,7 +130,7 @@ describe('two-listing cohort', () => {
     const { container } = renderReport([45_000, 47_000])
     const text = container.textContent ?? ''
     expect(zeroCurrency(text)).toEqual([])
-    expect(text).not.toContain('Harga tengah pasaran')
+    expect(text).not.toContain('Harga tengah iklan setanding')
     expect(text).not.toContain('Anggaran trade-in')
   })
 
@@ -198,8 +198,8 @@ describe('normal cohort (5+ listings)', () => {
   it('renders the market evidence block with a real median', () => {
     const { container } = renderReport(prices)
     const text = container.textContent ?? ''
-    expect(text).toContain('Bukti Harga Pasaran')
-    expect(text).toContain('Harga tengah pasaran')
+    expect(text).toContain('Bukti daripada Iklan Setanding')
+    expect(text).toContain('Harga tengah iklan setanding')
     expect(zeroCurrency(text)).toEqual([])
   })
 
@@ -228,14 +228,14 @@ describe('no asking price', () => {
 describe('insufficient-data page copy leaks', () => {
   it('does not title the found ads as evidence of a market price', () => {
     const text = renderWithNewPrice([45_000]).container.textContent ?? ''
-    expect(text).not.toContain('Bukti Harga Pasaran')
+    expect(text).not.toContain('Bukti daripada Iklan Setanding')
     expect(text).toContain('Iklan Dijumpai')
   })
 
   it('keeps that title once the cohort is eligible', () => {
     const text = renderWithNewPrice([42_000, 44_000, 45_000, 46_000, 48_000, 50_000], 62_000)
       .container.textContent ?? ''
-    expect(text).toContain('Bukti Harga Pasaran')
+    expect(text).toContain('Bukti daripada Iklan Setanding')
   })
 
   it('does not interpret the new price against a single-ad median', () => {
