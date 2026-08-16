@@ -127,10 +127,14 @@ describe('paid surfaces keep every figure', () => {
 })
 
 describe('CTA copy is true now that figures are paid', () => {
-  it('both paths promise the market price and the offer amount', () => {
-    expect(read('components/report/BuyerReportPitch.tsx')).toContain('Lihat harga pasaran sebenar')
+  it('both paths promise a price figure and the offer amount', () => {
+    // Rescoped from "harga pasaran sebenar" (the REAL market price) to the
+    // median of the comparable adverts Paqar actually found. The PROMISE is
+    // unchanged — a figure plus the amount to offer — and both paths still
+    // make the same one. See lib/verdict-copy.
+    expect(read('components/report/BuyerReportPitch.tsx')).toContain('Lihat harga tengah iklan setanding')
     expect(read('components/check/OverpricedCheckerForm.tsx'))
-      .toContain('Lihat harga pasaran sebenar dan jumlah yang patut anda tawarkan — RM12')
+      .toContain('Lihat harga tengah iklan setanding dan jumlah yang patut anda tawarkan — RM12')
   })
 
   it('the homepage does not advertise the range as free', () => {

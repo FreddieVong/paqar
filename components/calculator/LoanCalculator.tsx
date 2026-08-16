@@ -282,7 +282,7 @@ export function LoanCalculator() {
               Harga RM{fmt(priceNum)} ni berpatutan ke?
             </p>
             <p className="font-body text-[12px] text-[#6B7280] mt-0.5">
-              Semak harga pasaran sebenar — percuma, 10 saat.
+              Semak harga kereta ini — percuma, 10 saat.
             </p>
           </div>
           <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3 text-[18px]">→</span>

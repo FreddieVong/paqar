@@ -40,7 +40,7 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
             before paying a deposit; this is the answer to that, not a pitch
             for a different product. */}
         <p className="font-heading font-extrabold text-[15px] leading-snug text-white mb-2 tracking-tight">
-          Lihat harga pasaran sebenar<br />dan jumlah yang patut anda tawarkan.
+          Lihat harga tengah iklan setanding<br />dan jumlah yang patut anda tawarkan.
         </p>
         <p className="font-body text-[11px] text-white/55 leading-relaxed">
           Laporan penuh RM12 — harga tengah dan julat pasaran, sasaran rundingan,

@@ -7,6 +7,7 @@ import { analytics }   from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
 import { trackAdEvent } from '@/lib/meta-events'
 import { BRANDS, MODELS_BY_BRAND } from '@/lib/model-catalog'
+import { VERDICT_LINE, PAID_REPORT_CTA_SUB } from '@/lib/verdict-copy'
 
 // Shared by the verdict and the suppressed-verdict branches: a mixed-variant
 // cohort still has a real, useful range, and the buyer deserves to know how
@@ -38,14 +39,6 @@ function ConfidenceChip({ level }: { level: 'low' | 'medium' | 'high' }) {
 
 type FormState = 'idle' | 'loading' | 'result' | 'error'
 
-/** One qualitative sentence per verdict. Deliberately free of figures: the
- *  numbers are what RM12 sells. */
-const VERDICT_LINE: Record<Verdict, string> = {
-  overpriced:    'Harga ini berada di atas paras pasaran semasa untuk kereta ini.',
-  slightly_high: 'Harga ini sedikit di atas paras pasaran semasa.',
-  fair_price:    'Harga ini berada dalam paras pasaran semasa.',
-  good_deal:     'Harga ini di bawah paras pasaran semasa — semak sebabnya.',
-}
 
 const VERDICT_CONFIG: Record<Verdict, {
   badge:        string
@@ -61,7 +54,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#FEF2F2]',
     cardBorder: 'border-[#FECACA]',
     copy:       () => '',
-    ctaSub:     'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
+    ctaSub:     PAID_REPORT_CTA_SUB,
   },
   slightly_high: {
     badge:      'AGAK MAHAL',
@@ -69,7 +62,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#FFFBEB]',
     cardBorder: 'border-[#FDE68A]',
     copy:       () => 'Ada ruang untuk tawar turun.',
-    ctaSub:     'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
+    ctaSub:     PAID_REPORT_CTA_SUB,
   },
   fair_price: {
     badge:      'WAJAR',
@@ -77,7 +70,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#F0FDF4]',
     cardBorder: 'border-[#BBF7D0]',
     copy:       () => 'Semak maklumat kenderaan dan soalan untuk penjual sebelum setuju.',
-    ctaSub:     'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
+    ctaSub:     PAID_REPORT_CTA_SUB,
   },
   good_deal: {
     badge:      'BERBALOI',
@@ -85,7 +78,7 @@ const VERDICT_CONFIG: Record<Verdict, {
     cardBg:     'bg-[#F0FAFA]',
     cardBorder: 'border-[#99D4D1]',
     copy:       () => 'Tapi kenapa murah? Semak sejarah kemalangan sebelum bayar deposit.',
-    ctaSub:     'Harga pasaran sebenar · Maklumat kenderaan · Skrip rundingan',
+    ctaSub:     PAID_REPORT_CTA_SUB,
   },
 }
 
@@ -491,7 +484,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
                 maxLength={10}
                 required
                 aria-label="Nombor plat kenderaan"
-                className="w-full bg-transparent border-none outline-none text-center font-black text-[22px] sm:text-[28px] tracking-[.15em] sm:tracking-[.2em] text-white uppercase caret-white"
+                className="w-full self-stretch min-h-[44px] bg-transparent border-none outline-none text-center font-black text-[22px] sm:text-[28px] tracking-[.15em] sm:tracking-[.2em] text-white uppercase caret-white"
                 style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
               />
               {/* Fake placeholder with blinking caret — plate-styled input reads as
@@ -517,7 +510,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             type="submit" disabled={plateBusy}
             className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center transition-colors disabled:opacity-60"
           >
-            {plateBusy ? 'Memproses…' : 'Lihat harga pasaran sebenar dan jumlah yang patut anda tawarkan — RM12'}
+            {plateBusy ? 'Memproses…' : 'Lihat harga tengah iklan setanding dan jumlah yang patut anda tawarkan — RM12'}
           </button>
         </form>
 

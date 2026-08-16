@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { analytics }     from '@/lib/analytics'
 import { trackAdEvent }  from '@/lib/meta-events'
+import { VERDICT_LINE } from '@/lib/verdict-copy'
 
 type Verdict = 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
 
@@ -22,11 +23,13 @@ type Response =
   | { state: 'pending_market' }
   | { state: 'needs_asking_price' }
 
+// Styling stays here; the SENTENCE comes from lib/verdict-copy so the model tab
+// and the plate tab can never describe the same verdict differently.
 const VERDICT = {
-  overpriced:    { badge: 'MAHAL',      cls: 'bg-[#DC2626] text-white', card: 'bg-[#FEF2F2] border-[#FECACA]', line: 'Harga ini berada di atas paras pasaran semasa untuk kereta ini.' },
-  slightly_high: { badge: 'AGAK MAHAL', cls: 'bg-[#B45309] text-white', card: 'bg-[#FFFBEB] border-[#FDE68A]', line: 'Harga ini sedikit di atas paras pasaran semasa.' },
-  fair_price:    { badge: 'WAJAR',      cls: 'bg-[#064E4A] text-white', card: 'bg-[#F0FDF4] border-[#BBF7D0]', line: 'Harga ini berada dalam paras pasaran semasa.' },
-  good_deal:     { badge: 'BERBALOI',   cls: 'bg-[#0891B2] text-white', card: 'bg-[#F0FAFA] border-[#99D4D1]', line: 'Harga ini di bawah paras pasaran semasa — semak sebabnya.' },
+  overpriced:    { badge: 'MAHAL',      cls: 'bg-[#DC2626] text-white', card: 'bg-[#FEF2F2] border-[#FECACA]', line: VERDICT_LINE.overpriced },
+  slightly_high: { badge: 'AGAK MAHAL', cls: 'bg-[#B45309] text-white', card: 'bg-[#FFFBEB] border-[#FDE68A]', line: VERDICT_LINE.slightly_high },
+  fair_price:    { badge: 'WAJAR',      cls: 'bg-[#064E4A] text-white', card: 'bg-[#F0FDF4] border-[#BBF7D0]', line: VERDICT_LINE.fair_price },
+  good_deal:     { badge: 'BERBALOI',   cls: 'bg-[#0891B2] text-white', card: 'bg-[#F0FAFA] border-[#99D4D1]', line: VERDICT_LINE.good_deal },
 } as const
 
 // `low` also carries the provisional meaning: a 3–4 comparable cohort is always
