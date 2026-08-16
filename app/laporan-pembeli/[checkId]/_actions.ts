@@ -1,6 +1,8 @@
 'use server'
 
 import { createBill, getBill }    from '@/lib/billplz'
+import { resolveOfferForCheck }  from '@/lib/server/offer-for-check'
+import { OFFER_UNAVAILABLE_MESSAGE } from '@/lib/offer'
 import { createBuyerReport,
          getBuyerReport,
          getReusableBaseBill,
@@ -193,6 +195,7 @@ export async function initiateBuyerReport(
   return run
 }
 
+
 async function initiateBuyerReportImpl(
   params: InitiateBuyerReportParams,
 ): Promise<{ error: string | null; billUrl?: string; billId?: string }> {
@@ -226,6 +229,29 @@ async function initiateBuyerReportImpl(
   // by a stale tab, a back button, or a page that forgot to ask.
   if (await checkHasPaidReport(params.checkId).catch(() => false)) {
     return { error: 'Laporan ini sudah dibayar — buka laporan anda dari pautan asal atau e-mel resit.' }
+  }
+
+  // OFFER GATE — the server decides whether Paqar may sell, every time.
+  //
+  // The paywall promises a negotiation target. If the report cannot produce
+  // one, taking RM12 is charging for a headline the product cannot deliver.
+  //
+  // Recomputed HERE from the database rather than trusting anything the client
+  // sent: `offerAvailable` crosses to the browser only so the paywall can
+  // render honestly, and a rendering hint is not authorisation. A stale tab, an
+  // edited response, or a cohort that changed since the pitch rendered must not
+  // be able to open a charge.
+  //
+  // Cache reads only — no provider call, no scrape. A checkout attempt is not a
+  // reason to queue a scraper job.
+  const offerCheck = await resolveOfferForCheck({
+    plateEncrypted: row.check.plate_encrypted as string,
+    askingPriceRm:  params.askingPriceRm ?? null,
+  }).catch(() => null)
+
+  // Fail CLOSED. An unresolved gate is not permission to sell.
+  if (!offerCheck || offerCheck.status !== 'resolved' || !offerCheck.offer.available) {
+    return { error: OFFER_UNAVAILABLE_MESSAGE }
   }
 
   // Hoisted above the reuse check: which product the buyer is asking for

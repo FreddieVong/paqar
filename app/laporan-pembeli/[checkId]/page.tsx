@@ -10,7 +10,7 @@ import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
-import { FreePriceEvidence }   from '@/components/report/FreePriceEvidence'
+import { OfferGatedSurface }   from '@/components/report/OfferGatedSurface'
 import { PaidReportCtaTracker } from '@/components/report/PaidReportCtaTracker'
 import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
 import { VehiclePreviewTeaser } from '@/components/report/VehiclePreviewTeaser'
@@ -222,24 +222,41 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   price is fair; until now that number was only prefilled into
                   checkout. This keeps the promise, and gives the ad path the
                   same proof the model tab has always given away. */}
-              <FreePriceEvidence
+              {/* The pitch and the pay button only exist when the report can
+                  produce a negotiation target. Checkout enforces this again
+                  server-side and fails closed; this is what stops the buyer
+                  reading a promise that would then be refused. */}
+              <OfferGatedSurface
                 checkId={params.checkId}
                 claimToken={claimToken}
                 initialAskingPrice={
                   searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined
                 }
-              />
-              {/* plate="" — the page header above already shows the plate;
-                  the pitch's plate block is only load-bearing on /check/[id] */}
-              <PaidReportCtaTracker checkId={params.checkId} hasFreeVerdict={true} />
-              <BuyerReportPitch plate="" />
-              <PaymentForm
-                checkId={params.checkId}
-                claimToken={claimToken}
-                valuationPath="plate_report"
-                defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
-              />
-              <CollapsibleSampleReport />
+                unavailable={
+                  <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[14px] p-5">
+                    <p className="font-heading font-bold text-[14px] text-[#111827] mb-1">
+                      Laporan Pembeli tidak dijual untuk semakan ini
+                    </p>
+                    <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
+                      Iklan setanding yang Paqar jumpa untuk kereta ini tidak cukup untuk
+                      menghasilkan sasaran tawaran yang boleh dipakai. Keputusan harga
+                      percuma di atas kekal sah. Anda tidak dicaj apa-apa.
+                    </p>
+                  </div>
+                }
+              >
+                {/* plate="" — the page header above already shows the plate;
+                    the pitch's plate block is only load-bearing on /check/[id] */}
+                <PaidReportCtaTracker checkId={params.checkId} hasFreeVerdict={true} />
+                <BuyerReportPitch plate="" />
+                <PaymentForm
+                  checkId={params.checkId}
+                  claimToken={claimToken}
+                  valuationPath="plate_report"
+                  defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
+                />
+                <CollapsibleSampleReport />
+              </OfferGatedSurface>
             </>
           ) : (
             <>
