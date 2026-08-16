@@ -17,7 +17,10 @@ import { SampleReportLink } from './SampleReportLink'
 const STACK = [
   { title: 'Anggaran rundingan',          desc: 'Sasaran harga untuk mula tawar, dikira dari harga tengah pasaran.' },
   { title: 'Skrip bercakap dengan penjual', desc: 'Ayat siap untuk WhatsApp, dengan angka pasaran kereta ini.' },
-  { title: 'Maklumat kenderaan (JPJ)',    desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
+  // NOT "(JPJ)". The lookup provider names no Malaysian source, so Paqar
+  // cannot attribute these fields to JPJ. Same correction as the report, the
+  // sample and the homepage — this paywall was the surface those three missed.
+  { title: 'Maklumat pendaftaran kenderaan', desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
   { title: 'Senarai semak sebelum deposit', desc: 'Soalan untuk penjual dan perkara wajib semak sebelum bayar.' },
 ]
 

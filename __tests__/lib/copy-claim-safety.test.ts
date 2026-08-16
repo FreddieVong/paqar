@@ -36,11 +36,20 @@ const CLAIM_SURFACES = [
   'components/report/SampleReportPreview.tsx',
   'app/api/og/route.tsx',
   'lib/email/retarget-template.ts',
+  // The paywall pitch. Added after production QA found it still saying
+  // "Maklumat kenderaan (JPJ)" — the same claim, on the one surface the first
+  // sweep missed, and the surface a buyer reads immediately before paying.
+  'components/report/BuyerReportPitch.tsx',
+  // The homepage carries the same feature list.
+  'app/page.tsx',
 ]
 
 describe('provenance is never attributed to JPJ', () => {
   it.each(CLAIM_SURFACES)('%s does not claim JPJ as the data source', (path) => {
-    expect(code(read(path))).not.toMatch(/Sumber:\s*JPJ/)
+    const src = code(read(path))
+    expect(src).not.toMatch(/Sumber:\s*JPJ/)
+    // Also catches the paywall's "Maklumat kenderaan (JPJ)" phrasing.
+    expect(src).not.toMatch(/kenderaan\s*\(JPJ\)/)
   })
 
   it('the report and the sample agree on the provenance label', () => {
