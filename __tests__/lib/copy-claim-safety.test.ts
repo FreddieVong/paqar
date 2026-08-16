@@ -274,3 +274,70 @@ describe('the hero still sells only the free outcome it can deliver', () => {
     }
   })
 })
+
+/**
+ * ASKING PRICES ARE NOT THE MARKET — ON EVERY SURFACE THAT SHOWS THEM
+ *
+ * The cohort is at most 15 adverts (dedupeAndCap), from one site
+ * (mudah-market.ts), up to CACHE_TTL_DAYS old, and priced at what sellers are
+ * ASKING. None of that is "the market", and none of it is what a car sold for.
+ *
+ * The correction had been applied to the verdict lines, the paid CTAs and the
+ * sample's top card, but the LIVE PAID REPORT still said "Market semasa" over
+ * its range and "Bukti Harga Pasaran" over its evidence — the exact drift a
+ * shared source is supposed to prevent. So this suite covers the sample and
+ * the real report together: a fix to one that misses the other is the bug.
+ */
+describe('no surface calls advertised prices "the market"', () => {
+  const PRICE_SURFACES = [
+    'components/report/BuyerReportContent.tsx',
+    'components/report/SampleReportPreview.tsx',
+    'components/report/SampleVerdictCard.tsx',
+    'app/page.tsx',
+    'app/semak-accident-claim-insurans-kereta/page.tsx',
+    'app/harga-model/[slug]/page.tsx',
+  ]
+
+  it.each(PRICE_SURFACES)('%s uses listing language for its figures', (path) => {
+    const src = code(read(path))
+    expect(src).not.toContain('Market semasa')
+    expect(src).not.toContain('Bukti Harga Pasaran')
+    expect(src).not.toContain('Harga tengah pasaran')
+    expect(src).not.toContain('harga pasaran sebenar')
+  })
+
+  it('labels the range, the evidence and the median as listing-derived', () => {
+    // The paid report and its sample must agree label for label, or the sample
+    // is advertising a report the buyer does not receive.
+    for (const path of ['components/report/BuyerReportContent.tsx',
+                        'components/report/SampleReportPreview.tsx']) {
+      const src = read(path)
+      expect(src).toContain('Bukti daripada Iklan Setanding')
+      expect(src).toContain('Harga tengah iklan setanding')
+    }
+    expect(read('components/report/BuyerReportContent.tsx')).toContain('Julat iklan setanding')
+    expect(read('components/report/SampleVerdictCard.tsx')).toContain('Julat iklan setanding')
+  })
+
+  it('qualifies every figure as an asking price in BOTH reports', () => {
+    for (const path of ['components/report/BuyerReportContent.tsx',
+                        'components/report/SampleReportPreview.tsx']) {
+      expect(read(path)).toContain('Berdasarkan harga yang diiklankan, bukan harga jualan akhir.')
+    }
+  })
+
+  it('does not assert how often sellers disclose a history', () => {
+    // Paqar has measured nothing about seller behaviour, and it shows CLAIM
+    // records rather than accident records.
+    const src = code(read('app/page.tsx'))
+    expect(src).not.toContain('jarang diberitahu awal-awal')
+    expect(src).toContain('Rekod tuntutan atau banjir tidak semestinya diberitahu awal-awal.')
+  })
+
+  it('keeps the sample size visible — the claim narrows, the evidence does not', () => {
+    expect(read('components/report/BuyerReportContent.tsx'))
+      .toMatch(/Berdasarkan \$\{mPrices\.length\} iklan setanding yang kami jumpa/)
+    expect(read('components/report/SampleReportPreview.tsx'))
+      .toContain('Berdasarkan 10 iklan setanding yang kami jumpa')
+  })
+})

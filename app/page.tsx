@@ -224,7 +224,7 @@ export default async function HomePage() {
               <div className="px-4 py-1 border-b border-[#F3F4F6]">
                 {[
                   { title: 'Skrip rundingan harga',            desc: 'Bantu anda bincang berdasarkan data.' },
-                  { title: 'Harga pasaran & anggaran trade-in', desc: 'Faham harga sebenar dan ruang rundingan anda.' },
+                  { title: 'Bukti harga & anggaran trade-in', desc: 'Faham kedudukan harga dan ruang rundingan anda.' },
                   // Not "(JPJ)" — the lookup provider names no Malaysian source,
                   // so Paqar cannot attribute these fields to JPJ. Same
                   // correction as the report's own provenance label.
@@ -298,13 +298,13 @@ export default async function HomePage() {
             <span className="text-[#F59E0B]">Ramai pembeli tidak.</span>
           </h2>
           <p className="font-body text-[14px] text-white/60 leading-relaxed mb-5">
-            Harga pasaran berubah ikut model, tahun, varian, warna dan rekod kereta. Penjual berpengalaman tahu semua ini. Pembeli biasa selalunya tidak. Di situlah ramai orang bayar lebih.
+            Harga yang diiklankan berubah ikut model, tahun, varian, warna dan rekod kereta. Penjual berpengalaman tahu semua ini. Pembeli biasa selalunya tidak. Di situlah ramai orang bayar lebih.
           </p>
           <div className="h-px bg-white/7 mb-5" />
           <div className="flex flex-col gap-4">
             {[
-              'Harga yang penjual minta belum tentu mencerminkan harga pasaran sebenar.',
-              'Kereta dengan rekod kemalangan atau banjir jarang diberitahu awal-awal.',
+              'Harga yang penjual minta belum tentu selari dengan iklan kereta setanding.',
+              'Rekod tuntutan atau banjir tidak semestinya diberitahu awal-awal.',
               'Deposit yang dah dibayar susah nak dapat balik bila masalah muncul kemudian.',
             ].map((risk) => (
               <div key={risk} className="flex gap-3 items-start">

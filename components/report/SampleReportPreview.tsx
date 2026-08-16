@@ -198,9 +198,9 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
             <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
             <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
           </div>
-          <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti Harga Pasaran</p>
+          <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti daripada Iklan Setanding</p>
           <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2 mb-2">
-            <p className="font-body text-[12px] text-[#6B7280]">Harga tengah pasaran</p>
+            <p className="font-body text-[12px] text-[#6B7280]">Harga tengah iklan setanding</p>
             <p className="font-heading font-bold text-[13px] text-[#064E4A]">RM42,750</p>
           </div>
           <div className="flex flex-wrap gap-1.5 mb-2">
@@ -212,6 +212,11 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
           </div>
           <p className="font-body text-[11px] text-[#6B7280] mb-1">
             Berdasarkan 10 iklan setanding yang kami jumpa
+          </p>
+          {/* Same qualifier as the real report, in the same place — the sample
+              must not promise a provenance the report then walks back. */}
+          <p className="font-body text-[11px] text-[#6B7280] mb-2">
+            Berdasarkan harga yang diiklankan, bukan harga jualan akhir.
           </p>
           <div className="mb-3">
             <div className="flex items-center gap-1.5">

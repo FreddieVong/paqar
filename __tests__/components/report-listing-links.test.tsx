@@ -233,7 +233,7 @@ describe('the rest of the RM12 report is unchanged', () => {
   it('still renders median, range, trade-in, confidence and methodology', () => {
     const { container } = renderReport(mixed)
     const text = container.textContent ?? ''
-    expect(text).toContain('Harga tengah pasaran')
+    expect(text).toContain('Harga tengah iklan setanding')
     expect(text).toContain('Anggaran trade-in')
     expect(text).toMatch(/Berdasarkan \d+ iklan/)
     expect(text).toMatch(/Keyakinan data|Data pasaran terhad/)
