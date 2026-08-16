@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: 'Bandingkan harga kereta terpakai Malaysia side-by-side. Myvi vs Axia, Vios vs City, Bezza vs Saga, Alza vs X50.',
   alternates: { canonical: 'https://paqar.my/bandingkan' },
   openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
     title: 'Bandingkan Kereta Terpakai Malaysia — Myvi vs Axia, Vios vs City',
     description: 'Bandingkan harga kereta terpakai Malaysia side-by-side. Myvi vs Axia, Vios vs City, Bezza vs Saga, Alza vs X50.',
     url: 'https://paqar.my/bandingkan',

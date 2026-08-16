@@ -5,12 +5,16 @@ import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 
 export const metadata: Metadata = {
   title: 'Kereta Pertama Terbaik Bawah RM30k di Malaysia | Paqar',
-  description: 'Panduan pilih kereta pertama terpakai bawah RM30,000. Banding Perodua Myvi, Honda City dan Toyota Vios — anggaran harga, tip pembeli, dan cara semak harga pasaran sebenar.',
+  description: 'Panduan pilih kereta pertama terpakai bawah RM30,000. Banding Perodua Myvi, Honda City dan Toyota Vios — anggaran harga, tip pembeli, dan cara semak harga berbanding iklan setanding.',
   alternates: { canonical: 'https://paqar.my/faq/best-first-car-under-30k' },
   openGraph: {
     title: 'Kereta Pertama Terbaik Bawah RM30k di Malaysia',
-    description: 'Panduan jujur pilih kereta pertama: model mana pegang nilai, mana patut elak, dan cara semak harga pasaran sebenar.',
+    description: 'Panduan jujur pilih kereta pertama: model mana pegang nilai, mana patut elak, dan cara semak harga berbanding iklan setanding.',
+    url: 'https://paqar.my/faq/best-first-car-under-30k',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
     type: 'article',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
   },
 }
 
@@ -266,7 +270,7 @@ export default function FirstCarUnder30k() {
               <div className="border-b pb-6">
                 <h3 className="text-lg font-semibold text-[#111827] mb-2">Berapa patut saya tawar untuk Myvi yang disenaraikan RM28k?</h3>
                 <p className="text-[#374151]">
-                  Semak harga tengah pasaran untuk tahun dan varian tersebut. Kalau harga tengah RM26k tapi penjual minta RM28k, tawar RM24–25k. Ruang rundingan biasa: RM1–3k.
+                  Semak harga tengah iklan setanding untuk tahun dan varian tersebut. Kalau harga tengah iklan RM26k tapi penjual minta RM28k, tawar RM24–25k. Ruang rundingan biasa: RM1–3k.
                 </p>
               </div>
 

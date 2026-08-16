@@ -10,11 +10,26 @@ import { getCheckCount } from '@/lib/db/checks'
 import { organizationSchema, whatsappUrl } from '@/lib/site'
 import { HOME_FAQ, faqMainEntity } from '@/lib/faq/home'
 
-// Only the canonical is declared here — title/description/openGraph are
-// inherited from the root layout, which describes the homepage anyway.
-// This used to live in the layout, where it leaked onto every other page.
+// Title, description and the social image are inherited from the root layout,
+// which describes the homepage anyway. og:url is declared HERE because the root
+// no longer sets one: a url in the layout became og:url on every page that
+// declared no openGraph of its own, and all seven FAQ guides were shipping
+// the homepage's URL as their own. The homepage is the one page for which
+// https://paqar.my is genuinely correct, so it says so itself.
 export const metadata: Metadata = {
   alternates: { canonical: 'https://paqar.my' },
+  // Restated in full, not partially. A child `openGraph` REPLACES the root's
+  // rather than merging into it, so declaring only `url` here erased the
+  // locale and the image — scripts/seo-check.mjs caught exactly that. Title
+  // and description still resolve from `metadata.title`/`description`, which
+  // the root supplies and which genuinely describe this page.
+  openGraph: {
+    url: 'https://paqar.my',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'website',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+  },
 }
 
 // ISR: without this the page is fully static and the social-proof check count

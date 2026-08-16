@@ -180,7 +180,9 @@ describe('prose describing the free tier promises no paid figure', () => {
   it('/tentang describes free as a verdict, not a gap', () => {
     const src = read('app/tentang/page.tsx')
     // The free block runs from its heading to the RM12 heading below it.
-    const block = src.split('Semak harga pasaran — percuma')[1]!.split('Laporan Pembeli — RM12')[0]!
+    // Heading renamed from "Semak harga pasaran": Paqar checks the ASKING
+    // price against comparable adverts, it does not know a market price.
+    const block = src.split('Semak harga yang diminta — percuma')[1]!.split('Laporan Pembeli — RM12')[0]!
     for (const claim of FREE_CLAIMS) {
       expect(block, `/tentang free block still claims ${claim}`).not.toMatch(claim)
     }

@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: 'Terma dan syarat penggunaan perkhidmatan Paqar — semakan status kenderaan pihak ketiga di Malaysia.',
   alternates: { canonical: 'https://paqar.my/terma' },
   openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
     title: 'Terma & Syarat | Paqar',
     description: 'Terma dan syarat penggunaan perkhidmatan Paqar — semakan status kenderaan pihak ketiga di Malaysia.',
     url: 'https://paqar.my/terma',

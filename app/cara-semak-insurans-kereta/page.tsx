@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   description: 'Cara semak status insurans kereta Malaysia — sama ada masih aktif, tamat, atau perlu diperbaharui. Penting sebelum beli atau pandu kereta terpakai.',
   alternates: { canonical: 'https://paqar.my/cara-semak-insurans-kereta' },
   openGraph: {
+      locale: 'ms_MY',
     title: `Cara Semak Insurans Kereta Malaysia ${YEAR}`,
     description: 'Cara semak status insurans kereta Malaysia — sama ada masih aktif, tamat, atau perlu diperbaharui. Penting sebelum beli atau pandu kereta terpakai.',
     url: 'https://paqar.my/cara-semak-insurans-kereta',

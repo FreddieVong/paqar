@@ -296,6 +296,32 @@ describe('no surface calls advertised prices "the market"', () => {
     'app/page.tsx',
     'app/semak-accident-claim-insurans-kereta/page.tsx',
     'app/harga-model/[slug]/page.tsx',
+    // Added after an SEO reconciliation found the same overclaim alive on
+    // every surface the earlier sweeps had not listed. The pattern is now
+    // familiar: the fix lands on the surfaces someone remembered, and the
+    // wording survives everywhere else. These are the rest of the INDEXABLE
+    // public templates plus the two paid-pitch components.
+    'components/report/BuyerReportPitch.tsx',   // the paywall a buyer reads before paying
+    'app/tentang/page.tsx',                     // said "Angka pasaran penuh"
+    'app/faq/page.tsx',
+    'app/faq/best-first-car-under-30k/page.tsx',
+    'app/faq/honda-city-buying-guide/page.tsx',
+    'app/faq/toyota-vios-buying-guide/page.tsx',
+    'app/faq/honda-city-vs-toyota-vios/page.tsx',
+    'app/faq/how-to-negotiate-used-car/page.tsx',
+    'app/faq/how-to-spot-flood-cars/page.tsx',
+    'app/faq/what-to-check-buying-used-car/page.tsx',
+    'app/faq/roadtax-by-state/page.tsx',
+    'app/harga-kereta-terpakai/[model]/page.tsx',
+    'app/harga-kereta-terpakai/page.tsx',
+    'app/bandingkan/[slug]/page.tsx',
+    'app/varian/[model]/page.tsx',
+    'app/contoh-laporan/page.tsx',
+    'app/laporan-pembeli-kereta-terpakai/page.tsx',
+    'app/cara-beli-kereta-terpakai/page.tsx',
+    'app/checklist-beli-kereta-terpakai/page.tsx',
+    'app/risiko-beli-kereta-terpakai/page.tsx',
+    'lib/email/retarget-template.ts',           // same product claim, different channel
   ]
 
   it.each(PRICE_SURFACES)('%s uses listing language for its figures', (path) => {
@@ -303,7 +329,30 @@ describe('no surface calls advertised prices "the market"', () => {
     expect(src).not.toContain('Market semasa')
     expect(src).not.toContain('Bukti Harga Pasaran')
     expect(src).not.toContain('Harga tengah pasaran')
+    expect(src).not.toContain('harga tengah pasaran')
     expect(src).not.toContain('harga pasaran sebenar')
+    expect(src).not.toContain('Harga pasaran sebenar')
+    expect(src).not.toContain('harga pasaran semasa')
+    expect(src).not.toContain('Angka pasaran penuh')
+  })
+
+  it('every indexable public template is on the guarded list', () => {
+    // Guards the guard. The defect this suite keeps re-finding is not wrong
+    // wording — it is a surface nobody added to the list. A new indexable
+    // template must be listed here, or it can carry the overclaim untested.
+    const templates = PRICE_SURFACES.filter(p => p.startsWith('app/'))
+    for (const required of [
+      'app/page.tsx',
+      'app/tentang/page.tsx',
+      'app/faq/page.tsx',
+      'app/harga-model/[slug]/page.tsx',
+      'app/harga-kereta-terpakai/[model]/page.tsx',
+      'app/bandingkan/[slug]/page.tsx',
+      'app/varian/[model]/page.tsx',
+      'app/contoh-laporan/page.tsx',
+    ]) {
+      expect(templates, `${required} must be guarded`).toContain(required)
+    }
   })
 
   it('labels the range, the evidence and the median as listing-derived', () => {

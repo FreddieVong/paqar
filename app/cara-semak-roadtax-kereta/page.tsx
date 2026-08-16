@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   description: 'Cara semak status roadtax kereta Malaysia — sama ada masih sah, dah tamat, atau perlu diperbaharui. Penting sebelum beli kereta terpakai.',
   alternates: { canonical: 'https://paqar.my/cara-semak-roadtax-kereta' },
   openGraph: {
+      locale: 'ms_MY',
     title: `Cara Semak Roadtax Kereta Malaysia ${YEAR}`,
     description: 'Cara semak status roadtax kereta Malaysia — sama ada masih sah, dah tamat, atau perlu diperbaharui. Penting sebelum beli kereta terpakai.',
     url: 'https://paqar.my/cara-semak-roadtax-kereta',

@@ -38,7 +38,9 @@ export function generateMetadata({ params }: Props): Metadata {
     title,
     description,
     alternates: { canonical: `https://paqar.my/varian/${params.model}` },
-    openGraph: { title, description, url: `https://paqar.my/varian/${params.model}` },
+    openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY', title, description, url: `https://paqar.my/varian/${params.model}` },
   }
 }
 

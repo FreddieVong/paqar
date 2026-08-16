@@ -264,6 +264,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     alternates: { canonical: `https://paqar.my/harga-${params.slug}` },
     openGraph: {
+      locale: 'ms_MY',
       title,
       description,
       url: `https://paqar.my/harga-${params.slug}`,

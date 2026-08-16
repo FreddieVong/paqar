@@ -186,6 +186,92 @@ for (const { file, route } of pages) {
   if (!desc) fail('metadata', `${route} has no meta description`)
 }
 
+// ── 4b. Uniqueness ──────────────────────────────────────────────────────────
+//
+// Two pages sharing a title tell Google they are the same page. The risk lives
+// in the generated families — 58 year pages, 14 hubs, 7 comparisons — where a
+// template that forgets to interpolate produces dozens of identical strings.
+
+{
+  const seenTitle = new Map()
+  const seenDesc  = new Map()
+  for (const { file, route } of pages) {
+    const html  = readFileSync(file, 'utf8')
+    const title = html.match(/<title>([^<]*)<\/title>/)?.[1]?.trim()
+    const desc  = html.match(/<meta name="description" content="([^"]*)"/)?.[1]?.trim()
+    if (title) (seenTitle.get(title) ?? seenTitle.set(title, []).get(title)).push(route)
+    if (desc)  (seenDesc.get(desc)   ?? seenDesc.set(desc, []).get(desc)).push(route)
+  }
+  for (const [title, routes] of seenTitle) {
+    if (routes.length > 1) fail('duplicate title', `${routes.length} pages share "${title.slice(0, 60)}": ${routes.slice(0, 4).join(', ')}`)
+  }
+  for (const [desc, routes] of seenDesc) {
+    if (routes.length > 1) fail('duplicate description', `${routes.length} pages share a description: ${routes.slice(0, 4).join(', ')}`)
+  }
+}
+
+// ── 4c. Open Graph integrity ────────────────────────────────────────────────
+//
+// THE DEFECT THIS EXISTS FOR. Next.js replaces `openGraph` wholesale when a
+// child declares one and INHERITS it wholesale when a child does not. Measured
+// on 2026-08-15 against 116 built pages, that produced two opposite failures
+// which between them covered every page on the site:
+//
+//   · 7 /faq/* guides declared no openGraph, so og:url, og:title and
+//     og:description were the HOMEPAGE's. Each guide told Facebook and
+//     WhatsApp that it was the homepage.
+//   · 30 pages declared their own, which erased the root's locale and image —
+//     og:locale was missing on 108 pages, og:image on 27.
+//
+// The root layout's canonical carried a long comment warning about exactly
+// this inheritance trap. It was written for `alternates` and never applied to
+// `openGraph`. These checks close that gap at the only layer that can see it.
+
+for (const { file, route } of pages) {
+  const html = readFileSync(file, 'utf8')
+  const og = (prop) => html.match(new RegExp(`<meta property="og:${prop}" content="([^"]*)"`))?.[1]
+
+  const ogUrl = og('url')
+  if (!ogUrl) {
+    fail('open graph', `${route} has no og:url`)
+  } else {
+    if (!ogUrl.startsWith(ORIGIN)) fail('open graph', `${route} og:url is not absolute on ${ORIGIN}: ${ogUrl}`)
+    // The homepage-inheritance bug, caught by shape rather than by memory.
+    if (route !== '/' && ogUrl.replace(/\/$/, '') === ORIGIN) {
+      fail('open graph', `${route} claims the homepage as its og:url — it is inheriting the root layout's`)
+    }
+    const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1]
+    if (canonical && canonical.replace(/\/$/, '') !== ogUrl.replace(/\/$/, '')) {
+      fail('open graph', `${route} og:url (${ogUrl}) disagrees with canonical (${canonical})`)
+    }
+  }
+
+  if (og('locale') !== 'ms_MY') fail('open graph', `${route} og:locale is "${og('locale') ?? 'absent'}", expected ms_MY`)
+
+  const ogImage = og('image')
+  if (!ogImage) fail('open graph', `${route} has no og:image`)
+  else if (!/^https?:\/\//.test(ogImage)) fail('open graph', `${route} og:image is not absolute: ${ogImage}`)
+}
+
+// ── 4d. Structured-data claim safety ────────────────────────────────────────
+//
+// Google's structured-data policies forbid markup that is not supported by
+// visible page content. These are the fabrications that would be most tempting
+// and most damaging: ratings and reviews Paqar has never collected, and an
+// availability/price promise for a product that cannot currently be bought.
+
+for (const { file, route } of pages) {
+  const html = readFileSync(file, 'utf8')
+  for (const block of [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map(m => m[1])) {
+    if (/"aggregateRating"|"ratingValue"|"reviewCount"|"@type"\s*:\s*"Review"/.test(block)) {
+      fail('structured data', `${route} emits a rating or review Paqar has not collected`)
+    }
+    if (/"priceValidUntil"|"shippingDetails"|"hasMerchantReturnPolicy"/.test(block)) {
+      fail('structured data', `${route} emits merchant fields unrelated to Paqar`)
+    }
+  }
+}
+
 // ── 5. JSON-LD validity ─────────────────────────────────────────────────────
 
 let jsonLdBlocks = 0
@@ -399,6 +485,7 @@ console.log(`public pages checked : ${pages.length}`)
 console.log(`sitemap URLs         : ${sitemapUrls.length}`)
 console.log(`JSON-LD blocks parsed: ${jsonLdBlocks}`)
 console.log(`boundary pages scanned: ${boundaryPagesScanned}`)
+console.log(`Open Graph + uniqueness: checked on all ${pages.length}`)
 
 if (notes.length) {
   console.log(`\nnotes (${notes.length}) — not failures:`)

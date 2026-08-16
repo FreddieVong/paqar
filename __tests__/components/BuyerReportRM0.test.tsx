@@ -110,8 +110,10 @@ describe('one-listing cohort', () => {
   it('presents depreciation as clearly-labelled supporting context', () => {
     const text = renderWithNewPrice([45_000]).container.textContent ?? ''
     expect(text).toContain('Anggaran berdasarkan susut nilai')
-    expect(text).toContain('Belum cukup iklan setanding untuk beri keputusan harga pasaran')
-    expect(text).toContain('bukan harga pasaran semasa')
+    // "keputusan harga pasaran" implied Paqar otherwise knows a market price.
+    // The fallback now says only what it can: not enough comparable adverts.
+    expect(text).toContain('Belum cukup iklan setanding untuk beri keputusan harga')
+    expect(text).toContain('bukan harga iklan setanding')
     expect(text).not.toContain('Harga tengah iklan setanding')
     expect(text).not.toContain('Anggaran trade-in')
     expect(zeroCurrency(text)).toEqual([])

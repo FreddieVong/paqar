@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: 'Senarai Semak Penuh: Apa Nak Periksa Sebelum Beli Kereta Terpakai | Paqar',
   description: 'Panduan pemeriksaan langkah demi langkah: luaran, dalaman, enjin, elektrik, test drive dan bawah kereta. Apa nak cari, dan bila patut berundur.',
   alternates: { canonical: 'https://paqar.my/faq/what-to-check-buying-used-car' },
+  // These guides previously declared no openGraph at all, so they inherited
+  // the ROOT layout's — which named the homepage as og:url, og:title and
+  // og:description. Every share of this guide advertised the homepage.
+  openGraph: {
+    title: 'Senarai Semak Penuh: Apa Nak Periksa Sebelum Beli Kereta Terpakai | Paqar',
+    description: 'Panduan pemeriksaan langkah demi langkah: luaran, dalaman, enjin, elektrik, test drive dan bawah kereta. Apa nak cari, dan bila patut berundur.',
+    url: 'https://paqar.my/faq/what-to-check-buying-used-car',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'article',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+  },
 }
 
 export default function ChecklistBuyingUsedCar() {

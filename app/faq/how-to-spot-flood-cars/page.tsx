@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: 'Cara Kesan Kereta Banjir Sebelum Beli | Panduan Paqar',
   description: 'Panduan lengkap tanda kereta banjir: bau hapak, karat bawah kereta, masalah elektrik, minyak enjin berbuih. Apa perlu disemak sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/faq/how-to-spot-flood-cars' },
+  // These guides previously declared no openGraph at all, so they inherited
+  // the ROOT layout's — which named the homepage as og:url, og:title and
+  // og:description. Every share of this guide advertised the homepage.
+  openGraph: {
+    title: 'Cara Kesan Kereta Banjir Sebelum Beli | Panduan Paqar',
+    description: 'Panduan lengkap tanda kereta banjir: bau hapak, karat bawah kereta, masalah elektrik, minyak enjin berbuih. Apa perlu disemak sebelum bayar deposit.',
+    url: 'https://paqar.my/faq/how-to-spot-flood-cars',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'article',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+  },
 }
 
 export default function HowToSpotFloodedCars() {
@@ -89,7 +101,7 @@ export default function HowToSpotFloodedCars() {
 
         <section className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6">
           <h3 className="font-semibold text-[#064E4A] mb-2">💡 Tip Pembeli Bijak</h3>
-          <p className="text-[#374151]">Semak harga pasaran kereta itu guna nombor plat. Kalau harganya RM3–5k bawah harga tengah pasaran, tanya diri anda kenapa. Kerosakan banjir selalunya jadi sebabnya.</p>
+          <p className="text-[#374151]">Semak harga pasaran kereta itu guna nombor plat. Kalau harganya RM3–5k bawah harga tengah iklan setanding, tanya diri anda kenapa. Kerosakan banjir selalunya jadi sebabnya.</p>
         </section>
 
         <FaqGetValuationCta faqSlug="how-to-spot-flood-cars" />

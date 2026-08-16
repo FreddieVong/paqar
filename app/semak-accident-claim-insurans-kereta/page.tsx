@@ -33,6 +33,7 @@ export const metadata: Metadata = {
     : `${DESCRIPTION_BASE} Ketahui apa yang boleh dan tidak boleh disemak sebelum bayar deposit.`,
   alternates: { canonical: 'https://paqar.my/semak-accident-claim-insurans-kereta' },
   openGraph: {
+      locale: 'ms_MY',
     title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia',
     description: JOMCHECK_ON
       ? `${DESCRIPTION_BASE} RM100 sebelum bayar deposit.`

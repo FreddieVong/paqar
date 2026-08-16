@@ -47,7 +47,7 @@ const MODELS: Record<ModelHubSlug, ModelConfig> = {
       { q: 'Berapa harga Myvi terpakai 2020?', a: 'Harga bergantung kepada varian (E, X, AV, H), jarak tempuh dan keadaan kereta. Rujuk jadual harga pasaran di atas untuk julat berdasarkan iklan semasa.' },
       { q: 'Varian Myvi mana yang paling berbaloi dibeli terpakai?', a: 'Varian H (1.5L) dan AV menawarkan nilai terbaik kerana ada VSC, ASA, dan pelek aloi. Varian X 1.3L lebih murah tapi ketiadaan VSC bermakna kurang selamat.' },
       { q: 'Apa yang perlu disemak sebelum beli Myvi terpakai?', a: 'Semak saman dengan PDRM dan JPJ, semak geran asal, rekod servis di Perodua, kondisi airbag, dan test drive untuk dengar bunyi gear atau enjin.' },
-      { q: 'Boleh tawar berapa untuk Myvi terpakai?', a: 'Bergantung kepada keputusan harga semasa. Jika Paqar tunjukkan harga MAHAL, anda ada asas untuk tawar turun menggunakan harga tengah pasaran sebagai rujukan.' },
+      { q: 'Boleh tawar berapa untuk Myvi terpakai?', a: 'Bergantung kepada keputusan harga semasa. Jika Paqar tunjukkan harga MAHAL, anda ada asas untuk tawar turun menggunakan harga tengah iklan setanding sebagai rujukan.' },
     ],
   },
   'perodua-axia': {
@@ -264,6 +264,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     alternates: { canonical: `https://paqar.my/harga-kereta-terpakai/${params.model}` },
     openGraph: {
+      locale: 'ms_MY',
       title,
       description,
       url: `https://paqar.my/harga-kereta-terpakai/${params.model}`,

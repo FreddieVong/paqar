@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: 'Honda City vs Toyota Vios Terpakai — Mana Satu Patut Beli? | Paqar',
   description: 'Perbandingan penuh Honda City dan Toyota Vios terpakai: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penggunaan minyak. Mana lebih berbaloi?',
   alternates: { canonical: 'https://paqar.my/faq/honda-city-vs-toyota-vios' },
+  // These guides previously declared no openGraph at all, so they inherited
+  // the ROOT layout's — which named the homepage as og:url, og:title and
+  // og:description. Every share of this guide advertised the homepage.
+  openGraph: {
+    title: 'Honda City vs Toyota Vios Terpakai — Mana Satu Patut Beli? | Paqar',
+    description: 'Perbandingan penuh Honda City dan Toyota Vios terpakai: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penggunaan minyak. Mana lebih berbaloi?',
+    url: 'https://paqar.my/faq/honda-city-vs-toyota-vios',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'article',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+  },
 }
 
 export default function CityVsVios() {

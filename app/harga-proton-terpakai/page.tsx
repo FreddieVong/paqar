@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   description: 'Harga pasaran kereta terpakai Proton — Saga, Persona, X50, X70 mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/harga-proton-terpakai' },
   openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
     title: `Harga Proton Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
     description: 'Harga pasaran kereta terpakai Proton — Saga, Persona, X50, X70 mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
     url: 'https://paqar.my/harga-proton-terpakai',

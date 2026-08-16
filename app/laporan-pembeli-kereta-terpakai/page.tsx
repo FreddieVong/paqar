@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   description: 'Laporan Pembeli Paqar RM12 — keputusan harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
   alternates: { canonical: 'https://paqar.my/laporan-pembeli-kereta-terpakai' },
   openGraph: {
+      locale: 'ms_MY',
     title: 'Laporan Pembeli Kereta Terpakai Malaysia RM12',
     description: 'Laporan Pembeli Paqar RM12 — keputusan harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
     url: 'https://paqar.my/laporan-pembeli-kereta-terpakai',

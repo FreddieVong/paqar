@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/tentang' },
   openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
     title: 'Tentang Paqar — Semak Harga Kereta Terpakai Malaysia',
     description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
     url: 'https://paqar.my/tentang',
@@ -53,9 +55,9 @@ export default function TentangPage() {
             <h2 className="font-heading font-bold text-[16px] text-[#111827]">Apa yang Paqar buat</h2>
 
             <div>
-              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semak harga pasaran — percuma</p>
+              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semak harga yang diminta — percuma</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Masukkan model, tahun, dan harga penjual. Paqar semak data listing semasa dan bagi keputusan: murah, wajar, atau mahal — dengan penjelasan dan tahap keyakinan data. Angka pasaran penuh ada dalam Laporan Pembeli.
+                Masukkan model, tahun, dan harga penjual. Paqar bandingkan dengan kereta serupa yang sedang diiklankan dan bagi keputusan: murah, wajar, atau mahal — dengan penjelasan dan tahap keyakinan data. Angka penuh ada dalam Laporan Pembeli.
               </p>
             </div>
 
