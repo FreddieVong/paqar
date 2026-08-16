@@ -83,3 +83,79 @@ describe('the comparable set is never described as "the market"', () => {
     expect(src).toMatch(/Berdasarkan \$\{mPrices\.length\} iklan setanding yang kami jumpa/)
   })
 })
+
+/**
+ * THE HOMEPAGE PROOF BEAT
+ *
+ * The homepage shows a sample price result immediately after the plate form.
+ * It sits beside a "Semakan harga percuma" hero, which is what makes the
+ * labelling load-bearing: an unlabelled range and gap invite the reader to
+ * conclude the FREE check returns them. It does not.
+ *
+ * Source-level, like the guards above, because the wording is now shared
+ * between the homepage and /contoh-laporan through one component.
+ */
+describe('the homepage proof beat', () => {
+  const page = () => read('app/page.tsx')
+  const card = () => read('components/report/SampleVerdictCard.tsx')
+
+  it('names the paid tier that the sample figures come from', () => {
+    // Every numeric market figure in the beat is Laporan Pembeli evidence.
+    expect(card()).toContain('Contoh daripada Laporan Pembeli RM12')
+    expect(page()).toMatch(/<SampleVerdictCard\s+showTierLabel/)
+  })
+
+  it('marks the sample as illustrative, not a real vehicle', () => {
+    expect(card()).toContain('Data contoh — bukan kereta sebenar.')
+    expect(page()).toContain('SAMPLE_DISCLAIMER')
+  })
+
+  it('conditions the history row on a record existing', () => {
+    // Not every accident produces a claim record, and no odometer reading is
+    // guaranteed to have been logged. "jika direkodkan" is the whole claim.
+    expect(code(page())).toContain('jika direkodkan')
+  })
+
+  it('states the total, not only the increment', () => {
+    // "+RM88" alone leaves the buyer to work out what they would actually pay.
+    expect(page()).toContain('jumlah RM100')
+  })
+
+  it('does not call the comparable range "the market"', () => {
+    // The range is asking prices: capped, one site, up to CACHE_TTL_DAYS old.
+    // The same overclaim was removed from the verdict lines and the paid CTAs;
+    // it survived in the sample because the sample was not in that sweep.
+    for (const src of [code(card()), code(read('components/report/SampleReportPreview.tsx'))]) {
+      expect(src).not.toContain('Market semasa')
+      expect(src).not.toMatch(/harga pasaran (semasa|sebenar)/)
+    }
+    expect(card()).toContain('Julat iklan setanding')
+  })
+
+  it('renders the proof beat directly after the form, before the product cards', () => {
+    // Placement IS the design: the beat only works if it is the first thing a
+    // buyer scrolls to. Below the product cards it is the old link again.
+    const src = page()
+    const form  = src.indexOf('<HomeCheckerTabs')
+    const beat  = src.indexOf('<SampleVerdictCard')
+    const cards = src.indexOf('{/* Free price check card */}')
+    expect(form).toBeGreaterThan(-1)
+    expect(beat).toBeGreaterThan(form)
+    expect(beat).toBeLessThan(cards)
+  })
+
+  it('does not render the sample verdict card twice on expansion', () => {
+    // The beat already shows the card; the expander below it must not repeat it.
+    expect(page()).toMatch(/<CollapsibleSampleReport[^>]*showVerdictCard=\{false\}/)
+  })
+
+  it('distinguishes a homepage sample open from a paywall one', () => {
+    expect(page()).toMatch(/<CollapsibleSampleReport[^>]*source="homepage_proof"/)
+  })
+
+  it('no longer repeats the how-it-works strip the beat replaced', () => {
+    const tabs = code(read('components/check/HomeCheckerTabs.tsx'))
+    expect(tabs).not.toContain('showSteps')
+    expect(tabs).not.toContain('Dapat keputusan harga serta-merta')
+  })
+})
