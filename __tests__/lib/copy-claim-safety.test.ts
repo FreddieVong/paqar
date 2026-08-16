@@ -191,3 +191,86 @@ describe('a plus sign means the add-on, never the total', () => {
     expect(read('components/report/SampleReportPreview.tsx')).toContain('jumlah RM100')
   })
 })
+
+/**
+ * THE HOMEPAGE FAQ HAS ONE SOURCE
+ *
+ * The page rendered four questions while FAQPage emitted seven. Google's
+ * FAQPage guidance requires the question and answer content to be visible on
+ * the page, so three of them were structured data describing content no
+ * visitor could read — including the limitations answer, which is the most
+ * important thing Paqar tells a buyer.
+ *
+ * Source-level, because a rendering test would prove the accordion is right
+ * without proving the JSON-LD comes from the same place.
+ */
+describe('the homepage FAQ', () => {
+  const page = () => code(read('app/page.tsx'))
+  const faq  = () => read('lib/faq/home.ts')
+
+  it('drives both the accordion and the structured data from one import', () => {
+    const src = page()
+    expect(src).toContain("from '@/lib/faq/home'")
+    expect(src).toContain('mainEntity: faqMainEntity()')
+    expect(src).toContain('{HOME_FAQ.map((faq) => (')
+  })
+
+  it('leaves no hand-written Question nodes to drift', () => {
+    expect(page()).not.toMatch(/'@type':\s*'Question'/)
+  })
+
+  it('makes the limitations answer visible, not crawler-only', () => {
+    const src = faq()
+    expect(src).toContain('Apakah had atau limitasi Paqar?')
+    expect(src).toContain('Paqar tidak mengesahkan bacaan odometer sebenar.')
+  })
+
+  it('never frames a missing claim record as proof of a clean car', () => {
+    expect(faq()).toContain('Tiada rekod tuntutan bukan bukti bahawa kereta bebas kemalangan.')
+  })
+
+  it('states that RM12 excludes claim and odometer history', () => {
+    // A locked RM88 history row sits a few centimetres above this answer in
+    // the proof beat. The exclusion has to be said, not implied by omission.
+    expect(faq()).toMatch(/RM12 tidak termasuk rekod tuntutan kemalangan atau bacaan odometer/)
+  })
+
+  it('does not describe the RM12 figures as the whole market', () => {
+    expect(faq()).not.toContain('angka pasaran penuh')
+    expect(faq()).toContain('angka berdasarkan iklan setanding')
+  })
+})
+
+describe('structured data claims only what the site does', () => {
+  const page = () => read('app/page.tsx')
+
+  it('publishes no SearchAction, because there is no search', () => {
+    // The removed one pointed at /?q=, which nothing reads.
+    expect(page()).not.toContain('SearchAction')
+    expect(page()).not.toContain('potentialAction')
+    expect(page()).not.toContain('search_term_string')
+  })
+
+  it('keeps the RM12 Offer and adds no RM100 one', () => {
+    expect(page()).toContain("price: '12'")
+    expect(page()).not.toContain("price: '100'")
+  })
+})
+
+describe('the hero still sells only the free outcome it can deliver', () => {
+  const page = () => read('app/page.tsx')
+
+  it('names each price beside what it buys', () => {
+    expect(page()).toContain('Semakan harga percuma · Laporan pembeli RM12 · Rekod tuntutan +RM88')
+  })
+
+  it('leads the plate journey with the free outcome', () => {
+    expect(read('components/check/PlateCheckerForm.tsx')).toContain('Semak Harga Percuma →')
+  })
+
+  it('asks for a price in both journeys with the same words', () => {
+    for (const p of ['components/check/PlateCheckerForm.tsx', 'components/check/DualCheckForm.tsx']) {
+      expect(read(p)).toContain('Harga yang penjual minta')
+    }
+  })
+})

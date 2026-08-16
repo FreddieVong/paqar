@@ -8,6 +8,7 @@ import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
 import { trackAdEvent } from '@/lib/meta-events'
 import { BRANDS, MODELS_BY_BRAND } from '@/lib/model-catalog'
 import { VERDICT_LINE, PAID_REPORT_CTA_SUB } from '@/lib/verdict-copy'
+import { AskingPriceInput, PRICE_INPUT_CLS } from './AskingPriceInput'
 
 // Shared by the verdict and the suppressed-verdict branches: a mixed-variant
 // cohort still has a real, useful range, and the buyer deserves to know how
@@ -32,7 +33,7 @@ function ConfidenceChip({ level }: { level: 'low' | 'medium' | 'high' }) {
         <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${conf.dot}`} />
         <span className={`font-body text-[11px] font-semibold ${conf.labelCls}`}>{conf.label}</span>
       </div>
-      <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">{conf.text}</p>
+      <p className="font-body text-[11px] text-[#6B7280] mt-0.5 leading-relaxed">{conf.text}</p>
     </div>
   )
 }
@@ -171,6 +172,15 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault()
     setCheckError(null)
+
+    // The field is text now (so it can show "59,000"), so the browser no longer
+    // enforces min/max. Same bounds and same wording as the plate path below.
+    const priceRm = parseInt(askingPrice, 10)
+    if (!Number.isFinite(priceRm) || priceRm < 1000 || priceRm > 2_000_000) {
+      setCheckError('Masukkan harga yang penjual minta (RM1,000 – RM2,000,000).')
+      return
+    }
+
     setFormState('loading')
     analytics.checkStarted({ country: 'MY', is_test: false })
 
@@ -357,11 +367,12 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             </>
           )}
           <div>
-            <label htmlFor="oc-price" className={LABEL_CLS}>Harga Diminta (RM)</label>
-            <input
+            <label htmlFor="oc-price" className={LABEL_CLS}>Harga diminta (RM)</label>
+            <AskingPriceInput
               id="oc-price"
-              type="number" value={askingPrice} onChange={e => setAskingPrice(e.target.value)}
-              placeholder="cth: 59000" min={1000} max={2000000} required className={INPUT_CLS}
+              value={askingPrice}
+              onChange={setAskingPrice}
+              className={PRICE_INPUT_CLS}
             />
           </div>
           {checkError && <p className="font-body text-[13px] text-[#DC2626]">{checkError}</p>}
@@ -371,7 +382,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
           >
             Semak Harga Percuma →
           </button>
-          <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
+          <p className="font-body text-[11px] text-[#6B7280] text-center leading-relaxed">
             Percuma untuk semak harga · Dari RM12 untuk Laporan Pembeli dengan bukti harga &amp; skrip rundingan
           </p>
         </form>
@@ -500,7 +511,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
               Malaysia
             </p>
           </div>
-          <p className="font-body text-[9px] text-[#9CA3AF] text-center leading-relaxed">
+          <p className="font-body text-[11px] text-[#6B7280] text-center leading-relaxed">
             Diperlukan untuk jana laporan kereta ini.
           </p>
           {plateError && (
@@ -514,7 +525,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
           </button>
         </form>
 
-        <p className="font-body text-[9px] text-[#9CA3AF] text-center mt-2">
+        <p className="font-body text-[11px] text-[#6B7280] text-center mt-2">
           {'Harga tengah & julat pasaran · Jumlah patut ditawar · Skrip untuk penjual'}
         </p>
 

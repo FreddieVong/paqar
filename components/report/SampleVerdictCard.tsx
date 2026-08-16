@@ -61,7 +61,7 @@ export function SampleVerdictCard({ showTierLabel = false }: { showTierLabel?: b
           {SAMPLE_TIER_LABEL}
         </p>
       ) : (
-        <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
+        <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
           Keputusan Paqar
         </p>
       )}

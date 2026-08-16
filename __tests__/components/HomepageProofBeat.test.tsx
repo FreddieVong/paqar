@@ -93,3 +93,41 @@ describe('the expanded report is never centred by its surroundings', () => {
     expect(src).toMatch(/text-center">\s*\n\s*<CollapsibleSampleReport/)
   })
 })
+
+describe('the expander announces what it does', () => {
+  /**
+   * It was a bare <button> with a label that changed. A screen reader heard the
+   * new label only after activation, and was never told the control owned a
+   * region — so there was no way to know it was expandable at all.
+   */
+  it('reports collapsed and expanded state', () => {
+    render(<CollapsibleSampleReport showVerdictCard={false} source="homepage_proof" />)
+    const btn = screen.getByRole('button', { name: /Lihat contoh laporan/ })
+    expect(btn.getAttribute('aria-expanded')).toBe('false')
+    toggle()
+    expect(screen.getByRole('button', { name: /Sembunyikan contoh laporan/ })
+      .getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('names the region it controls, before it exists', () => {
+    // aria-controls is present while collapsed on purpose: that is when the
+    // user decides whether opening it is worth their time.
+    render(<CollapsibleSampleReport showVerdictCard={false} source="homepage_proof" />)
+    const btn = screen.getByRole('button', { name: /Lihat contoh laporan/ })
+    const controls = btn.getAttribute('aria-controls')
+    expect(controls).toBeTruthy()
+    toggle()
+    expect(document.getElementById(controls!)).toBeTruthy()
+  })
+
+  it('gives two expanders on one page distinct ids', () => {
+    const { container } = render(
+      <>
+        <CollapsibleSampleReport />
+        <CollapsibleSampleReport />
+      </>,
+    )
+    const ids = [...container.querySelectorAll('button')].map(b => b.getAttribute('aria-controls'))
+    expect(new Set(ids).size).toBe(2)
+  })
+})

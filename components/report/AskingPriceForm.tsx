@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { formatPriceInput, toDigits } from '@/lib/price-input'
 
 interface Props {
   checkId:    string
@@ -13,7 +14,7 @@ export function AskingPriceForm({ checkId, claimToken }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const price = parseInt(value.replace(/[^0-9]/g, ''), 10)
+    const price = parseInt(value, 10)
     if (!price || price < 1000) {
       setError('Sila masukkan harga yang sah.')
       return
@@ -47,12 +48,13 @@ export function AskingPriceForm({ checkId, claimToken }: Props) {
             RM
           </span>
           <input
-            type="number"
-            min={1000}
-            max={2000000}
-            placeholder="cth: 59000"
-            value={value}
-            onChange={e => setValue(e.target.value)}
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="59,000"
+            aria-label="Harga yang penjual minta"
+            value={formatPriceInput(value)}
+            onChange={e => setValue(toDigits(e.target.value))}
             className="w-full pl-9 pr-3 py-2.5 border border-[#E5E7EB] rounded-lg font-heading font-bold text-[13px] text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#064E4A]"
           />
         </div>

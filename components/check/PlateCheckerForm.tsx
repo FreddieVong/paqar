@@ -6,12 +6,7 @@ import type { CreateCheckResponse } from '@/types/api'
 import { analytics } from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
 import { trackAdEvent } from '@/lib/meta-events'
-
-const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
-  font-heading font-semibold text-[16px] text-[#111827]
-  placeholder:text-[#D1D5DB] placeholder:font-normal
-  focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
-  transition-all`
+import { AskingPriceInput, PRICE_INPUT_CLS } from './AskingPriceInput'
 
 const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.5'
 
@@ -142,7 +137,7 @@ export function PlateCheckerForm() {
     <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className={LABEL_CLS}>Taip Nombor Plat Kereta</label>
+          <label className={LABEL_CLS}>Nombor plat kereta</label>
           <div className="bg-[#1a1a1a] rounded-[7px] p-[5px] border border-transparent focus-within:border-[#064E4A] focus-within:shadow-[0_0_0_3px_rgba(6,78,74,0.15)] transition-all duration-150">
             <div className="relative bg-[#1a1a1a] rounded-[3px] flex items-center justify-center min-h-[60px] px-3">
               <input
@@ -153,6 +148,9 @@ export function PlateCheckerForm() {
                 onBlur={() => setPlateFocused(false)}
                 maxLength={10}
                 required
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
                 aria-label="Nombor plat kenderaan"
                 className="w-full self-stretch min-h-[44px] bg-transparent border-none outline-none text-center font-black text-[22px] sm:text-[28px] tracking-[.15em] sm:tracking-[.2em] text-white uppercase caret-white"
                 style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
@@ -174,21 +172,15 @@ export function PlateCheckerForm() {
 
         <div>
           <label htmlFor="pc-price" className={LABEL_CLS}>
-            Harga Yang Penjual Minta (RM)
+            Harga yang penjual minta
           </label>
-          <input
+          <AskingPriceInput
             id="pc-price"
-            type="number"
             value={askingPrice}
-            onChange={e => setAskingPrice(e.target.value)}
-            placeholder="cth: 59000"
-            min={1000}
-            max={2000000}
-            required
-            inputMode="numeric"
-            className={INPUT_CLS}
+            onChange={setAskingPrice}
+            className={PRICE_INPUT_CLS}
           />
-          <p className="font-body text-[11px] text-[#9CA3AF] mt-1.5 leading-relaxed">
+          <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
             Diperlukan untuk kami semak sama ada harganya berpatutan.
           </p>
         </div>
@@ -200,9 +192,9 @@ export function PlateCheckerForm() {
           disabled={busy}
           className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60"
         >
-          {busy ? 'Memproses…' : 'Semak Plat Percuma →'}
+          {busy ? 'Memproses…' : 'Semak Harga Percuma →'}
         </button>
-        <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
+        <p className="font-body text-[11px] text-[#6B7280] text-center leading-relaxed">
           Percuma untuk semak · Laporan dari RM12 — bayar hanya jika mahu
         </p>
       </form>
