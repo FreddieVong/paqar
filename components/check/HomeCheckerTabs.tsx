@@ -50,7 +50,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
         <button
           type="button"
           onClick={() => { setTab('model'); analytics.tabSelected({ tab: 'model' }) }}
-          className="w-full text-center font-body text-[12px] text-[#6B7280] underline underline-offset-2 mt-4 hover:text-[#064E4A] transition-colors"
+          className="w-full min-h-[44px] py-3 inline-flex items-center justify-center font-body text-[12px] text-[#6B7280] underline underline-offset-2 mt-2 hover:text-[#064E4A] transition-colors"
         >
           Tak ada nombor plat? Semak ikut model dan tahun →
         </button>
@@ -58,7 +58,7 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
         <button
           type="button"
           onClick={() => { setTab('plate'); analytics.tabSelected({ tab: 'plate' }) }}
-          className="w-full text-center font-body text-[12px] text-[#6B7280] underline underline-offset-2 mt-4 hover:text-[#064E4A] transition-colors"
+          className="w-full min-h-[44px] py-3 inline-flex items-center justify-center font-body text-[12px] text-[#6B7280] underline underline-offset-2 mt-2 hover:text-[#064E4A] transition-colors"
         >
           ← Dah ada nombor plat? Semak kereta itu sendiri
         </button>

@@ -94,3 +94,27 @@ describe('the pages that host them stay prerenderable', () => {
     expect(read('app/page.tsx')).toMatch(/export const revalidate\s*=\s*\d+/)
   })
 })
+
+/**
+ * The model-fallback link is a real tap target.
+ *
+ * Browser QA on the preview measured it at 335x18 — legible, but 18px tall is
+ * well under the 44px minimum, and it is the ONE control that rescues a buyer
+ * who has no plate. Missing it sends them away rather than to the fallback.
+ *
+ * Source-level, because the failure is a CSS class and jsdom does not lay out.
+ * The measured proof is the browser pass on the preview deployment.
+ */
+describe('the model-fallback link is tappable', () => {
+  it('declares a 44px minimum height on both fallback directions', () => {
+    const src = read('components/check/HomeCheckerTabs.tsx')
+    const matches = src.match(/min-h-\[44px\]/g) ?? []
+    // Two: plate -> model, and model -> plate.
+    expect(matches).toHaveLength(2)
+  })
+
+  it('centres its label so the padded box stays readable', () => {
+    const src = read('components/check/HomeCheckerTabs.tsx')
+    expect(src).toMatch(/inline-flex items-center justify-center/)
+  })
+})
