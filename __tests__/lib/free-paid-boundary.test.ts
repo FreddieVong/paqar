@@ -108,7 +108,7 @@ describe('paid surfaces keep every figure', () => {
   const report = read('components/report/BuyerReportContent.tsx')
 
   it('the report still shows the median, the chips and the count', () => {
-    expect(report).toContain('Harga tengah pasaran')
+    expect(report).toContain('Harga tengah iklan setanding')
     expect(report).toContain('Anggaran trade-in')
     expect(report).toMatch(/iklan setanding yang kami jumpa/)
   })
@@ -187,25 +187,22 @@ describe('prose describing the free tier promises no paid figure', () => {
     expect(block).toMatch(/murah, wajar, atau mahal/)
   })
 
-  it('EVERY copy of the homepage answer is corrected, not just the first', () => {
-    // The homepage asks this question TWICE: once in the JSON-LD FAQPage graph
-    // and once in the visible "Ada soalan?" accordion. A first-occurrence split
-    // passed while the accordion still said "jurang RM dari harga tengah
-    // pasaran" — caught by grepping the BUILT output, not the source. Hence
-    // iterating every occurrence.
-    const src = read('app/page.tsx')
-    const answers = src.split('Apakah beza semakan percuma dan laporan RM12?').slice(1)
-    expect(answers.length, 'expected both the JSON-LD and the visible FAQ').toBe(2)
+  it('the homepage answer exists exactly once, so it cannot be half-corrected', () => {
+    // This test used to iterate TWO copies: the JSON-LD FAQPage graph and the
+    // visible accordion both carried the answer, and a first-occurrence split
+    // once passed while the accordion still said "jurang RM dari harga tengah
+    // pasaran". The duplication is now gone — lib/faq/home.ts is the only copy
+    // and app/page.tsx renders it twice from that one array — so the guard
+    // becomes: there is one source, and its free half is clean.
+    expect(read('app/page.tsx')).not.toContain('Apakah beza semakan percuma dan laporan RM12?')
 
-    for (const [i, raw] of answers.entries()) {
-      const answer = raw.split('},')[0]!
-      // Everything before "Laporan Pembeli (RM12)" is the free description.
-      const freeHalf = answer.split('Laporan Pembeli (RM12)')[0]!
-      for (const claim of FREE_CLAIMS) {
-        expect(freeHalf, `homepage answer #${i + 1} still describes free as ${claim}`).not.toMatch(claim)
-      }
-      // The paid half must still carry them — that is what RM12 sells.
-      expect(answer, `homepage answer #${i + 1} lost the paid figures`).toMatch(/harga tengah dan julat/)
+    const faq = read('lib/faq/home.ts')
+    const answers = faq.split('Apakah beza semakan percuma dan laporan RM12?').slice(1)
+    expect(answers.length, 'one source of truth').toBe(1)
+
+    const freeHalf = answers[0]!.split('Laporan Pembeli (RM12)')[0]!
+    for (const claim of FREE_CLAIMS) {
+      expect(freeHalf, `the free half still describes free as ${claim}`).not.toMatch(claim)
     }
   })
 })
@@ -258,5 +255,36 @@ describe('confidence carries the provisional signal', () => {
 
   it.each(FREE_UI)('%s low-confidence copy explains itself', (path) => {
     expect(read(path)).toContain('Anggaran awal sahaja')
+  })
+})
+
+/**
+ * The FAQ now states the boundary, so it becomes a place the boundary can be
+ * broken. The free/RM12 answer is the first thing a buyer reads about what
+ * their money buys, and the proof beat renders a locked RM88 history row a few
+ * centimetres above it.
+ */
+describe('the homepage FAQ states the paid boundary in both directions', () => {
+  const faq = readFileSync(join(ROOT, 'lib/faq/home.ts'), 'utf8')
+
+  it('gives the free tier a verdict, an explanation and a confidence — no figures', () => {
+    expect(faq).toContain('Semakan percuma beri keputusan harga — murah, wajar atau mahal — dengan penjelasan dan tahap keyakinan data.')
+    // No median, range, gap, offer or trade-in attributed to the free check.
+    const freeSentence = faq.slice(faq.indexOf('Semakan percuma beri'), faq.indexOf('Laporan Pembeli (RM12)'))
+    for (const paid of ['harga tengah', 'julat', 'trade-in', 'skrip']) {
+      expect(freeSentence.toLowerCase()).not.toContain(paid)
+    }
+  })
+
+  it('attributes every figure to RM12', () => {
+    const paidSentence = faq.slice(faq.indexOf('Laporan Pembeli (RM12)'))
+    for (const paid of ['harga tengah', 'julat', 'trade-in', 'skrip rundingan']) {
+      expect(paidSentence).toContain(paid)
+    }
+  })
+
+  it('keeps claim and odometer history out of RM12', () => {
+    expect(faq).toMatch(/RM12 tidak termasuk rekod tuntutan kemalangan atau bacaan odometer/)
+    expect(faq).toContain('+RM88')
   })
 })
