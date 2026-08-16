@@ -141,14 +141,14 @@ export default async function HomePage() {
           </h1>
 
           <p className="font-body text-[15px] text-[#374151] mb-2 leading-relaxed text-balance">
-            Masukkan nombor plat dan harga yang penjual minta. Paqar semak maklumat
-            kenderaan dan sama ada harganya berpatutan sebelum anda bayar deposit.
+            Semak harga, rekod tuntutan kemalangan dan bacaan odometer yang pernah
+            direkodkan&mdash;sebelum bayar deposit.
           </p>
 
           {/* #6B7280 not #9CA3AF: gray-400 on white is 2.5:1 and fails WCAG AA.
               Size (13 vs 15px) and weight keep it subordinate to the subheadline. */}
           <p className="font-body text-[13px] text-[#6B7280] mb-7 leading-relaxed text-balance">
-            Semakan percuma · Tanpa daftar · Laporan pembeli RM12
+            Semakan harga percuma · Laporan pembeli RM12 · Rekod tuntutan +RM88
           </p>
 
           <HomeCheckerTabs countDisplay={countDisplay} />
