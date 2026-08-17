@@ -4,9 +4,19 @@ import { render, screen, cleanup, waitFor } from '@testing-library/react'
 
 const tracked = vi.hoisted(() => ({ ad: [] as Array<{ event: string; opts: unknown }> }))
 
+// ONE instance, not a fresh one per call. The component's poll effect lists
+// searchParams in its dependencies, so a mock that returns a new object every
+// render makes the effect tear down and restart on each state change — which
+// starts a SECOND poll loop and looks exactly like "it never stopped polling".
+// Next's useSearchParams is memoised per navigation, so the stable instance is
+// what production actually does.
+// vi.hoisted, like `tracked` above: vi.mock is hoisted above plain consts, so
+// a bare const would be in the temporal dead zone if the factory ever ran
+// eagerly.
+const SEARCH_PARAMS = vi.hoisted(() => new URLSearchParams())
 vi.mock('next/navigation', () => ({
   usePathname: () => '/laporan-pembeli/ch_1',
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => SEARCH_PARAMS,
 }))
 vi.mock('next/link', () => ({
   default: ({ href, children, ...p }: { href: string; children: React.ReactNode }) =>
@@ -22,6 +32,9 @@ vi.mock('@/lib/meta-events', () => ({
 }))
 
 import { VehiclePreviewTeaser } from '@/components/report/VehiclePreviewTeaser'
+
+// Mirrors POLL_INTERVAL_MS in the component under test.
+const POLL_INTERVAL_MS = 1_500
 
 const fetchMock = vi.fn()
 function reply(body: Record<string, unknown>) {
@@ -88,11 +101,27 @@ describe('not_found state', () => {
   })
 
   it('stops polling once the outcome is terminal', async () => {
-    mount()
-    await screen.findByText('Rekod kenderaan tidak dijumpai')
-    const calls = fetchMock.mock.calls.length
-    await new Promise((r) => setTimeout(r, 250))
-    expect(fetchMock.mock.calls.length).toBe(calls)
+    // Was: wait 250ms of wall clock and assert the call count held. That is
+    // both racy and weak — the poll interval is 1,500ms, so 250ms is too short
+    // to observe a component that KEPT polling, while a poll scheduled before
+    // the terminal render could still land inside the window and fail it under
+    // load. It flaked exactly that way during a full parallel run.
+    //
+    // Fake timers instead: advance well past several intervals, deterministically.
+    vi.useFakeTimers()
+    try {
+      mount()
+      // Flush the mount poll's promise chain without advancing the clock.
+      await vi.advanceTimersByTimeAsync(0)
+      const calls = fetchMock.mock.calls.length
+      expect(calls).toBeGreaterThan(0)
+
+      // Four full intervals. A component still polling would fire ~4 more times.
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 4)
+      expect(fetchMock.mock.calls.length).toBe(calls)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 
