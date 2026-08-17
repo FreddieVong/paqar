@@ -21,6 +21,16 @@ export class FakeSupabase {
   tables = new Map<string, Row[]>()
   /** Set to force the next request to fail, for error-path tests. */
   failNext: string | null = null
+  /**
+   * Narrow `failNext` to one kind of request.
+   *
+   * Null means "whichever request reaches this table first", which is what
+   * every caller meant while each function under test touched a given table
+   * once. recordPurchase now READS ad_events — to inherit the journey path
+   * recorded at checkout — before it writes to ad_events, so a test that means
+   * "the write failed" has to say so, or it silently exercises the read.
+   */
+  failNextOp: 'select' | 'upsert' | 'update' | null = null
 
   rows(table: string): Row[] {
     if (!this.tables.has(table)) this.tables.set(table, [])
@@ -56,8 +66,9 @@ export class FakeSupabase {
       })
 
     const run = (): { data: Row[] | null; error: { message: string } | null; count?: number } => {
-      if (self.failNext === table) {
+      if (self.failNext === table && (self.failNextOp == null || self.failNextOp === operation)) {
         self.failNext = null
+        self.failNextOp = null
         return { data: null, error: { message: `simulated failure on ${table}` } }
       }
 

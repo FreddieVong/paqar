@@ -56,7 +56,8 @@ const schema = z.object({
   event: z.enum([
     'landing_page_view', 'valuation_started', 'valuation_completed',
     'plate_submitted', 'plate_result_poll_timed_out',
-    'paywall_viewed', 'payment_form_focused', 'billplz_navigation_started',
+    'paywall_viewed', 'payment_form_focused', 'payment_form_submitted',
+    'billplz_navigation_started',
     'seo_page_cta_engaged',
     'model_result_shown', 'model_result_no_data',
     ...PER_CHECK_STAGES,
@@ -68,6 +69,9 @@ const schema = z.object({
   checkId:   z.string().max(100).optional(),
   valuationPath: z.enum(['plate_report', 'model_price', 'plate_check']).optional(),
   billId:    z.string().max(100).optional(),
+  // Bounded to the real tiers so this can never become a free-form numeric
+  // channel out of the browser.
+  amountCents: z.union([z.literal(1200), z.literal(8800), z.literal(10000)]).optional(),
   // The sending page's document.referrer, already reduced to a hostname by the
   // client. Nullable and optional so an older cached bundle that omits it keeps
   // working unchanged. Only ever reaches ad_sessions.referrer, which is written
@@ -186,6 +190,11 @@ export async function POST(request: NextRequest) {
   } else if (event === 'payment_form_focused') {
     if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
     id = derive.paymentFormFocused(sessionId, checkId)
+  } else if (event === 'payment_form_submitted') {
+    // Attempt-keyed, so a genuine retry after a rejected submit is a second
+    // row while a double-fire inside one press is not.
+    if (!attemptId) return NextResponse.json({ ok: true, skipped: 'no_attempt_id' })
+    id = derive.paymentFormSubmitted(sessionId, attemptId)
   } else if (event === 'plate_result_poll_timed_out') {
     if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
     // Keyed on the check alone, so a refresh that times out again is the same
@@ -227,6 +236,7 @@ export async function POST(request: NextRequest) {
     path,
     valuationPath: parsed.data.valuationPath ?? null,
     billId:        billId ?? null,
+    amountCents:   parsed.data.amountCents ?? null,
     journeyId:     attemptId ?? null,
     errorStage:    errorStage ?? null,
     errorCode:     errorCode  ?? null,
