@@ -85,6 +85,11 @@ export const REGIME_ANNOTATIONS: { at: string; note: string }[] = [
   // that could never have been fulfilled. A falling rate would mean the
   // availability threshold is too strict and is refusing sellable journeys.
   { at: '2026-08-16T18:01:05Z', note: 'offer gate live: no pitch and no bill when the report cannot produce a negotiation target' },
+  // Copy only — no logic, no pricing, no gate behaviour changed. Recorded
+  // because it altered the RM12 pitch, the locked preview and two cron emails,
+  // which is enough to move conversion on its own and would otherwise be
+  // invisible when reading this window later.
+  { at: '2026-08-17T02:39:56Z', note: 'market-price claims narrowed to comparable listings on every asserting surface; JPJ attribution removed from retargeting emails' },
 ]
 
 // ── Input rows. Field names mirror the columns exactly; nothing is invented. ──
