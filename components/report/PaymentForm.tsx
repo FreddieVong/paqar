@@ -33,6 +33,11 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
   const [isPending,    startTransition] = useTransition()
 
   const focusTrackedRef = useRef(false)
+  // The attempt currently in flight. A fresh id per genuine press, so a buyer
+  // who is rejected, fixes a field and presses again records two attempts —
+  // that repetition is the whole signal. Held in a ref, not a local, so the
+  // async continuation below refers to the same attempt that started it.
+  const attemptRef = useRef<string | null>(null)
 
   useEffect(() => {
     analytics.paymentFormViewed()
@@ -74,6 +79,28 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
     e.preventDefault()
     setError(null)
     analytics.paymentInitiated()
+
+    // The buyer pressed pay. Recorded HERE, before the server action, because
+    // checkout_started is keyed on a Billplz bill id and so cannot exist until
+    // createBill has already succeeded — a submission rejected by validation,
+    // or one that dies inside createBill, was previously invisible. The
+    // 2026-08-17 audit found ten sessions that focused a field and produced no
+    // bill, with nothing to say whether the form refused them or they changed
+    // their mind.
+    //
+    // Fire-and-forget, like every other funnel event: analytics must never sit
+    // in front of a payment. The tier travels as amount_cents, an existing
+    // ad_events column, so no form value is ever transmitted.
+    const attemptId = crypto.randomUUID()
+    attemptRef.current = attemptId
+    analytics.paymentFormSubmitted({ tier: addJomCheck ? 'rm100' : 'rm12', valuation_path: valuationPath })
+    trackAdEvent('payment_form_submitted', {
+      checkId,
+      valuationPath,
+      attemptId,
+      amountCents: addJomCheck ? 10000 : 1200,
+    })
+
     // Meta funnel signal — no-op unless the pixel is loaded. The eventID is
     // derived from (check, product) rather than generated per click, so a
     // user who returns to this form and clicks again is deduplicated by Meta
@@ -97,6 +124,12 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
         buyerPhone:    phone,
         baseUrl:       window.location.origin,
         addJomCheck,
+        // The journey this checkout belongs to. Until now the server derived
+        // nothing and passed nothing, so every checkout_started and every
+        // purchase in ad_events carried valuation_path = NULL — 100% of them —
+        // and no sale could be attributed to the journey that produced it.
+        // The form already knows; it simply never said.
+        valuationPath,
         askingPriceRm:    price   ? parseInt(price, 10)   : undefined,
         claimedMileageKm: mileage ? parseInt(mileage, 10) : undefined,
       })

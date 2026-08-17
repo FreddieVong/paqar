@@ -7,6 +7,7 @@ import { InspectionCTA }       from '@/components/report/InspectionCTA'
 import { PaymentForm }              from '@/components/report/PaymentForm'
 import { CollapsibleSampleReport }  from '@/components/report/CollapsibleSampleReport'
 import { BuyerReportPitch }         from '@/components/report/BuyerReportPitch'
+import { FreeResultGate }           from '@/components/report/FreeResultGate'
 import { createClient }  from '@/lib/supabase/client'
 import { analytics }     from '@/lib/analytics'
 
@@ -125,14 +126,28 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
         </div>
       )}
 
-      <BuyerReportPitch plate={plate ?? ''} />
-      <PaymentForm
-        valuationPath="plate_check"
+      {/* The buyer's own answer, then the ask — never the other way round.
+          The vehicle card above proves we found the CAR; this proves we can
+          judge the PRICE, which is what RM12 is sold on. Until the ordering
+          fix this route jumped straight from the pitch to the payment form,
+          and the plate_check path recorded no verdict or evidence event at
+          all. FreeResultGate withholds everything inside it until a terminal,
+          truthful result is on screen. */}
+      <FreeResultGate
         checkId={checkId}
         claimToken={claimToken}
-        defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
-      />
-      <CollapsibleSampleReport />
+        valuationPath="plate_check"
+        initialAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
+      >
+        <BuyerReportPitch plate={plate ?? ''} />
+        <PaymentForm
+          valuationPath="plate_check"
+          checkId={checkId}
+          claimToken={claimToken}
+          defaultAskingPrice={askingPrice ? parseInt(askingPrice, 10) : undefined}
+        />
+        <CollapsibleSampleReport />
+      </FreeResultGate>
 
       {authedUser != null && (
         <div className="border-[1.5px] border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">

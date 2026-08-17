@@ -39,11 +39,16 @@ export type AdEventName =
   | 'plate_price_evidence_viewed'
   | 'plate_verdict_viewed'
   | 'plate_verdict_suppressed'
+  // A terminal free-result state reached the screen. The ordering stage.
+  | 'free_result_presented'
   | 'paid_report_cta_viewed'
   | 'paid_report_cta_clicked'
   | 'billplz_navigation_started'
   | 'model_result_shown'
   | 'model_result_no_data'
+  // Pay pressed, BEFORE Billplz is called. checkout_started still means a bill
+  // exists; these two together bracket createBill.
+  | 'payment_form_submitted'
   | 'checkout_started'
   | 'purchase'
 
@@ -147,6 +152,19 @@ export const eventId = {
    */
   perCheckStage: (stage: string, sessionId: string, checkId: string) =>
     digest([stage, sessionId, checkId]),
+
+  /**
+   * Keyed on the SUBMIT ATTEMPT, not the check.
+   *
+   * This is the one stage where repetition is the signal. A buyer who presses
+   * pay, is rejected, corrects a field and presses again has told us something
+   * a per-check key would erase — so the client mints a fresh attempt id per
+   * genuine press, while a re-render or a double-fire inside one press reuses
+   * it and collapses here. Deliberately unlike checkoutStarted, which is keyed
+   * on the bill precisely because a reused bill is one checkout.
+   */
+  paymentFormSubmitted: (sessionId: string, attemptId: string) =>
+    digest(['payment_form_submitted', sessionId, attemptId]),
 
   // Keyed on the bill alone: the webhook and /selesai both derive it without
   // needing the session, and Billplz retries collapse onto one row.

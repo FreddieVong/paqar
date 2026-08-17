@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { analytics }     from '@/lib/analytics'
-import { trackAdEvent }  from '@/lib/meta-events'
+import { trackAdEvent, type ValuationPathKey }  from '@/lib/meta-events'
+import { VERDICT_LINE } from '@/lib/verdict-copy'
+import type { PresentedFreeResult } from '@/lib/free-result'
 
 type Verdict = 'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced'
 
@@ -22,11 +24,13 @@ type Response =
   | { state: 'pending_market' }
   | { state: 'needs_asking_price' }
 
+// Styling stays here; the SENTENCE comes from lib/verdict-copy so the model tab
+// and the plate tab can never describe the same verdict differently.
 const VERDICT = {
-  overpriced:    { badge: 'MAHAL',      cls: 'bg-[#DC2626] text-white', card: 'bg-[#FEF2F2] border-[#FECACA]', line: 'Harga ini berada di atas paras pasaran semasa untuk kereta ini.' },
-  slightly_high: { badge: 'AGAK MAHAL', cls: 'bg-[#B45309] text-white', card: 'bg-[#FFFBEB] border-[#FDE68A]', line: 'Harga ini sedikit di atas paras pasaran semasa.' },
-  fair_price:    { badge: 'WAJAR',      cls: 'bg-[#064E4A] text-white', card: 'bg-[#F0FDF4] border-[#BBF7D0]', line: 'Harga ini berada dalam paras pasaran semasa.' },
-  good_deal:     { badge: 'BERBALOI',   cls: 'bg-[#0891B2] text-white', card: 'bg-[#F0FAFA] border-[#99D4D1]', line: 'Harga ini di bawah paras pasaran semasa — semak sebabnya.' },
+  overpriced:    { badge: 'MAHAL',      cls: 'bg-[#DC2626] text-white', card: 'bg-[#FEF2F2] border-[#FECACA]', line: VERDICT_LINE.overpriced },
+  slightly_high: { badge: 'AGAK MAHAL', cls: 'bg-[#B45309] text-white', card: 'bg-[#FFFBEB] border-[#FDE68A]', line: VERDICT_LINE.slightly_high },
+  fair_price:    { badge: 'WAJAR',      cls: 'bg-[#064E4A] text-white', card: 'bg-[#F0FDF4] border-[#BBF7D0]', line: VERDICT_LINE.fair_price },
+  good_deal:     { badge: 'BERBALOI',   cls: 'bg-[#0891B2] text-white', card: 'bg-[#F0FAFA] border-[#99D4D1]', line: VERDICT_LINE.good_deal },
 } as const
 
 // `low` also carries the provisional meaning: a 3–4 comparable cohort is always
@@ -52,15 +56,34 @@ const CONFIDENCE = {
  * none of it can leak through this component.
  */
 export function FreePriceEvidence({
-  checkId, claimToken, initialAskingPrice,
+  checkId, claimToken, initialAskingPrice, valuationPath = 'plate_report', onPresented,
 }: {
   checkId: string
   claimToken: string
   initialAskingPrice?: number
+  /**
+   * Which journey this evidence belongs to. Defaults to the path this
+   * component was born on, so the existing /laporan-pembeli call site keeps
+   * its exact behaviour; /check/[id] passes 'plate_check'. Hardcoding it, as
+   * this file did until the ordering fix, made every event from a second route
+   * claim to be plate_report.
+   */
+  valuationPath?: ValuationPathKey
+  /**
+   * Fires when a TERMINAL free-result state is on screen. FreeResultGate uses
+   * it to decide when a paid offer may render below. Never called for a
+   * spinner.
+   */
+  onPresented?: (result: PresentedFreeResult) => void
 }) {
   const [asking, setAsking]   = useState<number | null>(initialAskingPrice ?? null)
   const [input, setInput]     = useState('')
   const [data, setData]       = useState<Response | null>(null)
+  // Set when polling gives up without evidence. Before this existed the
+  // component rendered a spinner for ever in that case, which is both a dead
+  // end for the buyer and — since a spinner is not a result — a state the
+  // ordering invariant could never resolve.
+  const [exhausted, setExhausted] = useState(false)
   const polls                 = useRef(0)
   const fired                 = useRef<Set<string>>(new Set())
 
@@ -85,9 +108,14 @@ export function FreePriceEvidence({
         if (stop) return
         setData(json)
         // Vehicle/market lookups are async; keep polling until evidence lands.
-        if (json.state !== 'evidence' && polls.current < 12) setTimeout(load, 2500)
+        if (json.state !== 'evidence') {
+          if (polls.current < 12) setTimeout(load, 2500)
+          else setExhausted(true)
+        }
       } catch {
-        if (!stop && polls.current < 12) setTimeout(load, 2500)
+        if (stop) return
+        if (polls.current < 12) setTimeout(load, 2500)
+        else setExhausted(true)
       }
     }
     load()
@@ -98,20 +126,54 @@ export function FreePriceEvidence({
     if (!data || data.state !== 'evidence') return
     once('evidence', () => {
       analytics.plateEvidenceViewed({ confidence: data.confidence })
-      trackAdEvent('plate_price_evidence_viewed', { checkId, valuationPath: 'plate_report' })
+      trackAdEvent('plate_price_evidence_viewed', { checkId, valuationPath })
     })
     if (data.verdict) {
       once('verdict', () => {
         analytics.plateVerdictViewed({ verdict: data.verdict!, status: data.verdictStatus, confidence: data.confidence })
-        trackAdEvent('plate_verdict_viewed', { checkId, valuationPath: 'plate_report' })
+        trackAdEvent('plate_verdict_viewed', { checkId, valuationPath })
       })
     } else {
       once('suppressed', () => {
         analytics.plateVerdictSuppressed({ reason: data.verdictReason ?? 'insufficient_data', confidence: data.confidence })
-        trackAdEvent('plate_verdict_suppressed', { checkId, valuationPath: 'plate_report' })
+        trackAdEvent('plate_verdict_suppressed', { checkId, valuationPath })
       })
     }
-  }, [data, checkId])
+  }, [data, checkId, valuationPath])
+
+  /**
+   * Report the terminal state upward, exactly once per distinct state.
+   *
+   * Kept separate from the analytics effect above because the two answer
+   * different questions: that one records what the buyer SAW, this one decides
+   * whether a paid offer may render. A spinner and an unresolved provider
+   * request deliberately report nothing at all — the gate keeps the paywall
+   * closed until this fires.
+   */
+  useEffect(() => {
+    if (!onPresented) return
+
+    if (asking == null) {
+      once('presented:needs_asking_price', () => onPresented({ state: 'needs_asking_price' }))
+      return
+    }
+    if (data?.state === 'evidence') {
+      const state = data.verdict
+        ? 'verdict' as const
+        : data.verdictReason === 'mixed_variants'
+          ? 'suppressed' as const
+          : 'insufficient_data' as const
+      once(`presented:${state}`, () => onPresented({
+        state,
+        verdict:    data.verdict,
+        confidence: data.confidence,
+      }))
+      return
+    }
+    if (exhausted) {
+      once('presented:unavailable', () => onPresented({ state: 'unavailable' }))
+    }
+  }, [asking, data, exhausted, onPresented])
 
   // ── 1. Ask for the price when it wasn't supplied ────────────────────────
   if (asking == null) {
@@ -142,7 +204,7 @@ export function FreePriceEvidence({
     )
   }
 
-  if (!data || data.state === 'pending_vehicle' || data.state === 'pending_market') {
+  if (!exhausted && (!data || data.state === 'pending_vehicle' || data.state === 'pending_market')) {
     return (
       <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[14px] p-5 flex items-center gap-2">
         <div className="w-4 h-4 rounded-full border-2 border-[#D1D5DB] border-t-[#064E4A] animate-spin flex-shrink-0" />
@@ -150,7 +212,29 @@ export function FreePriceEvidence({
       </div>
     )
   }
-  if (data.state !== 'evidence') return null
+
+  /**
+   * Polling gave up. This used to `return null`, which left the buyer with a
+   * spinner that never resolved and — worse for the ordering rule — a paid
+   * offer sitting under an empty space where their answer should be. Saying so
+   * is the honest terminal state; it claims nothing about the car.
+   */
+  if (!data || data.state !== 'evidence') {
+    return (
+      <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[14px] p-5">
+        <span className="inline-block font-heading font-bold text-[11px] rounded-[5px] px-3 py-1 mb-2 bg-[#F3F4F6] text-[#6B7280]">
+          TIDAK TERSEDIA
+        </span>
+        <p className="font-heading font-bold text-[14px] text-[#111827] mb-1">
+          Kami tidak dapat semak harga pasaran buat masa ini.
+        </p>
+        <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
+          Ini masalah di pihak kami, bukan pada kereta anda. Cuba muat semula
+          halaman ini sebentar lagi.
+        </p>
+      </div>
+    )
+  }
 
   const cfg        = data.verdict ? VERDICT[data.verdict] : null
   const conf       = CONFIDENCE[data.confidence]

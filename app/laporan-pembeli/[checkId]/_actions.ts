@@ -19,6 +19,7 @@ import { createClient }           from '@/lib/supabase/server'
 import { currentAttribution }     from '@/lib/attribution-request'
 import { recordCheckoutAttribution, recordAdEvent, markCapiSent } from '@/lib/db/ad-attribution'
 import { eventId }                from '@/lib/attribution'
+import type { ValuationPath }     from '@/lib/funnel-stages'
 import { normaliseMyMobile }      from '@/lib/phone-my'
 import { checkoutEventId }        from '@/lib/checkout-event-id'
 import { sendMetaEvent }          from '@/lib/meta-capi'
@@ -49,6 +50,13 @@ async function captureCheckout(params: {
    * first event that can.
    */
   buyerEmail?:   string | null
+  /**
+   * The journey this bill belongs to. recordAdEvent has accepted this since
+   * migration 021; this function simply never passed it, so every
+   * checkout_started row in production carries NULL and the purchase inheriting
+   * from it had nothing to inherit.
+   */
+  valuationPath?: ValuationPath | null
 }): Promise<void> {
   try {
     const { sessionId, attribution } = await currentAttribution()
@@ -65,12 +73,13 @@ async function captureCheckout(params: {
       const id = eventId.checkoutStarted(params.billId)
       const result = await recordAdEvent({
         sessionId,
-        eventName:   'checkout_started',
-        eventId:     id,
+        eventName:     'checkout_started',
+        eventId:       id,
         attribution,
-        checkId:     params.checkId,
-        billId:      params.billId,
-        amountCents: params.amountCents,
+        checkId:       params.checkId,
+        billId:        params.billId,
+        amountCents:   params.amountCents,
+        valuationPath: params.valuationPath ?? null,
       })
 
       // Forward to Meta as InitiateCheckout. This event was already being
@@ -179,6 +188,14 @@ export interface InitiateBuyerReportParams {
   addJomCheck?:      boolean
   askingPriceRm?:    number
   claimedMileageKm?: number
+  /**
+   * Which journey this checkout belongs to, named by the surface the form was
+   * rendered on. Optional so an older cached bundle keeps working, but every
+   * live call site supplies it — without it checkout_started and purchase
+   * record valuation_path = NULL, which is what made 100% of purchases
+   * unattributable to a journey in the 2026-08-17 audit.
+   */
+  valuationPath?:    ValuationPath
 }
 
 export async function initiateBuyerReport(
@@ -340,6 +357,7 @@ async function initiateBuyerReportImpl(
       product:       effectiveAddJomCheck ? 'buyer_report_bundle' : 'buyer_report',
       amountCents,
       buyerEmail:    params.buyerEmail,
+      valuationPath: params.valuationPath ?? null,
     })
 
     // Pre-warm vehicle data and market prices during the Billplz payment window (~30-60s).
@@ -455,6 +473,12 @@ export async function initiateJomCheckUpgrade(params: {
       product:       'claim_check_upgrade',
       amountCents:   8800,
       buyerEmail:    report.buyer_email,
+      // The RM88 upsell exists on exactly one surface — the paid report at
+      // /laporan-pembeli — so this is the surface's own name, not a guess from
+      // a URL. Same convention as PaymentForm, which labels the form by the
+      // route it renders on rather than by where the visitor originally came
+      // from.
+      valuationPath: 'plate_report',
     })
     return { error: null, billUrl: bill.url, billId: bill.id }
   } catch (err) {

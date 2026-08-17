@@ -9,6 +9,7 @@ import {
   type AdEventName,
 } from '@/lib/attribution'
 import { upsertAdSession, recordAdEvent, markCapiSent } from '@/lib/db/ad-attribution'
+import { normalizeReferrer } from '@/lib/traffic-source'
 import { sendMetaEvent, type MetaEventName } from '@/lib/meta-capi'
 
 /**
@@ -47,6 +48,12 @@ const PER_CHECK_STAGES = [
   'plate_price_evidence_viewed',
   'plate_verdict_viewed',
   'plate_verdict_suppressed',
+  // One offer for one check, exactly like the stages around it: a buyer whose
+  // result refines from needs_asking_price to a real verdict has been shown one
+  // answer for one car, so the second presentation collapses onto the first
+  // here. That keeps "paywall_viewed preceded by free_result_presented" a
+  // clean per-journey count.
+  'free_result_presented',
   'paid_report_cta_viewed',
   'paid_report_cta_clicked',
 ] as const
@@ -55,7 +62,8 @@ const schema = z.object({
   event: z.enum([
     'landing_page_view', 'valuation_started', 'valuation_completed',
     'plate_submitted', 'plate_result_poll_timed_out',
-    'paywall_viewed', 'payment_form_focused', 'billplz_navigation_started',
+    'paywall_viewed', 'payment_form_focused', 'payment_form_submitted',
+    'billplz_navigation_started',
     'model_result_shown', 'model_result_no_data',
     ...PER_CHECK_STAGES,
   ]),
@@ -66,6 +74,14 @@ const schema = z.object({
   checkId:   z.string().max(100).optional(),
   valuationPath: z.enum(['plate_report', 'model_price', 'plate_check']).optional(),
   billId:    z.string().max(100).optional(),
+  // Tier price in sen. Bounded to the two real tiers plus the upgrade so this
+  // can never become a free-form numeric channel out of the browser.
+  amountCents: z.union([z.literal(1200), z.literal(8800), z.literal(10000)]).optional(),
+  // The sending page's document.referrer, already reduced to a hostname by the
+  // client. Nullable and optional so an older cached bundle that omits it keeps
+  // working unchanged. Only ever reaches ad_sessions.referrer, which is written
+  // on first touch alone — no Meta field is derived from it.
+  referrer:  z.string().max(2000).nullable().optional(),
 })
 
 // Paqar funnel step → Meta standard event. valuation_started is also tracked
@@ -127,7 +143,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
   }
 
-  const { event, url, attemptId, checkId, billId } = parsed.data
+  const { event, url, attemptId, checkId, billId, referrer } = parsed.data
   const attribution = attributionFromRequest({
     url,
     fbcCookie: request.cookies.get('_fbc')?.value ?? null,
@@ -146,6 +162,15 @@ export async function POST(request: NextRequest) {
     sessionId,
     attribution,
     landingPath:      path,
+    // Written on first touch only, like landing_path — upsertAdSession's
+    // ignoreDuplicates means a later in-session event cannot overwrite it (R2).
+    //
+    // Normalised again here even though the client already did it (R4). The
+    // client is the browser: a bundle cached before that change shipped, or any
+    // other caller, could post a full URL with a query string. This is the last
+    // point before storage, so it is where "only a hostname is ever stored" has
+    // to be true rather than merely intended.
+    referrer:         normalizeReferrer(referrer, new URL(request.url).origin),
     authoritativeFbc: request.cookies.get('_fbc')?.value ?? null,
   })
 
@@ -167,6 +192,13 @@ export async function POST(request: NextRequest) {
   } else if (event === 'payment_form_focused') {
     if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
     id = derive.paymentFormFocused(sessionId, checkId)
+  } else if (event === 'payment_form_submitted') {
+    // Attempt-keyed, so a genuine retry after a rejected submit is a second
+    // row while a double-fire inside one press is not. Without an attempt id
+    // there is nothing to count, so the event is skipped rather than recorded
+    // against the check and silently merged with a previous attempt.
+    if (!attemptId) return NextResponse.json({ ok: true, skipped: 'no_attempt_id' })
+    id = derive.paymentFormSubmitted(sessionId, attemptId)
   } else if (event === 'plate_result_poll_timed_out') {
     if (!checkId) return NextResponse.json({ error: 'checkId required' }, { status: 400 })
     // Keyed on the check alone, so a refresh that times out again is the same
@@ -208,6 +240,7 @@ export async function POST(request: NextRequest) {
     path,
     valuationPath: parsed.data.valuationPath ?? null,
     billId:        billId ?? null,
+    amountCents:   parsed.data.amountCents ?? null,
     journeyId:     attemptId ?? null,
     errorStage:    errorStage ?? null,
     errorCode:     errorCode  ?? null,

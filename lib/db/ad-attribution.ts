@@ -297,3 +297,33 @@ export async function getCheckoutAttribution(
 
   return (data as CheckoutAttribution | null) ?? null
 }
+
+/**
+ * The journey a bill was created from, read back off its own funnel events.
+ *
+ * WHY NOT checkout_attributions. That table is the natural home for this and
+ * has no column for it, and adding one is a production migration this change
+ * does not otherwise need. ad_events already carries valuation_path on every
+ * row, and checkout_started is written with the same bill id in the same
+ * server action — so the value is already stored, one join away, the moment
+ * captureCheckout passes it.
+ *
+ * Inheritance rather than re-derivation is the point: the webhook fires from
+ * Billplz with no session, no route and no referrer, so it has no honest way
+ * to work out a path on its own. Returning null when nothing is recorded is
+ * correct and expected — every bill created before this shipped will do so,
+ * and no historical row is backfilled.
+ */
+export async function getBillValuationPath(billId: string): Promise<ValuationPath | null> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('ad_events')
+    .select('valuation_path')
+    .eq('bill_id', billId)
+    .not('valuation_path', 'is', null)
+    .order('occurred_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  return (data?.valuation_path as ValuationPath | null) ?? null
+}

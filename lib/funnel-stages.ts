@@ -49,6 +49,12 @@ export const FUNNEL_STAGES = [
   'plate_price_evidence_viewed',
   'plate_verdict_viewed',
   'plate_verdict_suppressed',
+  // The ordering stage. Fires when a TERMINAL free-result state is on screen —
+  // a verdict, either suppression, the free asking-price offer, or an honest
+  // "unavailable". It is what makes "was this buyer shown an answer before a
+  // price?" answerable per journey instead of inferred from three separate
+  // events that only one of the two paywall routes could ever emit.
+  'free_result_presented',
   'paid_report_cta_viewed',
   'paid_report_cta_clicked',
   // Paqar handed the browser a Billplz URL and is about to navigate. It does
@@ -66,6 +72,13 @@ export const FUNNEL_STAGES = [
   // Diagnostic only: neither is forwarded to Meta.
   'paywall_viewed',
   'payment_form_focused',
+  // The buyer pressed pay. Distinct from checkout_started, which is keyed on a
+  // bill id and therefore cannot exist until Billplz has already accepted the
+  // bill — a submission that fails validation, or fails at createBill, emitted
+  // nothing at all before this. Ten sessions focused a field and produced no
+  // bill in the 2026-08-17 audit with no way to tell a rejected form from a
+  // change of mind.
+  'payment_form_submitted',
   'checkout_started',
   'purchase',
 ] as const

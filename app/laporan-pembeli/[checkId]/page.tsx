@@ -10,7 +10,7 @@ import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
-import { FreePriceEvidence }   from '@/components/report/FreePriceEvidence'
+import { FreeResultGate }      from '@/components/report/FreeResultGate'
 import { PaidReportCtaTracker } from '@/components/report/PaidReportCtaTracker'
 import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
 import { VehiclePreviewTeaser } from '@/components/report/VehiclePreviewTeaser'
@@ -215,43 +215,51 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
           {/* Free teaser — proof the car was found, before asking for RM12 */}
           <VehiclePreviewTeaser checkId={params.checkId} claimToken={claimToken} />
 
-          {isPlateFlow ? (
-            <>
-              {/* Free price evidence BEFORE the ask. PlateCheckerForm promises
-                  that adding the asking price reveals whether the seller's
-                  price is fair; until now that number was only prefilled into
-                  checkout. This keeps the promise, and gives the ad path the
-                  same proof the model tab has always given away. */}
-              <FreePriceEvidence
-                checkId={params.checkId}
-                claimToken={claimToken}
-                initialAskingPrice={
-                  searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined
-                }
-              />
-              {/* plate="" — the page header above already shows the plate;
-                  the pitch's plate block is only load-bearing on /check/[id] */}
-              <PaidReportCtaTracker checkId={params.checkId} hasFreeVerdict={true} />
-              <BuyerReportPitch plate="" />
-              <PaymentForm
-                checkId={params.checkId}
-                claimToken={claimToken}
-                valuationPath="plate_report"
-                defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
-              />
-              <CollapsibleSampleReport />
-            </>
-          ) : (
-            <>
-              <LockedReportPreview />
-              <PaymentForm
-                checkId={params.checkId}
-                claimToken={claimToken}
-                valuationPath="plate_report"
-                defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
-              />
-            </>
-          )}
+          {/* Free price evidence BEFORE the ask. PlateCheckerForm promises
+              that adding the asking price reveals whether the seller's price is
+              fair; until now that number was only prefilled into checkout. This
+              keeps the promise, and gives the ad path the same proof the model
+              tab has always given away.
+
+              The gate now renders that evidence and owns the ordering for BOTH
+              branches below. The non-plate branch previously went straight from
+              LockedReportPreview — a generic locked document, not this buyer's
+              answer — to the payment form, which is the same defect /check/[id]
+              had, one ternary away. */}
+          <FreeResultGate
+            checkId={params.checkId}
+            claimToken={claimToken}
+            valuationPath="plate_report"
+            initialAskingPrice={
+              searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined
+            }
+          >
+            {isPlateFlow ? (
+              <>
+                {/* plate="" — the page header above already shows the plate;
+                    the pitch's plate block is only load-bearing on /check/[id] */}
+                <PaidReportCtaTracker checkId={params.checkId} hasFreeVerdict={true} />
+                <BuyerReportPitch plate="" />
+                <PaymentForm
+                  checkId={params.checkId}
+                  claimToken={claimToken}
+                  valuationPath="plate_report"
+                  defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
+                />
+                <CollapsibleSampleReport />
+              </>
+            ) : (
+              <>
+                <LockedReportPreview />
+                <PaymentForm
+                  checkId={params.checkId}
+                  claimToken={claimToken}
+                  valuationPath="plate_report"
+                  defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
+                />
+              </>
+            )}
+          </FreeResultGate>
         </div>
       </Shell>
     </>

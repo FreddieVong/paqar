@@ -1,5 +1,7 @@
 'use client'
 
+import { normalizeReferrer } from '@/lib/traffic-source'
+
 /**
  * Browser side of the funnel-event pipeline.
  *
@@ -25,11 +27,16 @@ type BrowserEvent =
   | 'plate_price_evidence_viewed'
   | 'plate_verdict_viewed'
   | 'plate_verdict_suppressed'
+  // Fired by FreeResultGate the moment a terminal free-result state is on
+  // screen — the event that makes paywall ordering measurable per journey.
+  | 'free_result_presented'
   | 'paid_report_cta_viewed'
   | 'paid_report_cta_clicked'
   | 'billplz_navigation_started'
   | 'model_result_shown'
   | 'model_result_no_data'
+  // Pay pressed, before the server action calls Billplz.
+  | 'payment_form_submitted'
 
 export type ValuationPathKey = 'plate_report' | 'model_price' | 'plate_check'
 
@@ -42,14 +49,33 @@ export function trackAdEvent(
     valuationPath?: ValuationPathKey
     /** Billplz bill this event is about. Required by billplz_navigation_started. */
     billId?: string
+    /**
+     * Price of the tier being bought, in sen — 1200 or 10000. Low-cardinality
+     * and already a column on ad_events, so payment_form_submitted can record
+     * which tier was attempted without a schema change and without ever
+     * carrying a form value.
+     */
+    amountCents?: number
   } = {}
 ): void {
   if (typeof window === 'undefined') return
 
+  // The referrer has to come from the browser: the server sees only its own
+  // Referer header on this fetch — the Paqar page that made the call — which is
+  // never the site that sent the visitor.
+  //
+  // Reduced to a bare hostname BEFORE it leaves the browser. A search referrer
+  // carries the query the visitor typed and other sites carry their own
+  // parameters, including session tokens; none of that is needed to answer the
+  // channel question, so none of it is transmitted. Same-origin referrers —
+  // every internal navigation after the first page — become null here.
+  // See the attribution rules in lib/traffic-source.ts.
+  const referrer = normalizeReferrer(document.referrer, window.location.origin)
+
   void fetch('/api/meta/event', {
     method:   'POST',
     headers:  { 'Content-Type': 'application/json' },
-    body:     JSON.stringify({ event, url: window.location.href, ...opts }),
+    body:     JSON.stringify({ event, url: window.location.href, referrer, ...opts }),
     keepalive: true, // survives the navigation that follows a valuation start
   }).catch(() => { /* tracking must never break the funnel */ })
 }
