@@ -62,6 +62,20 @@ export function Shell({
             <Link href="/tentang" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Tentang
             </Link>
+            {/*
+              /api-docs was in the sitemap, indexable, and reachable from no
+              page on the site — click depth infinity, zero inbound links. A
+              sitemap entry asserts a page EXISTS; a link asserts it MATTERS,
+              and a URL with only the first is what Google leaves in
+              "Discovered - currently not indexed".
+
+              It sits in the company group next to Tentang because that is what
+              it is: a public reference surface, not a buyer journey step. One
+              link in the footer, not a promotion into the homepage body.
+            */}
+            <Link href="/api-docs" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+              API
+            </Link>
             <Link href="/privasi" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
               Privasi
             </Link>
