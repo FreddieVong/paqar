@@ -69,6 +69,11 @@ export const FUNNEL_STAGES = [
   // Diagnostic only: neither is forwarded to Meta.
   'paywall_viewed',
   'payment_form_focused',
+  // The buyer pressed pay. Distinct from checkout_started, which is keyed on a
+  // bill id and therefore cannot exist until Billplz has already accepted the
+  // bill — a submission that fails validation, or fails inside createBill,
+  // emitted nothing at all before this.
+  'payment_form_submitted',
   'checkout_started',
   'purchase',
 ] as const

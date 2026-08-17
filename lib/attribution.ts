@@ -32,6 +32,9 @@ export type AdEventName =
   | 'valuation_completed'
   | 'paywall_viewed'
   | 'payment_form_focused'
+  // Pay pressed, BEFORE Billplz is called. checkout_started still means a bill
+  // exists; the two together bracket createBill.
+  | 'payment_form_submitted'
   // Free plate-path evidence, recorded so we can measure whether proving
   // capability before the RM12 ask changes conversion. Campaign attribution
   // rides on the session cookie, so these join to creative like every other
@@ -143,6 +146,17 @@ export const eventId = {
    */
   perCheckStage: (stage: string, sessionId: string, checkId: string) =>
     digest([stage, sessionId, checkId]),
+
+  /**
+   * Keyed on the SUBMIT ATTEMPT, not the check.
+   *
+   * Repetition is the signal here. A buyer who presses pay, is rejected,
+   * corrects a field and presses again has told us something a per-check key
+   * would erase — so the client mints a fresh attempt id per genuine press,
+   * while a re-render inside one press reuses it and collapses here.
+   */
+  paymentFormSubmitted: (sessionId: string, attemptId: string) =>
+    digest(['payment_form_submitted', sessionId, attemptId]),
 
   // Keyed on the bill alone: the webhook and /selesai both derive it without
   // needing the session, and Billplz retries collapse onto one row.
