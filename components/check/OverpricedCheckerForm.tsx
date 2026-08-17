@@ -96,9 +96,18 @@ type Props = {
   initialModel?:  string
   initialYear?:   string
   onStateChange?: (state: FormState) => void
+  /**
+   * Fire `seo_page_cta_engaged` on first interaction with the price field.
+   *
+   * Set by the SEO landing pages carrying the direct-answer treatment. It
+   * measures the step between landing and starting — without it, a page where
+   * fifty people opened the form and left is indistinguishable from one nobody
+   * looked at. Off everywhere else, so no other surface's event counts change.
+   */
+  trackCtaEngagement?: boolean
 }
 
-export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', initialYear = '', onStateChange }: Props) {
+export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', initialYear = '', onStateChange, trackCtaEngagement = false }: Props) {
   const router = useRouter()
 
   // Read the query string at submit time rather than via useSearchParams():
@@ -124,6 +133,21 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
   const [model,       setModel]       = useState(initialModel)
   const [year,        setYear]        = useState(initialYear)
   const [askingPrice, setAskingPrice] = useState('')
+
+  /**
+   * One CTA-engagement event per mount, at most.
+   *
+   * The ref is the guard that matters: onFocus fires again every time the user
+   * tabs back into the field, and the server's derived event_id would collapse
+   * the repeats anyway — but sending them would still put avoidable traffic
+   * through the endpoint for no additional signal.
+   */
+  const ctaEngagementSent = useRef(false)
+  function handleCtaEngagement() {
+    if (!trackCtaEngagement || ctaEngagementSent.current) return
+    ctaEngagementSent.current = true
+    trackAdEvent('seo_page_cta_engaged')
+  }
   const [formState,   setFormState]   = useState<FormState>('idle')
   const [result,      setResult]      = useState<PriceCheckResult | null>(null)
   const [checkError,  setCheckError]  = useState<string | null>(null)
@@ -372,6 +396,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
               id="oc-price"
               value={askingPrice}
               onChange={setAskingPrice}
+              onFocus={handleCtaEngagement}
               className={PRICE_INPUT_CLS}
             />
           </div>

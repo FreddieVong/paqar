@@ -71,11 +71,23 @@ describe('comparison config states no market price', () => {
     expect(claims, `range-shaped claims: ${claims.join(' | ')}`).toEqual([])
   })
 
-  it('still renders live figures elsewhere in the file', () => {
-    // Guard the guard: this must not become a blanket ban on RM in the file,
-    // or the live table's own formatter would be unfixable.
-    expect(stripComments(RAW)).toContain('function fmt')
-    expect(stripComments(RAW)).toContain('row.a.min')
+  it('checks the config region only, not the whole file', () => {
+    // Guard the guard: the assertions above must stay scoped to the authored
+    // config, or they become a blanket ban on 'RM' anywhere in the file and a
+    // legitimate RM12 CTA would be unfixable.
+    //
+    // This used to prove the scoping by pointing at the live price formatter
+    // (`function fmt`, `row.a.min`). Both are gone: the table now renders a
+    // link per model-year instead of a range, because a live range is still the
+    // RM12 report's range. The scoping is asserted directly instead.
+    expect(CONFIG.length).toBeGreaterThan(500)
+    expect(CONFIG.length).toBeLessThan(stripComments(RAW).length)
+  })
+
+  it('renders a per-year link where it used to render a range', () => {
+    const src = stripComments(RAW)
+    expect(src).not.toMatch(/row\.a\.min|row\.b\.min|function fmt/)
+    expect(src).toContain('harga-${yearKeyA}-${row.year}')
   })
 })
 

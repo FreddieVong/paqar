@@ -4,9 +4,12 @@ import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
+import { DirectAnswerBlock } from '@/components/seo/DirectAnswer'
+import { directAnswerFor } from '@/lib/direct-answers'
 import { VARIANT_GUIDES, type VariantVerdict } from '@/lib/variant-guides'
-import { variantLabelList } from '@/lib/variant-label'
-import { buildVariantLadder, ladderSpreadRm } from '@/lib/variant-ladder'
+import { variantLabelListFrom } from '@/lib/variant-label'
+import { clampMetaDescription } from '@/lib/meta-description'
+import { buildVariantLadder } from '@/lib/variant-ladder'
 import { getVariantLadderRows } from '@/lib/db/variant-ladder-query'
 
 type Props = { params: { model: string } }
@@ -23,12 +26,14 @@ export function generateMetadata({ params }: Props): Metadata {
   // variants in a generation share a displacement, so the old first-token
   // extraction rendered "1.3 vs 1.3 vs 1.5 vs 1.5". See lib/variant-label.ts.
   const newestGen    = guide.generations[guide.generations.length - 1]
-  const variantNames = variantLabelList(newestGen?.variants.map(v => v.name) ?? [])
+  const variantNames = variantLabelListFrom(newestGen?.variants ?? [])
   const title = `${guide.model} Varian Mana Patut Beli? ${variantNames} | Paqar`
-  // "Beza" is how the query data shows people actually phrase this ("beza
-  // honda city e dan v"), and the description has room for it that the title
-  // does not.
-  const description = `Beza varian ${guide.brand} ${guide.model} terpakai — ${variantNames}. ${guide.answerLine} Nilai terbaik, varian untuk elak, cara cam varian sebenar, dan harga berpatutan.`
+  // Purpose-written, not composed — see VariantGuide.metaDescription for why
+  // truncating the on-page answer line produced worse copy than writing a
+  // description outright. Still passed through the clamp: that is a backstop
+  // against a future edit quietly reintroducing a 280-character description,
+  // and a no-op on every current value.
+  const description = clampMetaDescription(guide.metaDescription)
   return {
     title,
     description,
@@ -48,12 +53,15 @@ export default async function VariantGuidePage({ params }: Props) {
   const guide = VARIANT_GUIDES[params.model]
   if (!guide) notFound()
 
+  // The direct answer, for the pages Search Console shows already ranking.
+  // Null everywhere else, and the page renders exactly as before.
+  const directAnswer = directAnswerFor(`/varian/${params.model}`)
+
   // Real price ladder from vehicle_valuations. Supplementary — the page must
   // still render if this fails, so failures degrade to hiding the block.
   const { rows: ladderRows, year: ladderYear } =
     await getVariantLadderRows(guide.brand, guide.model).catch(() => ({ rows: [], year: null }))
   const ladder = buildVariantLadder(ladderRows)
-  const spread = ladderSpreadRm(ladder)
 
   const schema = {
     '@context': 'https://schema.org',
@@ -96,6 +104,13 @@ export default async function VariantGuidePage({ params }: Props) {
               {guide.answerLine}
             </p>
           </div>
+
+          {/*
+            The direct answer, immediately under the H1 — first screen, before
+            anything is asked of the reader. Only on pages Search Console shows
+            already ranking for a specific question; see lib/direct-answers.ts.
+          */}
+          {directAnswer && <DirectAnswerBlock answer={directAnswer} />}
 
           {/* Quick verdict strip */}
           <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-4 space-y-1.5">
@@ -179,21 +194,32 @@ export default async function VariantGuidePage({ params }: Props) {
             )}
           </div>
 
-          {/* Price ladder — the arithmetic half of "beza varian X dan Y".
-              Real new prices from vehicle_valuations, not written prose, so
-              nothing here is a claim anyone had to make up. Hidden entirely
-              when the data is thin rather than shown half-empty. */}
+          {/*
+            Variant ladder — the manufacturer's ORIGINAL new-car price per trim.
+
+            wm_new_pr is the published list price a trim launched at. It is not
+            derived from a market-price distribution, it is not a used value,
+            and Perodua and Honda publish it themselves — so it is public
+            reference information rather than Paqar evidence, and it is labelled
+            as such twice: in the column heading and in the note beneath.
+
+            What stays removed is the arithmetic: stepUpRm (the gap to the next
+            trim) and the ladder spread. Those are derived RM gaps, which is
+            squarely what the RM12 report sells, and a reader who wants them can
+            subtract two published list prices themselves — the point is that
+            Paqar does not present the subtraction as its own finding.
+          */}
           {ladder.length >= 2 && (
             <div className="space-y-3">
               <div>
                 <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-1">
-                  Beza Harga Antara Varian
+                  Harga Baharu Asal Mengikut Varian
                 </p>
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
-                  {spread != null && (
-                    <>Beza antara varian paling murah dan paling mahal: <strong className="text-[#111827]">RM{spread.toLocaleString()}</strong>. </>
-                  )}
-                  Ini harga baharu{ladderYear ? ` (model ${ladderYear})` : ''} — guna sebagai rujukan tangga varian, bukan harga terpakai hari ni.
+                  Harga senarai keluaran{ladderYear ? ` (model ${ladderYear})` : ''} semasa varian ini
+                  dilancarkan baharu — <strong>bukan harga terpakai hari ini</strong>. Guna sebagai
+                  rujukan susunan varian sahaja; harga terpakai bergantung pada tahun, jarak tempuh
+                  dan kondisi unit.
                 </p>
               </div>
 
@@ -204,11 +230,9 @@ export default async function VariantGuidePage({ params }: Props) {
                     className={`flex items-center justify-between px-4 py-2.5 ${i > 0 ? 'border-t border-[#F3F4F6]' : ''}`}
                   >
                     <span className="font-heading font-bold text-[13px] text-[#111827]">{rung.variant}</span>
-                    <span className="flex items-baseline gap-2">
-                      {rung.stepUpRm != null && (
-                        <span className="font-body text-[11px] text-[#9CA3AF]">+RM{rung.stepUpRm.toLocaleString()}</span>
-                      )}
-                      <span className="font-body text-[13px] text-[#374151]">RM{rung.newPriceRm.toLocaleString()}</span>
+                    <span className="font-body text-[13px] text-[#374151]">
+                      RM{rung.newPriceRm.toLocaleString('en-MY')}
+                      <span className="text-[11px] text-[#9CA3AF]"> baharu</span>
                     </span>
                   </div>
                 ))}
@@ -221,7 +245,11 @@ export default async function VariantGuidePage({ params }: Props) {
             <p className="font-heading font-bold text-[14px] text-[#111827]">
               Dah jumpa {guide.model} yang berkenan? Semak harganya dulu:
             </p>
-            <OverpricedCheckerForm initialBrand={guide.brand} initialModel={guide.model} />
+            <OverpricedCheckerForm
+              initialBrand={guide.brand}
+              initialModel={guide.model}
+              trackCtaEngagement={!!directAnswer}
+            />
           </div>
 
           {/* FAQ */}

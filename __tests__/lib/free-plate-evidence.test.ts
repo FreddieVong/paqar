@@ -80,9 +80,17 @@ describe('the negotiation anchor is never exposed for free', () => {
       .toEqual(['make', 'model', 'registrationyear', 'description'])
   })
 
-  it('omits the range and the comparable count too', async () => {
-    // Both paths now answer WHETHER, never by how much. The count in
-    // particular describes Paqar's sample rather than the buyer's car.
+  it('omits the range and the STATISTICAL SAMPLE SIZE too', async () => {
+    // Both paths answer WHETHER, never by how much. listingCount in particular
+    // is the size of Paqar's cohort — it describes the sample rather than the
+    // buyer's car, and publishing it invites an audit of the evidence the RM12
+    // report sells.
+    //
+    // Scoped to these four named fields on purpose, NOT to "any field whose
+    // name contains count". An approved future feature adds an action count to
+    // the free result — betterListingCount, a count of qualifying alternatives
+    // — which exposes no price, no median, no range and not the cohort size.
+    // See the contract note on PriceCheckResult in types/api.ts.
     getMarket.mockResolvedValue({ listings: listings(6), fetchedAt: 'x', searchUrl: '' })
     const d = await call(QS)
     for (const field of ['minPrice', 'maxPrice', 'medianPrice', 'listingCount']) {

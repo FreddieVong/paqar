@@ -223,6 +223,174 @@ for (const { file, route } of pages) {
   }
 }
 
+// ── Free/paid boundary ──────────────────────────────────────────────────────
+//
+// THE DEFECT THIS EXISTS FOR. Paqar's free tier is a qualitative verdict, a
+// qualitative explanation and a confidence band. The RM12 report is the
+// numbers: median, range, price gap, negotiation room, trade-in evidence.
+//
+// The price templates were publishing the paid half for nothing, at scale:
+//
+//   /harga-{model}-{year}      min, max, median, listing count and a threshold
+//                              derived from the max — 58 pages, repeated inside
+//                              FAQPage JSON-LD, and the median again in a
+//                              /kira-ansuran-kereta?harga= query string
+//   /harga-kereta-terpakai/*   a min-max range per year per model, 14 hubs
+//   /harga-{brand}-terpakai    a rounded min-max span per model, 6 pages
+//   /bandingkan/*              both models' ranges per year, 7 pages
+//   /varian/*                  each trim's price, the step up to it, and the
+//                              spread across the ladder
+//
+// A unit test cannot catch this: the leak is what a template interpolates, and
+// it is only visible once rendered. So this scans the built HTML.
+//
+// WHAT IS DELIBERATELY ALLOWED. Paqar's own product prices (RM12, RM88, RM100),
+// because a page must be able to say what it costs. And hand-written trim
+// premiums on /varian/* ("biasanya RM3–5k atas E"), which are editorial priors
+// about how much a trim typically costs above another — not derived from a
+// market-price distribution, and not something that reveals any specific car's
+// market position. They are listed here rather than silently skipped so the
+// decision stays visible; if they should also go, tighten VARIANT_PREMIUM_OK.
+
+const BOUNDARY_TEMPLATES = [
+  { name: 'year page',   test: r => /^\/harga-[a-z0-9-]+-\d{4}$/.test(r) },
+  { name: 'model hub',   test: r => r.startsWith('/harga-kereta-terpakai/') },
+  { name: 'brand hub',   test: r => /^\/harga-[a-z]+-terpakai$/.test(r) },
+  { name: 'comparison',  test: r => r.startsWith('/bandingkan/') },
+  { name: 'variant',     test: r => r.startsWith('/varian/') },
+]
+
+/** Paqar's own prices. A page may always state what it charges. */
+const PRODUCT_PRICE = /^(12|88|100)(\.00)?$/
+
+/**
+ * The public market teaser, allowed on Tier A YEAR PAGES only.
+ *
+ * Two numbers, both exact multiples of RM5,000, from the interquartile range of
+ * the cleaned cohort rounded outward. The multiple-of-5,000 test is what makes
+ * this exemption safe to write down: an exact median (RM34,400), a raw bound
+ * (RM28,800) or a derived threshold (RM47,000) cannot pass it, so the exemption
+ * cannot be widened into the figures it exists to keep out.
+ *
+ * See lib/market-teaser.ts for why a band is published at all.
+ */
+const TEASER_BAND_OK = n => Number.isInteger(n) && n >= 5000 && n % 5000 === 0
+
+/**
+ * Manufacturer list prices on /varian/*.
+ *
+ * wm_new_pr is the published new-car price a trim launched at — public
+ * reference information from Perodua and Honda, not a used-market figure and
+ * not derived from any distribution. The page labels it twice, and the derived
+ * gaps between trims stay removed.
+ *
+ * Bounded to a plausible new-car range so the exemption cannot quietly cover a
+ * used-market figure that happens to appear in the same template.
+ */
+const NEW_CAR_PRICE_OK = n => Number.isInteger(n) && n >= 20_000 && n <= 600_000
+
+/**
+ * Hand-written trim premiums and decision thresholds, allowed only on
+ * /varian/*: "RM3–5k atas E", "berbaloi jika bezanya kurang dari RM4k".
+ *
+ * These are editorial priors about what a trim is worth relative to another —
+ * not derived from a market-price distribution, and they reveal nothing about
+ * any specific car's market position. The shape is deliberately narrow (at most
+ * two digits, always suffixed k) and __tests__/app/free-paid-boundary.test.ts
+ * asserts that every RM figure in lib/variant-guides.ts matches it, so the
+ * exemption cannot widen without a test failing.
+ */
+const VARIANT_PREMIUM_OK = /^\d{1,2}(?:[–-]\d{1,2})?k$/
+
+/**
+ * Budget brackets that name an editorial guide rather than a cohort.
+ *
+ * "Kereta pertama terbaik bawah RM30k" is the title of /faq/best-first-car-
+ * under-30k. Allowed only where the page actually links that guide, so the
+ * exemption cannot quietly cover a real figure that happens to be 30k.
+ */
+const EDITORIAL_BRACKET = /^30k$/
+
+// Matches an RM figure in visible text or JSON-LD: RM12, RM 34,400, RM3–5k.
+//
+// The range branch is FIRST and that ordering is load-bearing: with the plain
+// branch first, "RM1–2k" matched as "RM1" and the trim-premium exemption below
+// never fired, reporting six false positives on its first run.
+const RM_FIGURE = /RM\s?(\d{1,2}[–-]\d{1,2}k|[\d,]+(?:\.\d+)?k?)/gi
+
+let boundaryPagesScanned = 0
+
+for (const { file, route } of pages) {
+  const template = BOUNDARY_TEMPLATES.find(t => t.test(route))
+  if (!template) continue
+  boundaryPagesScanned++
+
+  const html = readFileSync(file, 'utf8')
+  // Strip the RSC payload: it repeats rendered strings in escaped JSON, so a
+  // single leak would be reported twice with unreadable context. The visible
+  // markup and the JSON-LD are what a reader and a crawler actually get.
+  //
+  // THEN strip Next's empty comment separators. React emits `<!-- -->` between
+  // adjacent text nodes, so an interpolated figure renders as
+  // `RM<!-- -->34,400` — and RM_FIGURE, which expects a digit after RM, saw
+  // nothing. This guard was blind to exactly the leak it exists to catch:
+  // every figure it did catch was a hand-written string literal. Found when the
+  // variant list prices, which ARE interpolated, failed to appear in a
+  // rendered-output inventory.
+  const visible = html
+    .replace(/<script[^>]*id="__NEXT_DATA__"[^>]*>[\s\S]*?<\/script>/g, '')
+    .replace(/<!--\s*-->/g, '')
+
+  const offenders = new Set()
+  for (const m of visible.matchAll(RM_FIGURE)) {
+    const figure = m[1].replace(/,/g, '')
+    if (PRODUCT_PRICE.test(figure)) continue
+    if (template.name === 'variant' && VARIANT_PREMIUM_OK.test(m[1])) continue
+    if (template.name === 'variant' && NEW_CAR_PRICE_OK(Number(figure))) continue
+    if (template.name === 'year page' && TEASER_BAND_OK(Number(figure))) continue
+    if (EDITORIAL_BRACKET.test(m[1]) && visible.includes('best-first-car-under-30k')) continue
+    offenders.add(m[0].trim())
+  }
+
+  if (offenders.size) {
+    fail('free/paid boundary', `${route} (${template.name}) renders market figures: ${[...offenders].slice(0, 6).join(', ')}`)
+  }
+
+  // ── Sample-size disclosure ────────────────────────────────────────────────
+  //
+  // A count is evidence too, and it carries no RM, so it needs its own check.
+  //
+  // WHAT THIS FORBIDS: the size of the statistical sample behind a published
+  // figure. "Berdasarkan 14 listing" invites a reader to audit Paqar's cohort,
+  // and next to a band it is the missing piece that makes the band estimable.
+  // On a PRERENDERED SEO SURFACE there is no legitimate count of any kind, so
+  // the rule here is deliberately absolute rather than clever: these templates
+  // publish a band and prose, and nothing that counts anything.
+  //
+  // WHAT THIS DOES NOT REACH, BY DESIGN: the free-check RESULT. A separately
+  // planned feature will show an action count there — "Ada 10 listing yang
+  // lebih murah di pasaran" — which is a count of QUALIFYING ALTERNATIVES, not
+  // of the sample behind a statistic. It exposes no price, no median, no range
+  // and not the cohort size.
+  //
+  // That feature is not blocked by this guard and needs no exemption added to
+  // it, for a structural reason worth stating so nobody adds one: this guard
+  // reads BUILD OUTPUT. The result renders client-side after a submission, so
+  // it is never in prerendered HTML. The scope of this rule is "no count on a
+  // prerendered SEO surface", not "no count anywhere in Paqar".
+  //
+  // If that ever changes — if a count is server-rendered onto one of these
+  // templates — it must fail here, and the fix is a review, not a wider regex.
+  if (/\b\d+\s+(listing|iklan)\b/i.test(visible)) {
+    fail('free/paid boundary', `${route} (${template.name}) states a listing count`)
+  }
+
+  // The median used to travel to the loan calculator in a query string.
+  if (/kira-ansuran-kereta\?harga=/.test(visible)) {
+    fail('free/paid boundary', `${route} (${template.name}) passes a market price in a query string`)
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────────
 
 console.log('SEO/GEO regression guard')
@@ -230,6 +398,7 @@ console.log('─'.repeat(60))
 console.log(`public pages checked : ${pages.length}`)
 console.log(`sitemap URLs         : ${sitemapUrls.length}`)
 console.log(`JSON-LD blocks parsed: ${jsonLdBlocks}`)
+console.log(`boundary pages scanned: ${boundaryPagesScanned}`)
 
 if (notes.length) {
   console.log(`\nnotes (${notes.length}) — not failures:`)
