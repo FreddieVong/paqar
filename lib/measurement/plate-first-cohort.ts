@@ -90,6 +90,12 @@ export const REGIME_ANNOTATIONS: { at: string; note: string }[] = [
   // which is enough to move conversion on its own and would otherwise be
   // invisible when reading this window later.
   { at: '2026-08-17T02:39:56Z', note: 'market-price claims narrowed to comparable listings on every asserting surface; JPJ attribution removed from retargeting emails' },
+  // Checkout gained a second fail-closed step: it now freezes the cohort before
+  // a bill can exist and refuses the sale if that write fails. Watch for a
+  // SMALL additional drop in checkout starts beyond the offer gate's. A large
+  // one means the freeze is failing — check the table exists and that
+  // service_role still holds INSERT.
+  { at: '2026-08-17T03:36:40Z', note: 'offer snapshot live: evidence frozen at checkout, paid report renders what was bought' },
 ]
 
 // ── Input rows. Field names mirror the columns exactly; nothing is invented. ──
