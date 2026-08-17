@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: 'Panduan harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Semak harga percuma sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/harga-kereta-terpakai' },
   openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
     title: `Harga Kereta Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
     description: 'Panduan harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Semak harga percuma sebelum bayar deposit.',
     url: 'https://paqar.my/harga-kereta-terpakai',

@@ -263,7 +263,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             Anggaran berdasarkan susut nilai
           </p>
           <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-4">
-            Belum cukup iklan setanding untuk beri keputusan harga pasaran. Anggaran ini
+            Belum cukup iklan setanding untuk beri keputusan harga. Anggaran ini
             berdasarkan harga baharu dan umur kenderaan sahaja — bukan harga pasaran semasa.
           </p>
           <div className="space-y-2.5">

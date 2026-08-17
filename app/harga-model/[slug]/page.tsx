@@ -264,6 +264,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     alternates: { canonical: `https://paqar.my/harga-${params.slug}` },
     openGraph: {
+      locale: 'ms_MY',
       title,
       description,
       url: `https://paqar.my/harga-${params.slug}`,
@@ -599,7 +600,8 @@ export default async function YearModelPage({ params }: Props) {
                 </p>
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-2">
                   Laporan RM12 pula menunjukkan angka di sebalik keputusan itu untuk unit anda:
-                  harga tengah pasaran, julat unit setara, jurang harga, dan ruang untuk berunding.
+                  harga tengah iklan setanding, julat unit setara, jurang harga, dan ruang untuk
+                  berunding.
                 </p>
               </div>
             </>

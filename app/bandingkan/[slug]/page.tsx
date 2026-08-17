@@ -243,6 +243,8 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     description: cfg.description,
     alternates: { canonical: `https://paqar.my/bandingkan/${params.slug}` },
     openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
       title: `${cfg.titleA} vs ${cfg.titleB} Terpakai`,
       description: cfg.description,
       url: `https://paqar.my/bandingkan/${params.slug}`,

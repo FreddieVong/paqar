@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   description: 'Panduan lengkap cara semak saman PDRM dan JPJ secara rasmi. Step by step, percuma, tanpa daftar akaun.',
   alternates: { canonical: 'https://paqar.my/panduan-semak-saman' },
   openGraph: {
+      locale: 'ms_MY',
     title: `Cara Semak Saman Kereta Malaysia ${YEAR} | Panduan Lengkap`,
     description: 'Panduan lengkap cara semak saman PDRM dan JPJ secara rasmi. Step by step, percuma, tanpa daftar akaun.',
     url: 'https://paqar.my/panduan-semak-saman',
