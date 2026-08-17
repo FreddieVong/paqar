@@ -20,6 +20,13 @@ const fake = new FakeSupabase()
 const createBill = vi.fn()
 const resolveOfferForCheck = vi.fn()
 
+// Checkout freezes the cohort before a bill can exist and fails closed if it
+// cannot. These suites are about billing, not freezing, so the freeze succeeds.
+vi.mock('@/lib/db/offer-snapshots', () => ({
+  freezeOfferSnapshot: vi.fn(async () => ({ status: 'inserted', snapshot: {} })),
+  readOfferSnapshot:   vi.fn(async () => null),
+}))
+
 vi.mock('server-only', () => ({}))
 vi.mock('next/headers', () => ({ cookies: () => ({ get: () => undefined }) }))
 vi.mock('@/lib/supabase/server', () => ({
@@ -42,6 +49,8 @@ vi.mock('@/lib/db/market-prices', () => ({ fetchAndCacheMarketPrices: vi.fn(asyn
 vi.mock('@/lib/server/offer-for-check', () => ({ resolveOfferForCheck }))
 
 const { initiateBuyerReport } = await import('@/app/laporan-pembeli/[checkId]/_actions')
+const { freezeOfferSnapshot } = await import('@/lib/db/offer-snapshots')
+const freeze = freezeOfferSnapshot as unknown as ReturnType<typeof vi.fn>
 
 const CHECK = 'ch_gate'
 const BASE = {
@@ -59,7 +68,12 @@ beforeEach(() => {
   })
 })
 
-const available = { status: 'resolved' as const, offer: { available: true as const, low: 40_000, high: 45_000 } }
+const available = {
+  status: 'resolved' as const,
+  offer:  { available: true as const, low: 40_000, high: 45_000 },
+  cohort: { listings: [], count: 3 } as never,
+  sourceFetchedAt: '2026-08-16T00:00:00.000Z',
+}
 
 describe('an offer opens checkout', () => {
   it('creates a bill when the server says an offer exists', async () => {
@@ -130,5 +144,55 @@ describe('the action takes no client sellability argument', () => {
     // is that there is no parameter through which it could arrive.
     const src = initiateBuyerReport.toString()
     expect(src).not.toMatch(/offerAvailable/)
+  })
+})
+
+describe('a promise that cannot be frozen is not sold', () => {
+  /**
+   * The gate proves an offer exists NOW. The paid report recomputes at render
+   * time, so without a frozen cohort the buyer can pay for an offer and open a
+   * report that no longer has one.
+   *
+   * Freezing therefore happens BEFORE the bill, and a failure to freeze refuses
+   * the sale. Selling first and freezing afterwards would take the money and
+   * leave the promise unbacked — the exact failure the snapshot exists to
+   * prevent, so it is not treated as a degraded-but-acceptable path.
+   */
+  it('creates no bill when the snapshot cannot be written', async () => {
+    resolveOfferForCheck.mockResolvedValue(available)
+    freeze.mockResolvedValueOnce({ status: 'failed', reason: 'relation does not exist' })
+    const r = await initiateBuyerReport({ ...BASE })
+    expect(r.error).toBeTruthy()
+    expect(r.billUrl).toBeUndefined()
+    expect(createBill).not.toHaveBeenCalled()
+  })
+
+  it('freezes BEFORE the bill exists, not after', async () => {
+    resolveOfferForCheck.mockResolvedValue(available)
+    freeze.mockResolvedValueOnce({ status: 'inserted', snapshot: {} })
+    await initiateBuyerReport({ ...BASE })
+    expect(freeze).toHaveBeenCalled()
+    expect(freeze.mock.invocationCallOrder[0]!)
+      .toBeLessThan(createBill.mock.invocationCallOrder[0]!)
+  })
+
+  it('sells when another request already froze the same evidence', async () => {
+    // A lost race is not a failure: check_id is the primary key, so the first
+    // snapshot wins and is the one the buyer receives.
+    resolveOfferForCheck.mockResolvedValue(available)
+    freeze.mockResolvedValueOnce({ status: 'existing', snapshot: {} })
+    const r = await initiateBuyerReport({ ...BASE })
+    expect(r.error).toBeNull()
+    expect(createBill).toHaveBeenCalledTimes(1)
+  })
+
+  it('freezes the cohort the gate decided on, not a re-derived one', async () => {
+    resolveOfferForCheck.mockResolvedValue(available)
+    freeze.mockResolvedValueOnce({ status: 'inserted', snapshot: {} })
+    await initiateBuyerReport({ ...BASE })
+    const arg = freeze.mock.calls[0]![0]
+    expect(arg.checkId).toBe(CHECK)
+    expect(arg.cohort).toBe(available.cohort)
+    expect(arg.sourceFetchedAt).toBe(available.sourceFetchedAt)
   })
 })

@@ -24,6 +24,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const createBill        = vi.fn()
 const createBuyerReport = vi.fn()
 
+// Checkout freezes the cohort before a bill can exist and fails closed if it
+// cannot. These suites are about billing, not freezing, so the freeze succeeds.
+vi.mock('@/lib/db/offer-snapshots', () => ({
+  freezeOfferSnapshot: vi.fn(async () => ({ status: 'inserted', snapshot: {} })),
+  readOfferSnapshot:   vi.fn(async () => null),
+}))
+
 vi.mock('server-only', () => ({}))
 vi.mock('next/headers', () => ({ cookies: () => ({ get: () => undefined }) }))
 

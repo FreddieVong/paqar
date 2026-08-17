@@ -7,6 +7,7 @@ import { getBuyerReport, setVehicleApiData } from '@/lib/db/buyer-reports'
 import { lookupJomCheck, normalisePlate, isJomCheckManual, type JomCheckResult, type JomCheckStatus } from '@/lib/jomcheck'
 import { setJomCheckStatus, setJomCheckSuccess, setJomCheckFailed } from '@/lib/jomcheck/db'
 import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
+import { readOfferSnapshot }    from '@/lib/db/offer-snapshots'
 import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
@@ -131,9 +132,29 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       jomcheckData = report.jomcheck_data as JomCheckResult | null
     }
 
-    // Market prices — serve from cache, refresh in background if stale
-    let marketPrices: CachedMarketPrices | null = null
-    if (vehicleData?.make && vehicleData?.model && vehicleData?.registrationYear) {
+    // THE EVIDENCE THE BUYER PAID FOR, IF IT WAS FROZEN.
+    //
+    // Checkout freezes the cohort before a bill can exist, so a paid report
+    // shows what was BOUGHT rather than what the market looks like at render
+    // time. Without this the report recomputes from the live cache, and a
+    // cohort that moved in between — the warm-cache cron, another visitor's
+    // refresh, CACHE_TTL_DAYS expiring — silently changes what the buyer
+    // receives, or removes the offer they paid for entirely.
+    //
+    // null is NOT an error. Reports sold before this feature have no snapshot
+    // and must keep rendering exactly as they did.
+    const frozenSnapshot = await readOfferSnapshot(params.checkId)
+
+    // Market prices — the frozen cohort when there is one, otherwise the live
+    // cache, refreshed in the background if stale.
+    let marketPrices: CachedMarketPrices | null = frozenSnapshot
+      ? {
+          listings:  frozenSnapshot.listings,
+          fetchedAt: frozenSnapshot.sourceFetchedAt,
+        } as CachedMarketPrices
+      : null
+
+    if (!frozenSnapshot && vehicleData?.make && vehicleData?.model && vehicleData?.registrationYear) {
       const mk      = vehicleData.make as string
       const rawModel = vehicleData.model as string
       const yr      = vehicleData.registrationYear as string
