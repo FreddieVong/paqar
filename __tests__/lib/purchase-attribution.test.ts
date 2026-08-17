@@ -164,7 +164,12 @@ describe('purchases without captured attribution', () => {
 describe('write failures', () => {
   it('does not send to Meta when the event could not be recorded', async () => {
     await seedCheckout('bill_1', 1200)
+    // The WRITE, specifically. recordPurchase reads ad_events first to inherit
+    // the journey path from this bill's checkout_started row; that read is
+    // best-effort and swallowed by design, so failing it would prove nothing
+    // about the guarantee this test exists for.
     fake.failNext = 'ad_events'
+    fake.failNextOp = 'upsert'
 
     const res = await recordPurchase({ billId: 'bill_1', email: 'b@e.com', amountCents: 1200 })
 

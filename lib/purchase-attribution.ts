@@ -1,6 +1,7 @@
 import 'server-only'
 import { eventId, EMPTY_ATTRIBUTION, type Attribution } from '@/lib/attribution'
-import { getCheckoutAttribution, recordAdEvent, markCapiSent } from '@/lib/db/ad-attribution'
+import { getCheckoutAttribution, getBillValuationPath, recordAdEvent, markCapiSent } from '@/lib/db/ad-attribution'
+import type { ValuationPath } from '@/lib/funnel-stages'
 import { sendMetaEvent } from '@/lib/meta-capi'
 
 /**
@@ -55,6 +56,17 @@ export async function recordPurchase(params: {
   const attributed = sessionId !== null
   const effectiveSession = sessionId ?? `bill:${params.billId}`
 
+  // Inherited from this bill's own checkout_started row. The webhook knows a
+  // bill id and nothing else, so the journey has to come from what Paqar
+  // recorded when it created the bill. Best-effort: a lookup failure must
+  // never cost us the purchase.
+  let valuationPath: ValuationPath | null = null
+  try {
+    valuationPath = await getBillValuationPath(params.billId)
+  } catch (err) {
+    console.error('[recordPurchase] valuation path lookup failed', err)
+  }
+
   const result = await recordAdEvent({
     sessionId:     effectiveSession,
     eventName:     'purchase',
@@ -64,6 +76,7 @@ export async function recordPurchase(params: {
     buyerReportId: params.buyerReportId ?? null,
     billId:        params.billId,
     amountCents:   params.amountCents,
+    valuationPath,
   })
 
   if (result.status === 'error') {

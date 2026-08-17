@@ -40,6 +40,17 @@ export const analytics = {
   paymentFormViewed: () =>
     posthog.capture('payment_form_viewed'),
 
+  /**
+   * The buyer pressed pay. Fires BEFORE the server action, so it exists even
+   * when validation or createBill rejects the attempt — the gap
+   * checkout_started structurally cannot cover, since it is keyed on a bill
+   * that does not exist yet. Fixed enums only; no form value can ride along.
+   */
+  paymentFormSubmitted: (props: {
+    tier:           'rm12' | 'rm100'
+    valuation_path: 'plate_report' | 'model_price' | 'plate_check'
+  }) => posthog.capture('payment_form_submitted', props),
+
   paymentInitiated: () =>
     posthog.capture('payment_initiated'),
 

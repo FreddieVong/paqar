@@ -22,6 +22,8 @@ type BrowserEvent =
   | 'plate_result_poll_timed_out'
   | 'paywall_viewed'
   | 'payment_form_focused'
+  // Pay pressed, before the server action calls Billplz.
+  | 'payment_form_submitted'
   | 'seo_page_cta_engaged'
   // Free plate-path evidence, ahead of the paywall. Diagnostic only — the
   // route's own allowlist decides what reaches Meta, and none of these do.
@@ -45,6 +47,12 @@ export function trackAdEvent(
     valuationPath?: ValuationPathKey
     /** Billplz bill this event is about. Required by billplz_navigation_started. */
     billId?: string
+    /**
+     * Tier price in sen — 1200 or 10000. Low-cardinality and already an
+     * ad_events column, so payment_form_submitted records which tier was
+     * attempted without a schema change and without carrying a form value.
+     */
+    amountCents?: number
   } = {}
 ): void {
   if (typeof window === 'undefined') return
