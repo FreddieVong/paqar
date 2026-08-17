@@ -526,7 +526,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
         </form>
 
         <p className="font-body text-[11px] text-[#6B7280] text-center mt-2">
-          {'Harga tengah & julat pasaran · Jumlah patut ditawar · Skrip untuk penjual'}
+          {'Harga tengah & julat iklan setanding · Jumlah patut ditawar · Skrip untuk penjual'}
         </p>
 
         {/* Email lead capture — below the RM12 CTA so it never interrupts a buyer */}

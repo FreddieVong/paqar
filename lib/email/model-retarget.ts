@@ -40,7 +40,7 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
       </p>
       ${verdictLine(params.verdict)}
       <p style="color:#374151;font-size:14px;margin:0 0 20px;line-height:1.6;">
-        Sebelum bayar deposit, semak nombor plat kereta tersebut untuk dapatkan data JPJ rasmi, harga pasaran semasa, dan panduan rundingan harga yang khusus untuk kereta itu.
+        Sebelum bayar deposit, semak nombor plat kereta tersebut untuk dapatkan maklumat pendaftaran kenderaan, kedudukan harga berbanding iklan setanding, dan panduan rundingan harga yang khusus untuk kereta itu.
       </p>
 
       <a href="https://paqar.my"
@@ -51,9 +51,9 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
       <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin-bottom:20px;">
         <p style="color:#374151;font-size:13px;margin:0 0 8px;font-weight:700;">Laporan penuh merangkumi:</p>
         <ul style="color:#6B7280;font-size:13px;margin:0;padding-left:16px;line-height:1.8;">
-          <li>Data kenderaan rasmi dari JPJ</li>
+          <li>Maklumat pendaftaran kenderaan</li>
           <li>Harga baru asal model ini</li>
-          <li>Harga pasaran semasa (verdict)</li>
+          <li>Keputusan harga berbanding iklan setanding</li>
           <li>Soalan untuk tanya penjual</li>
           <li>Skrip rundingan harga</li>
           <li>Checklist sebelum bayar deposit</li>

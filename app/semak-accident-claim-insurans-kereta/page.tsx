@@ -206,7 +206,7 @@ export default function SemakAccidentClaimInsuransPage() {
             </div>
             <div className="px-5 py-1">
               {[
-                { title: 'Keputusan harga pasaran', desc: 'Murah, wajar, atau mahal — berdasarkan data semasa.' },
+                { title: 'Keputusan harga', desc: 'Murah, wajar, atau mahal — berdasarkan data semasa.' },
                 { title: 'Bukti harga & anggaran trade-in', desc: 'Harga tengah, julat, dan ruang rundingan anda.' },
                 { title: 'Maklumat kenderaan', desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
                 { title: 'Skrip rundingan harga', desc: 'Masuk rundingan dengan data, bukan agak-agak.' },
@@ -246,7 +246,7 @@ export default function SemakAccidentClaimInsuransPage() {
               </p>
               <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mb-3">
                 Kami belum membuka semakan rekod claim insurans untuk tempahan. Sementara
-                itu, Laporan Pembeli RM12 memberi anda keputusan harga pasaran, skrip
+                itu, Laporan Pembeli RM12 memberi anda keputusan harga, skrip
                 rundingan dan checklist sebelum bayar deposit.
               </p>
               <Link

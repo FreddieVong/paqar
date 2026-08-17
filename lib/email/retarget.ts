@@ -26,9 +26,9 @@ interface RetargetParams {
 function subjectFor(plate: string | undefined, insight: RetargetEmailInsight | null | undefined): string {
   if (!plate) return 'Laporan Paqar — masih tersedia'
   switch (insight?.verdict) {
-    case 'overpriced':    return `${plate} — harga di atas pasaran`
+    case 'overpriced':    return `${plate} — lebih tinggi dari iklan setanding`
     case 'slightly_high': return `${plate} — ada ruang untuk tawar`
-    case 'good_deal':     return `${plate} — bawah harga pasaran`
+    case 'good_deal':     return `${plate} — lebih rendah dari iklan setanding`
     case 'fair_price':    return `${plate} — harga nampak wajar`
     default:              return `${plate} — berbaloi atau tidak?`
   }

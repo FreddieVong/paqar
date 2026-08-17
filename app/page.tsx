@@ -41,7 +41,7 @@ const homeSchema = {
     {
       '@type': 'Service',
       name: 'Laporan Pembeli Kereta Terpakai',
-      description: 'Laporan Pembeli RM12 merangkumi keputusan harga pasaran, harga tengah dan julat harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
+      description: 'Laporan Pembeli RM12 merangkumi keputusan harga, harga tengah dan julat iklan setanding, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
       provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
       areaServed: { '@type': 'Country', name: 'Malaysia' },
       offers: { '@type': 'Offer', price: '12', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
