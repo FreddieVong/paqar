@@ -153,10 +153,13 @@ export function FreePriceEvidence({
   useEffect(() => {
     if (!onPresented) return
 
-    if (asking == null) {
-      once('presented:needs_asking_price', () => onPresented({ state: 'needs_asking_price' }))
-      return
-    }
+    // No asking price means Paqar has judged NOTHING yet. The card below is a
+    // request for the one input only the buyer has, not a finding about their
+    // car, so it reports no result and the gate stays shut. Submitting the
+    // price re-runs the effect above against the cache — never a paid provider
+    // call — and the real result opens the gate a moment later.
+    if (asking == null) return
+
     if (data?.state === 'evidence') {
       const state = data.verdict
         ? 'verdict' as const

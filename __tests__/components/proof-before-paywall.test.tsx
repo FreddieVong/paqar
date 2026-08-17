@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { useEffect } from 'react'
 import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
@@ -40,6 +41,9 @@ vi.mock('@/lib/analytics', () => ({
 vi.mock('@/lib/meta-events', () => ({ trackAdEvent }))
 
 const { FreeResultGate } = await import('@/components/report/FreeResultGate')
+const {
+  isFreeResultPresented, isPaidReportEligible, mayShowPaywall, FREE_RESULT_STATES,
+} = await import('@/lib/free-result')
 
 const PAYWALL = 'THE-PAYWALL'
 const paywall = <div>{PAYWALL}</div>
@@ -85,22 +89,57 @@ describe('the gate withholds the paid offer until a result exists', () => {
     expect(screen.queryByText('WAJAR')).toBeNull()
   })
 
-  it('renders the paywall after an honest insufficient-data explanation', async () => {
+  it('does NOT sell a report when there are too few comparables to build one', async () => {
     mockEvidence({ ...VERDICT_BODY, verdict: null, verdictStatus: 'suppressed', verdictReason: 'insufficient_data' })
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
+    // Below MIN_LISTINGS_FOR_VERDICT the paid report's hasMarketData is false,
+    // so it has no median, range, gap or Target to sell. What remains is a
+    // depreciation estimate, which is not the comparable-listing evidence RM12
+    // advertises.
     await screen.findByText('DATA TIDAK CUKUP')
-    expect(screen.getByText(PAYWALL)).toBeTruthy()
+    await waitFor(() => expect(screen.getByText(/belum boleh disediakan/i)).toBeTruthy())
+    expect(screen.queryByText(PAYWALL)).toBeNull()
   })
 
-  it('offers the free check and the paywall when no asking price was supplied', async () => {
+  it('asks for the Seller minta price instead of showing a payment form', async () => {
     mockEvidence({ state: 'needs_asking_price' })
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check">{paywall}</FreeResultGate>)
 
-    // Resolved and actionable: Paqar states what it needs and what it gives
-    // free. That is a product answer, so the offer may sit below it.
+    // An input request is not a finding — Paqar has judged nothing yet. The
+    // recovery is the price field itself, already on screen.
     await screen.findByText(/Berapa harga yang penjual minta/i)
-    expect(screen.getByText(PAYWALL)).toBeTruthy()
+    expect(screen.queryByText(PAYWALL)).toBeNull()
+    // Nor the ineligible notice: nothing has failed, we simply have not asked yet.
+    expect(screen.queryByText(/belum boleh disediakan/i)).toBeNull()
+  })
+
+  it('recovers inline once the price is entered, with no second provider call', async () => {
+    const fetchMock = vi.fn(async (url: string) => ({
+      ok: true,
+      json: async () => (String(url).includes('asking_price=45000')
+        ? VERDICT_BODY
+        : { state: 'needs_asking_price' }),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check">{paywall}</FreeResultGate>)
+    await screen.findByText(/Berapa harga yang penjual minta/i)
+
+    fireEvent.change(screen.getByPlaceholderText(/contoh/i), { target: { value: '45000' } })
+    fireEvent.click(screen.getByRole('button', { name: /Semak/i }))
+
+    // The buyer never restarts the plate check…
+    await screen.findByText('MAHAL')
+    await waitFor(() => expect(screen.getByText(PAYWALL)).toBeTruthy())
+
+    // …and every call goes to the cache-only evidence endpoint. The route
+    // documents itself as "Cache read only — never a paid provider call";
+    // nothing here may reach /api/checks or a retry-lookup.
+    for (const [url] of fetchMock.mock.calls) {
+      expect(String(url)).toContain('/price-evidence')
+      expect(String(url)).not.toContain('retry-lookup')
+    }
   })
 
   it('never fabricates a verdict to satisfy the ordering', async () => {
@@ -148,8 +187,8 @@ describe('free_result_presented', () => {
     await screen.findByText('MAHAL')
     const call = posthog.mock.calls.find(c => c[0] === 'free_result_presented')
     expect(call![1]).toEqual({
-      result_state: 'verdict', valuation_path: 'plate_check',
-      verdict: 'overpriced', confidence: 'high',
+      result_state: 'verdict', paid_report_eligible: true,
+      valuation_path: 'plate_check', verdict: 'overpriced', confidence: 'high',
     })
 
     // The asking price was 45000 and the check id is a token. Neither may
@@ -157,6 +196,46 @@ describe('free_result_presented', () => {
     const serialised = JSON.stringify([...trackAdEvent.mock.calls, ...posthog.mock.calls])
     expect(serialised).not.toContain('45000')
     expect(serialised).not.toContain('claimToken')
+  })
+
+  it('cannot be preceded by paywall_viewed, because the paywall mounts inside it', async () => {
+    // paywall_viewed fires from PaymentForm's own mount effect. Standing in a
+    // child that does the same thing proves the ORDERING is structural: the
+    // gate withholds the subtree, so the mount cannot happen first.
+    function FakePaywall() {
+      useEffect(() => { trackAdEvent('paywall_viewed', { checkId: 'ch_1', valuationPath: 'plate_check' }) }, [])
+      return <div>{PAYWALL}</div>
+    }
+    mockEvidence(VERDICT_BODY)
+    render(
+      <FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>
+        <FakePaywall />
+      </FreeResultGate>,
+    )
+
+    await screen.findByText(PAYWALL)
+    const names = trackAdEvent.mock.calls.map(c => c[0])
+    expect(names).toContain('paywall_viewed')
+    expect(names.indexOf('free_result_presented')).toBeLessThan(names.indexOf('paywall_viewed'))
+  })
+
+  it('never fires paywall_viewed at all when the report is ineligible', async () => {
+    function FakePaywall() {
+      useEffect(() => { trackAdEvent('paywall_viewed', { checkId: 'ch_1', valuationPath: 'plate_check' }) }, [])
+      return <div>{PAYWALL}</div>
+    }
+    mockEvidence({ ...VERDICT_BODY, verdict: null, verdictStatus: 'suppressed', verdictReason: 'insufficient_data' })
+    render(
+      <FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>
+        <FakePaywall />
+      </FreeResultGate>,
+    )
+
+    await screen.findByText('DATA TIDAK CUKUP')
+    await waitFor(() => expect(screen.getByText(/belum boleh disediakan/i)).toBeTruthy())
+    const names = trackAdEvent.mock.calls.map(c => c[0])
+    expect(names).toContain('free_result_presented')
+    expect(names).not.toContain('paywall_viewed')
   })
 
   it('carries the journey path onto the evidence and verdict events too', async () => {
@@ -170,6 +249,69 @@ describe('free_result_presented', () => {
       // Hardcoded 'plate_report' here would make every /check/[id] event lie.
       expect(call![1]).toMatchObject({ valuationPath: 'plate_check' })
     }
+  })
+})
+
+describe('presentation and eligibility are independent axes', () => {
+  it('has states that are presented but not sellable', () => {
+    // The whole correction: "we displayed something true" is not "we can
+    // deliver a report". If this ever collapses to one axis, the paywall
+    // returns to selling undeliverable reports on timeouts.
+    for (const state of ['insufficient_data', 'unavailable'] as const) {
+      expect(isFreeResultPresented({ state }), `${state} should be presented`).toBe(true)
+      expect(isPaidReportEligible({ state }), `${state} must not be sellable`).toBe(false)
+      expect(mayShowPaywall({ state })).toBe(false)
+    }
+  })
+
+  it('sells only where the paid report can produce its price evidence', () => {
+    // suppressed = mixed variants: the cohort is big enough, so the report
+    // still renders comparable price chips and states the limitation itself.
+    for (const state of ['verdict', 'suppressed'] as const) {
+      expect(isPaidReportEligible({ state }), `${state} should be sellable`).toBe(true)
+      expect(mayShowPaywall({ state })).toBe(true)
+    }
+  })
+
+  it('treats nothing-presented as neither', () => {
+    expect(isFreeResultPresented(null)).toBe(false)
+    expect(isPaidReportEligible(null)).toBe(false)
+    expect(mayShowPaywall(null)).toBe(false)
+  })
+
+  it('does not carry an input request as a result state at all', () => {
+    // needs_asking_price must not be nameable here — if it re-enters the union
+    // it starts counting as proof in the ordering metric.
+    expect(FREE_RESULT_STATES as readonly string[]).not.toContain('needs_asking_price')
+    expect(FREE_RESULT_STATES).toEqual(['verdict', 'suppressed', 'insufficient_data', 'unavailable'])
+  })
+
+  it('requires BOTH axes for the paywall, never one', () => {
+    // Belt and braces: mayShowPaywall must be the conjunction, so a future
+    // edit that loosens either axis alone cannot open the gate.
+    const states = ['verdict', 'suppressed', 'insufficient_data', 'unavailable'] as const
+    for (const state of states) {
+      expect(mayShowPaywall({ state }))
+        .toBe(isFreeResultPresented({ state }) && isPaidReportEligible({ state }))
+    }
+  })
+})
+
+describe('suppression preserves uncertainty into the paid offer', () => {
+  it('shows VARIAN KHAS and never upgrades it to a confident verdict', async () => {
+    mockEvidence({ ...VERDICT_BODY, verdict: null, verdictStatus: 'suppressed', verdictReason: 'mixed_variants' })
+    render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
+
+    await screen.findByText('VARIAN KHAS')
+    // Sellable — the report delivers the comparable chips and states the
+    // mixed-variant limitation in its own methodology line.
+    await waitFor(() => expect(screen.getByText(PAYWALL)).toBeTruthy())
+    // But the free surface must still read as uncertain.
+    for (const badge of ['MAHAL', 'AGAK MAHAL', 'WAJAR', 'BERBALOI']) {
+      expect(screen.queryByText(badge)).toBeNull()
+    }
+    const call = posthog.mock.calls.find(c => c[0] === 'free_result_presented')
+    expect(call![1]).toMatchObject({ result_state: 'suppressed', paid_report_eligible: true, verdict: null })
   })
 })
 
@@ -190,7 +332,7 @@ describe('the free surface stays free', () => {
     expect(text).not.toContain('Target')
   })
 
-  it('reaches a truthful dead end rather than a silent blank', async () => {
+  it('reaches a truthful dead end and sells nothing there', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     mockEvidence({ state: 'pending_market' })
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
@@ -200,10 +342,13 @@ describe('the free surface stays free', () => {
     await vi.advanceTimersByTimeAsync(2500 * 13)
     await waitFor(() => expect(screen.getByText('TIDAK TERSEDIA')).toBeTruthy())
     expect(screen.getByText(/masalah di pihak kami/i)).toBeTruthy()
-    // One render behind the card by construction: the honest state paints
-    // first, the gate opens on the effect that reports it. Both orders are
-    // correct — what must never happen is the paywall arriving FIRST.
-    await waitFor(() => expect(screen.getByText(PAYWALL)).toBeTruthy())
+
+    // A polling timeout says nothing about whether a report could be built, so
+    // it must never be charged for. Support stays reachable — the payment form
+    // held the only link to a human on this surface.
+    await waitFor(() => expect(screen.getByText(/belum boleh disediakan/i)).toBeTruthy())
+    expect(screen.queryByText(PAYWALL)).toBeNull()
+    expect(screen.getByRole('link', { name: /WhatsApp/i })).toBeTruthy()
   })
 })
 
