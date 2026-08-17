@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { env }    from '@/lib/env'
 import { buildRetargetEmailHtml } from './retarget-template'
 import type { RetargetEmailInsight } from './retarget-template'
+import { isSuppressed, unsubscribeUrl } from '@/lib/email/suppression'
 import { SUPPORT_REPLY_TO } from '@/lib/site'
 
 interface RetargetParams {
@@ -45,6 +46,10 @@ export function buildRetargetReportUrl(checkId: string, claimToken: string | nul
 export async function sendRetargetEmail(params: RetargetParams): Promise<void> {
   if (!env.RESEND_API_KEY) return
 
+  // Fails CLOSED: an unresolved suppression check is treated as a refusal, so
+  // a missing table or a database blip can never send to someone who opted out.
+  if (await isSuppressed(params.toEmail)) return
+
   const resend     = new Resend(env.RESEND_API_KEY)
   const reportUrl  = buildRetargetReportUrl(params.checkId, params.claimToken)
   const subject    = subjectFor(params.plate, params.insight)
@@ -53,6 +58,7 @@ export async function sendRetargetEmail(params: RetargetParams): Promise<void> {
     plate:   params.plate,
     reportUrl,
     insight: params.insight ?? null,
+    unsubscribeUrl: unsubscribeUrl(params.toEmail),
   })
 
   await resend.emails.send({

@@ -7,6 +7,16 @@ const envMock  = vi.hoisted(() => ({ RESEND_API_KEY: 'rk_test' as string | undef
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({ env: envMock }))
 vi.mock('resend', () => ({ Resend: class { emails = { send: sendMock } } }))
+// The feedback e-mail now refuses anyone who has opted out, and that check
+// fails CLOSED — an unresolved lookup blocks the send. These tests are about
+// what the e-mail says and who it goes to, so give them a suppression list
+// that resolves cleanly and is empty. See email-suppression.test.ts for the
+// fail-closed behaviour itself.
+process.env.AES_KEY = 'a'.repeat(64)
+vi.mock('@/lib/email/suppression', async (orig) => ({
+  ...(await orig<Record<string, unknown>>()),
+  isSuppressed: async () => false,
+}))
 
 import { sendCustomerFeedbackEmail, isTeamEmail, TEAM_EMAILS } from '@/lib/email/customer-feedback'
 
