@@ -67,6 +67,12 @@ export interface RetargetEmailInsight {
 }
 
 export interface RetargetEmailContent {
+  /**
+   * One-click opt-out. Optional so existing callers and tests keep compiling,
+   * but every live send supplies it — an e-mail that cannot be stopped is the
+   * problem this was added to fix.
+   */
+  unsubscribeUrl?: string
   plate?:     string
   reportUrl:  string
   /** Omitted whenever the price picture cannot be stated safely — see
@@ -359,8 +365,10 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
           <tr>
             <td class="gutter" style="padding:16px 24px 26px;">
               <div class="t-dim" style="font-family:${BODY};font-size:11px;font-weight:400;color:${C.dim};line-height:1.7;">
-                Anda menerima emel ini kerana mendaftar minat di Paqar.<br>
-                <a href="https://paqar.my" class="t-mute" style="color:${C.muted};text-decoration:none;">paqar.my</a>
+                Anda menerima emel ini kerana anda memasukkan alamat emel semasa menyemak sebuah kereta di Paqar.<br>
+                ${content.unsubscribeUrl
+                  ? `<a href="${content.unsubscribeUrl}" class="t-mute" style="color:${C.muted};text-decoration:underline;">Berhenti terima emel</a>&nbsp;&middot;&nbsp;`
+                  : ''}<a href="https://paqar.my" class="t-mute" style="color:${C.muted};text-decoration:none;">paqar.my</a>
                 &nbsp;&middot;&nbsp;Bukan platform rasmi kerajaan
               </div>
             </td>
