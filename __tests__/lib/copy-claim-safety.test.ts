@@ -332,7 +332,10 @@ describe('no surface calls advertised prices "the market"', () => {
     expect(src).not.toContain('harga tengah pasaran')
     expect(src).not.toContain('harga pasaran sebenar')
     expect(src).not.toContain('Harga pasaran sebenar')
-    expect(src).not.toContain('harga pasaran semasa')
+    // NOT 'harga pasaran semasa': that phrase is also used to DISCLAIM
+    // ("bukan harga pasaran semasa"), and banning the string outright deleted
+    // the warning. The promise-vs-disclaimer distinction is covered by
+    // 'KEEPS the phrase where it is used to disclaim, not to promise'.
     expect(src).not.toContain('Angka pasaran penuh')
   })
 

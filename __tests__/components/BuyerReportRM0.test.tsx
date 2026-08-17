@@ -113,7 +113,7 @@ describe('one-listing cohort', () => {
     // "keputusan harga pasaran" implied Paqar otherwise knows a market price.
     // The fallback now says only what it can: not enough comparable adverts.
     expect(text).toContain('Belum cukup iklan setanding untuk beri keputusan harga')
-    expect(text).toContain('bukan harga iklan setanding')
+    expect(text).toContain('bukan harga pasaran semasa')
     expect(text).not.toContain('Harga tengah iklan setanding')
     expect(text).not.toContain('Anggaran trade-in')
     expect(zeroCurrency(text)).toEqual([])
