@@ -4,6 +4,7 @@ import { getCachedVehicleData } from '@/lib/db/plate-lookups'
 import { getCachedMarketPrices } from '@/lib/db/market-prices'
 import { buildMarketModelKeyword } from '@/lib/market-keyword'
 import { buildComparableCohort, isPerformanceModelText } from '@/lib/comparables'
+import type { ComparableCohort } from '@/lib/comparables'
 import { evaluateOfferAvailability, type OfferAvailability } from '@/lib/offer'
 
 /**
@@ -32,7 +33,14 @@ import { evaluateOfferAvailability, type OfferAvailability } from '@/lib/offer'
 export type OfferForCheck =
   | { status: 'no_vehicle' }
   | { status: 'no_market' }
-  | { status: 'resolved'; offer: OfferAvailability }
+  | {
+      status: 'resolved'
+      offer:  OfferAvailability
+      /** The cohort the decision was made on — frozen by the caller on a sale. */
+      cohort: ComparableCohort
+      /** fetched_at of the cache row: the evidence PERIOD, not the decision time. */
+      sourceFetchedAt: string
+    }
 
 export async function resolveOfferForCheck(params: {
   plateEncrypted: string
@@ -71,7 +79,9 @@ export async function resolveOfferForCheck(params: {
   })
 
   return {
-    status: 'resolved',
-    offer:  evaluateOfferAvailability(cohort, params.askingPriceRm ?? null),
+    status:          'resolved',
+    offer:           evaluateOfferAvailability(cohort, params.askingPriceRm ?? null),
+    cohort,
+    sourceFetchedAt: cached.fetchedAt,
   }
 }

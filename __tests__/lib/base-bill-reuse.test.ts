@@ -29,6 +29,13 @@ const db      = vi.hoisted(() => ({
 }))
 const money = vi.hoisted(() => ({ events: [] as { op: string; level?: string }[] }))
 
+// Checkout freezes the cohort before a bill can exist and fails closed if it
+// cannot. These suites are about billing, not freezing, so the freeze succeeds.
+vi.mock('@/lib/db/offer-snapshots', () => ({
+  freezeOfferSnapshot: vi.fn(async () => ({ status: 'inserted', snapshot: {} })),
+  readOfferSnapshot:   vi.fn(async () => null),
+}))
+
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({ env: { BILLPLZ_COLLECTION_ID_BUYER: 'c', BILLPLZ_COLLECTION_ID: 'c' } }))
 vi.mock('@/lib/billplz', () => ({

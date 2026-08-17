@@ -2,6 +2,7 @@
 
 import { createBill, getBill }    from '@/lib/billplz'
 import { resolveOfferForCheck }  from '@/lib/server/offer-for-check'
+import { freezeOfferSnapshot }   from '@/lib/db/offer-snapshots'
 import { OFFER_UNAVAILABLE_MESSAGE } from '@/lib/offer'
 import { createBuyerReport,
          getBuyerReport,
@@ -251,6 +252,29 @@ async function initiateBuyerReportImpl(
 
   // Fail CLOSED. An unresolved gate is not permission to sell.
   if (!offerCheck || offerCheck.status !== 'resolved' || !offerCheck.offer.available) {
+    return { error: OFFER_UNAVAILABLE_MESSAGE }
+  }
+
+  // FREEZE THE EVIDENCE BEFORE A BILL CAN EXIST.
+  //
+  // The gate above proves an offer exists RIGHT NOW. The paid report recomputes
+  // from the live cache when it renders, and between those two moments the
+  // cohort can move — the warm-cache cron overwrites it, another visitor
+  // refreshes it, or CACHE_TTL_DAYS expires. Freezing here is what makes the
+  // report show what was bought rather than what the market looks like later.
+  //
+  // This ALSO fails closed, and deliberately so: selling first and freezing
+  // afterwards would take the money and leave the promise unbacked, which is
+  // the failure this whole feature exists to prevent. A snapshot that cannot be
+  // written is a sale that must not happen.
+  const frozen = await freezeOfferSnapshot({
+    checkId:         params.checkId,
+    cohort:          offerCheck.cohort,
+    offer:           offerCheck.offer,
+    sourceFetchedAt: offerCheck.sourceFetchedAt,
+  })
+  if (frozen.status === 'failed') {
+    console.error('[checkout] refusing to sell — snapshot not frozen:', frozen.reason)
     return { error: OFFER_UNAVAILABLE_MESSAGE }
   }
 
