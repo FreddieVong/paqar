@@ -16,18 +16,26 @@ export function Nav() {
             priority
           />
         </Link>
+        {/*
+          ONE utility action, not a menu.
+
+          Kira Ansuran and Panduan moved to the footer's tools area. Neither is
+          a step in buying a car — they are things to read — and every extra
+          item here competes with the single job this page has. "Laporan Saya"
+          earns its place because it is the one thing a buyer who ALREADY paid
+          needs, and losing a paid report is the worst experience Paqar can
+          give someone.
+
+          It points at /laporan-saya rather than /dashboard: the dashboard
+          redirects anonymous visitors to a login wall, and virtually every
+          buyer is anonymous by design.
+        */}
         <div className="flex items-center gap-4">
           <Link
-            href="/kira-ansuran-kereta"
-            className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
+            href="/laporan-saya"
+            className="font-heading font-semibold text-[12px] text-[#374151] hover:text-[#064E4A] transition-colors min-h-[44px] flex items-center"
           >
-            Kira Ansuran
-          </Link>
-          <Link
-            href="/panduan"
-            className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
-          >
-            Panduan
+            Laporan Saya
           </Link>
           <NavAuthLink />
         </div>

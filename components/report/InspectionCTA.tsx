@@ -4,11 +4,14 @@ import { analytics } from '@/lib/analytics'
 
 interface Props {
   plate?: string
+  /** Where this was rendered. The same partner converts very differently
+   *  on the homepage than inside a report the buyer has already paid for. */
+  surface?: 'home' | 'report'
 }
 
 const WORKSHOP_WHATSAPP = '60126201163'
 
-export function InspectionCTA({ plate }: Props) {
+export function InspectionCTA({ plate, surface = 'report' }: Props) {
   const message = encodeURIComponent(
     `Hi, saya dari Paqar (kod: PAQAR). Saya nak buat pre-purchase inspection untuk kereta ${plate ?? 'saya'}. Boleh confirm availability dan harga?`
   )
@@ -53,7 +56,7 @@ export function InspectionCTA({ plate }: Props) {
         href={waUrl}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={() => analytics.ctaClicked({ cta: 'workshop' })}
+        onClick={() => analytics.ctaClicked({ cta: 'workshop', surface })}
         className="block w-full bg-[#25D366] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#1ebe5c] transition-colors"
       >
         Tempah via WhatsApp →

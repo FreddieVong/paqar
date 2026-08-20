@@ -3,6 +3,7 @@ import Link           from 'next/link'
 import { unstable_cache } from 'next/cache'
 import { Nav }           from '@/components/layout/Nav'
 import { ListingIntakeForm } from '@/components/check/ListingIntakeForm'
+import { ServiceShortcuts } from '@/components/home/ServiceShortcuts'
 import { SocialLinks }    from '@/components/layout/SocialLinks'
 import { getCheckCount } from '@/lib/db/checks'
 import { organizationSchema, whatsappUrl } from '@/lib/site'
@@ -166,6 +167,33 @@ export default async function HomePage() {
               {claim}
             </p>
           ))}
+        </div>
+      </section>
+
+      {/* ── SATU TEMPAT SEBELUM BELI KERETA ──
+          The three shortcuts, and the sequence they belong to.
+
+          Placed AFTER the hero, never beside it: the RM29 intake is this page's
+          single job, and a row of equally-weighted options next to it would
+          turn one decision into three. Here they answer the question a buyer
+          has once they have seen the form — "what else does this place do?" —
+          rather than competing with it. */}
+      <section className="bg-white px-5 py-12 md:py-16 border-t border-[#F3F4F6]">
+        <div className="max-w-5xl mx-auto">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+            Satu tempat sebelum beli kereta
+          </p>
+          <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827] mb-3">
+            Semak &rarr; Periksa &rarr; Insurans
+          </h2>
+          <p className="font-body text-[14px] text-[#374151] leading-relaxed mb-6 max-w-2xl">
+            Tiga langkah, ikut urutan. Semak dulu sama ada unit itu berbaloi
+            dikejar &mdash; lebih murah daripada memeriksa kereta yang anda
+            takkan beli. Bila dah pasti, periksa fizikalnya. Bila dah putus,
+            baru bandingkan insurans.
+          </p>
+
+          <ServiceShortcuts />
         </div>
       </section>
 
@@ -470,6 +498,10 @@ export default async function HomePage() {
           <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Harga Model</Link>
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Kira Ansuran</Link>
+          <span className="text-[#E5E7EB]">·</span>
+          <Link href="/pemeriksaan-fizikal" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Pemeriksaan Fizikal</Link>
+          <span className="text-[#E5E7EB]">·</span>
+          <Link href="/banding-insurans" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Banding Insurans</Link>
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Bandingkan</Link>
           <span className="text-[#E5E7EB]">·</span>

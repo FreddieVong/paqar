@@ -45,8 +45,20 @@ export const analytics = {
   paymentCompleted: () =>
     posthog.capture('payment_completed'),
 
-  ctaClicked: (props: { cta: 'workshop' | 'bjak' | 'whatsapp_share' }) =>
-    posthog.capture('cta_clicked', props),
+  /**
+   * A service CTA was clicked. LOW CARDINALITY BY CONSTRUCTION — the union is
+   * closed, so no plate, URL, listing or buyer detail can travel here even if a
+   * future caller wanted to attach one.
+   *
+   * `surface` distinguishes the homepage from inside a paid report. The same
+   * partner performs very differently in the two places: on the report the
+   * buyer has already decided to trust Paqar, on the homepage they have not.
+   * Without it, one number would average two different questions.
+   */
+  ctaClicked: (props: {
+    cta: 'workshop' | 'bjak' | 'whatsapp_share'
+    surface?: 'home' | 'report'
+  }) => posthog.capture('cta_clicked', props),
 
   /**
    * The buyer started filling the plate form, before anything was submitted.
