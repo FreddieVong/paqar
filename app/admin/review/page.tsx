@@ -5,6 +5,7 @@ import { listReportsAwaitingReview, listRecentlyReleased, type ReviewQueueRow } 
 import { hoursAwaitingReview, REVIEW_SLA_HOURS } from '@/lib/report-release'
 import { ringgit } from '@/lib/pricing'
 import { decrypt } from '@/lib/crypto'
+import { ReviewerScreenshots } from '@/components/admin/ReviewerScreenshots'
 import {
   adminLogin, startReviewAction, releaseReportAction, markUnableAction,
   startRefundAction, completeRefundAction, failRefundAction,
@@ -126,6 +127,10 @@ function QueueCard({ row }: { row: ReviewQueueRow }) {
           </p>
         </div>
       )}
+
+      <div className="mb-3">
+        <ReviewerScreenshots checkId={report.check_id} />
+      </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
         <a href={`/laporan-pembeli/${report.check_id}?claim_token=${check?.claim_token ?? ''}&admin_preview=1`}

@@ -60,13 +60,23 @@ async function compress(file: File): Promise<Blob> {
 }
 
 export interface ScreenshotUploadProps {
-  checkId:    string | null
+  intakeId:   string | null
+  /** Ownership credential. Header only — never a URL, never logged. */
+  token:      string | null
+  /**
+   * Creates the intake on first use and returns its id.
+   *
+   * Lazy on purpose: minting a row on mount would create one for every visitor
+   * who merely scrolls past the form, and the cleanup sweep would then be
+   * deleting mostly-empty rows nobody ever intended to create.
+   */
+  ensureIntake: () => Promise<{ id: string; token: string } | null>
   /** Called after each successful upload with the new server-side count. */
   onUploaded: (count: number) => void
   disabled?:  boolean
 }
 
-export function ScreenshotUpload({ checkId, onUploaded, disabled }: ScreenshotUploadProps) {
+export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, disabled }: ScreenshotUploadProps) {
   const [busy,   setBusy]   = useState(false)
   const [count,  setCount]  = useState(0)
   const [error,  setError]  = useState<string | null>(null)
@@ -74,7 +84,14 @@ export function ScreenshotUpload({ checkId, onUploaded, disabled }: ScreenshotUp
   const inputRef = useRef<HTMLInputElement>(null)
 
   const send = useCallback(async (files: File[]) => {
-    if (!checkId || disabled) return
+    if (disabled) return
+    // Returns the credential alongside the id: React state from the parent has
+    // not re-rendered yet at this point, so reading the prop would send an
+    // empty token on the very first upload.
+    const owner = (intakeId && token)
+      ? { id: intakeId, token }
+      : await ensureIntake()
+    if (!owner) { setError('Tak dapat mula. Cuba muat semula halaman.'); return }
     const room = MAX_FILES - count
     if (room <= 0) { setError(`Maksimum ${MAX_FILES} screenshot.`); return }
 
@@ -82,10 +99,16 @@ export function ScreenshotUpload({ checkId, onUploaded, disabled }: ScreenshotUp
     try {
       for (const file of files.slice(0, room)) {
         const body = new FormData()
-        body.append('checkId', checkId)
+        body.append('intakeId', owner.id)
         body.append('file', await compress(file), 'screenshot')
 
-        const res = await fetch('/api/listing-screenshots', { method: 'POST', body })
+        const res = await fetch('/api/listing-screenshots', {
+          method:  'POST',
+          // The credential goes in a header. A query string would reach access
+          // logs, browser history and Referer headers.
+          headers: { 'x-paqar-intake-token': owner.token },
+          body,
+        })
         const json = await res.json().catch(() => ({})) as { error?: string; count?: number }
         if (!res.ok) { setError(json.error ?? 'Gambar ini tidak dapat dibaca.'); break }
         if (typeof json.count === 'number') { setCount(json.count); onUploaded(json.count) }
@@ -95,7 +118,7 @@ export function ScreenshotUpload({ checkId, onUploaded, disabled }: ScreenshotUp
     } finally {
       setBusy(false)
     }
-  }, [checkId, count, disabled, onUploaded])
+  }, [intakeId, token, ensureIntake, count, disabled, onUploaded])
 
   // Window-level, because a paste has no target until something is focused and
   // requiring a click first defeats the purpose.
@@ -126,7 +149,7 @@ export function ScreenshotUpload({ checkId, onUploaded, disabled }: ScreenshotUp
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          disabled={busy || full || disabled || !checkId}
+          disabled={busy || full || disabled}
           className="w-full min-h-[44px] font-heading font-bold text-[14px] text-[#064E4A] disabled:opacity-50"
         >
           {busy ? 'Memuat naik…' : full ? `${count} screenshot dimuat naik` : 'Pilih atau seret screenshot ke sini'}

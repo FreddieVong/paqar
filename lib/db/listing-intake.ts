@@ -202,3 +202,15 @@ export async function deleteIntakes(ids: string[]): Promise<void> {
   const { error } = await supabase.from('listing_intake').delete().in('id', ids)
   if (error) throw error
 }
+
+/** The intake a check came from, for reviewer screenshot resolution. */
+export async function intakeIdForCheck(checkId: string): Promise<string | null> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('listing_intake')
+    .select('id')
+    .eq('converted_check_id', checkId)
+    .maybeSingle()
+  if (error) return null
+  return (data?.id as string | undefined) ?? null
+}
