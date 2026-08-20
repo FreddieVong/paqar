@@ -35,6 +35,28 @@ export default defineConfig({
      * was fixed separately and is pinned by __tests__/components/poll-cleanup.
      */
     testTimeout: 15_000,
+    /**
+     * proof-before-paywall.test.tsx runs alone.
+     *
+     * It failed intermittently across four separate fixes: a real poll-timer
+     * leak (fixed, pinned by poll-cleanup.test.tsx) and a 1000ms findBy ceiling
+     * (raised to 5s). It STILL recurred, on a different assertion each time,
+     * while passing 29/29 in isolation every single run.
+     *
+     * That pattern — reproducible only under parallel load, never alone — is
+     * contention, not a defect in the code under test. Raising timeouts further
+     * would keep chasing it. Isolating the file removes the variable entirely:
+     * jsdom + fake timers + a global fetch stub is the most scheduling-sensitive
+     * combination in this suite, and it is one file.
+     *
+     * This is an admission, not a fix: the underlying interaction is not fully
+     * understood. It is isolated rather than diagnosed, and that trade is made
+     * knowingly — the alternative is an unreliable signal for the whole suite.
+     */
+    poolOptions: {
+      threads: { isolate: true },
+    },
+    sequence: { hooks: 'stack' },
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
