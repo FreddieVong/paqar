@@ -1,6 +1,9 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest'
 
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({ env: { AES_KEY: 'test-key-0123456789abcdef0123456789ab' } }))
 
@@ -59,5 +62,43 @@ describe('a weak identifier never silently replaces a strong one', () => {
     vi.doMock('@/lib/env', () => ({ env: {} }))
     const mod = await import('@/lib/purchaser-identity')
     expect(mod.purchaserId('ali@example.com')).toBeNull()
+  })
+})
+
+/**
+ * Rotating the key must not make every returning customer look new.
+ *
+ * The id is keyed on a server secret. Recomputing it on read would re-issue
+ * every identity the moment that secret changed — the repeat-rate chart would
+ * show a cliff no product change caused, which is worse than having no chart,
+ * because someone will act on it.
+ */
+describe('identity is frozen at payment, not recomputed on read', () => {
+  const read = (p: string) =>
+    readFileSync(join(__dirname, '..', '..', p), 'utf8')
+
+  it('the webhook persists it inside the just-paid guard', () => {
+    const src = read('app/api/webhooks/billplz/route.ts')
+    const guard = src.slice(src.indexOf('if (wasJustPaid)'))
+    expect(guard).toContain('setPurchaserIdentity')
+    expect(guard).toContain('PURCHASER_ID_VERSION')
+  })
+
+  it('the writer refuses to overwrite an existing identity', () => {
+    const src = read('lib/db/buyer-reports.ts')
+    const fn  = src.slice(src.indexOf('export async function setPurchaserIdentity'))
+    expect(fn).toContain(".is('purchaser_id', null)")
+  })
+
+  it('the schema stores the version alongside the id', () => {
+    const sql = read('supabase/migrations/032_concierge_review.sql')
+    expect(sql).toContain('purchaser_id         TEXT')
+    expect(sql).toContain('purchaser_id_version SMALLINT')
+  })
+
+  it('the identity never reaches a log line', () => {
+    const src = read('app/api/webhooks/billplz/route.ts')
+    const block = src.slice(src.indexOf('setPurchaserIdentity'), src.indexOf('setPurchaserIdentity') + 600)
+    expect(block).not.toMatch(/console\.(log|error)\([^)]*pid/)
   })
 })

@@ -32,12 +32,31 @@ import { env } from '@/lib/env'
  * an email is reversible by anyone with a wordlist. Keyed, it is only linkable
  * by someone who already holds the key and the database.
  *
- * ── WHY IT IS DERIVED AT PAYMENT ───────────────────────────────────────────
+ * ── WHY IT IS DERIVED AT PAYMENT, AND PERSISTED THERE ──────────────────────
  *
  * From the email on a COMPLETED payment, so it identifies a purchaser rather
  * than a visitor. An abandoned checkout leaves no identity behind, which is the
  * correct behaviour for a repeat-PURCHASE measure.
+ *
+ * It is STORED on the row rather than recomputed on read. Recomputing looks
+ * tidier and is a trap: the id is keyed on a server secret, so rotating that
+ * secret would silently re-issue every identity at once. Every returning
+ * customer would become a first-time buyer on the same day, and the repeat-rate
+ * chart would show a cliff that no product change caused — the kind of number
+ * that is worse than having none, because someone will act on it.
+ *
+ * Persisting freezes history. PURCHASER_ID_VERSION travels with each row so a
+ * rotation is visible rather than invisible: ids of different versions are
+ * simply not comparable, and any query spanning a rotation can say so instead
+ * of quietly reporting nonsense.
  */
+
+/**
+ * Bump ONLY when the derivation changes — a new key, a different canonical
+ * form, a different hash. Rows keep the version they were written with, so a
+ * bump partitions the data rather than corrupting it.
+ */
+export const PURCHASER_ID_VERSION = 1
 
 /** Normalise before hashing, or the same person yields two identities. */
 export function canonicalEmail(raw: string): string | null {

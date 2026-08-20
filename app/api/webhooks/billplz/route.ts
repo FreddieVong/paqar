@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse }              from 'next/server'
 import { waitUntil }                              from '@vercel/functions'
 import { verifyWebhookSignature }                 from '@/lib/billplz'
+import { setPurchaserIdentity } from '@/lib/db/buyer-reports'
 import { markReportPaid, getBuyerReportByBillId,
          markUpgradePaid, getBuyerReportByUpgradeBillId,
          setVehicleApiData } from '@/lib/db/buyer-reports'
 import { deliverBuyerReportReceipt }              from '@/lib/receipt-delivery'
 import { triggerVehicleLookup } from '@/lib/vehicle-lookup-trigger'
+import { purchaserId, PURCHASER_ID_VERSION } from '@/lib/purchaser-identity'
 import { hash as hashPlate } from '@/lib/crypto'
 import { buildBuyerReportAccessUrl }              from '@/lib/report-access'
 import { sendJomCheckPendingEmail }               from '@/lib/email/jomcheck-pending'
@@ -299,6 +301,23 @@ export async function POST(request: NextRequest) {
             checkId: buyerReport.check_id, error: String(err),
           })),
       )
+
+      // ── Stable purchaser identity, written once ─────────────────────────
+      //
+      // Inside the wasJustPaid guard and additionally guarded on the column
+      // being null, so a resent webhook cannot rewrite an identity that repeat
+      // -purchase history already depends on. Never logged, never echoed.
+      {
+        const pid = purchaserId(buyerReport.buyer_email)
+        if (pid) {
+          waitUntil(
+            setPurchaserIdentity(buyerReport.id, pid, PURCHASER_ID_VERSION)
+              .catch(err => console.error('[post-payment:identity] failed', {
+                op: 'identity', buyerReportId: buyerReport.id, error: String(err),
+              })),
+          )
+        }
+      }
 
       // ── Best-effort: attribution ────────────────────────────────────────
       waitUntil(

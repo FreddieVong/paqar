@@ -114,7 +114,15 @@ ALTER TABLE buyer_reports
   -- re-lookup before the order is written off as unresolvable. Counted rather
   -- than boolean so the audit shows how many RM0.81 calls an order consumed.
   ADD COLUMN IF NOT EXISTS identity_recheck_count INTEGER NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS corrected_plate_hash   TEXT;
+  ADD COLUMN IF NOT EXISTS corrected_plate_hash   TEXT,
+  -- Stable purchaser identity, written once at payment. Keyed HMAC of the
+  -- canonical email, never the address itself. STORED rather than recomputed:
+  -- the key can be rotated, and recomputing would re-issue every identity at
+  -- once, turning every returning customer into a first-time buyer on the same
+  -- day. The version travels with the row so a rotation partitions the data
+  -- visibly instead of corrupting it silently.
+  ADD COLUMN IF NOT EXISTS purchaser_id         TEXT,
+  ADD COLUMN IF NOT EXISTS purchaser_id_version SMALLINT;
 
 COMMENT ON COLUMN buyer_reports.released_at IS
   'When a human released this report. THE ACCESS GATE: null means the report page must withhold BuyerReportContent entirely. No default — a default would release every row on creation, the exact failure being designed out.';
@@ -122,6 +130,14 @@ COMMENT ON COLUMN buyer_reports.review_status IS
   'Workflow state. released_at remains authoritative for ACCESS; this drives the queue. unable_to_complete means the draft could not be corrected into something truthful — the only valid outcome there is refund, never release.';
 COMMENT ON COLUMN buyer_reports.refund_status IS
   'Independent of review_status. Billplz has no refund API, so refunded means a human moved money and recorded the reference — never merely that a flag was set.';
+COMMENT ON COLUMN buyer_reports.purchaser_id IS
+  'HMAC of the canonical buyer email, written once when payment completes. Safe for analytics; the address itself is not. Compare only within one purchaser_id_version.';
+
+-- Repeat-purchase is the metric this exists for, so it gets the index.
+CREATE INDEX IF NOT EXISTS buyer_reports_purchaser_idx
+  ON buyer_reports (purchaser_id, purchaser_id_version)
+  WHERE purchaser_id IS NOT NULL;
+
 COMMENT ON COLUMN buyer_reports.identity_recheck_count IS
   'Audited provider re-lookups after a reviewer corrected the plate. Capped at MAX_IDENTITY_RECHECKS in lib/release-validation — each costs RM0.81, and a plate that keeps disagreeing is not converging on anything.';
 

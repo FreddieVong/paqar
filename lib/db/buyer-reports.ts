@@ -435,3 +435,25 @@ export async function getReusableBaseBill(
     billUrl: String(row.billplz_bill_url),
   }
 }
+
+/**
+ * Write the stable purchaser identity, once, when payment completes.
+ *
+ * Guarded on `purchaser_id IS NULL` so a resent webhook cannot rewrite an
+ * identity that history already depends on. Best-effort by design: failing to
+ * record an analytics identifier must never fail a payment the buyer has
+ * already made.
+ */
+export async function setPurchaserIdentity(
+  buyerReportId: string,
+  id: string,
+  version: number,
+): Promise<void> {
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('buyer_reports')
+    .update({ purchaser_id: id, purchaser_id_version: version })
+    .eq('id', buyerReportId)
+    .is('purchaser_id', null)
+  if (error) throw error
+}
