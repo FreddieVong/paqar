@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   REVIEW_STATES, REFUND_STATES,
-  canTransitionReview, canTransitionRefund,
+  canTransitionReview, canTransitionRefund, classifyReview, classifyRefund,
   isReportAccessible, requiresRefund,
   type ReviewStatus, type RefundStatus, type WorkflowRow,
 } from '@/lib/report-workflow'
@@ -117,5 +117,32 @@ describe('requiresRefund', () => {
     expect(requiresRefund(row({
       status: 'pending', review_status: 'pending', released_at: null,
     }))).toBe(false)
+  })
+})
+
+/**
+ * Billplz legitimately resends webhooks, and phones legitimately double-submit.
+ * "Already done" and "illegal" must be distinguishable, because the caller owes
+ * them opposite responses: 2xx-and-do-nothing versus refuse-and-alarm.
+ */
+describe('transition outcomes distinguish a retry from a bug', () => {
+  it('classifies a repeat of a terminal state as already_applied, not illegal', () => {
+    expect(classifyReview('released', 'released')).toBe('already_applied')
+    expect(classifyRefund('refunded', 'refunded')).toBe('already_applied')
+  })
+
+  it('still classifies a genuine skip as illegal', () => {
+    expect(classifyReview('pending', 'released')).toBe('illegal')
+    expect(classifyRefund('required', 'refunded')).toBe('illegal')
+  })
+
+  it('classifies a legal move as applied', () => {
+    expect(classifyReview('in_review', 'released')).toBe('applied')
+    expect(classifyRefund('processing', 'refunded')).toBe('applied')
+  })
+
+  it('canTransition* stays false for a repeat — nothing moves', () => {
+    expect(canTransitionReview('released', 'released')).toBe(false)
+    expect(canTransitionRefund('refunded', 'refunded')).toBe(false)
   })
 })

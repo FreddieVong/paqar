@@ -1,6 +1,25 @@
 /**
  * The review and refund state machines, and the one rule that decides access.
  *
+ * ── THREE OUTCOMES, NOT TWO ────────────────────────────────────────────────
+ *
+ * An earlier version of this module said "no-op transitions are illegal", which
+ * conflated two situations that need opposite responses:
+ *
+ *   ILLEGAL          pending → released. A bug. Refuse, and say so loudly.
+ *   ALREADY APPLIED  released → released. Not a bug — Billplz legitimately
+ *                    resends webhooks, and a phone on a slow connection
+ *                    legitimately double-submits. The work is already done.
+ *
+ * Treating the second as an error is how a retried webhook turns into a retry
+ * storm: the caller returns non-2xx, Billplz resends, and the failure repeats
+ * forever while the underlying state was correct the whole time.
+ *
+ * So transitions resolve to 'applied' | 'already_applied' | 'illegal'. Callers
+ * treat already_applied as SUCCESS with no side effects: no second transition
+ * row, no second notification, no repeated financial operation, and the
+ * previously completed result returned.
+ *
  * ── THREE AXES, NOT ONE ────────────────────────────────────────────────────
  *
  *   status         (pre-existing)  pending | paid | expired
@@ -80,12 +99,33 @@ const REFUND_MOVES: Record<RefundStatus, readonly RefundStatus[]> = {
   failed:       ['processing'],
 }
 
+/** What a requested transition means. See the header for why three, not two. */
+export type TransitionOutcome = 'applied' | 'already_applied' | 'illegal'
+
+export function classifyReview(from: ReviewStatus, to: ReviewStatus): TransitionOutcome {
+  if (from === to) return 'already_applied'
+  return REVIEW_MOVES[from]?.includes(to) ? 'applied' : 'illegal'
+}
+
+export function classifyRefund(from: RefundStatus, to: RefundStatus): TransitionOutcome {
+  if (from === to) return 'already_applied'
+  return REFUND_MOVES[from]?.includes(to) ? 'applied' : 'illegal'
+}
+
+/**
+ * True only for a transition that CHANGES state legally.
+ *
+ * A same-state request answers false here and that is correct — nothing moves.
+ * Callers deciding whether to perform side effects must use this; callers
+ * deciding whether to report failure must use classify*, because
+ * already_applied is a success with nothing left to do.
+ */
 export function canTransitionReview(from: ReviewStatus, to: ReviewStatus): boolean {
-  return REVIEW_MOVES[from]?.includes(to) ?? false
+  return classifyReview(from, to) === 'applied'
 }
 
 export function canTransitionRefund(from: RefundStatus, to: RefundStatus): boolean {
-  return REFUND_MOVES[from]?.includes(to) ?? false
+  return classifyRefund(from, to) === 'applied'
 }
 
 /** A timestamp only counts as a moment. Blank strings are backfill artefacts. */

@@ -5,6 +5,8 @@ import { markReportPaid, getBuyerReportByBillId,
          markUpgradePaid, getBuyerReportByUpgradeBillId,
          setVehicleApiData } from '@/lib/db/buyer-reports'
 import { deliverBuyerReportReceipt }              from '@/lib/receipt-delivery'
+import { triggerVehicleLookup } from '@/lib/vehicle-lookup-trigger'
+import { hash as hashPlate } from '@/lib/crypto'
 import { buildBuyerReportAccessUrl }              from '@/lib/report-access'
 import { sendJomCheckPendingEmail }               from '@/lib/email/jomcheck-pending'
 import { recordPurchase }                         from '@/lib/purchase-attribution'
@@ -112,6 +114,17 @@ async function reconcileOrphanedUpgrade(billId: string, paidAt: string): Promise
   return true
 }
 
+/**
+ * Placeholder IP for the spend guard's per-IP dimension.
+ *
+ * This request comes from Billplz, so its source address identifies a payment
+ * provider rather than a buyer, and rate-limiting on it would pool every
+ * customer into one bucket. The per-SESSION limiter — keyed on the session
+ * that created the check — is the dimension that actually constrains abuse
+ * here, and it is the stricter of the two anyway.
+ */
+const BILLPLZ_WEBHOOK_IP = 'billplz-webhook'
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const params: Record<string, string> = {}
@@ -204,20 +217,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
+    // ── IDEMPOTENCY, AND WHY IT IS SHAPED THIS WAY ──────────────────────
+    //
+    // Billplz legitimately resends this webhook: on its own retry schedule,
+    // after a timeout it did not hear the answer to, and when an operator
+    // replays one by hand. A duplicate is NORMAL TRAFFIC, not an error.
+    //
+    // markReportPaid's UPDATE is guarded on `status = 'pending'`, so exactly
+    // one delivery can win. `wasJustPaid` is that verdict, and every side
+    // effect below sits inside it: the RM0.81 vehicle lookup, the receipt, the
+    // funnel events. A resend therefore performs NO financial operation, sends
+    // NO second notification and writes NO second transition.
+    //
+    // It still returns 2xx. That is the whole point — a non-2xx here would tell
+    // Billplz the delivery failed and earn another retry, turning a correct
+    // duplicate into an endless loop against a row that is already right.
     const wasJustPaid = await markReportPaid(billId)
     if (wasJustPaid) {
       let plate: string | null = null
       let reportUrl: string | undefined
+      let checkSessionId: string | null = null
       try {
         const checkRow = await getCheck(buyerReport.check_id)
         if (checkRow) {
-          plate = decrypt(checkRow.check.plate_encrypted as string).toUpperCase()
+          checkSessionId = checkRow.check.session_id ?? null
+          // Null-safe now: the plate is optional at intake, because
+          // brand/model/year identify the car without a provider call.
+          const enc = checkRow.check.plate_encrypted
+          if (enc) plate = decrypt(enc as string).toUpperCase()
           reportUrl = buildBuyerReportAccessUrl({
             checkId:    buyerReport.check_id,
             claimToken: checkRow.check.claim_token,
           }) ?? undefined
         }
       } catch { /* non-fatal — deliverBuyerReportReceipt resolves this itself */ }
+
+      // ── THE RM0.81 VEHICLE LOOKUP, ON THE PAID SIDE OF THE LINE ─────────
+      //
+      // It used to fire in POST /api/checks, so every stranger who typed a
+      // plate spent provider credit before paying anything, at a measured
+      // conversion of about zero. Here it earns its cost: it verifies the
+      // variant and year the SELLER claimed against the official registration
+      // record, which is work the buyer cannot do and a competitor's automated
+      // report does not do for them.
+      //
+      // Only when a plate was supplied — it is optional at intake — and
+      // best-effort throughout: the buyer has paid, so a provider outage must
+      // degrade the report, never fail the payment. mayLookupVehicle inside
+      // still fails closed.
+      if (plate) {
+        // The webhook's caller is Billplz, not the buyer, so there is no
+        // meaningful client IP to rate-limit on. The per-session limiter is
+        // what applies here, keyed on the session that created the check.
+        triggerVehicleLookup(plate, BILLPLZ_WEBHOOK_IP, {
+          sessionId: checkSessionId,
+          journeyId: null,
+          checkId:   buyerReport.check_id,
+          plateHash: hashPlate(plate),
+        })
+      }
 
       // ── CRITICAL: receipt delivery ──────────────────────────────────────
       // Held by waitUntil so the runtime cannot freeze the instance before the

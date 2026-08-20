@@ -17,6 +17,22 @@
 -- deployed application keeps working after this is applied: it always supplies
 -- a plate, never reads the new columns, and every added column is nullable or
 -- defaulted. Apply the migration FIRST, deploy the application SECOND.
+--
+-- ── NOT YET APPLIED. DO NOT EDIT AFTER IT IS. ──────────────────────────────
+--
+-- This file is still being changed as workstreams land, so it must not be
+-- applied to any database until the schema work is finished and it is frozen.
+-- Editing an applied migration makes migration history a fiction: two
+-- databases that both "ran 032" would hold different schemas, and nothing
+-- would say so. Once applied, every further change goes in 033 onward.
+--
+-- ── LEGACY DATA ────────────────────────────────────────────────────────────
+--
+-- The backfill at the end of this file is the part that most needs review
+-- before freezing: buyer_reports already holds paid rows from the pre-review
+-- product, and the new NOT NULL defaults would silently describe them as
+-- 'pending' review — putting historical orders into a queue that will never be
+-- worked. See section 4.
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 1. INTAKE CONTEXT — collected BEFORE payment
@@ -92,7 +108,13 @@ ALTER TABLE buyer_reports
   -- double-paid, NOT to imply automation.
   ADD COLUMN IF NOT EXISTS refund_amount_cents INTEGER,
   ADD COLUMN IF NOT EXISTS refund_reason_code  TEXT,
-  ADD COLUMN IF NOT EXISTS refund_reference    TEXT;
+  ADD COLUMN IF NOT EXISTS refund_reference    TEXT,
+  -- Audited identity rechecks. A provider/listing mismatch usually means a
+  -- mistyped plate or a misread screenshot, so the reviewer gets ONE corrected
+  -- re-lookup before the order is written off as unresolvable. Counted rather
+  -- than boolean so the audit shows how many RM0.81 calls an order consumed.
+  ADD COLUMN IF NOT EXISTS identity_recheck_count INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS corrected_plate_hash   TEXT;
 
 COMMENT ON COLUMN buyer_reports.released_at IS
   'When a human released this report. THE ACCESS GATE: null means the report page must withhold BuyerReportContent entirely. No default — a default would release every row on creation, the exact failure being designed out.';
@@ -100,6 +122,9 @@ COMMENT ON COLUMN buyer_reports.review_status IS
   'Workflow state. released_at remains authoritative for ACCESS; this drives the queue. unable_to_complete means the draft could not be corrected into something truthful — the only valid outcome there is refund, never release.';
 COMMENT ON COLUMN buyer_reports.refund_status IS
   'Independent of review_status. Billplz has no refund API, so refunded means a human moved money and recorded the reference — never merely that a flag was set.';
+COMMENT ON COLUMN buyer_reports.identity_recheck_count IS
+  'Audited provider re-lookups after a reviewer corrected the plate. Capped at MAX_IDENTITY_RECHECKS in lib/release-validation — each costs RM0.81, and a plate that keeps disagreeing is not converging on anything.';
+
 COMMENT ON COLUMN buyer_reports.reviewed_overrides IS
   'Reviewer decisions applied over the automated draft at rebuild time. Source evidence (extraction, provider records, buyer edits) is preserved elsewhere and never rewritten.';
 
@@ -163,6 +188,13 @@ ALTER TABLE buyer_reports DROP CONSTRAINT IF EXISTS buyer_reports_released_has_n
 ALTER TABLE buyer_reports ADD CONSTRAINT buyer_reports_released_has_note
   CHECK (review_status <> 'released' OR (reviewer_note IS NOT NULL AND length(btrim(reviewer_note)) > 0));
 
+-- The recheck budget is a spend cap, so it is enforced here as well as in
+-- lib/release-validation. Application-only limits on money are one forgotten
+-- branch away from being advisory.
+ALTER TABLE buyer_reports DROP CONSTRAINT IF EXISTS buyer_reports_identity_recheck_bounded;
+ALTER TABLE buyer_reports ADD CONSTRAINT buyer_reports_identity_recheck_bounded
+  CHECK (identity_recheck_count >= 0 AND identity_recheck_count <= 1);
+
 -- The review queue's only hot query: unreleased paid rows, oldest first.
 CREATE INDEX IF NOT EXISTS buyer_reports_pending_review_idx
   ON buyer_reports (paid_at)
@@ -213,3 +245,58 @@ ALTER TABLE report_state_transitions ENABLE ROW LEVEL SECURITY;
 
 COMMENT ON TABLE report_state_transitions IS
   'Append-only audit of every review/refund state change. The unique partial index makes a second release or a second refund impossible at the database level, not merely unlikely.';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 4. LEGACY BACKFILL — historical orders predate the review product
+-- ═══════════════════════════════════════════════════════════════════════════
+--
+-- buyer_reports holds paid rows from before human review existed. Those buyers
+-- already received their report the instant Billplz confirmed payment, so they
+-- are DELIVERED — but the column defaults above would describe them as
+-- review_status = 'pending', dropping every historical order into a review
+-- queue that will never be worked and whose 24-hour promise is years expired.
+--
+-- They are marked released, back-dated to when they were actually delivered.
+-- That is the truthful record: a human did not review them, but the buyer did
+-- receive them, and 'released' is the state that means "the buyer can read
+-- this". The reviewer_note records honestly that no review took place, which
+-- also satisfies the released-rows-must-carry-a-note CHECK without inventing a
+-- human judgement that never happened.
+--
+-- ORDER MATTERS: this must run BEFORE the CHECK constraints above would be
+-- validated against it. Postgres validates on ADD CONSTRAINT, so the
+-- constraints are already in place by the time this executes — hence the
+-- backfill sets released_at and review_status together, exactly as the
+-- release-consistency CHECK requires.
+UPDATE buyer_reports
+SET
+  review_status = 'released',
+  released_at   = COALESCE(paid_at, created_at, now()),
+  reviewer_note = COALESCE(
+    reviewer_note,
+    'Laporan ini dihantar sebelum Paqar memperkenalkan semakan manusia. Ia dijana automatik dan tidak disemak oleh manusia.'
+  )
+WHERE status = 'paid'
+  AND released_at IS NULL
+  AND review_status = 'pending';
+
+-- Unpaid and expired legacy rows need nothing: the defaults already describe
+-- them correctly (pending review, no refund owed), and the
+-- workflow_requires_payment CHECK permits exactly that combination.
+
+-- Sanity: after this migration no paid row may sit in a state the application
+-- cannot represent. Raises loudly rather than leaving a silent inconsistency.
+DO $$
+DECLARE stranded INTEGER;
+BEGIN
+  SELECT count(*) INTO stranded
+  FROM buyer_reports
+  WHERE status = 'paid'
+    AND review_status = 'released'
+    AND released_at IS NULL;
+
+  IF stranded > 0 THEN
+    RAISE EXCEPTION 'Backfill left % paid rows released with no released_at', stranded;
+  END IF;
+END $$;

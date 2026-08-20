@@ -17,6 +17,7 @@ const clean = (over: Partial<ReleaseCandidate> = {}): ReleaseCandidate => ({
   listingIdentity:     { brand: 'Honda', model: 'City', year: '2019' },
   providerIdentity:    null,
   identityConflictResolved: false,
+  identityRecheckCount: 0,
   plateSupplied:       false,
   claimsRegistrationCheck: false,
   reviewerNote:        'Saya dah tengok iklan ini. Rim tak sepadan dengan V spec.',
@@ -86,12 +87,37 @@ describe('mileage provenance and rollback', () => {
 })
 
 describe('vehicle identity', () => {
-  it('fatally blocks a provider/listing conflict', () => {
+  /**
+   * A mismatch usually means a mistyped plate, a misread screenshot or a
+   * sloppy listing — all correctable. Refunding on the first sight of one
+   * would refund buyers whose only problem was a typo.
+   */
+  it('blocks release on a first conflict but does not force a refund', () => {
     const c = clean({
       providerIdentity: { brand: 'Honda', model: 'Civic', year: '2019' },
     })
     expect(codes(c)).toContain('identity_conflict')
+    expect(mayRelease(c)).toBe(false)
+    expect(mustRefund(c)).toBe(false)
+  })
+
+  it('becomes fatal once the single audited recheck is spent', () => {
+    const c = clean({
+      providerIdentity:     { brand: 'Honda', model: 'Civic', year: '2019' },
+      identityRecheckCount: 1,
+    })
     expect(mustRefund(c)).toBe(true)
+  })
+
+  it('tells the reviewer to recheck first, and to refund only after', () => {
+    const first = validateForRelease(clean({ providerIdentity: { model: 'Civic' } }))
+      .find(b => b.code === 'identity_conflict')!
+    expect(first.message).toMatch(/semak semula/i)
+
+    const after = validateForRelease(clean({
+      providerIdentity: { model: 'Civic' }, identityRecheckCount: 1,
+    })).find(b => b.code === 'identity_conflict')!
+    expect(after.message).toMatch(/refund/i)
   })
 
   it('clears once the reviewer resolves it', () => {
@@ -141,6 +167,6 @@ describe('mayRelease / mustRefund', () => {
 
   it('separates correctable blocks from fatal ones', () => {
     expect(mustRefund(clean({ reviewerNote: '' }))).toBe(false)
-    expect(mustRefund(clean({ providerIdentity: { model: 'Civic' } }))).toBe(true)
+    expect(mustRefund(clean({ providerIdentity: { model: 'Civic' }, identityRecheckCount: 1 }))).toBe(true)
   })
 })

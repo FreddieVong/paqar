@@ -129,6 +129,9 @@ export interface BuyerReport {
   refund_reason_code?: string | null
   /** External reference proving money actually moved. Required to mark refunded. */
   refund_reference?:   string | null
+  /** Audited provider re-lookups after a reviewer corrected the plate. Max 1. */
+  identity_recheck_count?: number | null
+  corrected_plate_hash?:   string | null
   receipt_status?:     'pending' | 'sending' | 'sent' | 'failed' | null
   receipt_attempts?:   number | null
   receipt_last_error?: string | null

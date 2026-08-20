@@ -24,6 +24,9 @@ import type { JomCheckIncident } from '@/lib/jomcheck/core'
  * be a formality.
  */
 
+/** One audited correction-and-recheck. See the identity_conflict branch. */
+export const MAX_IDENTITY_RECHECKS = 1
+
 export type ReleaseBlockCode =
   | 'seller_price_changed'
   | 'mileage_provenance'
@@ -57,6 +60,13 @@ export interface ReleaseCandidate {
   providerIdentity:         { brand?: string | null; model?: string | null; year?: string | null } | null
   identityConflictResolved: boolean
 
+  /**
+   * How many audited provider rechecks have already been spent on this order.
+   * One is allowed; beyond that the conflict is treated as unresolvable,
+   * because each recheck costs RM0.81 and repeated lookups of a plate that
+   * keeps disagreeing are not converging on anything.
+   */
+  identityRecheckCount:     number
   plateSupplied:            boolean
   /** Does the rendered report assert registration/variant verification? */
   claimsRegistrationCheck:  boolean
@@ -125,10 +135,27 @@ export function validateForRelease(c: ReleaseCandidate): ReleaseBlock[] {
       return a !== '' && b !== '' && a !== b
     })
     if (conflict) {
+      // BLOCKING, NOT FATAL — and the distinction is the point.
+      //
+      // A mismatch has four ordinary causes, three of which are correctable:
+      // the buyer mistyped the plate, extraction misread it, the seller
+      // listed the car wrongly, or the provider genuinely holds a different
+      // vehicle. Treating every one as unrefundable-and-done would refund
+      // buyers whose only problem was a typo, and would throw away a sale
+      // Paqar could have delivered honestly.
+      //
+      // So it blocks release and offers ONE audited recheck. It becomes fatal
+      // only after that recheck has been spent and the conflict survives —
+      // see identityRecheckExhausted below. What must never happen is Paqar
+      // silently picking one identity and reporting on a car it is not sure
+      // about.
+      const exhausted = c.identityRecheckCount >= MAX_IDENTITY_RECHECKS
       blocks.push({
         code: 'identity_conflict',
-        fatal: true,
-        message: 'Rekod pendaftaran dan iklan tidak sepadan tentang kereta yang sama. Betulkan atau refund — jangan lepaskan.',
+        fatal: exhausted,
+        message: exhausted
+          ? 'Rekod pendaftaran dan iklan masih tidak sepadan selepas semakan semula. Tandakan tidak dapat disiapkan dan refund — jangan pilih satu identiti sendiri.'
+          : 'Rekod pendaftaran dan iklan tidak sepadan. Betulkan nombor plat dan semak semula sekali, atau tandakan tidak dapat disiapkan.',
       })
     }
   }
