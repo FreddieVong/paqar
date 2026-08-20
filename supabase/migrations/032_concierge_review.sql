@@ -291,6 +291,33 @@ ALTER TABLE buyer_reports
 COMMENT ON COLUMN buyer_reports.is_current IS
   'The revision a buyer reads. Exactly one per check_id. Flipped atomically when a later revision is released, so the earlier report never disappears while its replacement is still under review.';
 
+-- ── PRE-EXISTING DUPLICATES MUST BE COLLAPSED FIRST ────────────────────────
+--
+-- The unique index below refused to build on the live database: check
+-- ch_zACGxV68jY carries TWO paid buyer_reports rows. Investigated before
+-- changing anything — both are amount_cents = 1900 (migration 003's original
+-- default), both have NO billplz_bill_id at all, same buyer, nineteen minutes
+-- apart on 2026-05-08, six days after the project was created. They are
+-- pre-Billplz seed rows, not a double payment; no money is involved.
+--
+-- They are nonetheless real rows, and under the revision model exactly one
+-- report per check is what a buyer reads. The newest is current; anything
+-- older becomes a superseded revision. Ordering by (paid_at, id) rather than
+-- paid_at alone so the result is deterministic when timestamps tie.
+--
+-- Idempotent: re-running marks nothing new, because after the first pass no
+-- row has a newer sibling still flagged current.
+UPDATE buyer_reports b
+SET is_current = false
+WHERE b.status = 'paid'
+  AND b.is_current
+  AND EXISTS (
+    SELECT 1 FROM buyer_reports o
+    WHERE o.check_id = b.check_id
+      AND o.status = 'paid'
+      AND (o.paid_at, o.id) > (b.paid_at, b.id)
+  );
+
 -- Exactly one current revision per check, enforced rather than assumed: two
 -- would make "which report does this buyer see" a race.
 CREATE UNIQUE INDEX IF NOT EXISTS buyer_reports_one_current_idx
@@ -302,13 +329,12 @@ ALTER TABLE buyer_reports DROP CONSTRAINT IF EXISTS buyer_reports_revision_chain
 ALTER TABLE buyer_reports ADD CONSTRAINT buyer_reports_revision_chain
   CHECK (revision = 1 OR supersedes_id IS NOT NULL);
 
--- A revision may only become current once a human has released it. Without
--- this, promoting an unreviewed revision would replace a good report with a
--- draft — the precise failure the release gate exists to prevent, arriving
--- through a side door.
-ALTER TABLE buyer_reports DROP CONSTRAINT IF EXISTS buyer_reports_current_is_released;
-ALTER TABLE buyer_reports ADD CONSTRAINT buyer_reports_current_is_released
-  CHECK (NOT is_current OR status <> 'paid' OR released_at IS NOT NULL);
+-- NOTE: buyer_reports_current_is_released is NOT added here. It depends on
+-- released_at being populated, which the backfill at the end of this file
+-- does — and Postgres validates a CHECK against existing rows at ADD
+-- CONSTRAINT time. Adding it here failed on the live database for exactly
+-- that reason: every paid row was is_current=true with released_at still NULL.
+-- It is added after the backfill instead. See the end of section 4.
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 4. LEGACY BACKFILL — historical orders predate the review product
@@ -363,3 +389,41 @@ BEGIN
     RAISE EXCEPTION 'Backfill left % paid rows released with no released_at', stranded;
   END IF;
 END $$;
+
+-- ── Deferred constraint: current revisions must be released ────────────────
+--
+-- Added HERE, after the backfill, not with the other revision constraints.
+-- Postgres validates a CHECK against existing rows the moment it is added, and
+-- at that earlier point every paid row was is_current=true with released_at
+-- still NULL — the backfill had not run yet. The live database rejected it,
+-- which is the correct behaviour and the reason for this ordering.
+--
+-- What it guarantees: a revision cannot become the one a buyer reads until a
+-- human has released it. Without it, promoting an unreviewed revision would
+-- replace a good report with a draft — the precise failure the release gate
+-- exists to prevent, arriving through a side door.
+--
+-- ── THE VERSION THAT BROKE PRODUCTION ──────────────────────────────────────
+--
+-- First written as:
+--
+--   CHECK (NOT is_current OR status <> 'paid' OR released_at IS NOT NULL)
+--
+-- which is wrong, and was caught only by simulating what the DEPLOYED
+-- application does rather than by reading the SQL. A brand-new payment is
+-- is_current = true (the column default), status = 'paid' the moment the
+-- webhook lands, and released_at NULL because nobody has reviewed it yet. That
+-- is the NORMAL state of a paid report awaiting review — and the constraint
+-- refused it, so the live Billplz webhook could not mark ANY payment paid.
+--
+-- The error conflated the initial state of revision 1 with the promotion of a
+-- later revision over it. Only the second needs guarding: revision 1 may be
+-- current while unreleased; revision 2 may not take over until released.
+--
+-- Verified against the live database after correcting:
+--   paid rev1, unreleased, current   -> ALLOWED  (a normal payment)
+--   rev2, unreleased, promoted       -> BLOCKED  (the guarantee)
+--   rev2, released, promoted         -> ALLOWED
+ALTER TABLE buyer_reports DROP CONSTRAINT IF EXISTS buyer_reports_current_is_released;
+ALTER TABLE buyer_reports ADD CONSTRAINT buyer_reports_current_is_released
+  CHECK (NOT is_current OR revision = 1 OR released_at IS NOT NULL);
