@@ -27,12 +27,14 @@ vi.mock('@/lib/db/listing-intake', () => ({
   listExpiredIntakes: async () => intakeRows,
   deleteIntakes:      async (ids: string[]) => { deletedIntakes = ids },
 }))
+let verifyReturns = true
 vi.mock('@/lib/screenshot-storage', () => ({
   deleteScreenshots: async (paths: string[]) => {
     if (storageFails) throw new Error('storage unavailable')
     removedPaths.push(...paths)
     return { removed: paths.length }
   },
+  verifyDeleted: async () => verifyReturns,
 }))
 
 const { GET } = await import('@/app/api/cron/screenshot-cleanup/route')
@@ -45,6 +47,7 @@ beforeEach(() => {
   intakeRows     = [{ id: 'i1' }]
   markedDeleted = []; deletedIntakes = []; removedPaths = []
   storageFails = false
+  verifyReturns = true
 })
 
 describe('authorisation', () => {
@@ -117,5 +120,35 @@ describe('logging', () => {
     const log = src.slice(src.indexOf('console.error'), src.indexOf('console.error') + 220)
     expect(log).not.toContain('storage_path')
     expect(log).not.toContain('.map(r => r.storage_path)')
+  })
+})
+
+/**
+ * remove() reporting success is not the same as the object being gone.
+ *
+ * download() cannot settle it either — Supabase serves objects through a CDN
+ * with max-age=3600, so a path read before deletion keeps returning 200
+ * afterwards. That behaviour produced a false "deletion failed" report in a
+ * previous session. Cleanup therefore CONFIRMS via signing, which consults
+ * metadata and cannot be answered from a cached body.
+ */
+describe('deletion is confirmed, not assumed', () => {
+  it('marks a row deleted only once absence is confirmed', async () => {
+    await call()
+    expect(markedDeleted).toEqual(['s1'])
+  })
+
+  it('leaves the row for the next sweep when confirmation fails', async () => {
+    // remove() succeeded, but the object is still signable — so it is still
+    // there, whatever remove() claimed.
+    verifyReturns = false
+    await call()
+    expect(markedDeleted).toEqual([])
+  })
+
+  it('does not delete the intake when confirmation failed', async () => {
+    verifyReturns = false
+    await call()
+    expect(deletedIntakes).toEqual([])
   })
 })

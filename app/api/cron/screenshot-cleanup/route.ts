@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { env } from '@/lib/env'
 import { listExpiredScreenshots, markScreenshotsDeleted } from '@/lib/db/listing-screenshots'
 import { listExpiredIntakes, deleteIntakes } from '@/lib/db/listing-intake'
-import { deleteScreenshots } from '@/lib/screenshot-storage'
+import { deleteScreenshots, verifyDeleted } from '@/lib/screenshot-storage'
 
 /**
  * Delete expired screenshots and abandoned intakes — objects AND rows.
@@ -60,8 +60,16 @@ export async function GET(request: NextRequest) {
     try {
       const res = await deleteScreenshots(slice.map(r => r.storage_path))
       removed += res.removed
-      // ONLY on success. A throw leaves these rows for the next sweep.
-      cleared.push(...slice.map(r => r.id))
+
+      // CONFIRM, do not assume. remove() reporting success is not the same as
+      // the object being gone, and download() cannot answer the question —
+      // it serves a cached body for up to an hour after deletion. verifyDeleted
+      // signs the path instead, which consults metadata. Only confirmed rows
+      // are marked deleted; the rest stay for the next sweep.
+      const confirmed = await Promise.all(
+        slice.map(async r => (await verifyDeleted(r.storage_path)) ? r.id : null),
+      )
+      cleared.push(...confirmed.filter((id): id is string => id !== null))
     } catch (err) {
       failedBatches++
       // No storage paths in the log line: they locate a buyer's evidence.

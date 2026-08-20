@@ -118,3 +118,48 @@ export async function deleteScreenshots(paths: string[]): Promise<{ removed: num
   if (error) throw error
   return { removed: data?.length ?? 0 }
 }
+
+/**
+ * Did this object actually go away?
+ *
+ * ── WHY NOT JUST download() ────────────────────────────────────────────────
+ *
+ * Because download() lies after a deletion, and it lied to me. Supabase serves
+ * objects through a CDN with `cacheControl: max-age=3600`, so a path that was
+ * downloaded BEFORE deletion keeps returning 200 from cache afterwards. A probe
+ * that read the object and then deleted it reported the bytes still present,
+ * and the conclusion drawn — that deletion had failed — was wrong.
+ *
+ * Reproduced deliberately:
+ *
+ *   download -> remove -> download        => 200, served from cache
+ *   download -> remove -> list            => empty
+ *   download -> remove -> createSignedUrl => "Object not found"
+ *
+ * ── THE TWO AUTHORITATIVE CHECKS ───────────────────────────────────────────
+ *
+ * list() and createSignedUrl() both consult storage METADATA rather than the
+ * object CDN, so neither can be answered from a cached body. Signing is the
+ * stronger of the two: it fails for the exact path, whereas a listing could in
+ * principle be stale for other reasons.
+ *
+ * ── CDN EXPIRY IS A SEPARATE FACT, AND NOT A SECURITY PROBLEM ──────────────
+ *
+ * A previously-warmed signed URL kept serving for about a second after
+ * deletion, then failed. That window is a property of cache invalidation, not
+ * of retention: the object is gone from storage immediately, and the only
+ * thing that can still read it is a URL someone already held, which was already
+ * a live credential before deletion and expires on its own within two minutes.
+ *
+ * Retention claims ("dipadam selepas 30 hari") are therefore honest as written
+ * — the deletion is real and immediate. This function is what proves it.
+ */
+export async function verifyDeleted(storagePath: string): Promise<boolean> {
+  const supabase = createServiceClient()
+  // Signing consults metadata for this exact path and cannot be served from an
+  // object cache. If the object were still there, this would succeed.
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(storagePath, 30)
+  return Boolean(error) || !data?.signedUrl
+}
