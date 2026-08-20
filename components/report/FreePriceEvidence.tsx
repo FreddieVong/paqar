@@ -98,7 +98,24 @@ export function FreePriceEvidence({
   useEffect(() => {
     if (asking == null) return
     let stop = false
+    // The pending retry timer MUST be cancellable.
+    //
+    // This used to schedule setTimeout(load, 2500) and never clear it, with
+    // cleanup setting `stop` alone. `stop` was then checked only AFTER the
+    // await, so a timer that fired post-unmount still issued a real fetch —
+    // up to twelve of them, over thirty seconds, for a component nobody is
+    // looking at any more. In production that is a request storm from an
+    // abandoned page; in the test suite it was an intermittent failure, because
+    // a leaked poll from one test lands inside the next one's global fetch mock
+    // and consumes it.
+    //
+    // The timer is now tracked and cleared, and `stop` is checked BEFORE the
+    // request as well as after — a cancelled effect must not spend a round trip
+    // to discover it was cancelled.
+    let timer: ReturnType<typeof setTimeout> | null = null
+
     async function load() {
+      if (stop) return
       polls.current += 1
       try {
         const res = await fetch(
@@ -109,17 +126,20 @@ export function FreePriceEvidence({
         setData(json)
         // Vehicle/market lookups are async; keep polling until evidence lands.
         if (json.state !== 'evidence') {
-          if (polls.current < 12) setTimeout(load, 2500)
+          if (polls.current < 12) timer = setTimeout(load, 2500)
           else setExhausted(true)
         }
       } catch {
         if (stop) return
-        if (polls.current < 12) setTimeout(load, 2500)
+        if (polls.current < 12) timer = setTimeout(load, 2500)
         else setExhausted(true)
       }
     }
     load()
-    return () => { stop = true }
+    return () => {
+      stop = true
+      if (timer) clearTimeout(timer)
+    }
   }, [asking, checkId, claimToken])
 
   useEffect(() => {

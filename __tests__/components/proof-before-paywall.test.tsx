@@ -2,6 +2,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useEffect } from 'react'
 import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react'
+
+/**
+ * ASYNC HEADROOM, and why it is here rather than in a global config.
+ *
+ * findBy* defaults to a 1000ms ceiling. With 130+ test files in parallel a
+ * saturated machine exceeds that for reasons unrelated to the code under test,
+ * which produced an intermittent failure that moved between assertions on each
+ * run and passed 29/29 in isolation every time.
+ *
+ * Raising it is not masking a defect — a genuinely broken assertion fails at 5s
+ * exactly as it fails at 1s. It is scoped to this file rather than set
+ * globally because a global setupFile applies to every suite, and most of this
+ * repo runs in the `node` environment where @testing-library/dom cannot even be
+ * imported; adding one took out every API test.
+ *
+ * A real resource leak was ALSO contributing — an uncancelled poll timer in
+ * FreePriceEvidence kept firing after unmount, landing inside the next test's
+ * fetch mock. That was a product bug, is fixed, and is pinned separately by
+ * __tests__/components/poll-cleanup.test.tsx.
+ */
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
@@ -66,7 +86,7 @@ describe('the gate withholds the paid offer until a result exists', () => {
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
     // A spinner is on screen — and a spinner is not a result.
-    await screen.findByText(/Sedang semak harga pasaran/i)
+    await screen.findByText(/Sedang semak harga pasaran/i, { timeout: 5000 })
     expect(screen.queryByText(PAYWALL)).toBeNull()
   })
 
@@ -74,7 +94,7 @@ describe('the gate withholds the paid offer until a result exists', () => {
     mockEvidence(VERDICT_BODY)
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
-    await screen.findByText('MAHAL')
+    await screen.findByText('MAHAL', { timeout: 5000 })
     expect(screen.getByText(PAYWALL)).toBeTruthy()
   })
 
@@ -82,7 +102,7 @@ describe('the gate withholds the paid offer until a result exists', () => {
     mockEvidence({ ...VERDICT_BODY, verdict: null, verdictStatus: 'suppressed', verdictReason: 'mixed_variants' })
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
-    await screen.findByText('VARIAN KHAS')
+    await screen.findByText('VARIAN KHAS', { timeout: 5000 })
     expect(screen.getByText(PAYWALL)).toBeTruthy()
     // Suppression must never be dressed up as a confident verdict.
     expect(screen.queryByText('MAHAL')).toBeNull()
@@ -97,7 +117,7 @@ describe('the gate withholds the paid offer until a result exists', () => {
     // so it has no median, range, gap or Target to sell. What remains is a
     // depreciation estimate, which is not the comparable-listing evidence RM12
     // advertises.
-    await screen.findByText('DATA TIDAK CUKUP')
+    await screen.findByText('DATA TIDAK CUKUP', { timeout: 5000 })
     await waitFor(() => expect(screen.getByText(/belum boleh disediakan/i)).toBeTruthy())
     expect(screen.queryByText(PAYWALL)).toBeNull()
   })
@@ -108,7 +128,7 @@ describe('the gate withholds the paid offer until a result exists', () => {
 
     // An input request is not a finding — Paqar has judged nothing yet. The
     // recovery is the price field itself, already on screen.
-    await screen.findByText(/Berapa harga yang penjual minta/i)
+    await screen.findByText(/Berapa harga yang penjual minta/i, { timeout: 5000 })
     expect(screen.queryByText(PAYWALL)).toBeNull()
     // Nor the ineligible notice: nothing has failed, we simply have not asked yet.
     expect(screen.queryByText(/belum boleh disediakan/i)).toBeNull()
@@ -124,13 +144,13 @@ describe('the gate withholds the paid offer until a result exists', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check">{paywall}</FreeResultGate>)
-    await screen.findByText(/Berapa harga yang penjual minta/i)
+    await screen.findByText(/Berapa harga yang penjual minta/i, { timeout: 5000 })
 
     fireEvent.change(screen.getByPlaceholderText(/contoh/i), { target: { value: '45000' } })
     fireEvent.click(screen.getByRole('button', { name: /Semak/i }))
 
     // The buyer never restarts the plate check…
-    await screen.findByText('MAHAL')
+    await screen.findByText('MAHAL', { timeout: 5000 })
     await waitFor(() => expect(screen.getByText(PAYWALL)).toBeTruthy())
 
     // …and every call goes to the cache-only evidence endpoint. The route
@@ -146,7 +166,7 @@ describe('the gate withholds the paid offer until a result exists', () => {
     mockEvidence({ state: 'pending_vehicle' })
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
-    await screen.findByText(/Sedang semak harga pasaran/i)
+    await screen.findByText(/Sedang semak harga pasaran/i, { timeout: 5000 })
     for (const badge of ['MAHAL', 'AGAK MAHAL', 'WAJAR', 'BERBALOI']) {
       expect(screen.queryByText(badge)).toBeNull()
     }
@@ -156,7 +176,7 @@ describe('the gate withholds the paid offer until a result exists', () => {
     mockEvidence(VERDICT_BODY)
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
-    await screen.findByText('MAHAL')
+    await screen.findByText('MAHAL', { timeout: 5000 })
     expect(screen.getAllByText(PAYWALL)).toHaveLength(1)
   })
 })
@@ -166,7 +186,7 @@ describe('free_result_presented', () => {
     mockEvidence(VERDICT_BODY)
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
-    await screen.findByText('MAHAL')
+    await screen.findByText('MAHAL', { timeout: 5000 })
     const presented = trackAdEvent.mock.calls.filter(c => c[0] === 'free_result_presented')
     expect(presented).toHaveLength(1)
     expect(presented[0]![1]).toMatchObject({ checkId: 'ch_1', valuationPath: 'plate_check' })
@@ -176,7 +196,7 @@ describe('free_result_presented', () => {
     mockEvidence({ state: 'pending_market' })
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
-    await screen.findByText(/Sedang semak harga pasaran/i)
+    await screen.findByText(/Sedang semak harga pasaran/i, { timeout: 5000 })
     expect(trackAdEvent.mock.calls.filter(c => c[0] === 'free_result_presented')).toHaveLength(0)
   })
 
@@ -184,7 +204,7 @@ describe('free_result_presented', () => {
     mockEvidence(VERDICT_BODY)
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
-    await screen.findByText('MAHAL')
+    await screen.findByText('MAHAL', { timeout: 5000 })
     const call = posthog.mock.calls.find(c => c[0] === 'free_result_presented')
     expect(call![1]).toEqual({
       result_state: 'verdict', paid_report_eligible: true,
@@ -231,7 +251,7 @@ describe('free_result_presented', () => {
       </FreeResultGate>,
     )
 
-    await screen.findByText('DATA TIDAK CUKUP')
+    await screen.findByText('DATA TIDAK CUKUP', { timeout: 5000 })
     await waitFor(() => expect(screen.getByText(/belum boleh disediakan/i)).toBeTruthy())
     const names = trackAdEvent.mock.calls.map(c => c[0])
     expect(names).toContain('free_result_presented')
@@ -242,7 +262,7 @@ describe('free_result_presented', () => {
     mockEvidence(VERDICT_BODY)
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
-    await screen.findByText('MAHAL')
+    await screen.findByText('MAHAL', { timeout: 5000 })
     for (const name of ['plate_price_evidence_viewed', 'plate_verdict_viewed']) {
       const call = trackAdEvent.mock.calls.find(c => c[0] === name)
       expect(call, `${name} was never fired`).toBeTruthy()
@@ -302,7 +322,7 @@ describe('suppression preserves uncertainty into the paid offer', () => {
     mockEvidence({ ...VERDICT_BODY, verdict: null, verdictStatus: 'suppressed', verdictReason: 'mixed_variants' })
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
-    await screen.findByText('VARIAN KHAS')
+    await screen.findByText('VARIAN KHAS', { timeout: 5000 })
     // Sellable — the report delivers the comparable chips and states the
     // mixed-variant limitation in its own methodology line.
     await waitFor(() => expect(screen.getByText(PAYWALL)).toBeTruthy())
@@ -321,7 +341,7 @@ describe('the free surface stays free', () => {
     const { container } = render(
       <FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>,
     )
-    await screen.findByText('MAHAL')
+    await screen.findByText('MAHAL', { timeout: 5000 })
 
     const text = container.textContent ?? ''
     expect(text).not.toMatch(/RM\s*[\d,]/)      // no figure of any kind
@@ -435,9 +455,19 @@ describe('intentional Malaysian product language survives', () => {
     expect(all).toMatch(/\bTarget\b/)
   })
 
-  it('does not let the RM12 tier imply the Accident/Claim check', () => {
+  it('does not let the base tier imply the Accident/Claim check', () => {
     const form = read('components/report/PaymentForm.tsx')
-    // The bundle title carries Accident/Claim; the bare RM12 title must not.
-    expect(form).toContain("addJomCheck ? 'Laporan + Accident/Claim — RM100' : 'Laporan Pembeli — RM12'")
+
+    // Asserted on the STRUCTURE, not on one literal string. The titles moved
+    // to template literals when the price moved to lib/pricing, and pinning
+    // the old exact line made this test fail for a reason it does not care
+    // about. What it does care about is unchanged: only the bundle branch may
+    // mention the add-on.
+    const title = form.slice(form.indexOf('const title'), form.indexOf('const ctaText'))
+    expect(title, 'title is derived from addJomCheck').toContain('addJomCheck')
+
+    const [bundleBranch, baseBranch] = title.split(':')
+    expect(bundleBranch, 'the bundle names the add-on').toContain('Accident/Claim')
+    expect(baseBranch,   'the base tier must not imply the add-on').not.toContain('Accident/Claim')
   })
 })
