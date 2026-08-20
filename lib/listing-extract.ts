@@ -1,0 +1,165 @@
+import { BRANDS, MODELS_BY_BRAND } from '@/lib/model-catalog'
+
+/**
+ * Turning a listing page into the four fields coverage needs, with an honest
+ * account of how sure we are about each one.
+ *
+ * ── WHY CONFIDENCE IS PER-FIELD ────────────────────────────────────────────
+ *
+ * A page can state the price unambiguously in a meta tag while leaving the
+ * variant buried in free-text prose. One overall score would force the intake
+ * to either re-ask everything (the friction this exists to remove) or accept
+ * everything (which is how a tester watched an asking price change from
+ * RM35,000 to RM55,000). So each field carries its own status, and the intake
+ * asks about exactly the uncertain ones.
+ *
+ * ── WHY THE ASKING PRICE IS TREATED DIFFERENTLY ────────────────────────────
+ *
+ * Every other field can be wrong and produce a slightly worse report. A wrong
+ * asking price produces a CONFIDENTLY wrong decision — the verdict, the offer
+ * band and the negotiation script all hang off it, and the buyer has no way to
+ * tell. It is therefore never auto-accepted: `needsConfirmation` is true for
+ * price even at high confidence, so the summary asks one explicit question
+ * while everything else stays passive.
+ *
+ * ── WHAT THIS DOES NOT DO ──────────────────────────────────────────────────
+ *
+ * It does not guess. A field it cannot read is returned as 'missing' rather
+ * than inferred from the page title, because a plausible-looking wrong value
+ * is worse than an empty one: the buyer skims past it, and the reviewer has
+ * nothing flagging it.
+ */
+
+export type FieldStatus = 'high' | 'medium' | 'missing'
+
+export interface ExtractedField<T> {
+  value:  T | null
+  status: FieldStatus
+  /** Which part of the page this came from. Kept for the reviewer's audit. */
+  evidence?: string | null
+}
+
+export interface ExtractedListing {
+  brand:        ExtractedField<string>
+  model:        ExtractedField<string>
+  year:         ExtractedField<string>
+  askingPriceRm: ExtractedField<number>
+  mileageKm:    ExtractedField<number>
+  variant:      ExtractedField<string>
+}
+
+export type ExtractionSource = 'url_metadata' | 'screenshot_ocr' | 'buyer_entry'
+
+/** Pull a meta tag's content by property or name. */
+function meta(html: string, key: string): string | null {
+  const re = new RegExp(
+    `<meta[^>]+(?:property|name)=["']${key}["'][^>]+content=["']([^"']+)["']`, 'i',
+  )
+  const alt = new RegExp(
+    `<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${key}["']`, 'i',
+  )
+  return html.match(re)?.[1] ?? html.match(alt)?.[1] ?? null
+}
+
+function titleOf(html: string): string {
+  return meta(html, 'og:title') ?? html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] ?? ''
+}
+
+/** RM 55,000 / RM55000 / 55,000 — the shapes Malaysian listings actually use. */
+export function parseRinggit(text: string): number | null {
+  const m = text.match(/RM\s*([\d,]{4,12})/i) ?? text.match(/\b([\d,]{5,12})\b/)
+  if (!m?.[1]) return null
+  const n = parseInt(m[1].replace(/,/g, ''), 10)
+  return Number.isFinite(n) && n >= 1000 && n <= 2_000_000 ? n : null
+}
+
+/** "85,000 km" / "85k km" / "85000km". */
+export function parseMileage(text: string): number | null {
+  const k = text.match(/\b(\d{1,3})\s*k\s*km\b/i)
+  if (k?.[1]) return parseInt(k[1], 10) * 1000
+  const m = text.match(/\b([\d,]{3,9})\s*km\b/i)
+  if (!m?.[1]) return null
+  const n = parseInt(m[1].replace(/,/g, ''), 10)
+  return Number.isFinite(n) && n > 0 && n <= 1_500_000 ? n : null
+}
+
+/** A four-digit year in a plausible range for a used car. */
+export function parseYear(text: string): string | null {
+  const now = new Date().getFullYear()
+  for (const m of text.matchAll(/\b(19[89]\d|20[0-4]\d)\b/g)) {
+    const y = parseInt(m[1]!, 10)
+    if (y >= 1990 && y <= now + 1) return String(y)
+  }
+  return null
+}
+
+/** Match a known brand, and then one of ITS models — never a model alone. */
+export function parseVehicle(text: string): { brand: string | null; model: string | null } {
+  const t = text.toLowerCase()
+  const brand = BRANDS.find(b => t.includes(b.toLowerCase())) ?? null
+  if (!brand) return { brand: null, model: null }
+  const model = (MODELS_BY_BRAND[brand] ?? []).find(m => t.includes(m.toLowerCase())) ?? null
+  return { brand, model }
+}
+
+const field = <T>(value: T | null, status: FieldStatus, evidence?: string | null): ExtractedField<T> =>
+  ({ value, status, evidence: value == null ? null : evidence ?? null })
+
+/**
+ * Extract from a fetched listing page.
+ *
+ * Structured metadata (og:*) is treated as HIGH confidence: the site authored
+ * it for machines, so it is the site's own statement rather than our reading of
+ * its prose. Values recovered from the title are MEDIUM — the title is written
+ * for humans and routinely contains a second car, a dealer name, or a monthly
+ * instalment that reads exactly like a price.
+ */
+export function extractFromHtml(html: string): ExtractedListing {
+  const title = titleOf(html)
+  const desc  = meta(html, 'og:description') ?? ''
+  const hay   = `${title} ${desc}`
+
+  const ogPrice = meta(html, 'product:price:amount') ?? meta(html, 'og:price:amount')
+  const price   = ogPrice ? parseRinggit(`RM${ogPrice}`) : parseRinggit(hay)
+
+  const { brand, model } = parseVehicle(hay)
+  const year    = parseYear(title) ?? parseYear(desc)
+  const mileage = parseMileage(hay)
+
+  return {
+    brand:  field(brand,  brand  ? 'high'   : 'missing', 'og:title'),
+    model:  field(model,  model  ? 'high'   : 'missing', 'og:title'),
+    year:   field(year,   year   ? 'high'   : 'missing', 'og:title'),
+    // MEDIUM unless the site stated it in a price meta tag. A number scraped
+    // out of a human-written title is as likely to be a monthly instalment.
+    askingPriceRm: field(price, price ? (ogPrice ? 'high' : 'medium') : 'missing',
+                         ogPrice ? 'product:price:amount' : 'og:title'),
+    mileageKm: field(mileage, mileage ? 'medium' : 'missing', 'og:description'),
+    // Variant is never read from free text. Its short tokens ("RS", "V", "E")
+    // collide with ordinary words, and a wrong variant silently reprices the
+    // car — the exact failure lib/comparables goes to lengths to avoid.
+    variant: field<string>(null, 'missing'),
+  }
+}
+
+/** Fields the intake must ask about, in the order a buyer should see them. */
+export function fieldsNeedingInput(x: ExtractedListing): (keyof ExtractedListing)[] {
+  const required: (keyof ExtractedListing)[] = ['brand', 'model', 'year', 'askingPriceRm']
+  return required.filter(k => x[k].status === 'missing' || x[k].status === 'medium')
+}
+
+/**
+ * May the intake proceed to coverage without asking anything?
+ *
+ * Requires brand, model and year at HIGH confidence. The asking price is
+ * excluded deliberately — see the header: it is always confirmed explicitly,
+ * because it is the one field whose error produces a confidently wrong answer.
+ */
+export function canProceedPassively(x: ExtractedListing): boolean {
+  return (['brand', 'model', 'year'] as const).every(k => x[k].status === 'high')
+}
+
+/** The asking price is confirmed by one tap, always. Never auto-accepted. */
+export function needsPriceConfirmation(x: ExtractedListing): boolean {
+  return x.askingPriceRm.value != null
+}
