@@ -6,6 +6,7 @@ import { analytics }               from '@/lib/analytics'
 import { checkoutEventId }        from '@/lib/checkout-event-id'
 import { trackAdEvent, type ValuationPathKey } from '@/lib/meta-events'
 import { whatsappUrl }         from '@/lib/site'
+import { BASE_REPORT_CENTS, COMBINED_CENTS, BASE_REPORT_LABEL, ringgit, REVIEW_SLA_HOURS, REFUND_GUARANTEE_SHORT } from '@/lib/pricing'
 
 const JOMCHECK_ENABLED = process.env.NEXT_PUBLIC_JOMCHECK_ENABLED === 'true'
 
@@ -72,8 +73,15 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
   // Carries the check id so a stuck buyer does not have to explain the whole
   // purchase from scratch. Never the claim token.
   const supportUrl = whatsappUrl(`Hai Paqar, saya ada masalah untuk bayar.\n\nCheck ID: ${checkId}`)
-  const title = addJomCheck ? 'Laporan + Accident/Claim — RM100' : 'Laporan Pembeli — RM12'
-  const ctaText = addJomCheck ? 'Bayar RM100 & Buka Laporan →' : 'Bayar RM12 & Buka Laporan Pembeli →'
+  const title = addJomCheck
+    ? `Laporan + Accident/Claim — RM${ringgit(COMBINED_CENTS)}`
+    : `Laporan Pembeli — ${BASE_REPORT_LABEL}`
+  // NOT "Buka Laporan". The report is no longer handed over at payment — a
+  // human reads it first (lib/report-release.ts), so a button promising to
+  // open something would be a lie told at the exact moment money moves.
+  const ctaText = addJomCheck
+    ? `Bayar RM${ringgit(COMBINED_CENTS)} →`
+    : `Bayar ${BASE_REPORT_LABEL} →`
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -93,12 +101,12 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
     // ad_events column, so no form value is ever transmitted.
     const attemptId = crypto.randomUUID()
     attemptRef.current = attemptId
-    analytics.paymentFormSubmitted({ tier: addJomCheck ? 'rm100' : 'rm12', valuation_path: valuationPath })
+    analytics.paymentFormSubmitted({ tier: addJomCheck ? 'rm100' : 'rm29', valuation_path: valuationPath })
     trackAdEvent('payment_form_submitted', {
       checkId,
       valuationPath,
       attemptId,
-      amountCents: addJomCheck ? 10000 : 1200,
+      amountCents: addJomCheck ? COMBINED_CENTS : BASE_REPORT_CENTS,
     })
 
     // Meta funnel signal — no-op unless the pixel is loaded. The eventID is
@@ -113,7 +121,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
     ;(window as { fbq?: (...a: unknown[]) => void }).fbq?.(
       'track',
       'InitiateCheckout',
-      { currency: 'MYR', value: addJomCheck ? 100 : 12 },
+      { currency: 'MYR', value: ringgit(addJomCheck ? COMBINED_CENTS : BASE_REPORT_CENTS) },
       { eventID: checkoutEventId(checkId, addJomCheck) }
     )
     startTransition(async () => {
@@ -168,7 +176,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
         {title}
       </p>
       <p className="font-body text-[12px] text-[#6B7280] mb-4">
-        Bayar sekali · Akses terus
+        Bayar sekali · Disemak oleh manusia
       </p>
       <form onSubmit={handleSubmit} className="space-y-3.5">
 
@@ -280,6 +288,32 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
 
         {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
 
+        {/*
+          THE WAIT IS DISCLOSED BEFORE THE MONEY, NOT AFTER.
+
+          This report is not delivered at payment. A person reads the advert,
+          checks the variant and signs it off first (lib/report-release.ts), so
+          the buyer lands on a waiting screen rather than a report. Discovering
+          that after paying would read as a bait-and-switch on the one page
+          where Paqar is asking a stranger to trust it — and this whole
+          experiment exists to measure exactly that trust.
+
+          So it sits directly above the button, not in a footnote, not in an
+          FAQ, and it is phrased as what the buyer GETS for waiting rather than
+          as an apology for it.
+        */}
+        <div className="bg-[#F8FAF7] border border-[#E5E7EB] rounded-[12px] p-3.5">
+          <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
+            Laporan anda disemak oleh manusia
+          </p>
+          <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
+            Bukan laporan auto. Kami baca iklan yang anda hantar, sahkan varian
+            dan tahun kereta, dan hantar keputusan dalam tempoh{' '}
+            <span className="font-bold text-[#064E4A]">{REVIEW_SLA_HOURS} jam</span>{' '}
+            melalui WhatsApp dan e-mel.
+          </p>
+        </div>
+
         <button
           type="submit"
           disabled={isPending}
@@ -320,7 +354,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
           promising a specific card network, which is not ours to guarantee.
         */}
         <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-          Bayar sekali · Tiada langganan<br />
+          Bayar sekali · Tiada langganan · {REFUND_GUARANTEE_SHORT}<br />
           Pembayaran diproses oleh Billplz (TENTEC SDN BHD) — perbankan online FPX atau kad kredit/debit.
         </p>
 
