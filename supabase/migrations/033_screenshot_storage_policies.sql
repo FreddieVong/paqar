@@ -64,69 +64,13 @@ CREATE POLICY "listing_screenshots_deny_client_roles"
 
 COMMIT;
 
--- ═══════════════════════════════════════════════════════════════════════════
--- Screenshot records
--- ═══════════════════════════════════════════════════════════════════════════
+-- Screenshot RECORDS live in 034, alongside listing_intake.
 --
--- Metadata only. The object itself lives in the private bucket, and a signed
--- URL is minted per reviewer view and never persisted — a stored signed URL is
--- a credential in a database column, and it outlives the reason it was created.
-CREATE TABLE IF NOT EXISTS listing_screenshots (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  check_id      TEXT NOT NULL REFERENCES checks(id) ON DELETE CASCADE,
-
-  -- Server-generated, random. A user-supplied filename is attacker-controlled
-  -- input used as a path, which is how traversal and overwrite happen.
-  storage_path  TEXT NOT NULL UNIQUE,
-
-  -- Verified from BYTES, never from the upload's claimed type.
-  mime_type     TEXT NOT NULL CHECK (mime_type IN ('image/png', 'image/jpeg', 'image/webp')),
-  bytes         INTEGER NOT NULL CHECK (bytes > 0),
-  width         INTEGER NOT NULL CHECK (width  > 0),
-  height        INTEGER NOT NULL CHECK (height > 0),
-
-  -- Same image uploaded twice is one row. Buyers screenshot the same page from
-  -- two apps more often than you would expect, and OCR is metered.
-  content_hash  TEXT NOT NULL,
-
-  -- quarantined: stored but not yet validated · ready: validated, OCR may run
-  -- · rejected: failed validation, delete on next sweep · extracted: OCR done
-  state         TEXT NOT NULL DEFAULT 'quarantined'
-                CHECK (state IN ('quarantined', 'ready', 'rejected', 'extracted')),
-
-  -- Per-field extraction with provenance. No signed URL, ever.
-  extraction    JSONB,
-
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  -- Set at insert to created_at + 24h. Moved out to +30d once the case is
-  -- released or refunded; swept either way.
-  expires_at    TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '24 hours'),
-  deleted_at    TIMESTAMPTZ
-);
-
--- One row per identical image per intake.
-CREATE UNIQUE INDEX IF NOT EXISTS listing_screenshots_dedupe_idx
-  ON listing_screenshots (check_id, content_hash)
-  WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS listing_screenshots_check_idx
-  ON listing_screenshots (check_id)
-  WHERE deleted_at IS NULL;
-
--- The cleanup sweep's only query.
-CREATE INDEX IF NOT EXISTS listing_screenshots_expiry_idx
-  ON listing_screenshots (expires_at)
-  WHERE deleted_at IS NULL;
-
-ALTER TABLE listing_screenshots ENABLE ROW LEVEL SECURITY;
--- No policy, deliberately: RLS on with no permissive policy means only the
--- service role reaches this table. Buyers and reviewers both go through server
--- code that authorises first.
-
-COMMENT ON TABLE listing_screenshots IS
-  'Metadata for privately-stored listing screenshots. Never holds a signed URL — those are minted per authorised view and expire. storage_path is server-generated and random.';
-COMMENT ON COLUMN listing_screenshots.state IS
-  'quarantined -> ready -> extracted, or -> rejected. OCR and reviewer access require ready or later; a quarantined object has been stored but not yet proven to be an image.';
+-- They were originally defined here keyed on check_id. That was wrong: a
+-- screenshot is uploaded BEFORE a check exists — the whole point of the intake
+-- entity — so keying it on check_id would have required a nullable owner and a
+-- second nullable owner after conversion. Neither migration is applied, so the
+-- table moves rather than acquiring a column to paper over the ordering.
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- Decision impact — extending report_feedback, not duplicating it

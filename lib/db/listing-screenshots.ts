@@ -9,7 +9,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 
 export interface ScreenshotRow {
   id:           string
-  check_id:     string
+  intake_id:    string
   storage_path: string
   mime_type:    string
   bytes:        number
@@ -23,12 +23,12 @@ export interface ScreenshotRow {
 }
 
 export async function recordScreenshot(p: {
-  checkId: string; storagePath: string; mimeType: string
+  intakeId: string; storagePath: string; mimeType: string
   bytes: number; width: number; height: number; contentHash: string
 }): Promise<void> {
   const supabase = createServiceClient()
   const { error } = await supabase.from('listing_screenshots').insert({
-    check_id:     p.checkId,
+    intake_id:    p.intakeId,
     storage_path: p.storagePath,
     mime_type:    p.mimeType,
     bytes:        p.bytes,
@@ -43,23 +43,23 @@ export async function recordScreenshot(p: {
   if (error) throw error
 }
 
-export async function countScreenshots(checkId: string): Promise<number> {
+export async function countScreenshots(intakeId: string): Promise<number> {
   const supabase = createServiceClient()
   const { count, error } = await supabase
     .from('listing_screenshots')
     .select('id', { count: 'exact', head: true })
-    .eq('check_id', checkId)
+    .eq('intake_id', intakeId)
     .is('deleted_at', null)
   if (error) throw error
   return count ?? 0
 }
 
-export async function hasScreenshotHash(checkId: string, hash: string): Promise<boolean> {
+export async function hasScreenshotHash(intakeId: string, hash: string): Promise<boolean> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('listing_screenshots')
     .select('id')
-    .eq('check_id', checkId)
+    .eq('intake_id', intakeId)
     .eq('content_hash', hash)
     .is('deleted_at', null)
     .limit(1)
@@ -67,12 +67,12 @@ export async function hasScreenshotHash(checkId: string, hash: string): Promise<
   return (data?.length ?? 0) > 0
 }
 
-export async function listScreenshots(checkId: string): Promise<ScreenshotRow[]> {
+export async function listScreenshots(intakeId: string): Promise<ScreenshotRow[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('listing_screenshots')
     .select('*')
-    .eq('check_id', checkId)
+    .eq('intake_id', intakeId)
     .is('deleted_at', null)
     .order('created_at', { ascending: true })
   if (error) throw error
@@ -110,12 +110,23 @@ export async function markScreenshotsDeleted(ids: string[]): Promise<void> {
 }
 
 /** Extend retention once a case reaches a terminal state. */
-export async function extendRetention(checkId: string, days: number): Promise<void> {
+export async function extendRetention(intakeId: string, days: number): Promise<void> {
   const supabase = createServiceClient()
   const { error } = await supabase
     .from('listing_screenshots')
     .update({ expires_at: new Date(Date.now() + days * 86_400_000).toISOString() })
-    .eq('check_id', checkId)
+    .eq('intake_id', intakeId)
     .is('deleted_at', null)
+  if (error) throw error
+}
+
+/** Store per-image OCR results so a later upload does not re-charge for these. */
+export async function markExtracted(ids: string[], extraction: Record<string, unknown>): Promise<void> {
+  if (ids.length === 0) return
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('listing_screenshots')
+    .update({ state: 'extracted', extraction })
+    .in('id', ids)
   if (error) throw error
 }

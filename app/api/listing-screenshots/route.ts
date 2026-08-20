@@ -4,7 +4,7 @@ import { UPLOAD_REJECTION_COPY, MAX_BYTES } from '@/lib/image-validation'
 import { recordScreenshot, countScreenshots, hasScreenshotHash } from '@/lib/db/listing-screenshots'
 import { mayLookupVehicle } from '@/lib/lookup-spend-guard'
 import { SESSION_COOKIE } from '@/lib/attribution'
-import { getCheck } from '@/lib/db/checks'
+import { authorizeIntake } from '@/lib/intake-auth'
 
 /**
  * Server-mediated screenshot upload.
@@ -36,16 +36,20 @@ export async function POST(request: NextRequest) {
   const form = await request.formData().catch(() => null)
   if (!form) return NextResponse.json({ error: UPLOAD_REJECTION_COPY }, { status: 400 })
 
-  const checkId = String(form.get('checkId') ?? '')
-  const file    = form.get('file')
+  const intakeId = String(form.get('intakeId') ?? '')
+  const file     = form.get('file')
 
-  if (!checkId || !(file instanceof File)) {
+  if (!intakeId || !(file instanceof File)) {
     return NextResponse.json({ error: UPLOAD_REJECTION_COPY }, { status: 400 })
   }
-  // The intake must exist. Without this the endpoint is free storage for
-  // anyone who can guess the shape of a check id.
-  const row = await getCheck(checkId).catch(() => null)
-  if (!row) return NextResponse.json({ error: UPLOAD_REJECTION_COPY }, { status: 404 })
+
+  // OWNERSHIP, not existence. An id identifies which intake; the token in the
+  // header is what authorises touching it. Without this the endpoint is free
+  // storage — and free reads — for anyone who has seen an id.
+  const intake = await authorizeIntake(request, intakeId)
+  if (!intake) {
+    return NextResponse.json({ error: 'Sesi ini sudah tamat. Sila mula semula.' }, { status: 403 })
+  }
 
   // Bytes are metered downstream by OCR, so uploads are rate-limited on the
   // same guard as the provider lookup. It fails closed.
@@ -59,7 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: UPLOAD_REJECTION_COPY }, { status: 413 })
   }
 
-  const existing = await countScreenshots(checkId)
+  const existing = await countScreenshots(intakeId)
   if (existing >= MAX_SCREENSHOTS_PER_INTAKE) {
     return NextResponse.json(
       { error: `Maksimum ${MAX_SCREENSHOTS_PER_INTAKE} screenshot.` },
@@ -72,18 +76,18 @@ export async function POST(request: NextRequest) {
   // Deduplicate BEFORE storing: buyers screenshot the same page from two apps
   // more often than you would expect, and OCR is metered per image.
   const hash = contentHashOf(bytes)
-  if (await hasScreenshotHash(checkId, hash)) {
+  if (await hasScreenshotHash(intakeId, hash)) {
     return NextResponse.json({ ok: true, duplicate: true, count: existing })
   }
 
-  const stored = await storeScreenshot(checkId, bytes)
+  const stored = await storeScreenshot(intakeId, bytes)
   if (!stored.ok) {
     // stored.reason is deliberately not returned. It names our validator.
     return NextResponse.json({ error: UPLOAD_REJECTION_COPY }, { status: 400 })
   }
 
   await recordScreenshot({
-    checkId,
+    intakeId,
     storagePath: stored.stored.storagePath,
     mimeType:    `image/${stored.stored.image.format}`,
     bytes:       stored.stored.image.bytes,

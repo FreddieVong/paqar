@@ -87,14 +87,56 @@ describe('it never blocks the report, and never leaks free text', () => {
   })
 })
 
-describe('the aggregate does not flatter the product', () => {
-  it('counts negotiate and walk-away as impact, but not buying anyway', () => {
-    const src = read('lib/db/decision-impact.ts')
-    const fn  = src.slice(src.indexOf('changedDecision ='))
-    expect(fn).toContain('runding_harga')
-    expect(fn).toContain('tak_jadi_beli')
-    // A buyer may have bought regardless; counting it as impact is how a
-    // metric starts telling you what you want to hear.
-    expect(fn.slice(0, 200)).not.toContain('teruskan_beli')
+describe('the aggregate reports influence honestly', () => {
+  const src = read('lib/db/decision-impact.ts')
+
+  /**
+   * An earlier version excluded teruskan_beli from the influenced count,
+   * reasoning the buyer might have bought anyway. That was wrong, and wrong
+   * asymmetrically — a buyer who negotiated might have negotiated anyway too,
+   * yet runding_harga was counted without hesitation. The question asks about
+   * influence; discarding a self-reported yes substitutes the analyst's
+   * scepticism for the respondent's answer.
+   */
+  it('counts all three Ya answers as influenced', () => {
+    const fn = src.slice(src.indexOf('const yes'), src.indexOf('const decided'))
+    for (const k of ['teruskan_beli', 'runding_harga', 'tak_jadi_beli']) {
+      expect(fn, `${k} missing from the influenced count`).toContain(k)
+    }
+  })
+
+  it('keeps reassurance and risk-prevention as separate rates', () => {
+    expect(src).toContain('proceedRate')
+    expect(src).toContain('riskActionRate')
+    const risk = src.slice(src.indexOf('riskActionRate: share('), src.indexOf('riskActionRate: share(') + 90)
+    expect(risk).toContain('runding_harga')
+    expect(risk).toContain('tak_jadi_beli')
+    expect(risk, 'proceeding is reassurance, not a changed course of action')
+      .not.toContain('teruskan_beli')
+  })
+
+  /**
+   * belum_pasti is neither a yes nor a no. Folding it into either denominator
+   * would move a rate without anyone's opinion having changed.
+   */
+  it('excludes belum_pasti from the yes/no denominator but still reports it', () => {
+    const decided = src.slice(src.indexOf('const decided'), src.indexOf('const share'))
+    expect(decided).not.toContain('belum_pasti')
+    expect(src).toContain('uncertainRate')
+    // lastIndexOf: the first match is the interface declaration, not the
+    // implementation. Reading the wrong one made this assertion vacuous.
+    const unc = src.slice(src.lastIndexOf('uncertainRate:'), src.lastIndexOf('uncertainRate:') + 80)
+    expect(unc, 'reported against all answers, since it is not in `decided`').toContain('answered')
+  })
+
+  it('exposes every rate the operator needs', () => {
+    for (const r of [
+      'influencedRate', 'proceedRate', 'negotiateRate', 'walkAwayRate',
+      'riskActionRate', 'uncertainRate', 'notHelpfulRate',
+    ]) expect(src, `${r} missing`).toContain(r)
+  })
+
+  it('divides by zero nowhere', () => {
+    expect(src).toContain('d === 0 ? 0 : n / d')
   })
 })

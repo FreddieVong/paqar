@@ -57,15 +57,15 @@ export function contentHashOf(bytes: Uint8Array): string {
  * so a rejected file never exists as an object to clean up or to serve.
  */
 export async function storeScreenshot(
-  checkId: string,
+  intakeId: string,
   bytes: Uint8Array,
 ): Promise<{ ok: true; stored: StoredScreenshot } | { ok: false; reason: string }> {
   const check = validateImage(bytes)
   if (!check.ok) return { ok: false, reason: check.reason }
 
   const ext  = check.image.format === 'jpeg' ? 'jpg' : check.image.format
-  // Random, and namespaced by check so a sweep can delete a whole intake.
-  const path = `${checkId}/${randomUUID()}.${ext}`
+  // Random, and namespaced by intake so a sweep can delete a whole intake.
+  const path = `${intakeId}/${randomUUID()}.${ext}`
 
   const supabase = createServiceClient()
   const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {

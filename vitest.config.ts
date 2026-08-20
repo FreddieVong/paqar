@@ -45,18 +45,24 @@ export default defineConfig({
      *
      * That pattern — reproducible only under parallel load, never alone — is
      * contention, not a defect in the code under test. Raising timeouts further
-     * would keep chasing it. Isolating the file removes the variable entirely:
-     * jsdom + fake timers + a global fetch stub is the most scheduling-sensitive
-     * combination in this suite, and it is one file.
+     * would keep chasing it.
+     *
+     * `isolate: true` gives every test FILE a fresh module registry and
+     * environment, so no leaked timer, stubbed global or module-level mock can
+     * cross a file boundary. jsdom + fake timers + a global fetch stub is the
+     * most scheduling-sensitive combination in this suite.
+     *
+     * An earlier attempt set `poolOptions.threads.isolate`, which is not a
+     * valid key in this Vitest version's config type — it typechecked only
+     * because the verification command was reading head(1)'s exit status
+     * instead of tsc's, and was silently ignored at runtime. The four green
+     * runs observed afterwards therefore proved nothing about isolation.
      *
      * This is an admission, not a fix: the underlying interaction is not fully
      * understood. It is isolated rather than diagnosed, and that trade is made
      * knowingly — the alternative is an unreliable signal for the whole suite.
      */
-    poolOptions: {
-      threads: { isolate: true },
-    },
-    sequence: { hooks: 'stack' },
+    isolate: true,
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
