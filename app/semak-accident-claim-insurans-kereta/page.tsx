@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { historyUpgradeAvailable } from '@/lib/pricing'
 import Link from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
@@ -14,12 +15,15 @@ import { DualCheckForm } from '@/components/check/DualCheckForm'
  * Only the OFFER is gated, never the page. The explanatory content is what
  * ranks and what makes the page worth having; removing the URL would cost
  * indexed coverage to fix a pricing claim. When the flag is off the page still
- * explains what a claim check is and points at the RM12 report that does exist.
+ * explains what a claim check is and points at the RM29 report that does exist.
  *
  * Read at build time, which is correct: this is a deploy-time Vercel flag, so
  * turning it on is a redeploy either way.
  */
-const JOMCHECK_ON = process.env.JOMCHECK_ENABLED === 'true'
+// Gated on deliverability, not only on configuration. The page remains as
+// SEO content; what disappears is the ability to pay for something Paqar
+// cannot currently complete.
+const JOMCHECK_ON = historyUpgradeAvailable()
 
 // The description is the search-result snippet. Naming a price there is the
 // same promise as naming it on the page, made to people who never open it.
@@ -95,7 +99,7 @@ export default function SemakAccidentClaimInsuransPage() {
           ...(JOMCHECK_ON ? [{
             '@type': 'Question',
             name: 'Berapa harga Semakan Accident/Claim Insurans?',
-            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli + Semakan Accident/Claim Insurans berharga RM100 (satu bayaran). Atau tambah +RM88 kepada Laporan Pembeli RM12 sedia ada.' },
+            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli + Semakan Accident/Claim Insurans berharga RM100 (satu bayaran). Atau tambah +RM88 kepada Laporan Pembeli RM29 sedia ada.' },
           }] : []),
           {
             '@type': 'Question',
@@ -201,7 +205,7 @@ export default function SemakAccidentClaimInsuransPage() {
                 Laporan + Semakan Accident/Claim Insurans — RM100
               </p>
               <p className="font-heading font-extrabold text-[15px] text-white leading-snug">
-                Semua dalam Laporan Pembeli RM12, ditambah semakan rekod claim insurans.
+                Semua dalam Laporan Pembeli RM29, ditambah semakan rekod claim insurans.
               </p>
             </div>
             <div className="px-5 py-1">
@@ -246,14 +250,14 @@ export default function SemakAccidentClaimInsuransPage() {
               </p>
               <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mb-3">
                 Kami belum membuka semakan rekod claim insurans untuk tempahan. Sementara
-                itu, Laporan Pembeli RM12 memberi anda keputusan harga pasaran, skrip
+                itu, Laporan Pembeli RM29 memberi anda keputusan harga pasaran, skrip
                 rundingan dan checklist sebelum bayar deposit.
               </p>
               <Link
                 href="/laporan-pembeli-kereta-terpakai"
                 className="inline-block bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
               >
-                Lihat Laporan Pembeli RM12 →
+                Lihat Laporan Pembeli RM29 →
               </Link>
             </div>
           )}
@@ -297,7 +301,7 @@ export default function SemakAccidentClaimInsuransPage() {
           {/* Related links */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
-            <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Laporan Pembeli RM12 — apa yang ada dalam laporan →</Link>
+            <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Laporan Pembeli RM29 — apa yang ada dalam laporan →</Link>
             <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist lengkap sebelum bayar deposit →</Link>
             <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Risiko beli kereta terpakai Malaysia →</Link>
             <Link href="/cara-semak-insurans-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak status insurans kereta →</Link>

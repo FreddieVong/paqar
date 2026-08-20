@@ -1,5 +1,6 @@
 'use server'
 
+import { BASE_REPORT_CENTS, COMBINED_CENTS, historyUpgradeAvailable } from '@/lib/pricing'
 import { createBill, getBill }    from '@/lib/billplz'
 import { createBuyerReport,
          getBuyerReport,
@@ -247,9 +248,9 @@ async function initiateBuyerReportImpl(
 
   // Hoisted above the reuse check: which product the buyer is asking for
   // decides which bill may be handed back. Pure computation, no side effects.
-  const jomcheckEnabled      = process.env.JOMCHECK_ENABLED === 'true'
+  const jomcheckEnabled      = historyUpgradeAvailable()
   const effectiveAddJomCheck = jomcheckEnabled && !!params.addJomCheck
-  const amountCents          = effectiveAddJomCheck ? 10000 : 1200
+  const amountCents          = effectiveAddJomCheck ? COMBINED_CENTS : BASE_REPORT_CENTS
 
   // ONE UNPAID INTENT, ONE PAYABLE BILL.
   //
@@ -379,7 +380,7 @@ export async function initiateJomCheckUpgrade(params: {
   claimToken: string
   baseUrl:    string
 }): Promise<{ error: string | null; billUrl?: string; billId?: string }> {
-  if (process.env.JOMCHECK_ENABLED !== 'true') {
+  if (!historyUpgradeAvailable()) {
     return { error: 'Semakan Accident/Claim belum tersedia' }
   }
 

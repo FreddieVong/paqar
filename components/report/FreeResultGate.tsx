@@ -122,7 +122,7 @@ function PaidReportUnavailableNotice({ checkId }: { checkId: string }) {
         Laporan Pembeli belum boleh disediakan untuk kereta ini.
       </p>
       <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mb-3">
-        Laporan RM12 berasaskan iklan setanding — harga, julat dan panduan
+        Laporan RM29 berasaskan iklan setanding — harga, julat dan panduan
         rundingan. Buat masa ini kami belum jumpa cukup iklan untuk kereta ini,
         jadi kami tidak jual laporan yang tidak dapat menepati janji itu.
       </p>

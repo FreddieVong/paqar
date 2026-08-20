@@ -1,3 +1,5 @@
+import { BASE_REPORT_LABEL } from '@/lib/pricing'
+
 const LOCKED_SECTIONS = [
   {
     title: 'Perbandingan Harga',
@@ -27,7 +29,7 @@ export function LockedReportPreview() {
       {/* Header */}
       <div className="px-5 pt-5 pb-4 border-b border-[#F3F4F6]">
         <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#9CA3AF] mb-1">
-          Laporan Pembeli — RM12
+          Laporan Pembeli — {BASE_REPORT_LABEL}
         </p>
         <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
           Unlock semua bahagian di bawah untuk buat keputusan sebelum bayar deposit.

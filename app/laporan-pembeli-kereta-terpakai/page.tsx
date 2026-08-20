@@ -2,17 +2,17 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Nav }                 from '@/components/layout/Nav'
 import { Shell }               from '@/components/layout/Shell'
-import { HomeCheckerTabs }     from '@/components/check/HomeCheckerTabs'
+import { ListingIntakeForm }   from '@/components/check/ListingIntakeForm'
 
 export const metadata: Metadata = {
-  title: 'Laporan Pembeli Kereta Terpakai Malaysia RM12 | Paqar',
-  description: 'Laporan Pembeli Paqar RM12 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
+  title: 'Laporan Pembeli Kereta Terpakai Malaysia RM29 | Paqar',
+  description: 'Laporan Pembeli Paqar RM29 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
   alternates: { canonical: 'https://paqar.my/laporan-pembeli-kereta-terpakai' },
   openGraph: {
-    title: 'Laporan Pembeli Kereta Terpakai Malaysia RM12',
-    description: 'Laporan Pembeli Paqar RM12 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
+    title: 'Laporan Pembeli Kereta Terpakai Malaysia RM29',
+    description: 'Laporan Pembeli Paqar RM29 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
     url: 'https://paqar.my/laporan-pembeli-kereta-terpakai',
-    images: [{ url: '/api/og?title=Laporan%20Pembeli%20Kereta%20Terpakai&subtitle=RM12%20%C2%B7%20Satu%20bayaran%20%C2%B7%20Tanpa%20akaun', width: 1200, height: 630 }],
+    images: [{ url: '/api/og?title=Laporan%20Pembeli%20Kereta%20Terpakai&subtitle=RM29%20%C2%B7%20Satu%20bayaran%20%C2%B7%20Tanpa%20akaun', width: 1200, height: 630 }],
   },
 }
 
@@ -29,8 +29,8 @@ export default function LaporanPembelihPage() {
       },
       {
         '@type': 'Article',
-        headline: 'Laporan Pembeli Kereta Terpakai Malaysia RM12',
-        description: 'Apa yang ada dalam Laporan Pembeli Paqar RM12 — keputusan harga, trade-in estimate, maklumat kenderaan, skrip rundingan dan checklist deposit.',
+        headline: 'Laporan Pembeli Kereta Terpakai Malaysia RM29',
+        description: 'Apa yang ada dalam Laporan Pembeli Paqar RM29 — keputusan harga, trade-in estimate, maklumat kenderaan, skrip rundingan dan checklist deposit.',
         author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
         publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
         datePublished: '2026-06-23',
@@ -39,7 +39,7 @@ export default function LaporanPembelihPage() {
       {
         '@type': 'Service',
         name: 'Laporan Pembeli Kereta Terpakai',
-        description: 'Laporan Pembeli RM12 merangkumi keputusan harga pasaran, harga tengah dan julat harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
+        description: 'Laporan Pembeli RM29 merangkumi keputusan harga pasaran, harga tengah dan julat harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
         provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
         areaServed: { '@type': 'Country', name: 'Malaysia' },
         offers: { '@type': 'Offer', price: '12', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
@@ -49,8 +49,8 @@ export default function LaporanPembelihPage() {
         mainEntity: [
           {
             '@type': 'Question',
-            name: 'Apa yang ada dalam Laporan Pembeli RM12 Paqar?',
-            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM12 merangkumi: keputusan harga pasaran (murah/wajar/mahal), harga tengah dan julat harga berdasarkan listing semasa, anggaran trade-in, maklumat kenderaan (tahun daftar, enjin, jenis badan, nombor rangka), skrip rundingan harga siap pakai, soalan penting untuk penjual, dan checklist sebelum bayar deposit.' },
+            name: 'Apa yang ada dalam Laporan Pembeli RM29 Paqar?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM29 merangkumi: keputusan harga pasaran (murah/wajar/mahal), harga tengah dan julat harga berdasarkan listing semasa, anggaran trade-in, maklumat kenderaan (tahun daftar, enjin, jenis badan, nombor rangka), skrip rundingan harga siap pakai, soalan penting untuk penjual, dan checklist sebelum bayar deposit.' },
           },
           {
             '@type': 'Question',
@@ -60,7 +60,7 @@ export default function LaporanPembelihPage() {
           {
             '@type': 'Question',
             name: 'Boleh tambah semakan accident/claim kemudian?',
-            acceptedAnswer: { '@type': 'Answer', text: 'Ya. Anda boleh tambah Semakan Accident/Claim Insurans (+RM88) selepas dapat Laporan Pembeli RM12.' },
+            acceptedAnswer: { '@type': 'Answer', text: 'Ya. Anda boleh tambah Semakan Accident/Claim Insurans (+RM88) selepas dapat Laporan Pembeli RM29.' },
           },
           {
             '@type': 'Question',
@@ -85,10 +85,10 @@ export default function LaporanPembelihPage() {
               Alat Pembeli Kereta Terpakai
             </p>
             <h1 className="font-heading font-extrabold text-[26px] text-[#111827] leading-tight mb-3">
-              Laporan Pembeli kereta terpakai — RM12
+              Laporan Pembeli kereta terpakai — RM29
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar membantu pembeli kereta terpakai Malaysia masuk rundingan dengan data — bukan agak-agak. Laporan Pembeli RM12 memberi anda semua yang perlu tahu sebelum bayar deposit.
+              Paqar membantu pembeli kereta terpakai Malaysia masuk rundingan dengan data — bukan agak-agak. Laporan Pembeli RM29 memberi anda semua yang perlu tahu sebelum bayar deposit.
             </p>
           </div>
 
@@ -96,7 +96,7 @@ export default function LaporanPembelihPage() {
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
             <div className="bg-[#14453d] px-5 py-4">
               <p className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/45 mb-1">
-                Laporan Pembeli — RM12
+                Laporan Pembeli — RM29
               </p>
               <p className="font-heading font-extrabold text-[15px] text-white">
                 Satu laporan. Semua yang perlu anda tahu.
@@ -198,7 +198,7 @@ export default function LaporanPembelihPage() {
             <p className="font-heading font-bold text-[14px] text-[#111827]">
               Semak harga kereta yang anda minat:
             </p>
-            <HomeCheckerTabs countDisplay={null} />
+            <ListingIntakeForm />
           </div>
 
           {/* Related links */}

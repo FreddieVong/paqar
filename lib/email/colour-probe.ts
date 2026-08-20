@@ -88,7 +88,7 @@ export function buildColourProbeHtml(): string {
               <div style="font-family:${FONT};font-size:11px;font-weight:700;letter-spacing:0.1em;color:${LABEL};line-height:1;padding-bottom:8px;">BUTTON &mdash; WHITE LABEL</div>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F05A50" style="background:#F05A50;border-radius:12px;">
                 <tr><td align="center" style="padding:17px 16px;">
-                  <span style="font-family:${FONT};font-size:17px;font-weight:800;color:#FFFFFF;line-height:22px;">Semak JUF222 &mdash; RM12</span>
+                  <span style="font-family:${FONT};font-size:17px;font-weight:800;color:#FFFFFF;line-height:22px;">Semak JUF222 &mdash; RM29</span>
                 </td></tr>
               </table>
             </td>
@@ -98,7 +98,7 @@ export function buildColourProbeHtml(): string {
               <div style="font-family:${FONT};font-size:11px;font-weight:700;letter-spacing:0.1em;color:${LABEL};line-height:1;padding-bottom:8px;">BUTTON &mdash; NEAR-BLACK LABEL</div>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F05A50" style="background:#F05A50;border-radius:12px;">
                 <tr><td align="center" style="padding:17px 16px;">
-                  <span style="font-family:${FONT};font-size:17px;font-weight:800;color:#1A0F0E;line-height:22px;">Semak JUF222 &mdash; RM12</span>
+                  <span style="font-family:${FONT};font-size:17px;font-weight:800;color:#1A0F0E;line-height:22px;">Semak JUF222 &mdash; RM29</span>
                 </td></tr>
               </table>
             </td>

@@ -43,7 +43,7 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
           Lihat harga tengah iklan setanding<br />dan jumlah yang patut anda tawarkan.
         </p>
         <p className="font-body text-[11px] text-white/55 leading-relaxed">
-          Laporan penuh RM12 — harga tengah dan julat pasaran, sasaran rundingan,
+          Laporan penuh RM29 — harga tengah dan julat pasaran, sasaran rundingan,
           skrip untuk penjual, maklumat kenderaan dan senarai semak sebelum deposit.
         </p>
         {plate && (
@@ -116,7 +116,7 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
         </div>
 
         <p className="font-body text-[11px] text-[#78350F] leading-relaxed">
-          <span className="font-bold">Tidak termasuk</span> dalam Laporan Pembeli RM12 &mdash;
+          <span className="font-bold">Tidak termasuk</span> dalam Laporan Pembeli RM29 &mdash;
           boleh ditambah selepas anda buka laporan.
         </p>
       </div>
@@ -125,7 +125,7 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
       <div className="px-[18px] py-[11px] bg-[#F8FAF7]">
         <p className="font-body text-[11px] text-[#6B7280] leading-relaxed">
           Untuk pembelian kereta <span className="font-bold text-[#14453d]">bernilai ribuan ringgit</span>,
-          Laporan Pembeli hanya <span className="font-extrabold text-[13px] text-[#14453d]">RM12</span>
+          Laporan Pembeli hanya <span className="font-extrabold text-[13px] text-[#14453d]">RM29</span>
           {' '}&middot; tanpa daftar.
         </p>
       </div>

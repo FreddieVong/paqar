@@ -92,3 +92,30 @@ export const REFUND_GUARANTEE_SHORT =
 
 export const REFUND_GUARANTEE_LONG =
   `Kalau kami tidak dapat siapkan keputusan yang kami janjikan, kami pulangkan RM${ringgit(BASE_REPORT_CENTS)} penuh — dalam ${REFUND_WORKING_DAYS} hari bekerja. Refund diproses oleh manusia, bukan automatik.`
+
+/**
+ * Is the RM88 history add-on actually deliverable end to end?
+ *
+ * ── WHY THIS IS A CONSTANT AND NOT AN ENV VAR ──────────────────────────────
+ *
+ * JOMCHECK_ENABLED already exists and is currently `true` in production, so the
+ * add-on is purchasable today. What does NOT exist is the journey it now
+ * promises: buying it is supposed to send the report back for a SECOND human
+ * review that reconciles claim records against recorded mileage and the
+ * seller's statements, then issues an updated decision. None of that is built.
+ *
+ * An environment variable is the wrong guard for this, because it can be
+ * flipped by someone who does not know the review journey is missing — and the
+ * failure is silent: money arrives, and the buyer waits for a revision that
+ * nobody can produce. A constant in the codebase can only change in a commit,
+ * where the missing half is visible.
+ *
+ * Both gates must pass. Flip this to `true` in the same change that ships the
+ * second review, not before.
+ */
+export const HISTORY_UPGRADE_OPERATIONAL = false
+
+/** Server-side: may the add-on be sold at all? */
+export function historyUpgradeAvailable(): boolean {
+  return HISTORY_UPGRADE_OPERATIONAL && process.env.JOMCHECK_ENABLED === 'true'
+}

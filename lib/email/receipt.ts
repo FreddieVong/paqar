@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 import { env }    from '@/lib/env'
 import { SUPPORT_REPLY_TO, whatsappUrl, SITE_URL } from '@/lib/site'
+import { BASE_REPORT_CENTS, COMBINED_CENTS, JOMCHECK_UPGRADE_CENTS, REVIEW_SLA_HOURS, historyUpgradeAvailable } from '@/lib/pricing'
 
 // timeZone is explicit because Vercel runs in UTC: without it a payment made
 // between 00:00 and 08:00 MYT is dated to the previous day on the customer's
@@ -41,7 +42,12 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
   const amountRm   = (params.amountCents / 100).toFixed(2)
   const dateStr    = formatDate(params.paidAt)
   const plateLabel = params.plate ? ` (${params.plate})` : ''
-  const subject    = `Resit & Link Laporan — Paqar${plateLabel}`
+  // NOT "Resit & Link Laporan". Payment no longer delivers the report — a
+  // human reviews it first (lib/report-release.ts) — so a subject line
+  // promising a link would be read as a delivery that never arrived. This
+  // email is now purely proof of payment plus the wait it already disclosed
+  // at checkout; lib/email/report-ready.ts is what announces delivery.
+  const subject    = `Resit — laporan anda sedang disemak (Paqar${plateLabel})`
   // Falls back to the site when no number is configured, so the receipt
   // never renders an empty href.
   const supportUrl = whatsappUrl(
@@ -64,10 +70,21 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
         <p style="color:#111827;font-size:14px;font-weight:600;margin:0;">${dateStr}</p>
       </div>
 
+      <div style="background:#F8FAF7;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin:20px 0;">
+        <p style="color:#111827;font-size:14px;font-weight:700;margin:0 0 6px;">
+          Laporan anda sedang disemak oleh manusia
+        </p>
+        <p style="color:#374151;font-size:13px;margin:0;line-height:1.6;">
+          Kami baca iklan yang anda hantar, sahkan varian dan tahun kereta, dan
+          hantar keputusan dalam tempoh ${REVIEW_SLA_HOURS} jam melalui WhatsApp
+          dan e-mel. Anda tidak perlu buat apa-apa.
+        </p>
+      </div>
+
       ${params.reportUrl ? `
       <a href="${params.reportUrl}"
          style="display:block;background:#064E4A;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin:20px 0;">
-        Buka Laporan Saya →
+        Semak status laporan →
       </a>
       <p style="color:#9CA3AF;font-size:11px;text-align:center;margin:-12px 0 20px;">
         Simpan emel ini — link laporan anda ada di sini
@@ -78,7 +95,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
       </div>
       ` : ''}
 
-      ${(params.amountCents === 10000 || params.amountCents === 8800) && env.JOMCHECK_MODE === 'manual' ? `
+      ${(params.amountCents === COMBINED_CENTS || params.amountCents === JOMCHECK_UPGRADE_CENTS) && env.JOMCHECK_MODE === 'manual' ? `
       <div style="background:#F0FAFA;border:1px solid #99D4D1;border-radius:12px;padding:16px;margin:0 0 20px;">
         <p style="color:#111827;font-size:14px;font-weight:700;margin:0 0 4px;">
           Semakan Accident/Claim Insurans
@@ -90,7 +107,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
       </div>
       ` : ''}
 
-      ${params.amountCents === 1200 && process.env.JOMCHECK_ENABLED === 'true' && params.reportUrl ? `
+      ${params.amountCents === BASE_REPORT_CENTS && historyUpgradeAvailable() && params.reportUrl ? `
       <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:16px;margin:0 0 20px;">
         <p style="color:#111827;font-size:14px;font-weight:700;margin:0 0 4px;">
           Kereta ini pernah accident atau banjir?

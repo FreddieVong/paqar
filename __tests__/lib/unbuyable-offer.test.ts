@@ -22,8 +22,13 @@ const ROOT = join(__dirname, '..', '..')
 const SRC  = readFileSync(join(ROOT, 'app/semak-accident-claim-insurans-kereta/page.tsx'), 'utf-8')
 
 describe('the RM100 offer is gated on the flag that makes it buyable', () => {
-  it('reads the same server flag the checkout and upgrade paths read', () => {
-    expect(SRC).toContain("process.env.JOMCHECK_ENABLED === 'true'")
+  it('reads the same deliverability gate the checkout and upgrade paths read', () => {
+    // The env flag alone is no longer sufficient anywhere. It can be flipped by
+    // someone unaware that the second human review the add-on promises does not
+    // exist, and the failure is silent — money arrives, and the buyer waits for
+    // a revision nobody can produce. historyUpgradeAvailable() requires BOTH.
+    expect(SRC).toContain('historyUpgradeAvailable()')
+    expect(SRC).not.toMatch(/JOMCHECK_ON = process\.env\.JOMCHECK_ENABLED === 'true'/)
   })
 
   it('gates the visible offer block', () => {
@@ -60,7 +65,7 @@ describe('the RM12 report never claims to include accident history', () => {
   it('keeps the two products distinct wherever the add-on is described', () => {
     // Product rule: RM12 and the premium accident capability must never be
     // conflated. The offer block is explicit that RM100 is RM12 PLUS the check.
-    expect(SRC).toContain('Semua dalam Laporan Pembeli RM12, ditambah semakan rekod claim insurans.')
+    expect(SRC).toContain('Semua dalam Laporan Pembeli RM29, ditambah semakan rekod claim insurans.')
   })
 
   it('states the data limits alongside the claim', () => {

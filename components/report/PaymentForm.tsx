@@ -6,9 +6,12 @@ import { analytics }               from '@/lib/analytics'
 import { checkoutEventId }        from '@/lib/checkout-event-id'
 import { trackAdEvent, type ValuationPathKey } from '@/lib/meta-events'
 import { whatsappUrl }         from '@/lib/site'
-import { BASE_REPORT_CENTS, COMBINED_CENTS, BASE_REPORT_LABEL, ringgit, REVIEW_SLA_HOURS, REFUND_GUARANTEE_SHORT } from '@/lib/pricing'
+import { BASE_REPORT_CENTS, COMBINED_CENTS, BASE_REPORT_LABEL, ringgit, REVIEW_SLA_HOURS, REFUND_GUARANTEE_SHORT, HISTORY_UPGRADE_OPERATIONAL } from '@/lib/pricing'
 
-const JOMCHECK_ENABLED = process.env.NEXT_PUBLIC_JOMCHECK_ENABLED === 'true'
+// BOTH gates. HISTORY_UPGRADE_OPERATIONAL is false until the second human
+// review that the add-on promises actually exists — see lib/pricing.
+const JOMCHECK_ENABLED =
+  HISTORY_UPGRADE_OPERATIONAL && process.env.NEXT_PUBLIC_JOMCHECK_ENABLED === 'true'
 
 interface Props {
   checkId:             string

@@ -95,12 +95,21 @@ describe('the count still works internally', () => {
     expect(src).toContain('cohort.count')
   })
 
-  it('the free routes still call both helpers', () => {
-    for (const path of ['app/api/price-check/route.ts', 'app/api/checks/[id]/price-evidence/route.ts']) {
-      const src = read(path)
-      expect(src).toContain('comparableConfidence(cohort.count)')
-      expect(src).toContain('evaluateVerdictEligibility')
-    }
+  it('the paid evidence route still calls both helpers', () => {
+    const src = read('app/api/checks/[id]/price-evidence/route.ts')
+    expect(src).toContain('comparableConfidence(cohort.count)')
+    expect(src).toContain('evaluateVerdictEligibility')
+  })
+
+  /**
+   * /api/price-check is no longer a "free verdict" route — it answers coverage
+   * only. Confidence is a property OF a verdict, so computing one there would
+   * mean a verdict had crept back in.
+   */
+  it('the coverage route derives eligibility but never a confidence', () => {
+    const src = read('app/api/price-check/route.ts')
+    expect(src).toContain('evaluateVerdictEligibility')
+    expect(src).not.toContain('comparableConfidence')
   })
 })
 
@@ -110,7 +119,7 @@ describe('paid surfaces keep every figure', () => {
   it('the report still shows the median, the chips and the count', () => {
     expect(report).toContain('Harga tengah pasaran')
     expect(report).toContain('Anggaran trade-in')
-    expect(report).toMatch(/listing serupa di pasaran/)
+    expect(report).toMatch(/iklan setanding yang kami jumpa/)
   })
 
   it('the report keeps its own provisional caution with the count', () => {
@@ -127,19 +136,27 @@ describe('paid surfaces keep every figure', () => {
 })
 
 describe('CTA copy is true now that figures are paid', () => {
-  it('both paths promise the market price and the offer amount', () => {
-    expect(read('components/report/BuyerReportPitch.tsx')).toContain('Lihat harga pasaran sebenar')
+  it('both paths promise a price figure and the offer amount', () => {
+    // Rescoped from "harga pasaran sebenar" (the REAL market price) to the
+    // median of the comparable adverts Paqar actually found. The PROMISE is
+    // unchanged — a figure plus the amount to offer — and both paths still
+    // make the same one. See lib/verdict-copy.
+    expect(read('components/report/BuyerReportPitch.tsx')).toContain('Lihat harga tengah iklan setanding')
     expect(read('components/check/OverpricedCheckerForm.tsx'))
-      .toContain('Lihat harga pasaran sebenar dan jumlah yang patut anda tawarkan — RM12')
+      .toContain('Lihat harga tengah iklan setanding dan jumlah yang patut anda tawarkan — RM29')
   })
 
-  it('the homepage does not advertise the range as free', () => {
-    // This block carries a "Percuma" badge and listed "Harga tengah & julat
-    // pasaran" — promising for free exactly what the CTA now sells.
+  it('the homepage advertises no free tier at all', () => {
+    // Stronger than the assertion this replaces. That one checked a "Percuma"
+    // feature block did not promise the figures the CTA sold. There is no free
+    // block left to check: the free verdict was the product being given away,
+    // and removing it is the whole point of the RM29 change.
     const home = read('app/page.tsx')
-    const block = home.split("'Keputusan harga percuma',")[1]!.split('].map')[0]!
-    expect(block).not.toContain('julat pasaran')
-    expect(block).not.toContain('Harga tengah')
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')   // JSX comments
+      .replace(/\/\*[\s\S]*?\*\//g, '')          // block comments
+    expect(home).not.toContain('Semak Harga Percuma')
+    expect(home).not.toContain('percuma')
+    expect(home).not.toContain('Percuma')
   })
 
   it('no free surface claims to show the real market price', () => {
@@ -173,35 +190,49 @@ describe('CTA copy is true now that figures are paid', () => {
 describe('prose describing the free tier promises no paid figure', () => {
   const FREE_CLAIMS = [/jurang RM/i, /harga tengah/i, /julat pasaran/i, /iklan setanding/i]
 
-  it('/tentang describes free as a verdict, not a gap', () => {
+  it('/tentang no longer describes a free verdict tier', () => {
+    // This used to assert the free block promised a VERDICT and not the
+    // figures behind it. There is no free verdict left to describe: giving it
+    // away while charging for the footnotes is what made the old product
+    // indefensible, so the pre-payment step now only says whether Paqar can
+    // help at all.
     const src = read('app/tentang/page.tsx')
-    // The free block runs from its heading to the RM12 heading below it.
-    const block = src.split('Semak harga pasaran — percuma')[1]!.split('Laporan Pembeli — RM12')[0]!
-    for (const claim of FREE_CLAIMS) {
-      expect(block, `/tentang free block still claims ${claim}`).not.toMatch(claim)
+    const block = src.split('Semakan awal — sebelum bayar')[1]!.split('Laporan Pembeli — RM29')[0]!
+
+    // /iklan setanding/ is deliberately NOT banned here, unlike in the other
+    // free-tier assertions. It was on the list because promising comparable
+    // adverts for free leaked what the report sold. Naming the set WITHOUT
+    // quantifying it is now the honest description of coverage itself — the
+    // same distinction VERDICT_BASIS_LINE already draws. What must stay out is
+    // any actual figure, and any verdict.
+    const FIGURES = [/jurang RM/i, /harga tengah/i, /julat pasaran/i]
+    for (const claim of [...FIGURES, /murah, wajar, atau mahal/i]) {
+      expect(block, `/tentang pre-payment block still claims ${claim}`).not.toMatch(claim)
     }
-    expect(block).toMatch(/murah, wajar, atau mahal/)
+    // What it MUST say: Paqar refuses the sale when it cannot deliver.
+    expect(block).toMatch(/tidak jual/i)
   })
 
-  it('EVERY copy of the homepage answer is corrected, not just the first', () => {
-    // The homepage asks this question TWICE: once in the JSON-LD FAQPage graph
-    // and once in the visible "Ada soalan?" accordion. A first-occurrence split
-    // passed while the accordion still said "jurang RM dari harga tengah
-    // pasaran" — caught by grepping the BUILT output, not the source. Hence
-    // iterating every occurrence.
+  it('EVERY copy of the homepage objection answer stays consistent', () => {
+    // The homepage answers this TWICE: once in the JSON-LD FAQPage graph and
+    // once in the visible "Ada soalan?" accordion. A first-occurrence split
+    // once passed while the accordion still carried a corrected claim, caught
+    // only by grepping the BUILT output — hence iterating every occurrence.
+    //
+    // The question itself changed. "Apakah beza semakan percuma dan laporan
+    // RM12?" described a boundary that no longer exists; the objection worth
+    // answering on the homepage is now the one a tester actually raised.
     const src = read('app/page.tsx')
-    const answers = src.split('Apakah beza semakan percuma dan laporan RM12?').slice(1)
+    const answers = src.split('Kenapa tak semak sendiri di Mudah atau Carlist?').slice(1)
     expect(answers.length, 'expected both the JSON-LD and the visible FAQ').toBe(2)
 
     for (const [i, raw] of answers.entries()) {
       const answer = raw.split('},')[0]!
-      // Everything before "Laporan Pembeli (RM12)" is the free description.
-      const freeHalf = answer.split('Laporan Pembeli (RM12)')[0]!
-      for (const claim of FREE_CLAIMS) {
-        expect(freeHalf, `homepage answer #${i + 1} still describes free as ${claim}`).not.toMatch(claim)
-      }
-      // The paid half must still carry them — that is what RM12 sells.
-      expect(answer, `homepage answer #${i + 1} lost the paid figures`).toMatch(/harga tengah dan julat/)
+      // The answer must not resurrect a free tier…
+      expect(answer, `answer #${i + 1} implies a free tier`).not.toMatch(/percuma/i)
+      // …and must name what Paqar actually adds over a listings portal.
+      expect(answer, `answer #${i + 1} does not say what Paqar adds`)
+        .toMatch(/langkah seterusnya|keputusan/i)
     }
   })
 })

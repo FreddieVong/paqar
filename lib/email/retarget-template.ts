@@ -135,10 +135,10 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
   const plate      = content.plate?.trim().toUpperCase() || ''
   const hasPlate   = plate.length > 0
   const subjectRef = hasPlate ? plate : 'kereta ini'
-  // "dari RM12", not "RM12": RM12 is the floor and the claim check adds RM88.
+  // "dari RM29", not "RM29": RM29 is the floor and the claim check adds RM88.
   // The flat-price exception belongs to the checkout button that charges exactly
-  // RM12 — this one only opens a page.
-  const ctaLabel   = hasPlate ? `Semak ${plate} &mdash; dari RM12` : 'Semak laporan &mdash; dari RM12'
+  // RM29 — this one only opens a page.
+  const ctaLabel   = hasPlate ? `Semak ${plate} &mdash; dari RM29` : 'Semak laporan &mdash; dari RM29'
   const url        = content.reportUrl
   // Only personalise when there is a plate to name; the no-plate fallback has
   // nothing to anchor a price claim to.
@@ -215,7 +215,7 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
           </tr>
 
           <!-- ── registration plate ───────────────────────────────────
-               The one deep-teal block, mirroring the homepage RM12 card so the
+               The one deep-teal block, mirroring the homepage RM29 card so the
                e-mail is recognisably the same product. -->
           ${hasPlate ? `
           <tr>
@@ -279,7 +279,7 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
                 <tr>
                   <td colspan="2" class="gutter" style="padding:0 20px 16px;">
                     <div style="height:1px;background:${C.hair};font-size:0;line-height:0;">&nbsp;</div>
-                    <div class="t-dim" style="font-family:${BODY};font-size:11.5px;font-weight:400;color:${C.dim};line-height:1.55;padding-top:11px;">Berdasarkan ${insight.count} iklan model dan tahun yang sama di pasaran semasa.</div>
+                    <div class="t-dim" style="font-family:${BODY};font-size:11.5px;font-weight:400;color:${C.dim};line-height:1.55;padding-top:11px;">Berdasarkan ${insight.count} iklan model dan tahun yang sama yang kami jumpa.</div>
                   </td>
                 </tr>
               </table>
@@ -343,7 +343,7 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
                     </tr><tr>
                       ${pill('Risiko banjir')}${pill('Total loss')}
                     </tr></table>
-                    <div class="t-warnb" style="font-family:${BODY};font-size:12px;font-weight:400;color:${C.warnBody};line-height:1.55;padding-top:10px;"><strong>Tidak termasuk</strong> dalam Laporan Pembeli RM12 &mdash; boleh ditambah selepas anda buka laporan.</div>
+                    <div class="t-warnb" style="font-family:${BODY};font-size:12px;font-weight:400;color:${C.warnBody};line-height:1.55;padding-top:10px;"><strong>Tidak termasuk</strong> dalam Laporan Pembeli RM29 &mdash; boleh ditambah selepas anda buka laporan.</div>
                   </td>
                 </tr>
               </table>

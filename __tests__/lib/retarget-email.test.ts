@@ -101,8 +101,8 @@ describe('retarget email rendering', () => {
 
   describe('copy claim safety', () => {
     it('prices the report as a floor, since the claim check adds RM88', () => {
-      expect(html).toContain('dari RM12')
-      expect(html).not.toMatch(/&mdash; RM12/)
+      expect(html).toContain('dari RM29')
+      expect(html).not.toMatch(/&mdash; RM29/)
     })
 
     it('scopes the claim check as a paid add-on', () => {
@@ -216,7 +216,7 @@ describe('retarget email rendering', () => {
     })
 
     it('still carries the price', () => {
-      expect(bare).toContain('dari RM12')
+      expect(bare).toContain('dari RM29')
     })
   })
 })

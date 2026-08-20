@@ -1,4 +1,5 @@
 import { notFound }             from 'next/navigation'
+import { historyUpgradeAvailable } from '@/lib/pricing'
 export const dynamic = 'force-dynamic'
 import { Nav }                  from '@/components/layout/Nav'
 import { Shell }                from '@/components/layout/Shell'
@@ -228,7 +229,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               generatedAt={report.created_at}
               claimedMileageKm={report.claimed_mileage_km}
               upsellJomCheck={
-                process.env.JOMCHECK_ENABLED === 'true' && !report.add_jomcheck
+                historyUpgradeAvailable() && !report.add_jomcheck
                   ? { checkId: params.checkId, claimToken: claimToken ?? '' }
                   : null
               }

@@ -40,6 +40,19 @@ vi.mock('@/lib/supabase/server', () => ({
 }))
 const getBill = vi.fn()
 vi.mock('@/lib/billplz', () => ({ createBill, getBill }))
+/**
+ * The add-on is switched OFF in production because the second human review it
+ * promises does not exist yet (HISTORY_UPGRADE_OPERATIONAL in lib/pricing).
+ *
+ * These tests are about the BILLING MECHANICS — idempotency, no orphaned bills,
+ * bill reuse — which remain correct and will matter on the day the feature
+ * ships. So the gate is mocked open here, and a separate test below asserts it
+ * is genuinely shut by default.
+ */
+vi.mock('@/lib/pricing', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/pricing')>('@/lib/pricing')
+  return { ...actual, HISTORY_UPGRADE_OPERATIONAL: true, historyUpgradeAvailable: () => true }
+})
 vi.mock('@/lib/crypto', () => ({ decrypt: () => 'WXY1234', hash: (v: string) => `h(${v})` }))
 vi.mock('@/lib/env', () => ({ env: { BILLPLZ_COLLECTION_ID: 'col', BILLPLZ_COLLECTION_ID_BUYER: 'colb' } }))
 vi.mock('@/lib/attribution-request', () => ({ currentAttribution: async () => ({ sessionId: null, attribution: {} }) }))
@@ -306,5 +319,28 @@ describe('a stored bill is only reused while it can still be paid', () => {
     expect(report().upgrade_bill_url).toBe('https://billplz/bill_B')
     // bill_A is no longer named by any column — checkout_attributions is what
     // keeps it payable-and-reconcilable, which reconcileOrphanedUpgrade uses.
+  })
+})
+
+
+/**
+ * The gate itself, unmocked.
+ *
+ * Everything above runs with the add-on forced open. This confirms that in the
+ * real module it is shut — so an accidental deletion of the gate would surface
+ * here rather than as a customer paying RM88 for a revision nobody can produce.
+ */
+describe('the add-on is genuinely disabled outside these tests', () => {
+  it('HISTORY_UPGRADE_OPERATIONAL is false in the real module', async () => {
+    const real = await vi.importActual<typeof import('@/lib/pricing')>('@/lib/pricing')
+    expect(real.HISTORY_UPGRADE_OPERATIONAL).toBe(false)
+  })
+
+  it('and the env var alone cannot switch it on', async () => {
+    const real = await vi.importActual<typeof import('@/lib/pricing')>('@/lib/pricing')
+    const prev = process.env.JOMCHECK_ENABLED
+    process.env.JOMCHECK_ENABLED = 'true'
+    try { expect(real.historyUpgradeAvailable()).toBe(false) }
+    finally { process.env.JOMCHECK_ENABLED = prev }
   })
 })

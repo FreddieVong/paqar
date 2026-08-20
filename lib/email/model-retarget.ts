@@ -45,7 +45,7 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
 
       <a href="https://paqar.my"
          style="display:block;background:#064E4A;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin-bottom:16px;">
-        Semak Nombor Plat — dari RM12 →
+        Semak Nombor Plat — dari RM29 →
       </a>
 
       <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin-bottom:20px;">

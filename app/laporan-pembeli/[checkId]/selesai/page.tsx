@@ -1,4 +1,5 @@
 import { redirect }                                  from 'next/navigation'
+import { historyUpgradeAvailable } from '@/lib/pricing'
 import Image                                         from 'next/image'
 import { Nav }                                       from '@/components/layout/Nav'
 import { Shell }                                     from '@/components/layout/Shell'
@@ -173,7 +174,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
   // Only show if we're in verified_paid state and it's the normal (non-upgrade) path
   const paidReport = displayState.state === 'verified_paid' ? await getBuyerReport(params.checkId).catch(() => null) : null
   const showJomCheckNudge =
-    process.env.JOMCHECK_ENABLED === 'true' &&
+    historyUpgradeAvailable() &&
     displayState.state === 'verified_paid' &&
     paidReport?.status === 'paid' &&
     !paidReport.add_jomcheck
