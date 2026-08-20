@@ -131,6 +131,11 @@ export interface BuyerReport {
   refund_reference?:   string | null
   /** Audited provider re-lookups after a reviewer corrected the plate. Max 1. */
   identity_recheck_count?: number | null
+  /** 1 = original RM29 decision · 2 = history-enhanced revision (migration 032). */
+  revision?:    number | null
+  supersedes_id?: string | null
+  /** The revision the buyer reads. Exactly one per check. */
+  is_current?:  boolean | null
   corrected_plate_hash?:   string | null
   receipt_status?:     'pending' | 'sending' | 'sent' | 'failed' | null
   receipt_attempts?:   number | null

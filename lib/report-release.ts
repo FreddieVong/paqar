@@ -107,3 +107,33 @@ export function hoursAwaitingReview(
 
 /** The promise made before payment. One home, so copy and queue cannot drift. */
 export const REVIEW_SLA_HOURS = 24
+
+
+/**
+ * Was this report actually read by a person?
+ *
+ * ── WHY THIS IS NOT THE SAME AS "RELEASED" ─────────────────────────────────
+ *
+ * Migration 032 back-fills historical paid rows as released, because those
+ * buyers genuinely did receive their reports — under the old product, the
+ * instant Billplz confirmed payment. 'released' is the access state and it is
+ * correct for them.
+ *
+ * But nobody reviewed those reports. Rendering "Disemak oleh manusia" over a
+ * back-filled row would be a lie told by a badge, on the exact claim the RM29
+ * price rests on, to the buyers least able to check. So the badge asks a
+ * narrower question than the gate does.
+ *
+ * Both a reviewer AND a review start time are required. Either alone can be
+ * back-filled by accident; together they mean a person opened the queue, took
+ * the order, and signed it off.
+ */
+export function wasHumanReviewed(report: {
+  reviewer_id?:       string | null
+  review_started_at?: string | null
+} | null | undefined): boolean {
+  const id = report?.reviewer_id
+  const at = report?.review_started_at
+  return typeof id === 'string' && id.trim() !== ''
+    && typeof at === 'string' && at.trim() !== ''
+}

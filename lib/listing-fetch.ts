@@ -36,7 +36,31 @@ import { isIP } from 'node:net'
  * short and contains only sites with no interest in attacking us.
  */
 
-/** Hosts Paqar has a documented reason to read. Suffix-matched. */
+/**
+ * ── ACCEPTANCE IS NOT FETCHING ─────────────────────────────────────────────
+ *
+ * Two separate decisions, and conflating them would throw away the product's
+ * main advantage:
+ *
+ *   ACCEPT   may this URL be stored and shown to a reviewer?
+ *            Any legitimate https listing link — Carlist, Facebook Marketplace,
+ *            a dealer's own site. See normaliseListingUrl in lib/listing-intake.
+ *
+ *   FETCH    may this server request it automatically?
+ *            Only the allowlist below.
+ *
+ * A Carlist link is genuinely useful: a human opens it during review, which is
+ * the whole reason Paqar can cover sources no competitor's automation reaches.
+ * Refusing to STORE it because we cannot FETCH it would discard that for no
+ * security benefit whatsoever — storing a string is not a request.
+ *
+ * When a URL cannot be fetched, the buyer is asked for screenshots. They are
+ * never shown a fetch failure, an HTTP status or a host-policy message: those
+ * describe Paqar's plumbing, not anything they did wrong, and a buyer who
+ * pasted a perfectly good Carlist link has made no mistake to report.
+ */
+
+/** Hosts Paqar may automatically request. Suffix-matched. NOT an acceptance list. */
 const ALLOWED_HOSTS = [
   'mudah.my',
   'www.mudah.my',
@@ -90,7 +114,13 @@ export function isPrivateAddress(ip: string): boolean {
   return true   // not an IP we understand: refuse
 }
 
-export function isAllowedHost(hostname: string): boolean {
+/**
+ * May the server fetch this host automatically?
+ *
+ * Deliberately named for FETCHING, not for validity. Callers deciding whether
+ * to accept a buyer's URL must not consult this.
+ */
+export function isFetchableHost(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/\.$/, '')
   return ALLOWED_HOSTS.some(a => h === a || h.endsWith(`.${a}`))
 }
@@ -109,7 +139,7 @@ export function screenUrl(raw: string): { ok: true; url: URL } | { ok: false; re
   // user:pass@host smuggles credentials to whatever we connect to, and is never
   // present on a real listing link.
   if (url.username || url.password) return { ok: false, reason: 'credentials_in_url' }
-  if (!isAllowedHost(url.hostname))  return { ok: false, reason: 'host_not_allowed' }
+  if (!isFetchableHost(url.hostname)) return { ok: false, reason: 'host_not_allowed' }
   // A literal private address passes host allowlisting only if someone put one
   // in ALLOWED_HOSTS, but check anyway — defence in depth is cheap here.
   if (isIP(url.hostname) && isPrivateAddress(url.hostname)) {
@@ -186,4 +216,14 @@ export async function fetchListingHtml(raw: string): Promise<FetchOutcome> {
   }
 
   return { ok: false, reason: 'too_many_redirects' }
+}
+
+/**
+ * Can this stored URL be extracted from automatically?
+ *
+ * The intake uses this to decide whether to attempt extraction or go straight
+ * to asking for screenshots — WITHOUT rejecting the URL either way.
+ */
+export function isExtractable(raw: string): boolean {
+  return screenUrl(raw).ok
 }

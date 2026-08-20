@@ -248,6 +248,53 @@ COMMENT ON TABLE report_state_transitions IS
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
+-- 3b. REVISIONS — a second review must not take the first one away
+-- ═══════════════════════════════════════════════════════════════════════════
+--
+-- The RM88 history add-on sends the report back for a SECOND human review: the
+-- reviewer reconciles claim records against recorded mileage and the seller's
+-- statements, then issues an updated decision and next action. That review
+-- takes time.
+--
+-- Reopening the released row would make the buyer's existing report vanish
+-- while they wait — they paid RM29 for a decision, read it, paid RM88 more, and
+-- would be left with nothing readable. So a revision is a NEW row, and the
+-- released one stays current until the new one is released.
+--
+--   revision          1 for the original, 2 for the history-enhanced version
+--   supersedes_id     the revision this replaces
+--   is_current        exactly one true per check, flipped atomically at release
+--
+-- is_current is what every read path resolves, so promotion is a single
+-- statement rather than a sequence a failure can interrupt halfway.
+ALTER TABLE buyer_reports
+  ADD COLUMN IF NOT EXISTS revision      INTEGER NOT NULL DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS supersedes_id UUID REFERENCES buyer_reports(id),
+  ADD COLUMN IF NOT EXISTS is_current    BOOLEAN NOT NULL DEFAULT true;
+
+COMMENT ON COLUMN buyer_reports.is_current IS
+  'The revision a buyer reads. Exactly one per check_id. Flipped atomically when a later revision is released, so the earlier report never disappears while its replacement is still under review.';
+
+-- Exactly one current revision per check, enforced rather than assumed: two
+-- would make "which report does this buyer see" a race.
+CREATE UNIQUE INDEX IF NOT EXISTS buyer_reports_one_current_idx
+  ON buyer_reports (check_id)
+  WHERE is_current AND status = 'paid';
+
+-- A revision beyond the first must say what it replaces.
+ALTER TABLE buyer_reports DROP CONSTRAINT IF EXISTS buyer_reports_revision_chain;
+ALTER TABLE buyer_reports ADD CONSTRAINT buyer_reports_revision_chain
+  CHECK (revision = 1 OR supersedes_id IS NOT NULL);
+
+-- A revision may only become current once a human has released it. Without
+-- this, promoting an unreviewed revision would replace a good report with a
+-- draft — the precise failure the release gate exists to prevent, arriving
+-- through a side door.
+ALTER TABLE buyer_reports DROP CONSTRAINT IF EXISTS buyer_reports_current_is_released;
+ALTER TABLE buyer_reports ADD CONSTRAINT buyer_reports_current_is_released
+  CHECK (NOT is_current OR status <> 'paid' OR released_at IS NOT NULL);
+
+-- ═══════════════════════════════════════════════════════════════════════════
 -- 4. LEGACY BACKFILL — historical orders predate the review product
 -- ═══════════════════════════════════════════════════════════════════════════
 --

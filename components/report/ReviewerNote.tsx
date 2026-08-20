@@ -22,9 +22,34 @@
  * Paqar" would advertise a human review that did not happen, so it renders
  * nothing at all instead.
  */
-export function ReviewerNote({ note }: { note: string | null | undefined }) {
+export function ReviewerNote({
+  note, humanReviewed = true,
+}: {
+  note: string | null | undefined
+  /**
+   * False for reports released before human review existed (migration 032
+   * back-fills them). They carry an explanatory note but no reviewer, and must
+   * never wear the badge — see wasHumanReviewed in lib/report-release.
+   */
+  humanReviewed?: boolean
+}) {
   const text = note?.trim()
   if (!text) return null
+
+  // A legacy row still shows its note — the buyer is owed the explanation —
+  // but framed as what it is, with no claim of human attention.
+  if (!humanReviewed) {
+    return (
+      <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[16px] p-5">
+        <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#6B7280] mb-2">
+          Nota
+        </p>
+        <p className="font-body text-[14px] text-[#374151] leading-relaxed whitespace-pre-wrap">
+          {text}
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[16px] p-5">

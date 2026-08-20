@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   REVIEW_STATES, REFUND_STATES,
   canTransitionReview, canTransitionRefund, classifyReview, classifyRefund,
-  isReportAccessible, requiresRefund,
+  isReportAccessible, requiresRefund, currentRevision, mayPromote,
   type ReviewStatus, type RefundStatus, type WorkflowRow,
 } from '@/lib/report-workflow'
 
@@ -144,5 +144,53 @@ describe('transition outcomes distinguish a retry from a bug', () => {
   it('canTransition* stays false for a repeat — nothing moves', () => {
     expect(canTransitionReview('released', 'released')).toBe(false)
     expect(canTransitionRefund('refunded', 'refunded')).toBe(false)
+  })
+})
+
+/**
+ * The RM88 upgrade must not take the RM29 report away while its replacement is
+ * being reviewed. A buyer who paid twice and can read nothing is worse off than
+ * one who never upgraded.
+ */
+describe('revisions keep the released report readable', () => {
+  const rev = (n: number, over: Partial<WorkflowRow & { is_current: boolean }> = {}) => ({
+    status: 'paid' as const,
+    review_status: 'released' as ReviewStatus,
+    released_at: '2026-08-20T10:00:00Z',
+    refund_status: 'not_required' as RefundStatus,
+    revision: n,
+    is_current: n === 1,
+    ...over,
+  })
+
+  it('keeps revision 1 current while revision 2 is still in review', () => {
+    const rows = [
+      rev(1),
+      rev(2, { review_status: 'in_review', released_at: null, is_current: false }),
+    ]
+    expect(currentRevision(rows)?.revision).toBe(1)
+  })
+
+  it('promotes revision 2 once it is released', () => {
+    const rows = [
+      rev(1, { is_current: false }),
+      rev(2, { is_current: true }),
+    ]
+    expect(currentRevision(rows)?.revision).toBe(2)
+  })
+
+  it('never returns an unreleased revision, even if flagged current', () => {
+    const rows = [rev(2, { review_status: 'in_review', released_at: null, is_current: true })]
+    expect(currentRevision(rows)).toBeNull()
+  })
+
+  it('refuses to promote a revision that is not released', () => {
+    expect(mayPromote(rev(2, { review_status: 'in_review', released_at: null }))).toBe(false)
+    expect(mayPromote(rev(2))).toBe(true)
+  })
+
+  it('falls back to the highest released revision if none is flagged', () => {
+    const rows = [rev(1, { is_current: false }), rev(2, { is_current: false })]
+    expect(currentRevision(rows)?.revision).toBe(2)
   })
 })

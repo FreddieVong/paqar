@@ -61,12 +61,14 @@ describe('extractFromHtml — high confidence', () => {
   })
 
   /**
-   * The asking price is confirmed even at high confidence. Every other field
-   * can be wrong and produce a slightly worse report; a wrong price produces a
-   * confidently wrong DECISION, and the buyer cannot tell.
+   * No extra tap for a price the site itself published. The value is shown
+   * prominently with an Ubah action directly above the pay button, and pressing
+   * that button is the confirmation. An extra "Ya, betul" bought no additional
+   * signal and reintroduced the friction this intake removes.
    */
-  it('still asks one explicit question about the price', () => {
-    expect(needsPriceConfirmation(x)).toBe(true)
+  it('does not interrupt for a price the source stated unambiguously', () => {
+    expect(needsPriceConfirmation(x)).toBe(false)
+    expect(fieldsNeedingInput(x)).toEqual([])
   })
 
   /** Variant is never read from prose — short tokens collide with real words. */
@@ -91,6 +93,7 @@ describe('extractFromHtml — medium confidence', () => {
 
   it('asks only about the uncertain field', () => {
     expect(fieldsNeedingInput(x)).toEqual(['askingPriceRm'])
+    expect(needsPriceConfirmation(x)).toBe(true)
   })
 })
 

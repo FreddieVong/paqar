@@ -16,7 +16,7 @@ import { ReviewerNote }        from '@/components/report/ReviewerNote'
 import { PaidReportCtaTracker } from '@/components/report/PaidReportCtaTracker'
 import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
 import { VehiclePreviewTeaser } from '@/components/report/VehiclePreviewTeaser'
-import { mayRenderReport }      from '@/lib/report-release'
+import { mayRenderReport, wasHumanReviewed } from '@/lib/report-release'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
@@ -201,7 +201,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             {/* The human note leads. Everything below it is machine output a
                 competitor could reproduce; this is the part that waited for a
                 person, and it is what the price difference bought. */}
-            <ReviewerNote note={report.reviewer_note} />
+            <ReviewerNote note={report.reviewer_note} humanReviewed={wasHumanReviewed(report)} />
             {/* No page-level plate header — the report's own header card
                 (plate + car + date) opens the document directly below */}
             {report.asking_price_rm == null && vehicleData && claimToken && (

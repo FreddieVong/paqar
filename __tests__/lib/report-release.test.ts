@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isReleasedToBuyer, mayRenderReport, type ReleasableReport } from '@/lib/report-release'
+import { isReleasedToBuyer, mayRenderReport, wasHumanReviewed, type ReleasableReport } from '@/lib/report-release'
 
 const ROOT = join(__dirname, '..', '..')
 const read = (p: string) => readFileSync(join(ROOT, p), 'utf8')
@@ -124,5 +124,43 @@ describe('the report page is wired to the gate', () => {
     for (const b of branches) {
       expect(b).not.toContain('searchParams')
     }
+  })
+})
+
+/**
+ * Migration 032 back-fills historical paid rows as released — correctly, since
+ * those buyers did receive their reports. But nobody reviewed them, and a badge
+ * saying "Disemak oleh manusia" over one would be a lie told on the exact claim
+ * the RM29 price rests on.
+ */
+describe('wasHumanReviewed distinguishes a real review from a legacy release', () => {
+  it('is true only when a reviewer AND a start time both exist', () => {
+    expect(wasHumanReviewed({ reviewer_id: 'admin', review_started_at: '2026-08-20T10:00:00Z' })).toBe(true)
+  })
+
+  it.each([
+    ['no reviewer',    { reviewer_id: null,    review_started_at: '2026-08-20T10:00:00Z' }],
+    ['no start time',  { reviewer_id: 'admin', review_started_at: null }],
+    ['neither',        { reviewer_id: null,    review_started_at: null }],
+    ['blank reviewer', { reviewer_id: '   ',   review_started_at: '2026-08-20T10:00:00Z' }],
+  ])('is false with %s', (_l, row) => {
+    expect(wasHumanReviewed(row)).toBe(false)
+  })
+
+  it('is false for a null row', () => {
+    expect(wasHumanReviewed(null)).toBe(false)
+  })
+
+  it('the report page gates the badge on it, not on release', () => {
+    const src = read('app/laporan-pembeli/[checkId]/page.tsx')
+    expect(src).toContain('humanReviewed={wasHumanReviewed(report)}')
+  })
+
+  it('the note component refuses the badge without it', () => {
+    const src = read('components/report/ReviewerNote.tsx')
+    expect(src).toContain('if (!humanReviewed)')
+    const legacy = src.slice(src.indexOf('if (!humanReviewed)'), src.indexOf('if (!humanReviewed)') + 700)
+    expect(legacy).not.toContain('Nota daripada Paqar')
+    expect(legacy).not.toMatch(/disemak oleh/i)
   })
 })

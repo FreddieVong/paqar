@@ -13,14 +13,22 @@ import { BRANDS, MODELS_BY_BRAND } from '@/lib/model-catalog'
  * RM35,000 to RM55,000). So each field carries its own status, and the intake
  * asks about exactly the uncertain ones.
  *
- * ── WHY THE ASKING PRICE IS TREATED DIFFERENTLY ────────────────────────────
+ * ── WHY THE ASKING PRICE IS STILL NOT SPECIAL-CASED ────────────────────────
  *
- * Every other field can be wrong and produce a slightly worse report. A wrong
- * asking price produces a CONFIDENTLY wrong decision — the verdict, the offer
- * band and the negotiation script all hang off it, and the buyer has no way to
- * tell. It is therefore never auto-accepted: `needsConfirmation` is true for
- * price even at high confidence, so the summary asks one explicit question
- * while everything else stays passive.
+ * An earlier version forced an explicit confirmation tap on the price even at
+ * high confidence, reasoning that a wrong price produces a confidently wrong
+ * decision. That reasoning is right about the CONSEQUENCE and wrong about the
+ * remedy.
+ *
+ * The price is displayed prominently with an Ubah action, and pressing the RM29
+ * button is itself the confirmation — a buyer who reads "Seller minta RM55,000"
+ * directly above the pay button and pays has confirmed it as surely as one who
+ * tapped an extra "Ya, betul". The extra tap bought no additional signal and
+ * reintroduced exactly the friction this intake exists to remove.
+ *
+ * An explicit question is asked only when the value is genuinely uncertain:
+ * missing, or read out of a human-written title where it is as likely to be a
+ * monthly instalment as an asking price.
  *
  * ── WHAT THIS DOES NOT DO ──────────────────────────────────────────────────
  *
@@ -151,15 +159,23 @@ export function fieldsNeedingInput(x: ExtractedListing): (keyof ExtractedListing
 /**
  * May the intake proceed to coverage without asking anything?
  *
- * Requires brand, model and year at HIGH confidence. The asking price is
- * excluded deliberately — see the header: it is always confirmed explicitly,
- * because it is the one field whose error produces a confidently wrong answer.
+ * All four coverage fields — including the price — at HIGH confidence. The
+ * buyer still sees every value, prominently and editable; they are simply not
+ * interrupted for a value the source stated unambiguously.
  */
 export function canProceedPassively(x: ExtractedListing): boolean {
-  return (['brand', 'model', 'year'] as const).every(k => x[k].status === 'high')
+  return (['brand', 'model', 'year', 'askingPriceRm'] as const)
+    .every(k => x[k].status === 'high')
 }
 
-/** The asking price is confirmed by one tap, always. Never auto-accepted. */
+/**
+ * Ask about the price only when it is genuinely uncertain.
+ *
+ * 'medium' means it was scraped from a human-written title, where a number is
+ * as likely to be a monthly instalment or a second car. 'missing' means we have
+ * nothing. A price the site itself published in a meta tag is not questioned —
+ * it is shown, editable, above the pay button.
+ */
 export function needsPriceConfirmation(x: ExtractedListing): boolean {
-  return x.askingPriceRm.value != null
+  return x.askingPriceRm.status !== 'high'
 }

@@ -159,3 +159,46 @@ export function requiresRefund(row: WorkflowRow | null | undefined): boolean {
   if (row.review_status !== 'unable_to_complete') return false
   return row.refund_status !== 'refunded' && row.refund_status !== 'processing'
 }
+
+/**
+ * Which revision does this buyer read?
+ *
+ * ── WHY REVISIONS EXIST ────────────────────────────────────────────────────
+ *
+ * The RM88 history add-on sends the report back for a SECOND human review —
+ * reconciling claim records against recorded mileage and the seller's
+ * statements, then issuing an updated decision. That takes time.
+ *
+ * Reopening the released row would make the buyer's report vanish while they
+ * wait: they paid RM29, read a decision, paid RM88 more, and are left with a
+ * waiting screen where their report used to be. That is a worse experience than
+ * not offering the upgrade at all, and it punishes the most engaged buyer.
+ *
+ * So the revision is a new row and the released one stays current until the
+ * replacement is itself released.
+ */
+export interface RevisionRow extends WorkflowRow {
+  revision?:   number | null
+  is_current?: boolean | null
+}
+
+/** The row a buyer's report page should render. */
+export function currentRevision<T extends RevisionRow>(rows: T[]): T | null {
+  const readable = rows.filter(r => isReportAccessible(r))
+  if (readable.length === 0) return null
+  // is_current is authoritative; the revision number breaks ties only if a
+  // migration ever left two marked, which the unique index forbids.
+  return readable.find(r => r.is_current)
+    ?? readable.sort((a, b) => (b.revision ?? 1) - (a.revision ?? 1))[0]!
+}
+
+/**
+ * May this revision be promoted to current?
+ *
+ * Only a released one. Promoting an unreleased revision would replace a good
+ * report with a draft — the exact failure the release gate exists to prevent,
+ * arriving through a side door.
+ */
+export function mayPromote(row: RevisionRow): boolean {
+  return isReportAccessible(row)
+}

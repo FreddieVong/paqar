@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
 
-const { screenUrl, isPrivateAddress, isAllowedHost } = await import('@/lib/listing-fetch')
+const { screenUrl, isPrivateAddress, isFetchableHost } = await import('@/lib/listing-fetch')
 
 /**
  * Paqar asks a server to fetch a URL a stranger chose. Unfenced, that is an
@@ -46,9 +46,9 @@ describe('isPrivateAddress', () => {
  * unbounded; the set of listing sites Paqar has a documented reason to read is
  * two hostnames.
  */
-describe('isAllowedHost', () => {
+describe('isFetchableHost', () => {
   it.each(['mudah.my', 'www.mudah.my', 'MUDAH.MY', 'www.mudah.my.'])(
-    'allows %s', (h) => expect(isAllowedHost(h)).toBe(true),
+    'allows %s', (h) => expect(isFetchableHost(h)).toBe(true),
   )
 
   it.each([
@@ -58,15 +58,54 @@ describe('isAllowedHost', () => {
     'mudah.my.evil.com',
     'notmudah.my',
     '169.254.169.254',
-  ])('refuses %s', (h) => expect(isAllowedHost(h)).toBe(false))
+  ])('refuses %s', (h) => expect(isFetchableHost(h)).toBe(false))
 
   /**
    * Carlist answers 403 behind Cloudflare and Facebook requires auth. Getting
-   * past either is bypassing an access control, so neither is attempted —
-   * those sources reach the REVIEWER as a link a human opens.
+   * past either is bypassing an access control, so neither is FETCHED — those
+   * sources reach the REVIEWER as a link a human opens.
    */
   it.each(['carlist.my', 'www.carlist.my', 'facebook.com', 'www.facebook.com'])(
-    'does not attempt %s', (h) => expect(isAllowedHost(h)).toBe(false),
+    'does not fetch %s', (h) => expect(isFetchableHost(h)).toBe(false),
+  )
+})
+
+/**
+ * ACCEPTANCE IS A DIFFERENT QUESTION FROM FETCHING.
+ *
+ * A Carlist link is useful precisely because a human opens it during review.
+ * Refusing to STORE it because we cannot FETCH it would discard the product's
+ * main advantage for no security benefit — storing a string is not a request.
+ */
+describe('unfetchable URLs are still accepted and stored', () => {
+  it.each([
+    'https://www.carlist.my/used-cars/honda/city/2019/1234567',
+    'https://www.facebook.com/marketplace/item/1234567890/',
+    'https://somedealer.com.my/stok/honda-city-2019',
+  ])('accepts %s for the reviewer', async (url) => {
+    const { normaliseListingUrl } = await import('@/lib/listing-intake')
+    expect(normaliseListingUrl(url)).toBe(url)
+  })
+
+  it.each([
+    'https://www.carlist.my/used-cars/honda/city/2019/1234567',
+    'https://www.facebook.com/marketplace/item/1234567890/',
+  ])('but does not attempt to fetch %s', async (url) => {
+    const { isExtractable } = await import('@/lib/listing-fetch')
+    expect(isExtractable(url)).toBe(false)
+  })
+
+  it('marks an allowlisted URL as extractable', async () => {
+    const { isExtractable } = await import('@/lib/listing-fetch')
+    expect(isExtractable('https://www.mudah.my/honda-city-2019-108451234.htm')).toBe(true)
+  })
+
+  /** Acceptance still refuses genuinely dangerous shapes. */
+  it.each(['javascript:alert(1)', 'data:text/html,x', 'file:///etc/passwd'])(
+    'still refuses %s at acceptance', async (url) => {
+      const { normaliseListingUrl } = await import('@/lib/listing-intake')
+      expect(normaliseListingUrl(url)).toBeNull()
+    },
   )
 })
 
