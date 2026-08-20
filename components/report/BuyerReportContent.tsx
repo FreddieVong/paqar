@@ -2,6 +2,7 @@ import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
 import { buildComparableCohort, evaluateVerdictEligibility, comparableConfidence } from '@/lib/comparables'
 import { odometerEvidence, MILEAGE_PROVENANCE_LABEL, type MileageSource } from '@/lib/mileage-provenance'
+import { registrationState, REGISTRATION_COPY } from '@/lib/registration-claim'
 import { isIndividualListingUrl } from '@/lib/listing-url'
 import { InspectionCTA }   from './InspectionCTA'
 import { InsuranceCTA }    from './InsuranceCTA'
@@ -86,9 +87,15 @@ interface Props {
   mileageSource?:    MileageSource
   /** Reviewer suppression of an unsupported rollback finding. */
   rollbackSuppressed?: boolean
+  /**
+   * Whether the buyer supplied a plate at intake. Distinct from having
+   * provider data: no plate means no lookup was ever attempted, and saying
+   * "not found" to that buyer would be untrue.
+   */
+  plateSupplied?:      boolean
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true }: Props) {
   // The reading that may support a TAMPERING claim — null unless a human
   // confirmed it. Distinct from claimedMileageKm, which is still displayed as
   // context. Conflating the two is what published a false rollback warning
@@ -98,6 +105,15 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
     : odometerEvidence(claimedMileageKm != null ? { km: claimedMileageKm, source: mileageSource } : null)
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
+
+  // Registration promises are conditional on a plate having been supplied.
+  // plate is the carLabel on plate-less checks, so presence of provider data
+  // is what distinguishes "not asked" from "asked and found nothing".
+  const regState = registrationState({
+    plateSupplied:   plateSupplied,
+    hasProviderData: !!vehicleData?.make,
+  })
+
 
   // ── Variant identity (must precede the cohort — it drives variant matching) ──
   const wmNewPrice = vehicleData?.valuation?.wmNewPrice ?? null
@@ -842,6 +858,26 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           </div>
         )
       })()}
+
+      {/*
+        Registration state, stated explicitly.
+
+        A buyer who supplied no plate must be told nothing was attempted —
+        rather than shown an empty section that reads as a fault in their car.
+        The three states are distinct (see lib/registration-claim) and the
+        middle one, "we looked and found nothing", is the one that must never
+        be shown to someone who never asked us to look.
+      */}
+      {regState !== 'checked' && (
+        <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+          <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280] mb-2">
+            Maklumat Pendaftaran
+          </p>
+          <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+            {REGISTRATION_COPY[regState]}
+          </p>
+        </div>
+      )}
 
       {/* 4. Data Kenderaan Rasmi (JPJ) */}
       {vehicleData?.make && (

@@ -17,7 +17,10 @@ import { SampleReportLink } from './SampleReportLink'
 const STACK = [
   { title: 'Anggaran rundingan',          desc: 'Sasaran harga untuk mula tawar, dikira dari harga tengah pasaran.' },
   { title: 'Skrip bercakap dengan penjual', desc: 'Ayat siap untuk WhatsApp, dengan angka pasaran kereta ini.' },
-  { title: 'Maklumat kenderaan (JPJ)',    desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka.' },
+  // NOT "(JPJ)". The lookup provider names no Malaysian source, so Paqar
+  // cannot attribute these fields to JPJ. Same correction as the report, the
+  // sample and the homepage — this paywall was the surface those three missed.
+  { title: 'Maklumat pendaftaran kenderaan', desc: 'Tahun daftar, enjin, jenis badan dan nombor rangka — jika anda beri nombor plat.' },
   { title: 'Senarai semak sebelum deposit', desc: 'Soalan untuk penjual dan perkara wajib semak sebelum bayar.' },
 ]
 
@@ -37,7 +40,7 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
             before paying a deposit; this is the answer to that, not a pitch
             for a different product. */}
         <p className="font-heading font-extrabold text-[15px] leading-snug text-white mb-2 tracking-tight">
-          Lihat harga pasaran sebenar<br />dan jumlah yang patut anda tawarkan.
+          Lihat harga tengah iklan setanding<br />dan jumlah yang patut anda tawarkan.
         </p>
         <p className="font-body text-[11px] text-white/55 leading-relaxed">
           Laporan penuh RM12 — harga tengah dan julat pasaran, sasaran rundingan,

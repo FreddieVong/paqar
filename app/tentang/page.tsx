@@ -53,16 +53,16 @@ export default function TentangPage() {
             <h2 className="font-heading font-bold text-[16px] text-[#111827]">Apa yang Paqar buat</h2>
 
             <div>
-              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semak harga pasaran — percuma</p>
+              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semakan awal — sebelum bayar</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Masukkan model, tahun, dan harga penjual. Paqar semak data listing semasa dan bagi keputusan: murah, wajar, atau mahal — dengan penjelasan dan tahap keyakinan data. Angka pasaran penuh ada dalam Laporan Pembeli.
+                Masukkan jenama, model, tahun dan harga penjual. Paqar beritahu sama ada kami ada cukup iklan setanding untuk membuat keputusan tentang kereta itu. Kalau tidak ada, kami tidak jual laporan.
               </p>
             </div>
 
             <div>
-              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Laporan Pembeli — RM12</p>
+              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Laporan Pembeli — RM29</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Laporan satu bayaran yang merangkumi keputusan harga, julat pasaran penuh, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.
+                Laporan satu bayaran untuk satu kereta: sama ada patut diteruskan, julat pasaran penuh, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Setiap laporan dibaca dan disemak oleh manusia sebelum dihantar, dalam tempoh 24 jam.
               </p>
             </div>
 
@@ -80,7 +80,7 @@ export default function TentangPage() {
             <ul className="space-y-2.5">
               {[
                 { label: 'Harga pasaran', detail: 'Berdasarkan data listing kereta terpakai semasa dari platform listing Malaysia. Dikira berdasarkan model, tahun, dan varian yang serupa.' },
-                { label: 'Maklumat kenderaan', detail: 'Maklumat pendaftaran kenderaan berdasarkan nombor plat — termasuk tahun daftar, kapasiti enjin, jenis badan, dan nombor rangka.' },
+                { label: 'Maklumat kenderaan', detail: 'Jika anda beri nombor plat, Paqar semak maklumat pendaftaran — tahun daftar, kapasiti enjin, jenis badan dan nombor rangka — dan bandingkan dengan apa yang penjual iklankan. Tanpa plat, semakan ini tidak dijalankan.' },
                 { label: 'Rekod claim insurans', detail: 'Data tuntutan insurans dari pangkalan data pihak ketiga. Hanya rekod yang dihantar kepada sistem insurans yang direkodkan.' },
               ].map(item => (
                 <li key={item.label}>
@@ -143,7 +143,7 @@ export default function TentangPage() {
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Laman utama</p>
             <Link href="/" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semak harga kereta terpakai — percuma →</Link>
-            <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Laporan Pembeli RM12 →</Link>
+            <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Laporan Pembeli RM29 →</Link>
             <Link href="/semak-accident-claim-insurans-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semakan Accident/Claim Insurans RM100 →</Link>
             <Link href="/contoh-laporan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Contoh laporan →</Link>
             <Link href="/privasi" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Dasar privasi →</Link>

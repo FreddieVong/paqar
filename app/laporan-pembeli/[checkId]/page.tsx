@@ -216,6 +216,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             <MarketPricePoller active={!!vehicleData?.make && !marketPrices} />
             <BuyerReportContent
               plate={carLabel}
+              plateSupplied={plate != null}
               askingPriceRm={report.asking_price_rm ?? null}
               vehicleData={vehicleData}
               marketPrices={marketPrices}
