@@ -125,10 +125,24 @@ describe('the team address list cannot reach the browser', () => {
     // Belt and braces against the real artefact. Skipped when no build exists.
     const staticDir = join(ROOT, '.next', 'static')
     if (!existsSync(staticDir)) return
+
+    // Generic addresses are excluded from the BUNDLE scan, though they stay in
+    // TEAM_EMAILS where isTeamEmail() needs them: one real team purchase used
+    // test@example.com, so it must still classify as internal.
+    //
+    // Scanning bundles for it produced a false alarm — the Sentry SDK ships a
+    // doc comment containing `"contact_email": "test@example.com"`, and vendor
+    // sample data is not a Paqar leak. A test that cries wolf on framework
+    // strings gets muted, which is worse than not having it.
+    const SCANNABLE = PRIVATE_ADDRESSES.filter(
+      e => !/^(test|example|user|admin|foo|bar)@(example|test)\.(com|org|invalid)$/i.test(e),
+    )
+    expect(SCANNABLE.length, 'nothing distinctive left to scan for').toBeGreaterThan(0)
+
     const offenders: string[] = []
     for (const f of walk(staticDir)) {
       const src = readFileSync(f, 'utf-8')
-      if (PRIVATE_ADDRESSES.some(e => src.includes(e))) offenders.push(f.replace(ROOT + '/', ''))
+      if (SCANNABLE.some(e => src.includes(e))) offenders.push(f.replace(ROOT + '/', ''))
     }
     expect(offenders, 'team addresses shipped in a public bundle').toEqual([])
   })

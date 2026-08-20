@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createIntake, setIntakeUrl } from '@/lib/db/listing-intake'
 import { normaliseListingUrl } from '@/lib/listing-intake'
-import { mayLookupVehicle } from '@/lib/lookup-spend-guard'
-import { SESSION_COOKIE } from '@/lib/attribution'
+import { mayIntake } from '@/lib/intake-rate-limit'
 
 /**
  * Start an anonymous intake.
@@ -18,7 +17,7 @@ import { SESSION_COOKIE } from '@/lib/attribution'
  */
 export async function POST(request: NextRequest) {
   const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1'
-  const decision = await mayLookupVehicle(ip, request.cookies.get(SESSION_COOKIE)?.value ?? null)
+  const decision = await mayIntake('intake', ip)
   if (!decision.allowed) {
     return NextResponse.json({ error: 'Cuba lagi sebentar nanti.' }, { status: 429 })
   }

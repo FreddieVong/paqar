@@ -7,11 +7,17 @@ import { createClient } from '@/lib/supabase/client'
 // Client-side auth check so Nav stays a static component — a server-side
 // auth.getUser() here would force every page on the site into dynamic rendering.
 //
-// "Laporan Saya", not "Log Masuk". The hero badge two inches below promises
-// "Tanpa daftar", and /auth is passwordless — magic link or phone OTP, with no
-// password and no registration step. "Log Masuk" described an account that does
-// not exist and contradicted the badge on the same screen. What this link
-// actually does is reach reports you already have.
+// Renders NOTHING when logged out, and that is the fix for a duplicate.
+//
+// It used to show "Laporan Saya" pointing at /auth. Nav now has its own
+// "Laporan Saya" pointing at /laporan-saya, so the header carried the SAME
+// LABEL TWICE with different destinations — and the /auth one is a login wall
+// for a product sold explicitly without accounts.
+//
+// /laporan-saya serves the anonymous buyer (their link is in their email) and
+// offers /dashboard to the few who registered for expiry reminders. So the only
+// thing left for this component to do is show Dashboard to someone already
+// signed in.
 export function NavAuthLink() {
   const [loggedIn, setLoggedIn] = useState(false)
 
@@ -29,12 +35,5 @@ export function NavAuthLink() {
     >
       Dashboard
     </Link>
-  ) : (
-    <Link
-      href="/auth"
-      className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
-    >
-      Laporan Saya
-    </Link>
-  )
+  ) : null
 }

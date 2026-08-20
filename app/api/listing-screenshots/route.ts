@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { storeScreenshot, contentHashOf, MAX_SCREENSHOTS_PER_INTAKE } from '@/lib/screenshot-storage'
 import { UPLOAD_REJECTION_COPY, MAX_BYTES } from '@/lib/image-validation'
 import { recordScreenshot, countScreenshots, hasScreenshotHash } from '@/lib/db/listing-screenshots'
-import { mayLookupVehicle } from '@/lib/lookup-spend-guard'
-import { SESSION_COOKIE } from '@/lib/attribution'
+import { mayIntake } from '@/lib/intake-rate-limit'
 import { authorizeIntake } from '@/lib/intake-auth'
 
 /**
@@ -54,7 +53,7 @@ export async function POST(request: NextRequest) {
   // Bytes are metered downstream by OCR, so uploads are rate-limited on the
   // same guard as the provider lookup. It fails closed.
   const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1'
-  const decision = await mayLookupVehicle(ip, request.cookies.get(SESSION_COOKIE)?.value ?? null)
+  const decision = await mayIntake('upload', ip)
   if (!decision.allowed) {
     return NextResponse.json({ error: 'Terlalu banyak muat naik. Cuba lagi sebentar nanti.' }, { status: 429 })
   }

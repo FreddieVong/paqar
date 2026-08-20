@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authorizeIntake } from '@/lib/intake-auth'
+import { mayIntake } from '@/lib/intake-rate-limit'
 import { setIntakeExtraction } from '@/lib/db/listing-intake'
 import { listScreenshots, markExtracted } from '@/lib/db/listing-screenshots'
 import { readScreenshot } from '@/lib/screenshot-storage'
@@ -34,6 +35,15 @@ export const maxDuration = 60
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const intake = await authorizeIntake(request, params.id)
   if (!intake) return NextResponse.json({ error: 'expired' }, { status: 403 })
+
+  // OCR is a metered Anthropic call, so this endpoint alone keeps the strict,
+  // fail-closed posture. Being unable to enforce a limit is exactly when the
+  // limit matters most — unlike intake creation, where refusing costs a sale
+  // and protects nothing, because nobody reaches the expensive path anyway.
+  const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1'
+  if (!(await mayIntake('extract', ip)).allowed) {
+    return NextResponse.json({ error: 'busy' }, { status: 429 })
+  }
 
   // ── URL, when the host is one Paqar may fetch ──────────────────────────
   let fromUrl = null

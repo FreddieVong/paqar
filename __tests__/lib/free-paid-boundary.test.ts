@@ -262,9 +262,17 @@ describe('the paywall shows the product before asking for money', () => {
 
 describe('nav does not contradict "Tanpa daftar"', () => {
   it('the logged-out nav link names the reports, not an account', () => {
-    const src = code(read('components/layout/NavAuthLink.tsx'))
-    expect(src).toContain('Laporan Saya')
-    expect(src, 'nav still offers a login the product does not have').not.toContain('Log Masuk')
+    // The label moved to Nav itself. NavAuthLink used to render a SECOND
+    // "Laporan Saya" pointing at /auth, so the header showed the same label
+    // twice with different destinations — one of them a login wall for a
+    // product sold without accounts. It now renders nothing when logged out.
+    const nav = code(read('components/layout/Nav.tsx'))
+    expect(nav).toContain('Laporan Saya')
+    expect(nav).toContain('/laporan-saya')
+    expect(nav, 'nav still offers a login the product does not have').not.toContain('Log Masuk')
+
+    const authLink = code(read('components/layout/NavAuthLink.tsx'))
+    expect(authLink, 'duplicate "Laporan Saya" is back').not.toContain('Laporan Saya')
   })
 
   it('/auth promises no notification the product does not send', () => {
