@@ -127,3 +127,46 @@ COMMENT ON TABLE listing_screenshots IS
   'Metadata for privately-stored listing screenshots. Never holds a signed URL — those are minted per authorised view and expire. storage_path is server-generated and random.';
 COMMENT ON COLUMN listing_screenshots.state IS
   'quarantined -> ready -> extracted, or -> rejected. OCR and reviewer access require ready or later; a quarantined object has been stored but not yet proven to be an image.';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Decision impact — extending report_feedback, not duplicating it
+-- ═══════════════════════════════════════════════════════════════════════════
+--
+-- report_feedback (013) already stores post-report responses, but its answer is
+-- a boolean `helpful`. The question that actually measures market fit is not
+-- whether a report was liked — it is whether it CHANGED WHAT THE BUYER DID:
+--
+--   teruskan_beli · runding_harga · tak_jadi_beli · belum_pasti · tidak_membantu
+--
+-- "Bought anyway" and "walked away" are both successes for the product and are
+-- indistinguishable under a boolean. So the column is added here rather than a
+-- second feedback table being created: one subsystem, one place to query.
+--
+-- `helpful` becomes nullable, because a decision-impact answer is a complete
+-- response on its own and forcing a boolean alongside it would invent data.
+ALTER TABLE report_feedback
+  ADD COLUMN IF NOT EXISTS decision_impact  TEXT,
+  ADD COLUMN IF NOT EXISTS buyer_report_id  UUID REFERENCES buyer_reports(id) ON DELETE SET NULL,
+  -- WHICH revision the buyer was answering about. After an RM88 upgrade the
+  -- decision may change again, and an answer about revision 1 must not be read
+  -- as an answer about revision 2.
+  ADD COLUMN IF NOT EXISTS revision         INTEGER,
+  ADD COLUMN IF NOT EXISTS updated_at       TIMESTAMPTZ NOT NULL DEFAULT now();
+
+ALTER TABLE report_feedback ALTER COLUMN helpful DROP NOT NULL;
+
+ALTER TABLE report_feedback DROP CONSTRAINT IF EXISTS report_feedback_decision_impact_values;
+ALTER TABLE report_feedback ADD CONSTRAINT report_feedback_decision_impact_values
+  CHECK (decision_impact IS NULL OR decision_impact IN (
+    'teruskan_beli', 'runding_harga', 'tak_jadi_beli', 'belum_pasti', 'tidak_membantu'
+  ));
+
+-- One answer per check per revision, so a buyer changing their mind UPDATES
+-- rather than appending. Without this an idempotent upsert is impossible and
+-- the aggregate double-counts anyone who tapped twice.
+CREATE UNIQUE INDEX IF NOT EXISTS report_feedback_one_per_revision_idx
+  ON report_feedback (check_id, COALESCE(revision, 1))
+  WHERE decision_impact IS NOT NULL;
+
+COMMENT ON COLUMN report_feedback.decision_impact IS
+  'Did the report change what the buyer did? Both tak_jadi_beli and runding_harga are product successes — a boolean cannot express that, which is why this column exists alongside `helpful` rather than reusing it.';

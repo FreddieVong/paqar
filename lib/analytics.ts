@@ -117,9 +117,25 @@ export const analytics = {
    * that does not exist yet.
    */
   paymentFormSubmitted: (props: {
-    tier:           'rm12' | 'rm100'
+    /**
+     * 'rm12' is RETAINED, not stale. It is what every event recorded before
+     * the base report became RM29, and PostHog keeps those rows forever — a
+     * funnel spanning the price change has to be able to tell the two apart.
+     * Reusing 'rm12' for an RM29 sale would silently merge two different
+     * products into one number, which is the exact analysis this dimension
+     * exists to support.
+     */
+    tier:           'rm12' | 'rm29' | 'rm100'
     valuation_path: 'plate_report' | 'model_price' | 'plate_check'
   }) => posthog.capture('payment_form_submitted', props),
+
+  /**
+   * The one-tap decision-impact answer. The CHOICE only — never the comment,
+   * the plate or the check id. The comment is free text a buyer may have put
+   * their own name or the seller's details into.
+   */
+  decisionImpact: (props: { impact: string }) =>
+    posthog.capture('decision_impact_answered', props),
 
   paidReportCtaViewed: (props: { has_free_verdict: boolean }) =>
     posthog.capture('paid_report_cta_viewed', props),

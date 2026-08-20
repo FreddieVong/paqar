@@ -13,6 +13,7 @@ import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleRe
 import { FreeResultGate }      from '@/components/report/FreeResultGate'
 import { UnderReviewNotice }   from '@/components/report/UnderReviewNotice'
 import { ReviewerNote }        from '@/components/report/ReviewerNote'
+import { DecisionImpact }      from '@/components/report/DecisionImpact'
 import { PaidReportCtaTracker } from '@/components/report/PaidReportCtaTracker'
 import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
 import { VehiclePreviewTeaser } from '@/components/report/VehiclePreviewTeaser'
@@ -232,6 +233,10 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   : null
               }
             />
+            {/* Below the report, never over it. A buyer who ignores this
+                loses nothing — it is research, not a toll on what they paid
+                for. */}
+            <DecisionImpact checkId={params.checkId} revision={report.revision ?? 1} />
             <ReportFeedback checkId={params.checkId} plate={carLabel} />
           </div>
         </Shell>
