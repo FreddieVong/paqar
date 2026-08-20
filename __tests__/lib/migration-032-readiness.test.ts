@@ -58,8 +58,12 @@ describe('the legacy backfill leaves no stranded historical order', () => {
   })
 
   it('sets review_status and released_at together, as the CHECK requires', () => {
-    const stmt = SQL.slice(SQL.indexOf('UPDATE buyer_reports'))
-    const set  = stmt.slice(0, stmt.indexOf('WHERE'))
+    // Targets the BACKFILL specifically. 032 now contains an earlier UPDATE —
+    // the revision de-duplication — and slicing from the first occurrence found
+    // that one instead. Anchoring on the backfill's own SET clause.
+    const anchor = SQL.indexOf("SET\n  review_status = 'released'")
+    expect(anchor, 'backfill statement not found').toBeGreaterThan(-1)
+    const set = SQL.slice(anchor, SQL.indexOf('WHERE', anchor))
     expect(set).toContain('review_status')
     expect(set).toContain('released_at')
   })

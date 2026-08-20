@@ -31,6 +31,8 @@ type Row = {
   released_at: string | null
   reviewer_note: string | null
   refund_status: string
+  is_current: boolean
+  revision: number
   refund_completed_at?: string | null
   refund_reference?: string | null
   refund_amount_cents?: number | null
@@ -41,7 +43,7 @@ type Row = {
 const afterAddColumns = (over: Partial<Row>): Row => ({
   status: 'pending', paid_at: null, created_at: '2026-07-01T00:00:00Z',
   review_status: 'pending', released_at: null, reviewer_note: null,
-  refund_status: 'not_required', ...over,
+  refund_status: 'not_required', is_current: true, revision: 1, ...over,
 })
 
 /** The four CHECK constraints 032 installs on buyer_reports. */
@@ -56,6 +58,15 @@ const CHECKS: Record<string, (r: Row) => boolean> = {
     r.status === 'paid' || (r.review_status === 'pending' && r.refund_status === 'not_required'),
   released_has_note: r =>
     r.review_status !== 'released' || (!!r.reviewer_note && r.reviewer_note.trim().length > 0),
+  /**
+   * ADDED AFTER THE INCIDENT. This constraint was absent from the list, which
+   * is why the rehearsal passed while the migration broke the live payment
+   * webhook. Its first form was `NOT is_current OR status <> 'paid' OR
+   * released_at IS NOT NULL`, which forbade the normal state of a paid report
+   * awaiting review.
+   */
+  current_is_released: r =>
+    !r.is_current || r.revision === 1 || r.released_at !== null,
 }
 
 const allPass = (r: Row) => Object.entries(CHECKS).filter(([, f]) => !f(r)).map(([n]) => n)
@@ -71,6 +82,34 @@ function backfill(r: Row): Row {
     reviewer_note: r.reviewer_note ?? 'Laporan ini dihantar sebelum Paqar memperkenalkan semakan manusia. Ia dijana automatik dan tidak disemak oleh manusia.',
   }
 }
+
+/**
+ * THE CASE THE REHEARSAL MISSED.
+ *
+ * A brand-new payment is is_current=true, status='paid', released_at=NULL —
+ * the normal state of a report awaiting review. The original constraint
+ * refused it, and the live Billplz webhook could not mark any payment paid.
+ */
+describe('a normal payment is not refused', () => {
+  it('accepts paid + current + revision 1 + unreleased', () => {
+    const r = afterAddColumns({ status: 'paid', paid_at: '2026-08-21T00:00:00Z' })
+    expect(CHECKS.current_is_released!(r)).toBe(true)
+    expect(allPass(r)).toEqual([])
+  })
+
+  it('still refuses promoting an unreleased revision 2', () => {
+    const r = afterAddColumns({ status: 'paid', paid_at: '2026-08-21T00:00:00Z', revision: 2, is_current: true })
+    expect(CHECKS.current_is_released!(r)).toBe(false)
+  })
+
+  it('allows a released revision 2 to be current', () => {
+    const r = afterAddColumns({
+      status: 'paid', paid_at: '2026-08-21T00:00:00Z', revision: 2, is_current: true,
+      review_status: 'released', released_at: '2026-08-21T01:00:00Z', reviewer_note: 'ok',
+    })
+    expect(CHECKS.current_is_released!(r)).toBe(true)
+  })
+})
 
 describe('constraints hold the moment they are added', () => {
   /**
