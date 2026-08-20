@@ -1,3 +1,5 @@
+import type { ReviewStatus, RefundStatus } from '@/lib/report-workflow'
+
 export interface Check {
   id: string
   user_id: string | null
@@ -16,7 +18,32 @@ export interface Check {
   created_at: string
   updated_at: string
   completed_at: string | null
+  /** Null when the buyer identified the car by brand/model/year instead. */
   plate_encrypted: string | null
+  /**
+   * The advert the buyer is considering, pasted at intake (migration 032).
+   *
+   * Stored as text and NEVER parsed — a human opens it. That is what lets
+   * Paqar cover Carlist and Facebook Marketplace, neither of which any scraper
+   * here can reach: Carlist returns 403 behind Cloudflare, and getting past
+   * that is bypassing an access control.
+   *
+   * NOTE: this is NOT buyer_reports.listing_url, a dormant column from
+   * migration 004 that nothing has ever written. This is the source of truth.
+   */
+  listing_url?: string | null
+  /** Free text: what the buyer is worried about. The reviewer's brief. */
+  buyer_concern?: string | null
+  /**
+   * Car identity from intake (migration 032).
+   *
+   * These are what let the plate become optional: they identify the car for
+   * free, so the RM0.81 provider lookup no longer has to run before payment
+   * just to learn a model the buyer was already reading off an advert.
+   */
+  brand?: string | null
+  model?: string | null
+  year?:  string | null
 }
 
 export interface Vehicle {
@@ -75,6 +102,33 @@ export interface BuyerReport {
   paid_at:            string | null
   // Receipt delivery (migration 026). receipt_status is null on rows that
   // predate tracking — treat that as unknown, never as sent.
+  /**
+   * When a human released this report to the buyer (migration 032).
+   *
+   * NULL means still under review, and the report page MUST withhold
+   * BuyerReportContent — see mayRenderReport in lib/report-release.ts. Absent
+   * on rows predating the column, which that function treats as unreleased.
+   */
+  released_at?:        string | null
+  /** The human judgement RM29 actually buys. Rendered atop a released report. */
+  reviewer_note?:      string | null
+  /**
+   * Workflow state (migration 032). Independent of `status`, which is payment,
+   * and of `refund_status`. released_at stays authoritative for ACCESS —
+   * see isReportAccessible in lib/report-workflow.
+   */
+  review_status?:      ReviewStatus | null
+  refund_status?:      RefundStatus | null
+  review_started_at?:  string | null
+  refund_required_at?: string | null
+  refund_completed_at?: string | null
+  reviewer_id?:        string | null
+  /** Reviewer decisions applied over the draft. Never overwrites evidence. */
+  reviewed_overrides?: Record<string, unknown> | null
+  refund_amount_cents?: number | null
+  refund_reason_code?: string | null
+  /** External reference proving money actually moved. Required to mark refunded. */
+  refund_reference?:   string | null
   receipt_status?:     'pending' | 'sending' | 'sent' | 'failed' | null
   receipt_attempts?:   number | null
   receipt_last_error?: string | null

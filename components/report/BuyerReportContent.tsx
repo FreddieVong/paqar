@@ -1,6 +1,8 @@
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
 import { buildComparableCohort, evaluateVerdictEligibility, comparableConfidence } from '@/lib/comparables'
+import { odometerEvidence, MILEAGE_PROVENANCE_LABEL, type MileageSource } from '@/lib/mileage-provenance'
+import { isIndividualListingUrl } from '@/lib/listing-url'
 import { InspectionCTA }   from './InspectionCTA'
 import { InsuranceCTA }    from './InsuranceCTA'
 import { CopyButton }      from './CopyButton'
@@ -75,9 +77,25 @@ interface Props {
   generatedAt?:      string | null
   upsellJomCheck?:   { checkId: string; claimToken: string } | null
   claimedMileageKm?: number | null
+  /**
+   * Where claimedMileageKm came from. Defaults to 'buyer_claimed', which is
+   * what it has always actually been — a number typed into an optional
+   * checkout field. Only a reviewer-confirmed reading may drive the
+   * odometer-rollback finding; see lib/mileage-provenance.
+   */
+  mileageSource?:    MileageSource
+  /** Reviewer suppression of an unsupported rollback finding. */
+  rollbackSuppressed?: boolean
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false }: Props) {
+  // The reading that may support a TAMPERING claim — null unless a human
+  // confirmed it. Distinct from claimedMileageKm, which is still displayed as
+  // context. Conflating the two is what published a false rollback warning
+  // about a real seller from a buyer's typo.
+  const odometerForRollback = rollbackSuppressed
+    ? null
+    : odometerEvidence(claimedMileageKm != null ? { km: claimedMileageKm, source: mileageSource } : null)
   const vehicleData = rawVehicleData as VehicleData | null | undefined
   const ins         = vehicleData?.insurance
 
@@ -231,7 +249,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           5-second scan, ABOVE the price verdict. Only when JomCheck was bought
           and succeeded; renders nothing for a clean or minor history. */}
       {addJomCheck && jomcheckStatus === 'success' && jomcheckData && (
-        <HistoryRiskBanner data={jomcheckData} currentOdometerKm={claimedMileageKm ?? null} />
+        <HistoryRiskBanner data={jomcheckData} currentOdometerKm={odometerForRollback} />
       )}
 
       {/* Vehicle not found — shown when RegCheck returns null for this plate */}
@@ -420,7 +438,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       {/* JomCheck — shown only if purchased; hidden for RM12 basic reports */}
       {addJomCheck && (
         jomcheckStatus === 'success' && jomcheckData
-          ? <JomCheckSection data={jomcheckData} currentOdometerKm={claimedMileageKm ?? null} />
+          ? <JomCheckSection data={jomcheckData} currentOdometerKm={odometerForRollback} />
           : jomcheckManualPending
           ? (
             <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">
@@ -564,23 +582,40 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       ? `Harga listing dijumpai (tahun ${vehicleData.registrationYear} sahaja):`
                       : 'Harga listing dijumpai:'}
                   </p>
+                  {/* A chip is a LINK only when the URL resolves to one advert.
+                      The scraper also stores search pages, category pages and a
+                      bare "/m/" stub (empty adid), and linking those sends a
+                      paying buyer somewhere that is not the advert the price
+                      came from. The price still renders — the row is real
+                      evidence and is counted in the median above — so
+                      withholding only the href keeps the displayed set
+                      identical to the measured one. See lib/listing-url.ts. */}
                   <div className="flex flex-wrap gap-1.5">
-                    {relevantListings.map((l, i) => (
-                      <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
-                        className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A] hover:bg-[#E0F2F1] transition-colors">
-                        RM{fmt(l.price)}
-                      </a>
-                    ))}
+                    {relevantListings.map((l, i) => {
+                      const chip = 'inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A]'
+                      return isIndividualListingUrl(l.url) ? (
+                        <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+                          className={`${chip} hover:bg-[#E0F2F1] transition-colors`}>
+                          RM{fmt(l.price)}
+                        </a>
+                      ) : (
+                        <span key={i} className={chip}>RM{fmt(l.price)}</span>
+                      )
+                    })}
                   </div>
 
                   {/* Methodology — states exactly which cohort was measured, so
-                      the copy never describes a different set than the numbers */}
+                      the copy never describes a different set than the numbers.
+                      NOT "di pasaran": the cohort is at most 15 adverts from one
+                      site, up to 7 days old (CACHE_TTL_DAYS), ordered by Mudah
+                      relevance rather than price. "Iklan setanding yang kami
+                      jumpa" claims exactly that and nothing wider. */}
                   <p className="font-body text-[11px] text-[#9CA3AF]">
                     {cohort.mode === 'same_variant'
-                      ? `Berdasarkan ${mPrices.length} listing yang dilabel “${cohort.variantToken}” di pasaran`
+                      ? `Berdasarkan ${mPrices.length} iklan setanding yang kami jumpa, dilabel “${cohort.variantToken}”`
                       : cohort.mode === 'mixed_variants'
-                        ? `Berdasarkan ${mPrices.length} listing ${vehicleData?.model ?? 'model'} ${vehicleData?.registrationYear ?? ''} di pasaran (pelbagai varian)`.replace(/\s+/g, ' ').trim()
-                        : `Berdasarkan ${mPrices.length} listing serupa di pasaran`}
+                        ? `Berdasarkan ${mPrices.length} iklan ${vehicleData?.model ?? 'model'} ${vehicleData?.registrationYear ?? ''} yang kami jumpa (pelbagai varian)`.replace(/\s+/g, ' ').trim()
+                        : `Berdasarkan ${mPrices.length} iklan setanding yang kami jumpa`}
                     {excludedCount > 0 ? ` · ${excludedCount} listing ditapis (tahun/varian berbeza atau harga luar biasa)` : ''}
                   </p>
                   <div>
@@ -668,7 +703,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               const hasLive  = (marketPrices?.listings.length ?? 0) > 0
               return !hasLive ? (
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F3F4F6]">
-                  <p className="font-body text-[12px] text-[#6B7280]">Tengok harga jualan serupa di pasaran</p>
+                  <p className="font-body text-[12px] text-[#6B7280]">Tengok iklan serupa di pasaran</p>
                   <div className="flex items-center gap-3">
                     <a href={mudahUrl} target="_blank" rel="noopener noreferrer"
                       className="font-heading font-bold text-[12px] text-[#064E4A]">Mudah →</a>
@@ -759,9 +794,9 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           : ''
 
         const scripts: Record<NonNullable<typeof effectiveVerdict>, string> | null = marketFigures ? {
-          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} listing serupa di pasaran — harga tengah pasaran sekarang RM${marketFigures.median}, dalam julat RM${marketFigures.min}–RM${marketFigures.max}.\n\nHarga RM${fmt(askingPriceRm)} agak tinggi berbanding pasaran. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?${provisionalNote}`,
-          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} listing serupa di pasaran — harga tengah pasaran sekarang RM${marketFigures.median}, dalam julat RM${marketFigures.min}–RM${marketFigures.max}.\n\nHarga RM${fmt(askingPriceRm)} sedikit di atas pasaran. Boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?${provisionalNote}`,
-          fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nSaya dah semak ${listingCount} listing serupa — harga tengah pasaran sekitar RM${marketFigures.median}. Harga tuan/puan nampak okay. Apa harga terbaik yang boleh offer?${provisionalNote}`,
+          overpriced:    `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} iklan setanding — harga tengahnya RM${marketFigures.median}, dalam julat RM${marketFigures.min}–RM${marketFigures.max}.\n\nHarga RM${fmt(askingPriceRm)} agak tinggi berbanding iklan-iklan itu. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?${provisionalNote}`,
+          slightly_high: `Salam, saya berminat dengan ${carName} yang tuan/puan jual.\n\nSaya dah semak ${listingCount} iklan setanding — harga tengahnya RM${marketFigures.median}, dalam julat RM${marketFigures.min}–RM${marketFigures.max}.\n\nHarga RM${fmt(askingPriceRm)} sedikit di atas iklan-iklan itu. Boleh consider sekitar RM${fmt(offerLow)}–RM${fmt(offerHigh)}?${provisionalNote}`,
+          fair_price:    `Salam, saya berminat dengan ${carName} tuan/puan.\n\nSaya dah semak ${listingCount} iklan setanding — harga tengahnya sekitar RM${marketFigures.median}. Harga tuan/puan nampak okay. Apa harga terbaik yang boleh offer?${provisionalNote}`,
           good_deal:     `Salam, saya berminat dengan ${carName} tuan/puan.\n\nHarga ni nampak menarik berbanding pasaran. Bila boleh saya datang tengok? Saya serius nak beli.`,
         } : null
         // Unreachable: effectiveVerdict is market-only, so marketFigures is
@@ -776,7 +811,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           ? fmt(offerHigh)
           : null
         const followUpScript = followUpTarget
-          ? `Saya faham tuan/puan ada harga sendiri. Tapi berdasarkan listing yang saya semak, RM${followUpTarget} memang harga pasaran sekarang.\n\nKalau boleh buat RM${followUpTarget}, saya boleh confirm minggu ini juga. Kalau tak boleh, takpe — terima kasih, saya consider unit lain.`
+          ? `Saya faham tuan/puan ada harga sendiri. Tapi berdasarkan iklan setanding yang saya semak, RM${followUpTarget} setara dengan harga tengahnya.\n\nKalau boleh buat RM${followUpTarget}, saya boleh confirm minggu ini juga. Kalau tak boleh, takpe — terima kasih, saya consider unit lain.`
           : null
 
         return (
@@ -815,7 +850,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             <p className="font-heading font-bold text-[13px] uppercase tracking-[.07em] text-[#6B7280]">
               Data Kenderaan Rasmi
             </p>
-            <span className="font-body text-[10px] text-[#9CA3AF]">Sumber: JPJ</span>
+            {/* NOT "Sumber: JPJ". The lookup provider (RegCheck, Infinite Loop
+                Development Ltd) names no Malaysian source — only "official
+                government data sources" generically — so Paqar cannot
+                substantiate JPJ provenance. This says what is actually known:
+                these are registration-record fields. */}
+            <span className="font-body text-[10px] text-[#9CA3AF]">Maklumat pendaftaran kenderaan</span>
           </div>
           <p className="font-heading font-extrabold text-[18px] text-[#111827] mb-3 leading-tight">
             {vehicleData.description ?? `${vehicleData.make} ${vehicleData.model}`}
@@ -888,7 +928,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             <p className={`font-heading font-bold text-[13px] mb-2 ${cfg.badgeCls}`}>{cfg.badge}</p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed">{cfg.note}</p>
             <p className="font-body text-[10px] text-[#9CA3AF] mt-2">
-              Berdasarkan mileage yang penjual bagi — Paqar tidak dapat sahkan bacaan sebenar meter.
+              {MILEAGE_PROVENANCE_LABEL[mileageSource]} Paqar tidak dapat sahkan bacaan sebenar meter.
             </p>
           </div>
         )
@@ -936,7 +976,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           // Skip for a mixed-variant cohort — "listing serupa" would overclaim
           // when the comps span multiple variants of the model.
           ...((effectiveVerdict === 'overpriced' || effectiveVerdict === 'slightly_high') && cohort.mode !== 'mixed_variants'
-            ? ['Kenapa harga ni lebih tinggi dari listing serupa di pasaran?'] : []),
+            ? ['Kenapa harga ni lebih tinggi dari iklan setanding yang lain?'] : []),
           ...(carAge != null && carAge >= 8
             ? ['Timing belt dan servis besar dah buat? Ada resit?'] : []),
           ...(insuranceExpired

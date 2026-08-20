@@ -36,7 +36,31 @@ export function setAdminCookie(): void {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path:     '/admin',
+    // Site-wide, NOT '/admin'.
+    //
+    // The review queue's whole job is to check a draft before a buyer sees it,
+    // and the draft only renders at /laporan-pembeli/[checkId] — a path an
+    // /admin-scoped cookie is never sent to. Scoping it to /admin would mean
+    // the reviewer approving reports they cannot read.
+    //
+    // The widening is safe by construction: the value is sha256(ADMIN_SECRET),
+    // never the secret; it is httpOnly so no script can read it; and it is
+    // compared with timingSafeEqual. It grants exactly one extra capability —
+    // previewing an unreleased report — and only to someone who already holds
+    // the admin secret.
+    path:     '/',
     maxAge:   60 * 60 * 24 * 30,
   })
 }
+
+/**
+ * Audit marker for the single operator behind ADMIN_SECRET.
+ *
+ * Paqar has one reviewer and one shared secret, so there is no per-user
+ * identity to record and pretending otherwise would put a fictional name in an
+ * audit log. This is deliberately a constant: when a second reviewer exists,
+ * the honest change is real accounts, not a free-text field anyone can type
+ * into. Recorded on every transition so the audit trail says WHO by role even
+ * while that answer is trivially "the owner".
+ */
+export const REVIEWER_ID = 'admin'
