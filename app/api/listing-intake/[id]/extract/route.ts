@@ -7,7 +7,6 @@ import { readScreenshot } from '@/lib/screenshot-storage'
 import { extractFromScreenshots, ocrToExtracted } from '@/lib/listing-ocr'
 import { isExtractable } from '@/lib/listing-fetch'
 import { extractListingViaScraper } from '@/lib/listing-scraper'
-import { extractFromHtml } from '@/lib/listing-extract'
 import { mergeListing, readyForCoverage } from '@/lib/listing-merge'
 
 /**
