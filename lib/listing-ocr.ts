@@ -86,7 +86,17 @@ function toBase64(b: Uint8Array): string {
  * partial results that something else then has to merge without context.
  */
 export async function extractFromScreenshots(images: OcrImage[]): Promise<OcrOutcome> {
-  if (!env.ANTHROPIC_API_KEY) return { ok: false, reason: 'no_api_key' }
+  if (!env.ANTHROPIC_API_KEY) {
+    // LOUD, because this is the silent one. A missing key produced no log line
+    // at all, so the only signal was a buyer being told their screenshot was
+    // unreadable — indistinguishable from a genuinely bad screenshot, and the
+    // most likely cause of both is a deployment that was built before the
+    // variable existed.
+    console.error('[listing-ocr] ANTHROPIC_API_KEY is not set in this environment', {
+      hint: 'Vercel env vars apply to NEW deployments only — redeploy after adding it',
+    })
+    return { ok: false, reason: 'no_api_key' }
+  }
   if (images.length === 0)    return { ok: false, reason: 'failed' }
 
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, timeout: TIMEOUT_MS, maxRetries: 1 })
@@ -116,7 +126,12 @@ export async function extractFromScreenshots(images: OcrImage[]): Promise<OcrOut
     if (name === 'APIConnectionTimeoutError' || name === 'TimeoutError')
                                                          return { ok: false, reason: 'timeout' }
     // No response body is logged: it is derived from an untrusted image.
-    console.error('[listing-ocr] call failed', { status, name })
+    console.error('[listing-ocr] call failed', {
+      status, name,
+      hint: status === 401 ? 'the key is present but rejected — wrong or malformed value'
+          : status === 403 ? 'the key is valid but not permitted for this model'
+          : undefined,
+    })
     return { ok: false, reason: 'failed' }
   }
 
@@ -124,7 +139,10 @@ export async function extractFromScreenshots(images: OcrImage[]): Promise<OcrOut
   // discard good extractions. The SCHEMA is what enforces safety, not the
   // surrounding format.
   const json = text.match(/\{[\s\S]*\}/)?.[0]
-  if (!json) return { ok: false, reason: 'invalid_output' }
+  if (!json) {
+    console.error('[listing-ocr] model returned no JSON block')
+    return { ok: false, reason: 'invalid_output' }
+  }
 
   let parsed: unknown
   try { parsed = JSON.parse(json) } catch { return { ok: false, reason: 'invalid_output' } }

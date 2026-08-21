@@ -63,7 +63,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   let fromShots = null
   let plate: string | null = null
-  let ocrFailed = false
+  let ocrFailure: string | null = null
 
   if (pending.length > 0) {
     const images = (await Promise.all(
@@ -81,7 +81,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         // Persist per-image so a later addition does not re-charge for these.
         await markExtracted(pending.map(s => s.id), ocr.fields as unknown as Record<string, unknown>)
       } else {
-        ocrFailed = true
+        // The REASON, not just the fact. 'no_api_key' is a deployment problem,
+        // 'invalid_output' is a bad screenshot, and telling a buyer the same
+        // thing for both sends them off to retake a photo that was fine.
+        ocrFailure = ocr.reason
+        console.error('[intake/extract] screenshot OCR failed', {
+          reason: ocr.reason, images: images.length,
+        })
       }
     }
   }
@@ -101,6 +107,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     ready,
     // A hint for the UI's wording, not an error to display verbatim.
     needScreenshots: !ready && !fromShots && !fromUrl,
-    ocrUnavailable:  ocrFailed,
+    ocrUnavailable:  ocrFailure !== null,
+    // Our fault vs theirs. Everything except 'invalid_output' means Paqar
+    // could not run the read at all, and asking the buyer to try another
+    // screenshot would be blaming them for our outage.
+    ocrOurFault:     ocrFailure !== null && ocrFailure !== 'invalid_output',
   })
 }

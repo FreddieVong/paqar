@@ -74,6 +74,9 @@ export function ListingIntakeForm({
   const [needShots,  setNeedShots]  = useState(false)
   // Which input the buyer actually used, so a failure can name the right thing.
   const [shotCount,  setShotCount]  = useState(0)
+  // True when the read failed on OUR side (no API key, timeout, rate limit) —
+  // as opposed to a screenshot we genuinely could not read.
+  const [ourFault,   setOurFault]   = useState(false)
   const [editing,    setEditing]    = useState(false)
   const [coverage,   setCoverage]   = useState<Coverage | null>(null)
   const [busy,       setBusy]       = useState(false)
@@ -121,10 +124,12 @@ export function ListingIntakeForm({
       })
       if (!res.ok) { setPhase('start'); setStatus(null); return }
       const j = await res.json() as {
-        summary: MergedListing; ready: boolean; needScreenshots: boolean; ocrUnavailable: boolean
+        summary: MergedListing; ready: boolean; needScreenshots: boolean
+        ocrUnavailable: boolean; ocrOurFault?: boolean
       }
       setSummary(j.summary)
       setNeedShots(j.needScreenshots || j.ocrUnavailable)
+      setOurFault(j.ocrOurFault === true)
       // Prefill the fallback fields with whatever WAS found, so a buyer only
       // completes the gaps.
       if (j.summary.brand.value) setBrand(String(j.summary.brand.value))
@@ -452,17 +457,27 @@ export function ListingIntakeForm({
                 buyer had given us, so someone who pasted a link was told their
                 screenshot could not be read — at the exact moment they most
                 need to understand what went wrong. */}
+            {/* OUR FAULT, OR THE SCREENSHOT'S?
+                Every failure said "kami tak dapat baca screenshot itu", which
+                blames the buyer's photo for what is usually our outage — a
+                missing API key, a timeout, a rate limit. Someone whose
+                screenshot was perfectly readable was sent off to take another
+                one. */}
             <p className="font-heading font-bold text-[14px] text-[#B45309] mb-1">
-              {shotCount === 0
-                ? 'Kami tak dapat baca link itu'
-                : listingUrl.trim() !== ''
-                  ? 'Kami tak dapat baca iklan itu'
-                  : 'Kami tak dapat baca screenshot itu'}
+              {ourFault
+                ? 'Ada masalah teknikal di pihak kami'
+                : shotCount === 0
+                  ? 'Kami tak dapat baca link itu'
+                  : listingUrl.trim() !== ''
+                    ? 'Kami tak dapat baca iklan itu'
+                    : 'Kami tak dapat baca screenshot itu'}
             </p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-              {shotCount === 0
-                ? 'Link anda tetap disimpan dan akan dibuka oleh manusia semasa menyemak.'
-                : 'Apa yang anda hantar tetap disimpan dan akan dibaca oleh manusia semasa menyemak.'}
+              {ourFault
+                ? 'Screenshot anda tak ada masalah — sistem bacaan kami yang gagal. Apa yang anda hantar tetap disimpan dan akan dibaca oleh manusia semasa menyemak.'
+                : shotCount === 0
+                  ? 'Link anda tetap disimpan dan akan dibuka oleh manusia semasa menyemak.'
+                  : 'Apa yang anda hantar tetap disimpan dan akan dibaca oleh manusia semasa menyemak.'}
               {' '}Isi butiran kereta di bawah supaya kami boleh semak liputan dahulu.
             </p>
           </div>
