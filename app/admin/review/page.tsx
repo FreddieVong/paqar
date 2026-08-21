@@ -356,6 +356,7 @@ export default async function AdminReviewPage() {
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center px-5">
         <form action={adminLogin} className="w-full max-w-xs bg-white border border-[#E5E7EB] rounded-[16px] p-6 space-y-4">
           <p className="font-heading font-bold text-[16px] text-[#111827]">Paqar Admin</p>
+          <input type="hidden" name="from" value="/admin/review" />
           <input
             type="password"
             name="secret"
@@ -401,9 +402,17 @@ export default async function AdminReviewPage() {
     <div className="min-h-screen bg-[#F9FAFB] px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
-          <h1 className="font-heading font-extrabold text-[24px] text-[#111827]">
-            Semakan Laporan
-          </h1>
+          <div className="flex items-baseline justify-between gap-3">
+            <h1 className="font-heading font-extrabold text-[24px] text-[#111827]">
+              Semakan Laporan
+            </h1>
+            {/* Reachable from the page you are already on when something looks
+                wrong, rather than by remembering a URL. */}
+            <a href="/admin/config"
+               className="font-heading font-bold text-[12px] text-[#6B7280] underline underline-offset-2 flex-shrink-0">
+              Konfigurasi
+            </a>
+          </div>
           <p className="font-body text-[13px] text-[#6B7280] mt-1">
             {realPending.length} menunggu
             {overdue > 0 && (

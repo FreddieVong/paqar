@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect }       from 'next/navigation'
 import { isAdminSecretValid, isAdminAuthenticated, setAdminCookie } from '@/lib/admin-auth'
 import {
   getReportForReview, startReview, releaseReport, markUnableToComplete,
@@ -17,11 +18,28 @@ import { sendReportReadyEmail } from '@/lib/email/report-ready'
 
 const PATH = '/admin/review'
 
+/** Admin pages a login form may return to. Never a caller-supplied path. */
+const ADMIN_PATHS = new Set([PATH, '/admin/config'])
+
 export async function adminLogin(formData: FormData): Promise<void> {
   const secret = String(formData.get('secret') ?? '')
   if (!isAdminSecretValid(secret)) return
   setAdminCookie()
-  revalidatePath(PATH)
+
+  // REDIRECT, not just revalidate.
+  //
+  // Setting the cookie and revalidating left the login form on screen until
+  // the operator refreshed by hand — type the secret, press the button, watch
+  // nothing happen. A redirect forces the navigation that re-reads the cookie.
+  //
+  // The return path is validated against a fixed set rather than trusted from
+  // the form: a hidden field is attacker-controllable, and an open redirect on
+  // the one endpoint that hands out an admin session is not a trade worth
+  // making for a convenience.
+  const from = String(formData.get('from') ?? '')
+  const to   = ADMIN_PATHS.has(from) ? from : PATH
+  revalidatePath(to)
+  redirect(to)
 }
 
 /** Claim a report for review. Idempotent: a second click is a no-op. */

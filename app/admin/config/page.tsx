@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
+import { adminLogin } from '@/app/admin/review/_actions'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Admin — Konfigurasi', robots: { index: false, follow: false } }
@@ -118,7 +119,36 @@ function present(name: string, value: unknown, required: boolean, breaks: string
 
 export default async function AdminConfigPage() {
   if (!env.ADMIN_SECRET) notFound()
-  if (!isAdminAuthenticated()) notFound()
+
+  // A LOGIN FORM, NOT A 404.
+  //
+  // This page is reached precisely when something is broken, and 404ing an
+  // unauthenticated visitor meant the only way in was to log in at
+  // /admin/review first and then retype the URL — a detour, at the moment
+  // someone is already debugging. Same form and same action as the queue.
+  if (!isAdminAuthenticated()) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center px-5">
+        <form action={adminLogin} className="w-full max-w-xs bg-white border border-[#E5E7EB] rounded-[16px] p-6 space-y-4">
+          <p className="font-heading font-bold text-[16px] text-[#111827]">Paqar Admin</p>
+          <input type="hidden" name="from" value="/admin/config" />
+          <input
+            type="password"
+            name="secret"
+            placeholder="Admin secret"
+            autoFocus
+            className="w-full border border-[#D1D5DB] rounded-[10px] px-4 py-3 text-[16px]"
+          />
+          <button
+            type="submit"
+            className="w-full bg-[#064E4A] text-white font-heading font-bold text-[15px] rounded-[10px] py-3"
+          >
+            Log Masuk
+          </button>
+        </form>
+      </div>
+    )
+  }
 
   const [anthropic, scraper] = await Promise.all([verifyAnthropic(), verifyScraper()])
 
@@ -180,6 +210,11 @@ export default async function AdminConfigPage() {
         <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed">
           Halaman ini tidak pernah memaparkan nilai sebenar mana-mana kunci.
         </p>
+
+        <a href="/admin/review"
+           className="inline-block font-heading font-bold text-[13px] text-[#064E4A] underline underline-offset-2">
+          ← Semakan Laporan
+        </a>
       </div>
     </div>
   )
