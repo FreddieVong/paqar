@@ -57,6 +57,16 @@ export function ListingIntakeForm({
   const [intakeId, setIntakeId] = useState<string | null>(null)
   // Held in memory only. Never a URL, never localStorage, never logged.
   const tokenRef = useRef<string | null>(null)
+  /**
+   * The id, mirrored in a ref.
+   *
+   * `intakeId` state is null during the render in which the intake is created,
+   * and callbacks fired from a CHILD (the screenshot upload) run before the
+   * parent re-renders. Reading state there meant the first upload never
+   * triggered extraction — the file landed in storage and no summary ever
+   * appeared, which is exactly the "upload not working" symptom.
+   */
+  const intakeIdRef = useRef<string | null>(null)
 
   const [listingUrl, setListingUrl] = useState('')
   const [phase,      setPhase]      = useState<Phase>('start')
@@ -80,7 +90,8 @@ export function ListingIntakeForm({
 
   /** Create the intake on first interaction. The buyer sees nothing. */
   const ensureIntake = useCallback(async (url?: string): Promise<{ id: string; token: string } | null> => {
-    if (intakeId && tokenRef.current) return { id: intakeId, token: tokenRef.current }
+    const known = intakeIdRef.current ?? intakeId
+    if (known && tokenRef.current) return { id: known, token: tokenRef.current }
     const res = await fetch('/api/listing-intake', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -88,7 +99,8 @@ export function ListingIntakeForm({
     })
     if (!res.ok) return null
     const j = await res.json() as { intakeId: string; token: string }
-    tokenRef.current = j.token
+    tokenRef.current    = j.token
+    intakeIdRef.current = j.intakeId
     setIntakeId(j.intakeId)
     return { id: j.intakeId, token: j.token }
   }, [intakeId])
@@ -124,18 +136,34 @@ export function ListingIntakeForm({
     }
   }, [])
 
+  /**
+   * Store the link, then try to read it.
+   *
+   * Reading happens on the server, through the scraper service — the app gets
+   * 403 from Mudah and its robots.txt forbids automated access, so it never
+   * fetches these pages itself. Where a site cannot be read at all (Carlist
+   * behind Cloudflare, Facebook behind auth) the link is still stored, a human
+   * opens it during review, and the buyer is asked for screenshots instead.
+   *
+   * Either way the buyer hears nothing about hosts, HTTP or robots.
+   */
   async function onUrlBlur() {
     const url = listingUrl.trim()
     if (!url) return
     setBusy(true)
     const created = await ensureIntake(url)
     setBusy(false)
-    if (created) await runExtraction(created.id)
+    if (!created) return
+    await runExtraction(created.id)
   }
 
   async function onScreenshotUploaded() {
     setStatus('Sedang baca screenshot…')
-    if (intakeId) await runExtraction(intakeId)
+    // The REF, not the state: on the first upload the child created the intake
+    // and this parent has not re-rendered, so `intakeId` is still null here.
+    const id = intakeIdRef.current ?? intakeId
+    if (id) await runExtraction(id)
+    else setStatus(null)
   }
 
   /** Apply the buyer's corrections and re-merge. */
@@ -216,10 +244,48 @@ export function ListingIntakeForm({
     <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
       <div className="space-y-4">
 
-        {/* THE LISTING LEADS. The buyer already found a car. */}
+        {/*
+          SCREENSHOTS LEAD, and that is a mobile decision.
+
+          Most Malaysian buyers are on a phone, where screenshotting an advert
+          is ONE gesture while copying its link is three — share, copy, switch
+          app, paste. Leading with the link optimised for the desktop minority.
+
+          Screenshots are also the only path that works everywhere. Carlist sits
+          behind Cloudflare and Facebook Marketplace requires authentication, so
+          no service can read either. A picture of the screen has no such limit,
+          and it is the buyer's own content rather than something taken from a
+          site that declined to serve it.
+        */}
+        <div>
+          <label htmlFor="li-shots" className={LABEL_CLS}>
+            Muat naik screenshot iklan
+          </label>
+          <p className="font-body text-[12px] text-[#6B7280] mb-2 leading-relaxed">
+            Cara paling senang. Boleh hantar beberapa kalau harga, model dan
+            mileage berada di skrin berlainan.
+          </p>
+          {/* Created lazily, on first file selection: minting a row on mount
+              would create one for every visitor who scrolls past the form. */}
+          <ScreenshotUpload
+            intakeId={intakeId}
+            token={tokenRef.current}
+            ensureIntake={ensureIntake}
+            onUploaded={() => void onScreenshotUploaded()}
+          />
+        </div>
+
+        <div className="flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-[#F3F4F6]" />
+          <span className="font-body text-[12px] text-[#9CA3AF]">atau</span>
+          <span className="h-px flex-1 bg-[#F3F4F6]" />
+        </div>
+
+        {/* The link, secondary. Read where a service can read it, and always
+            stored so a reviewer can open it during review. */}
         <div>
           <label htmlFor="li-url" className={LABEL_CLS}>
-            Tampal link iklan atau muat naik screenshot
+            Tampal link iklan
           </label>
           <input
             id="li-url"
@@ -230,22 +296,46 @@ export function ListingIntakeForm({
             placeholder="Mudah, Carlist, Facebook Marketplace…"
             inputMode="url"
             autoComplete="off"
-            className={INPUT_CLS}
+            // Disabled while reading: re-pasting mid-extraction starts a second
+            // run against the same intake and confuses the summary.
+            disabled={phase === 'working'}
+            className={`${INPUT_CLS} disabled:opacity-60`}
           />
         </div>
 
-        {/* The intake is created lazily, when the buyer first picks a file.
-            Creating one on mount would mint a row for every visitor who scrolls
-            past the form. */}
-        <ScreenshotUpload
-          intakeId={intakeId}
-          token={tokenRef.current}
-          ensureIntake={ensureIntake}
-          onUploaded={() => void onScreenshotUploaded()}
-        />
+        {/*
+          THE WAIT NEEDS TO LOOK LIKE A WAIT.
 
+          This was a single 13px grey line, and a buyer in a browser could not
+          tell anything was happening — so they paste again, or leave. Reading a
+          listing takes real time: a URL fetch plus an OCR call, and up to a
+          minute on a cold serverless function.
+
+          So it occupies the same footprint as the summary card that replaces
+          it, which also stops the layout jumping when the answer lands. And it
+          states the worst case honestly rather than implying it is nearly done
+          — a buyer told "up to a minute" waits; a buyer shown a silent spinner
+          for forty seconds assumes it is broken.
+        */}
         {status && (
-          <p role="status" className="font-body text-[13px] text-[#6B7280]">{status}</p>
+          <div
+            role="status"
+            aria-live="polite"
+            className="bg-[#F8FAF7] border border-[#E5E7EB] rounded-[12px] p-4 flex items-start gap-3"
+          >
+            <span
+              aria-hidden="true"
+              className="w-5 h-5 mt-0.5 rounded-full border-2 border-[#BBF7D0] border-t-[#064E4A] animate-spin flex-shrink-0 motion-reduce:animate-none"
+            />
+            <div className="min-w-0">
+              <p className="font-heading font-bold text-[15px] text-[#111827] leading-snug">
+                {status}
+              </p>
+              <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-0.5">
+                Ambil masa sehingga seminit. Jangan tutup halaman ini.
+              </p>
+            </div>
+          </div>
         )}
 
         {/* ONE SUMMARY. Everything found, editable, no confirmation step. */}
@@ -255,7 +345,7 @@ export function ListingIntakeForm({
               Paqar akan semak
             </p>
             <p className="font-heading font-extrabold text-[16px] text-[#111827] leading-snug">
-              {[summary.brand.value, summary.model.value, summary.year.value].filter(Boolean).join(' · ') || 'Butiran belum lengkap'}
+              {[summary.brand.value, summary.model.value, summary.year.value].filter(Boolean).join(' · ') || 'Isi butiran kereta di bawah'}
             </p>
             {askPrice?.value != null && (
               <p className="font-heading font-extrabold text-[18px] text-[#064E4A] mt-1">
@@ -283,10 +373,16 @@ export function ListingIntakeForm({
         )}
 
         {needShots && phase === 'summary' && (
-          <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
-            Kami tak dapat baca iklan ini secara automatik. Muat naik screenshot
-            iklan, atau isi butiran di bawah.
-          </p>
+          <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[12px] p-4">
+            <p className="font-heading font-bold text-[14px] text-[#B45309] mb-1">
+              Kami tak dapat baca screenshot itu
+            </p>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+              Screenshot anda tetap disimpan dan akan dibaca oleh manusia semasa
+              menyemak. Isi butiran kereta di bawah supaya kami boleh semak
+              liputan dahulu.
+            </p>
+          </div>
         )}
 
         {/* FALLBACK: only the fields extraction could not settle. */}

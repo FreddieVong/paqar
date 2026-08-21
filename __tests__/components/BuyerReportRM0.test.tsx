@@ -206,7 +206,10 @@ describe('normal cohort (5+ listings)', () => {
   it('carries the real median into the negotiation script', () => {
     const { container } = renderReport(prices, 62_000)
     const text = container.textContent ?? ''
-    expect(text).toContain('harga tengah pasaran sekarang RM45,500')
+    // Wording scoped from "harga tengah pasaran sekarang" to "harga tengahnya":
+    // the script is pasted to a seller, and a ≤15-advert single-site sample is
+    // not "the market price now". The figure it must carry is unchanged.
+    expect(text).toContain('harga tengahnya RM45,500')
   })
 
   it('shows no provisional caution', () => {

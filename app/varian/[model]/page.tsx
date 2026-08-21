@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
-import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
+import { ListingIntakeForm } from '@/components/check/ListingIntakeForm'
 import { VARIANT_GUIDES, type VariantVerdict } from '@/lib/variant-guides'
 import { variantLabelList } from '@/lib/variant-label'
 import { buildVariantLadder, ladderSpreadRm } from '@/lib/variant-ladder'
@@ -221,7 +221,7 @@ export default async function VariantGuidePage({ params }: Props) {
             <p className="font-heading font-bold text-[14px] text-[#111827]">
               Dah jumpa {guide.model} yang berkenan? Semak harganya dulu:
             </p>
-            <OverpricedCheckerForm initialBrand={guide.brand} initialModel={guide.model} />
+            <ListingIntakeForm initialBrand={guide.brand} initialModel={guide.model} />
           </div>
 
           {/* FAQ */}

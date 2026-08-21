@@ -1,0 +1,78 @@
+import 'server-only'
+import { screenUrl } from '@/lib/listing-fetch'
+import { extractFromHtml, type ExtractedListing } from '@/lib/listing-extract'
+
+/**
+ * Read one listing page through the scraper service.
+ *
+ * ── WHY NOT FROM HERE ──────────────────────────────────────────────────────
+ *
+ * Vercel cannot read these pages: Mudah returns 403 to non-browser clients and
+ * its robots.txt forbids automated access. The scraper service already runs a
+ * real browser against Mudah for comparables — the pipeline the coverage gate
+ * depends on — so reading one advert is access it already performs, not new
+ * access invented here.
+ *
+ * ── SSRF IS STILL SCREENED HERE ────────────────────────────────────────────
+ *
+ * Handing a stranger's URL to another service does not remove the problem, it
+ * moves it. screenUrl runs first — scheme, credentials, host allowlist, literal
+ * private addresses — so the scraper is never asked to fetch something the app
+ * would itself refuse. The scraper re-checks the host independently, because a
+ * service that trusts its caller is one bug away from being an open proxy.
+ *
+ * ── THE URL IS NEVER LOGGED ────────────────────────────────────────────────
+ *
+ * It identifies the specific car a specific buyer is considering. Only outcomes
+ * are recorded, here and in the scraper.
+ */
+
+const TIMEOUT_MS = 30_000
+
+export type ScrapeOutcome =
+  | { ok: true;  extracted: ExtractedListing }
+  | { ok: false; reason: 'unsupported' | 'unreachable' | 'blocked' | 'timeout' | 'not_configured' }
+
+export async function extractListingViaScraper(rawUrl: string): Promise<ScrapeOutcome> {
+  const screened = screenUrl(rawUrl)
+  if (!screened.ok) return { ok: false, reason: 'unsupported' }
+
+  const base = process.env.SCRAPER_URL
+  const key  = process.env.SCRAPER_API_KEY
+  if (!base || !key) return { ok: false, reason: 'not_configured' }
+
+  let payload: { ok?: boolean; title?: string; text?: string; meta?: Record<string, string>; error?: string }
+  try {
+    const res = await fetch(`${base.replace(/\/$/, '')}/extract/listing`, {
+      method:  'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': key },
+      body:    JSON.stringify({ url: screened.url.toString() }),
+      signal:  AbortSignal.timeout(TIMEOUT_MS),
+    })
+    if (!res.ok) return { ok: false, reason: res.status === 400 ? 'unsupported' : 'unreachable' }
+    payload = await res.json()
+  } catch (err) {
+    return { ok: false, reason: (err as Error).name === 'TimeoutError' ? 'timeout' : 'unreachable' }
+  }
+
+  if (!payload.ok) {
+    return { ok: false, reason: payload.error?.startsWith('http_4') ? 'blocked' : 'unreachable' }
+  }
+
+  // Rebuild a minimal document so ONE extractor serves both paths. A second
+  // parser for scraper output would drift from the first, and the rules that
+  // stop a monthly instalment becoming an asking price live in that one.
+  const metaTags = Object.entries(payload.meta ?? {})
+    .map(([k, v]) => `<meta property="${esc(k)}" content="${esc(v)}">`)
+    .join('\n')
+  const html = `<html><head><title>${esc(payload.title ?? '')}</title>${metaTags}`
+    + `<meta property="og:description" content="${esc((payload.text ?? '').slice(0, 1500))}">`
+    + `</head><body></body></html>`
+
+  return { ok: true, extracted: extractFromHtml(html) }
+}
+
+/** Values come from a third-party page — never interpolated raw. */
+function esc(v: string): string {
+  return v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}

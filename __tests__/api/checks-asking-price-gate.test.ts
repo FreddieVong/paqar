@@ -4,17 +4,22 @@ import { NextRequest } from 'next/server'
 import { FakeSupabase } from '../helpers/fake-supabase'
 
 /**
- * The RM0.81 provider call must not fire without an asking price.
+ * A check cannot be created without an asking price.
  *
- * WHY THIS GATE EXISTS
+ * WHY THIS GATE EXISTS — AND WHY THE REASON CHANGED
  *
- * Creating a check triggers getOrFetchVehicleLookup, which bills the vehicle
- * provider. A check with no asking price cannot produce what the buyer came
- * for: /api/checks/[id]/price-evidence answers `needs_asking_price` and stops.
- * So a priceless check spends real money to deliver a dead end.
+ * Originally: creating a check triggered getOrFetchVehicleLookup, which bills
+ * the vehicle provider RM0.81. A priceless check spent real money to deliver a
+ * dead end, so the price had to be enforced before the spend.
  *
- * The form validates too, but a client gate is bypassable and this one costs
- * money, so the route is where it has to hold.
+ * That spend is gone from this route — it now fires from the Billplz webhook,
+ * on the paid side of the line. The gate stays anyway, for the reason that was
+ * always underneath the money one: a check with no asking price cannot produce
+ * what the buyer came for. There is nothing to compare a price against, so the
+ * report has no verdict, no gap, no offer band and no negotiation script.
+ *
+ * The form validates too, but a client gate is bypassable, so the route is
+ * where it has to hold.
  *
  * WHAT THE GATE MUST NOT DO
  *
@@ -56,6 +61,16 @@ const { POST } = await import('@/app/api/checks/route')
 
 const PLATE = 'WXY1234'
 
+/**
+ * The car identity every request needs since migration 032.
+ *
+ * brand/model/year replaced the plate as the cheap identifier, which is what
+ * let the RM0.81 provider call move off this route entirely. Spread into each
+ * body below so the tests exercise a realistic request and fail for the reason
+ * they are actually about.
+ */
+const CAR = { brand: 'Honda', model: 'City', year: '2019' }
+
 async function post(body: Record<string, unknown>) {
   const req = new NextRequest('https://paqar.my/api/checks', {
     method:  'POST',
@@ -75,18 +90,17 @@ beforeEach(() => {
 
 describe('a check cannot be created without an asking price', () => {
   it('rejects a body with no askingPriceRm', async () => {
-    const { status } = await post({ plate: PLATE })
+    const { status } = await post({ plate: PLATE, ...CAR })
     expect(status).toBe(400)
   })
 
   it('spends NO provider call when the price is missing', async () => {
-    await post({ plate: PLATE })
-    // The whole point of the gate: the RM0.81 lookup never happens.
+    await post({ plate: PLATE, ...CAR })
     expect(getOrFetchVehicleLookup).not.toHaveBeenCalled()
   })
 
   it('creates no check row when the price is missing', async () => {
-    await post({ plate: PLATE })
+    await post({ plate: PLATE, ...CAR })
     expect(fake.rows('checks')).toHaveLength(0)
   })
 
@@ -97,27 +111,34 @@ describe('a check cannot be created without an asking price', () => {
     ['a string',           '59000'],
     ['null',               null],
   ])('rejects an asking price that is %s', async (_label, askingPriceRm) => {
-    const { status } = await post({ plate: PLATE, askingPriceRm })
+    const { status } = await post({ plate: PLATE, ...CAR, askingPriceRm })
     expect(status).toBe(400)
     expect(getOrFetchVehicleLookup).not.toHaveBeenCalled()
   })
 })
 
 describe('a valid asking price lets the journey proceed', () => {
-  it('creates the check and spends exactly one provider call', async () => {
-    const { status, body } = await post({ plate: PLATE, askingPriceRm: 59_000 })
+  it('creates the check and spends NOTHING', async () => {
+    const { status, body } = await post({ plate: PLATE, ...CAR, askingPriceRm: 59_000 })
     expect(status).toBe(201)
     expect(body.checkId).toBeTruthy()
-    expect(getOrFetchVehicleLookup).toHaveBeenCalledTimes(1)
+
+    // This used to assert exactly ONE provider call. The call has left this
+    // route: it fired for every stranger who typed a plate, before anyone paid
+    // anything, at a measured conversion of roughly zero. It now runs from the
+    // Billplz webhook (lib/vehicle-lookup-trigger), where it verifies the
+    // seller's claimed variant against the official record instead of telling
+    // the buyer a model they read off the advert themselves.
+    expect(getOrFetchVehicleLookup).not.toHaveBeenCalled()
   })
 
   it.each([1000, 2_000_000])('accepts the boundary value %i', async (askingPriceRm) => {
-    const { status } = await post({ plate: PLATE, askingPriceRm })
+    const { status } = await post({ plate: PLATE, ...CAR, askingPriceRm })
     expect(status).toBe(201)
   })
 
   it('does NOT persist the price on the check — no schema change', async () => {
-    await post({ plate: PLATE, askingPriceRm: 59_000 })
+    await post({ plate: PLATE, ...CAR, askingPriceRm: 59_000 })
     const [row] = fake.rows('checks') as Record<string, unknown>[]
     expect(row).toBeTruthy()
     // buyer_reports.asking_price_rm owns this value. If a column ever appears

@@ -5,11 +5,9 @@ import { getCachedMarketPrices, fetchAndCacheMarketPrices }   from '@/lib/db/mar
 import {
   buildComparableCohort,
   evaluateVerdictEligibility,
-  comparableConfidence,
   isPerformanceModelText,
 }                                                             from '@/lib/comparables'
 import { canonicalModelKeyword }                              from '@/lib/model-catalog'
-import type { Verdict }                                       from '@/types/api'
 
 const schema = z.object({
   brand:       z.string().min(1).max(50),
@@ -22,24 +20,37 @@ const schema = z.object({
 })
 
 /**
- * The response is a JUDGEMENT, not data.
+ * The response is a CAPABILITY answer. Not a judgement, and not data.
  *
- * median, min, max and listingCount are computed here and deliberately never
- * serialised. The count is the one number that describes Paqar's process
- * rather than the buyer's car — it invites auditing the sample instead of
- * acting on the conclusion, and no count reads as impressive (8, 14 and 30 all
- * sound thin). The range and the median are what RM12 sells.
+ * ── WHY THE VERDICT LEFT ───────────────────────────────────────────────────
  *
- * Withholding them at the API rather than in the UI is the point: a field that
- * is never sent cannot leak through a later markup change.
+ * This route used to return the verdict — MAHAL / WAJAR / BERBALOI — for free,
+ * while the paid report sold the median and range behind it. That is backwards,
+ * and it is precisely why a tester asked why anyone would pay RM12 when Mudah
+ * is free: the verdict is the answer, the median is the footnote, and a buyer
+ * already holding the answer has no reason to buy footnotes they could
+ * reconstruct by scrolling a listings page.
+ *
+ * The free surface now answers one question: can Paqar produce a report for
+ * this car at all? The verdict, the figures under it, and the human review that
+ * signs it off are the product.
+ *
+ * ── WHY AT THE ROUTE, NOT IN THE UI ────────────────────────────────────────
+ *
+ * Unchanged from this route's original reasoning, and why it is rewritten in
+ * place rather than wrapped by a new endpoint: a field that is never
+ * serialised cannot leak through a later markup change. Leaving a
+ * verdict-serving route alive next to a coverage one would keep the leak one
+ * import away.
+ *
+ * ── WHY NO COUNT ───────────────────────────────────────────────────────────
+ *
+ * `eligible` is a boolean, with no comparable count beside it. A count
+ * describes Paqar's sample rather than the buyer's car, invites auditing the
+ * sample instead of acting on the answer, and reads as thin at every value it
+ * takes — 8, 14 and 30 all sound small. That judgement predates this change
+ * and survives it.
  */
-function computeVerdict(askingPrice: number, min: number, max: number): Verdict {
-  if (askingPrice < min)         return 'good_deal'
-  if (askingPrice <= max)        return 'fair_price'
-  if (askingPrice <= max * 1.08) return 'slightly_high'
-  return 'overpriced'
-}
-
 export async function POST(request: NextRequest) {
   let body: unknown
   try { body = await request.json() } catch {
@@ -56,42 +67,39 @@ export async function POST(request: NextRequest) {
 
   const { brand, model, year, askingPrice } = parsed.data
 
-  // The model field is free text, so the cache key was whatever the buyer
-  // typed. "Civic 1.8S" and "Civic" became different rows, and the qualified
-  // one held five listings where the plain one held fifteen — a LOW-confidence
-  // answer, or none at all below three, for the same car. Resolve to the
-  // catalogue spelling first so a variant-qualified name reaches the warm row.
-  //
-  // Unrecognised input passes through unchanged, so this can only ever widen a
-  // cohort that a known model already owns.
+  // Resolve to the catalogue spelling first so a variant-qualified name
+  // ("Civic 1.8S") reaches the same warm cache row as the plain one.
+  // Unrecognised input passes through unchanged, so this can only widen a
+  // cohort a known model already owns.
   const modelKeyword = canonicalModelKeyword(brand, model)
 
-  // DB layer uses 'make' — same value, different naming convention
+  // Echoed back so the buyer sees WHICH car Paqar matched before paying.
+  // Silently analysing the wrong model is the failure this experiment most
+  // needs to avoid, and showing the match is the cheapest guard against it —
+  // the buyer corrects us for free.
+  const modelLabel = `${brand} ${model} ${year}`.replace(/\s+/g, ' ').trim()
+
   const cached = await getCachedMarketPrices(brand, modelKeyword, year).catch(() => null)
 
   if (!cached || cached.listings.length === 0) {
     waitUntil(fetchAndCacheMarketPrices(brand, modelKeyword, year).catch(() => {}))
-    return NextResponse.json({ hasData: false, verdictReason: 'insufficient_data' })
+    return NextResponse.json({ eligible: false, reason: 'no_comparables', modelLabel })
   }
 
-  // The free checker has no plate, so no NVIC record and no new-price ratio to
-  // detect a special variant the way the paid report does. What it does have is
-  // the model string the user typed — "Golf GTI" carries the discriminator in
-  // plain sight. Without this the free tool would confidently price a GTI
-  // against base-Golf listings, which is precisely the failure the paid report
-  // goes to lengths to prevent.
+  // "Golf GTI" carries its discriminator in plain sight. Marker-based, NOT
+  // token presence: extractVariantToken is tuned for the structured NVIC field
+  // and its short tokens ("RS", "M", "GR") match mainstream Malaysian trims.
+  // Named local kept deliberately: `variantSource` is what the guard in
+  // __tests__/lib/free-text-variant-detection asserts on, and the name records
+  // that the discriminator comes from FREE TEXT the buyer typed rather than the
+  // structured NVIC field. The two must not be conflated — extractVariantToken
+  // is tuned for the latter and its short tokens ("RS", "M", "GR") match
+  // mainstream Malaysian trims when run over the former.
   const variantSource    = model
-  // Marker-based, NOT the presence of a token. extractVariantToken is tuned for
-  // the structured NVIC variant field; on free text its short tokens ("RS",
-  // "M", "GR") match mainstream Malaysian trims and pushed the cohort into
-  // mixed_variants, which suppresses the verdict entirely. See
-  // isPerformanceModelText.
   const isSpecialVariant = isPerformanceModelText(variantSource)
 
   // Same cohort builder as the paid report — one pipeline, so year filtering,
-  // outlier trimming, variant matching and any future de-duplication apply
-  // identically to both. The hand-rolled pipeline this replaces silently
-  // skipped every one of those guarantees.
+  // outlier trimming and variant matching apply identically to both.
   const cohort = buildComparableCohort(cached.listings, {
     year,
     officialVariant: model,
@@ -101,44 +109,19 @@ export async function POST(request: NextRequest) {
 
   const eligibility = evaluateVerdictEligibility(cohort, askingPrice)
 
-  // Too thin to say anything. Refetch in the background so a polluted or
-  // sparse cached row self-heals before its TTL expires.
+  // Too thin to build a report on. Refetch in the background so a sparse
+  // cached row self-heals before its TTL expires.
   if (eligibility.suppressionReason === 'insufficient_data') {
     waitUntil(fetchAndCacheMarketPrices(brand, modelKeyword, year).catch(() => {}))
-    return NextResponse.json({ hasData: false, verdictReason: 'insufficient_data' })
+    return NextResponse.json({ eligible: false, reason: 'no_comparables', modelLabel })
   }
 
-  const confidence = comparableConfidence(cohort.count)
-
-  // Variant mismatch: the range is real and worth showing, the verdict is not.
-  // Returning an unexplained `verdict: null` would leave the UI guessing, so
-  // the reason travels with it.
-  if (eligibility.suppressionReason === 'mixed_variants') {
-    return NextResponse.json({
-      hasData:       true,
-      verdict:       null,
-      verdictStatus: 'suppressed',
-      verdictReason: 'mixed_variants',
-      confidence,
-      cohortMode:    cohort.mode,
-      variantToken:  cohort.variantToken,
-      fetchedAt:     cached.fetchedAt,
-    })
-  }
-
-  // Eligible. Every figure below is non-null — evaluateVerdictEligibility
-  // returns insufficient_data unless median, min and max all exist.
-  const min = cohort.min!
-  const max = cohort.max!
-
-  return NextResponse.json({
-    hasData:       true,
-    verdict:       computeVerdict(askingPrice, min, max),
-    verdictStatus: eligibility.evidenceLevel === 'provisional' ? 'provisional' : 'normal',
-    verdictReason: null,
-    confidence,
-    cohortMode:    cohort.mode,
-    variantToken:  cohort.variantToken,
-    fetchedAt:     cached.fetchedAt,
-  })
+  // Eligible — and that is the whole answer.
+  //
+  // mixed_variants is NOT a refusal. It suppressed the free VERDICT because a
+  // verdict spanning two variants would be wrong; it never meant a report
+  // could not be built. With no verdict on offer there is nothing to suppress,
+  // and the paid report still renders the comparable evidence while stating
+  // the variant limitation in its own methodology line.
+  return NextResponse.json({ eligible: true, modelLabel })
 }

@@ -29,92 +29,82 @@ const myvi = (price: number, i: number) =>
 
 const post = async (body: unknown) => (await POST(request(body))).json()
 
-describe('price-check verdict policy', () => {
+/**
+ * COVERAGE THRESHOLDS — what decides whether Paqar will sell at all.
+ *
+ * This file used to assert the free VERDICT policy: which cohort sizes earned a
+ * confident verdict, which a provisional one, and which none. The route no
+ * longer issues verdicts — it gave away the answer for free and charged for the
+ * footnotes, which is exactly why nobody paid.
+ *
+ * The thresholds underneath it survived the change and matter more than before.
+ * They no longer decide how loudly Paqar speaks; they decide whether Paqar
+ * takes a stranger's RM29 at all. Below the floor the honest answer is "we
+ * cannot help with this car", and no offer is shown.
+ */
+describe('coverage thresholds decide whether Paqar offers to sell', () => {
   beforeEach(() => vi.mocked(getCachedMarketPrices).mockReset())
 
-  it('issues no verdict on 1 listing', async () => {
-    vi.mocked(getCachedMarketPrices).mockResolvedValue(cached([myvi(45_000, 1)]))
-    const data = await post(myviBody)
-    expect(data.hasData).toBe(false)
-    expect(data.verdictReason).toBe('insufficient_data')
-    expect(data.verdict).toBeUndefined()
-  })
-
-  it('issues no verdict on 2 listings', async () => {
-    // Previously this returned a confident 'fair_price'. Two advertisements is
-    // not a market — and the old fixture here averaged a Golf R against a Golf
-    // GTI, two different special variants, to produce it.
-    vi.mocked(getCachedMarketPrices).mockResolvedValue(cached([
-      { price: 83_888,  title: '(2020)Volkswagen GOLF R', url: 'u1', year: '2020', mileage: null },
-      { price: 144_800, title: 'ORI 2020 Volkswagen GOLF GTI', url: 'u2', year: '2020', mileage: null },
-    ]))
-    const data = await post(golfBody)
-    expect(data.hasData).toBe(false)
-    expect(data.verdictReason).toBe('insufficient_data')
-  })
-
-  it.each([3, 4])('issues a provisional verdict on %i listings', async (n) => {
+  it.each([
+    ['1 listing',  1],
+    ['2 listings', 2],
+  ])('refuses to sell on %s', async (_label, n) => {
     vi.mocked(getCachedMarketPrices).mockResolvedValue(
       cached(Array.from({ length: n }, (_, i) => myvi(45_000 + i * 1_000, i))),
     )
     const data = await post(myviBody)
-    expect(data.hasData).toBe(true)
-    expect(data.verdictStatus).toBe('provisional')
-    expect(data.verdict).toBeTruthy()
-    expect(data.verdictReason).toBeNull()
-    expect(data.confidence).toBe('low')
+    expect(data.eligible).toBe(false)
+    expect(data.reason).toBe('no_comparables')
   })
 
-  it('issues a normal verdict on 5+ listings', async () => {
+  it.each([3, 4, 6])('offers to sell on %i listings', async (n) => {
     vi.mocked(getCachedMarketPrices).mockResolvedValue(
-      cached(Array.from({ length: 6 }, (_, i) => myvi(45_000 + i * 1_000, i))),
+      cached(Array.from({ length: n }, (_, i) => myvi(45_000 + i * 1_000, i))),
     )
     const data = await post(myviBody)
-    expect(data.hasData).toBe(true)
-    expect(data.verdictStatus).toBe('normal')
-    expect(data.verdictReason).toBeNull()
-    expect(data.confidence).toBe('medium')
-    // Asking 50,000 sits exactly at the top of the 45k–50k band → within market.
-    expect(data.verdict).toBe('fair_price')
-    // The band itself is not disclosed — see "free response carries no figures".
-    expect(data.minPrice).toBeUndefined()
-    expect(data.maxPrice).toBeUndefined()
+    expect(data.eligible).toBe(true)
   })
 
-  it('calls an asking price above the band overpriced', async () => {
-    vi.mocked(getCachedMarketPrices).mockResolvedValue(
-      cached(Array.from({ length: 6 }, (_, i) => myvi(45_000 + i * 1_000, i))),
-    )
-    const data = await post({ ...myviBody, askingPrice: 62_000 })
-    expect(data.verdict).toBe('overpriced')
-    expect(data.verdictStatus).toBe('normal')
-  })
-
-  it('still returns hasData false when year filtering leaves too few', async () => {
+  it('refuses when year filtering leaves too few', async () => {
     vi.mocked(getCachedMarketPrices).mockResolvedValue(cached([
       { price: 31_900, title: 'GOLF GTi MK6 18RIM2011Auto80k-85k', url: 'u1', year: null, mileage: null },
       { price: 43_900, title: 'GOLF TSI MK7 F/Exhaust2014Auto90k-95k', url: 'u2', year: null, mileage: null },
       { price: 83_888, title: '(2020)Volkswagen GOLF R', url: 'u3', year: '2020', mileage: null },
     ]))
-    const data = await post(golfBody)
-    expect(data.hasData).toBe(false)
+    expect((await post(golfBody)).eligible).toBe(false)
   })
 
-  it('returns insufficient_data with an empty cache', async () => {
+  it('refuses on an empty cache', async () => {
     vi.mocked(getCachedMarketPrices).mockResolvedValue(cached([]))
     const data = await post(myviBody)
-    expect(data.hasData).toBe(false)
-    expect(data.verdictReason).toBe('insufficient_data')
+    expect(data.eligible).toBe(false)
+    expect(data.reason).toBe('no_comparables')
+  })
+
+  it('never leaks a verdict, whatever the cohort size', async () => {
+    for (const n of [1, 3, 6, 20]) {
+      vi.mocked(getCachedMarketPrices).mockResolvedValue(
+        cached(Array.from({ length: n }, (_, i) => myvi(45_000 + i * 1_000, i))),
+      )
+      const data = await post(myviBody)
+      expect(data, `cohort of ${n}`).not.toHaveProperty('verdict')
+      expect(data, `cohort of ${n}`).not.toHaveProperty('verdictStatus')
+      expect(data, `cohort of ${n}`).not.toHaveProperty('confidence')
+    }
   })
 })
 
-describe('price-check variant safety', () => {
+describe('variant safety still governs the cohort', () => {
   beforeEach(() => vi.mocked(getCachedMarketPrices).mockReset())
 
-  it('suppresses the verdict for a GTI priced against base Golfs', async () => {
-    // The whole point: the free checker used to hand-roll its pipeline with no
-    // variant awareness at all, so it would confidently call a GTI "MAHAL"
-    // against ordinary Golf listings.
+  /**
+   * A GTI against base Golfs used to suppress the verdict. There is no verdict
+   * left to suppress — and mixed variants never meant a report could not be
+   * built, only that a single confident number across two variants would be
+   * wrong. The paid report still renders the comparable evidence and states the
+   * limitation in its own methodology line, so this is a sale Paqar can honour.
+   */
+  it('still offers to sell when the cohort mixes variants', async () => {
     vi.mocked(getCachedMarketPrices).mockResolvedValue(cached(
       Array.from({ length: 8 }, (_, i) => ({
         price: 60_000 + i * 1_000, title: `Volkswagen Golf 1.4 TSI ${i}`,
@@ -123,14 +113,11 @@ describe('price-check variant safety', () => {
     ))
 
     const data = await post({ ...golfBody, model: 'Golf GTI', askingPrice: 150_000 })
-    expect(data.hasData).toBe(true)
-    expect(data.verdict).toBeNull()
-    expect(data.verdictStatus).toBe('suppressed')
-    expect(data.verdictReason).toBe('mixed_variants')
-    expect(data.variantToken).toBe('GTI')
+    expect(data.eligible).toBe(true)
+    expect(data).not.toHaveProperty('verdict')
   })
 
-  it('issues a verdict when enough listings name the same variant', async () => {
+  it('offers to sell when enough listings name the same variant', async () => {
     vi.mocked(getCachedMarketPrices).mockResolvedValue(cached(
       Array.from({ length: 6 }, (_, i) => ({
         price: 145_000 + i * 1_000, title: `Volkswagen Golf GTI Mk7 ${i}`,
@@ -139,50 +126,13 @@ describe('price-check variant safety', () => {
     ))
 
     const data = await post({ ...golfBody, model: 'Golf GTI', askingPrice: 150_000 })
-    expect(data.hasData).toBe(true)
-    expect(data.cohortMode).toBe('same_variant')
-    expect(data.verdictStatus).toBe('normal')
-    expect(data.verdict).toBeTruthy()
+    expect(data.eligible).toBe(true)
   })
 
-  it('treats an ordinary model as a normal cohort', async () => {
+  it('echoes the car it matched, so a wrong match is visible before payment', async () => {
     vi.mocked(getCachedMarketPrices).mockResolvedValue(
       cached(Array.from({ length: 6 }, (_, i) => myvi(45_000 + i * 1_000, i))),
     )
-    const data = await post(myviBody)
-    expect(data.cohortMode).toBe('normal')
-    expect(data.variantToken).toBeNull()
-  })
-
-  it('never returns a verdict together with a suppression reason', async () => {
-    vi.mocked(getCachedMarketPrices).mockResolvedValue(cached(
-      Array.from({ length: 8 }, (_, i) => ({
-        price: 60_000 + i * 1_000, title: `Volkswagen Golf 1.4 TSI ${i}`,
-        url: `u${i}`, year: '2020', mileage: null,
-      })),
-    ))
-    const data = await post({ ...golfBody, model: 'Golf GTI', askingPrice: 150_000 })
-    expect(data.verdictReason == null || data.verdict == null).toBe(true)
-  })
-})
-
-
-describe('free response carries no figures', () => {
-  beforeEach(() => vi.mocked(getCachedMarketPrices).mockReset())
-
-  it('omits median, range and comparable count', async () => {
-    vi.mocked(getCachedMarketPrices).mockResolvedValue(
-      cached(Array.from({ length: 8 }, (_, i) => myvi(45_000 + i * 1_000, i))),
-    )
-    const data = await post(myviBody)
-    // Free answers WHETHER the price is right. Every figure — including the
-    // count, which describes Paqar's sample rather than the buyer's car — is
-    // what RM12 sells. Withheld at the API so a UI change cannot leak them.
-    for (const field of ['medianPrice', 'minPrice', 'maxPrice', 'listingCount']) {
-      expect(data[field], `leaked: ${field}`).toBeUndefined()
-    }
-    // What free DOES carry.
-    expect(data.verdict).toBeTruthy()
-    expect(data.confidence).toBeTruthy()
+    expect((await post(myviBody)).modelLabel).toBe('Perodua Myvi 2020')
   })
 })

@@ -45,16 +45,35 @@ vi.mock('@upstash/ratelimit', () => ({
   },
 }))
 
+// The spend guard FAILS CLOSED when Upstash is unconfigured, so these suites —
+// which are about entitlement/caching, not spend — must present a configured
+// environment or every lookup would be (correctly) suppressed.
+process.env.UPSTASH_REDIS_REST_URL   ??= 'https://fake.upstash.io'
+process.env.UPSTASH_REDIS_REST_TOKEN ??= 'fake-token'
+
 const { POST } = await import('@/app/api/checks/route')
 
 const PLATE = 'WXY1234'
 
-/** Submits a plate as a visitor identified by `sid` (omit for no cookie). */
+/**
+ * Submits a plate as a visitor identified by `sid` (omit for no cookie).
+ *
+ * askingPriceRm is required by the route — a check without one still bills the
+ * RM0.81 provider call but can only ever answer `needs_asking_price`. These
+ * tests are about entitlement isolation, so they send a valid price and say
+ * nothing about it; the gate itself is covered in checks-asking-price-gate.
+ */
 async function checkPlate(sid: string | null, plate = PLATE) {
   const req = new NextRequest('https://paqar.my/api/checks', {
     method:  'POST',
     headers: { 'content-type': 'application/json' },
-    body:    JSON.stringify({ plate }),
+    // brand/model/year are required since migration 032: they identify the
+    // car without a provider call, which is what let the plate become
+    // optional. The plate is still sent here because THIS test is about
+    // plate-keyed cache reuse, which only exists when a plate is supplied.
+    body:    JSON.stringify({
+      plate, brand: 'Honda', model: 'City', year: '2019', askingPriceRm: 59_000,
+    }),
   })
   if (sid) req.cookies.set('paqar_sid', sid)
   const res = await POST(req)
@@ -166,15 +185,40 @@ describe('caching still works where it is safe', () => {
   })
 })
 
-describe('the paid vehicle lookup is still shared', () => {
-  it('does not key the lookup on the check', async () => {
-    // The RM0.81 RegCheck call is deduplicated by plate_lookup_cache on the
-    // plate hash, not by check reuse — scoping checks must not start costing
-    // money. Both visitors trigger the same cache-first helper.
+describe('creating a check spends no provider credit', () => {
+  /**
+   * This replaces an assertion that the route DID call the provider.
+   *
+   * That test existed to prove session-scoping had not broken the plate-hash
+   * deduplication of the RM0.81 lookup — a real concern while the call fired
+   * at intake. It no longer fires at intake at all: every stranger who typed a
+   * plate used to spend provider credit before paying anything, at a measured
+   * conversion of roughly zero, so the call moved to the Billplz webhook
+   * (lib/vehicle-lookup-trigger).
+   *
+   * The property worth pinning is therefore the stronger one — the unpaid path
+   * cannot spend money, no matter how many times it is hit.
+   */
+  it('makes no vehicle lookup for either visitor', async () => {
     const { getOrFetchVehicleLookup } = await import('@/lib/db/plate-lookups')
     await checkPlate('sid_A')
     completeAll()
     await checkPlate('sid_B')
-    expect(getOrFetchVehicleLookup).toHaveBeenCalledWith(PLATE)
+    expect(getOrFetchVehicleLookup).not.toHaveBeenCalled()
+  })
+
+  it('makes no vehicle lookup even when no plate is supplied', async () => {
+    const { getOrFetchVehicleLookup } = await import('@/lib/db/plate-lookups')
+    const req = new NextRequest('https://paqar.my/api/checks', {
+      method:  'POST',
+      headers: { 'content-type': 'application/json' },
+      body:    JSON.stringify({ brand: 'Honda', model: 'City', year: '2019', askingPriceRm: 59_000 }),
+    })
+    req.cookies.set('paqar_sid', 'sid_C')
+    const res = await POST(req)
+
+    // A plateless check is a first-class journey now, not a degraded one.
+    expect(res.status).toBe(201)
+    expect(getOrFetchVehicleLookup).not.toHaveBeenCalled()
   })
 })

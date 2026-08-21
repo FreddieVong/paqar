@@ -113,11 +113,19 @@ describe('the free/paid boundary is unchanged', () => {
   })
 
   it('verdict THRESHOLDS were not touched — this change is wording only', () => {
-    // computeVerdict lives in the API routes; the 1.08 slightly_high band and
-    // the min/max comparisons must survive a copy edit untouched.
+    // computeVerdict left /api/price-check with the free verdict itself: that
+    // route now answers coverage only, so there is no classification there to
+    // protect. The thresholds still govern the PAID report, and the
+    // price-evidence route is where they live.
+    const evidence = read('app/api/checks/[id]/price-evidence/route.ts')
+    expect(evidence).toMatch(/askingPrice < min\s*\)?\s*\??\s*'good_deal'/)
+    expect(evidence).toMatch(/max \* 1\.08/)
+  })
+
+  it('the free coverage route classifies nothing at all', () => {
     const priceCheck = read('app/api/price-check/route.ts')
-    expect(priceCheck).toMatch(/askingPrice < min\s*\)?\s*return 'good_deal'/)
-    expect(priceCheck).toMatch(/max \* 1\.08/)
+    expect(priceCheck).not.toContain('good_deal')
+    expect(priceCheck).not.toContain('1.08')
   })
 })
 

@@ -28,6 +28,14 @@ import { getOrFetchVehicleLookup } from '@/lib/db/plate-lookups'
  * answered. Concurrent presses share one in-flight call.
  */
 
+/**
+ * The lookup retries once on a transient failure (LOOKUP_TIME_BUDGET_MS,
+ * 20.4s worst case) and this route AWAITS it, unlike /api/checks. Without an
+ * explicit ceiling above that budget the retry turns a slow provider into a
+ * 504 — strictly worse than the error card the button exists to escape.
+ */
+export const maxDuration = 30
+
 const ratelimit = new Ratelimit({
   redis:   Redis.fromEnv(),
   // Deliberately tighter than the poll route: every allowed call here can cost

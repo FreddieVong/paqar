@@ -60,11 +60,59 @@ import { isIP } from 'node:net'
  * pasted a perfectly good Carlist link has made no mistake to report.
  */
 
-/** Hosts Paqar may automatically request. Suffix-matched. NOT an acceptance list. */
-const ALLOWED_HOSTS = [
-  'mudah.my',
-  'www.mudah.my',
-] as const
+/**
+ * Hosts a listing page can be READ from. Suffix-matched. NOT an acceptance list.
+ *
+ * ── THE APP NEVER FETCHES THESE ITSELF ─────────────────────────────────────
+ *
+ * A direct fetch from Vercel returns 403 every time: Mudah answers non-browser
+ * clients that way, and its robots.txt forbids automated access outright.
+ * Getting past that from the app would mean the app spoofing a browser, which
+ * it does not do.
+ *
+ * Reading is delegated to the scraper service, which already runs a real
+ * browser against Mudah for the comparables the entire coverage gate depends
+ * on. That access decision predates this code and is not widened by it — same
+ * service, same context, one advert instead of a search.
+ *
+ * Carlist and Facebook stay absent: Carlist sits behind Cloudflare, Facebook
+ * requires authentication. Both reach the REVIEWER as a link a human opens.
+ *
+ * ── HISTORY ────────────────────────────────────────────────────────────────
+ *
+ * mudah.my was on this list. It should never have been: mudah.my/robots.txt
+ * opens with
+ *
+ *   "It is expressly forbidden to use spiders or other automated methods to
+ *    access mudah.my. Only if mudah.my has given special permit such access is
+ *    allowed."
+ *
+ * and the site returns 403 to every non-browser request. So the feature never
+ * worked in production — every URL produced an empty summary and the buyer was
+ * dropped into a manual form.
+ *
+ * The error was mine and it was avoidable: this module already refuses Carlist
+ * and Facebook on precisely this reasoning, and I allowlisted the one remaining
+ * host without ever reading its robots.txt.
+ *
+ * Getting past a 403 by presenting a browser user-agent would be circumventing
+ * an access control the site states in words. It is not done, and the empty
+ * list is what enforces that rather than a comment asking people not to.
+ *
+ * ── WHAT REPLACES IT ───────────────────────────────────────────────────────
+ *
+ * The URL is still ACCEPTED and stored on every intake — a human reviewer opens
+ * it, which is a person reading a page they were linked to, not automation.
+ * That was always the product's real advantage over competitors who can only
+ * read what they can scrape.
+ *
+ * Extraction now comes from SCREENSHOTS, which are the buyer's own content,
+ * lawfully theirs to share, and readable from any source including the ones no
+ * scraper can reach.
+ *
+ * A host may be added here only with documented permission from that site.
+ */
+const ALLOWED_HOSTS: readonly string[] = ['mudah.my', 'www.mudah.my']
 
 /** Redirect budget. Listing pages redirect once or twice, never five times. */
 const MAX_REDIRECTS = 3

@@ -37,16 +37,24 @@ vi.mock('@upstash/ratelimit', () => ({
   },
 }))
 
+// The spend guard FAILS CLOSED when Upstash is unconfigured, so these suites —
+// which are about entitlement/caching, not spend — must present a configured
+// environment or every lookup would be (correctly) suppressed.
+process.env.UPSTASH_REDIS_REST_URL   ??= 'https://fake.upstash.io'
+process.env.UPSTASH_REDIS_REST_TOKEN ??= 'fake-token'
+
 const { POST }     = await import('@/app/api/checks/route')
 const { getCheck, getCachedCheck } = await import('@/lib/db/checks')
 
 const PLATE = 'WXY1234'
 const FUTURE = () => new Date(Date.now() + 86_400_000).toISOString()
 
+// askingPriceRm is required by the route — see checks-asking-price-gate. These
+// tests are about session-scoped check reuse, so they always send a valid one.
 async function checkPlate(sid: string | null, plate = PLATE) {
   const req = new NextRequest('https://paqar.my/api/checks', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ plate }),
+    body: JSON.stringify({ plate, brand: 'Honda', model: 'City', year: '2019', askingPriceRm: 59_000 }),
   })
   if (sid) req.cookies.set('paqar_sid', sid)
   return (await POST(req)).json() as Promise<{ checkId: string; claimToken: string }>
@@ -141,10 +149,19 @@ describe('3. a fresh check when the session differs', () => {
   })
 })
 
-describe('4. the paid vehicle lookup stays shared across sessions', () => {
-  it('routes every session through the same plate-keyed cache helper', async () => {
-    // The RM0.81 provider call is deduplicated by plate_lookup_cache on the
-    // plate hash. Scoping CHECKS must not start costing money per visitor.
+describe('4. the paid vehicle lookup is not on the unpaid path at all', () => {
+  /**
+   * This section used to assert that session-scoped checks still shared the
+   * plate-keyed lookup cache, so that scoping did not start costing RM0.81 per
+   * visitor. That concern is now moot in the strongest possible way: creating a
+   * check makes no provider call whatsoever. The lookup fires from the Billplz
+   * webhook (lib/vehicle-lookup-trigger), on the paid side of the line.
+   *
+   * The dedup property it protected still holds — plate_lookup_cache is keyed
+   * on the plate hash — and lib/vehicle-lookup-trigger owns it now, with the
+   * limiter matrix in lookup-spend-guard-matrix driving it directly.
+   */
+  it('spends nothing however many sessions check the same plate', async () => {
     const { getOrFetchVehicleLookup } = await import('@/lib/db/plate-lookups')
     vi.mocked(getOrFetchVehicleLookup).mockClear()
 
@@ -152,14 +169,16 @@ describe('4. the paid vehicle lookup stays shared across sessions', () => {
     await checkPlate('sid_B'); completeAll()
     await checkPlate('sid_C')
 
-    for (const call of vi.mocked(getOrFetchVehicleLookup).mock.calls) {
-      expect(call[0]).toBe(PLATE)
-    }
-    expect(vi.mocked(getOrFetchVehicleLookup).mock.calls.length).toBeGreaterThan(0)
+    expect(getOrFetchVehicleLookup).not.toHaveBeenCalled()
   })
 
-  it('never keys the lookup on a check id or a session', async () => {
+  it('the route contains no provider call at all', async () => {
     const src = readFileSync(join(__dirname, '..', '..', 'app/api/checks/route.ts'), 'utf-8')
+    expect(src).not.toContain('getOrFetchVehicleLookup')
+  })
+
+  it('the trigger still keys the lookup on the plate, never on a session', async () => {
+    const src = readFileSync(join(__dirname, '..', '..', 'lib/vehicle-lookup-trigger.ts'), 'utf-8')
     expect(src).toContain('getOrFetchVehicleLookup(plate)')
     expect(src).not.toMatch(/getOrFetchVehicleLookup\([^)]*session/i)
   })

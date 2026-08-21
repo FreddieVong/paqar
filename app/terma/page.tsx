@@ -54,7 +54,7 @@ export default function TermaPage() {
             },
             {
               title: 'Pembayaran dan Bayaran Balik',
-              body: 'Semua pembayaran adalah muktamad. Laporan Pembeli (RM12) tidak boleh dikembalikan setelah laporan dijana. Jika anda menghadapi masalah teknikal yang menghalang akses kepada laporan anda, hubungi kami dalam masa 7 hari.',
+              body: 'Laporan Pembeli (RM29) dikembalikan sepenuhnya jika Paqar tidak dapat menyiapkan laporan untuk kenderaan anda — contohnya apabila tiada cukup iklan setanding untuk membuat keputusan. Setelah laporan disemak dan dilepaskan kepada anda, bayaran adalah muktamad. Jika anda menghadapi masalah teknikal yang menghalang akses kepada laporan anda, hubungi kami dalam masa 7 hari.',
             },
             {
               title: 'Had Liabiliti',

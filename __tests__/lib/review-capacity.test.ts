@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import {
-  capacityState, withinReviewHours, serviceDayKey, klParts,
+  capacityState, withinReviewHours, serviceDayKey, klParts, serviceDayStart,
   DAILY_CAPACITY, TYPICAL_MINUTES, MAX_PROMISE_HOURS,
 } from '@/lib/review-capacity'
 
@@ -108,5 +110,50 @@ describe('the copy promises only what is guaranteed', () => {
       expect(c, c).not.toMatch(/dijamin|pasti siap|guarantee/i)
       if (c.includes('minit')) expect(c).toMatch(/[Bb]iasanya/)
     }
+  })
+})
+
+describe('serviceDayStart', () => {
+  it('returns 10:00 MYT of the current sitting', () => {
+    // 14:00 MYT on the 21st -> sitting began 10:00 MYT on the 21st (02:00 UTC).
+    expect(serviceDayStart(kl('2026-08-21', 14)).toISOString()).toBe('2026-08-21T02:00:00.000Z')
+  })
+
+  it('reaches back to yesterday for an after-midnight order', () => {
+    // 01:00 MYT on the 22nd is still the sitting that began on the 21st.
+    expect(serviceDayStart(kl('2026-08-22', 1)).toISOString()).toBe('2026-08-21T02:00:00.000Z')
+  })
+
+  it('rolls forward once the sitting has closed', () => {
+    expect(serviceDayStart(kl('2026-08-22', 11)).toISOString()).toBe('2026-08-22T02:00:00.000Z')
+  })
+})
+
+/**
+ * The gate must sit BEFORE a check exists, and therefore before checkout —
+ * accepting money on a full day sells a promise Paqar knows it cannot keep.
+ */
+describe('the convert endpoint is capacity-gated', () => {
+  const src = readFileSync(
+    join(__dirname, '..', '..', 'app/api/listing-intake/[id]/convert/route.ts'), 'utf8')
+
+  it('checks capacity before creating the check', () => {
+    expect(src).toContain('capacityState(')
+    expect(src.indexOf('capacityState(')).toBeLessThan(src.indexOf('convertIntakeToCheck('))
+  })
+
+  it('refuses with a truthful message rather than a bare error', () => {
+    expect(src).toContain('at_capacity')
+    expect(src).toContain('cap.etaCopy')
+  })
+
+  /**
+   * Refusing a real buyer to protect a ceiling that has never been reached is
+   * worse than briefly exceeding it, so a counting failure allows the sale.
+   */
+  it('allows the sale when the count itself fails', () => {
+    const block = src.slice(src.indexOf('try {'), src.indexOf('const plate'))
+    expect(block).toContain('catch')
+    expect(block).toContain('allowing')
   })
 })

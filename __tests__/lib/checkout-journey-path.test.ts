@@ -151,7 +151,11 @@ describe('the client fires the submit event before Billplz is ever called', () =
   })
 
   it('carries the tier as an amount, never a form value', () => {
-    expect(form).toMatch(/amountCents:\s*addJomCheck \? 10000 : 1200/)
+    // The amount is now named rather than inlined (lib/pricing), so the shape
+    // this guards is "a constant chosen by the tier", not two literals. The
+    // point of the assertion is unchanged: nothing the buyer typed may decide
+    // what they are charged.
+    expect(form).toMatch(/amountCents:\s*addJomCheck \? COMBINED_CENTS : BASE_REPORT_CENTS/)
     // The submit event's payload must not reach for anything the buyer typed.
     const call = form.slice(
       form.indexOf("trackAdEvent('payment_form_submitted'"),

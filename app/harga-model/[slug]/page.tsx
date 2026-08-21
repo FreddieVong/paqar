@@ -3,7 +3,7 @@ import { notFound }       from 'next/navigation'
 import Link               from 'next/link'
 import { Nav }            from '@/components/layout/Nav'
 import { Shell }          from '@/components/layout/Shell'
-import { OverpricedCheckerForm } from '@/components/check/OverpricedCheckerForm'
+import { ListingIntakeForm } from '@/components/check/ListingIntakeForm'
 import { getCachedMarketPrices } from '@/lib/db/market-prices'
 import { buildMarketYearStats }  from '@/lib/comparables'
 import { formatFetchedAt, MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
@@ -440,10 +440,9 @@ export default async function YearModelPage({ params }: Props) {
             <p className="font-heading font-bold text-[14px] text-[#111827]">
               Ada {info.model} {year} yang nak dibeli? Masukkan harga penjual:
             </p>
-            <OverpricedCheckerForm
+            <ListingIntakeForm
               initialBrand={info.brand}
               initialModel={info.model}
-              initialYear={year}
             />
           </div>
 

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { waitUntil } from '@vercel/functions'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis }     from '@upstash/redis'
+import { normaliseListingUrl, normaliseConcern } from '@/lib/listing-intake'
 import { plateSchema } from '@/lib/validation/plate'
 import { encrypt, hash } from '@/lib/crypto'
 import {
@@ -13,66 +11,67 @@ import {
   getCheckByIdempotencyKey,
 } from '@/lib/db/checks'
 import { checkHasPaidReport } from '@/lib/db/buyer-reports'
-import { getOrFetchVehicleLookup } from '@/lib/db/plate-lookups'
-import { recordAdEvent } from '@/lib/db/ad-attribution'
-import { eventId as derive, SESSION_COOKIE } from '@/lib/attribution'
-import { eventForLookupStatus, isTerminalLookupStatus, VALUATION_PATHS } from '@/lib/funnel-stages'
+import { SESSION_COOKIE } from '@/lib/attribution'
 
-// Vehicle lookups cost RM0.81/call — cap NEW-plate lookups per IP so the free
-// teaser can't be farmed. Already-cached plates never hit the API.
-const lookupLimit = new Ratelimit({
-  redis:   Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, '1 d'),
-  prefix:  'paqar:vlookup',
-  timeout: 1000,
-})
+// THIS ROUTE SPENDS NOTHING.
+//
+// It used to fire the RM0.81 vehicle lookup, so every stranger who typed a
+// plate cost real money before paying anything — at a measured conversion of
+// roughly zero. The call now lives in lib/vehicle-lookup-trigger and runs from
+// the Billplz webhook, where it verifies the seller's claimed variant against
+// the official record rather than telling the buyer a model they read off the
+// advert themselves.
+//
+// The extended maxDuration went with it: nothing here waits on a provider.
 
 /**
- * Background-fetch vehicle data so the free teaser is ready by the time the
- * results page polls. Best-effort: never blocks or fails the check itself.
+ * askingPriceRm is REQUIRED, and is deliberately validated then DISCARDED.
  *
- * Also records the TERMINAL lookup outcome as a funnel event. The event is
- * derived from the persisted status, never inferred from a null vehicle —
- * `not_found` (a valid outcome: the plate simply is not on record) and a
- * provider failure are different events and must never be summed.
+ * WHY REQUIRED. A check without an asking price cannot produce the thing the
+ * buyer came for: there is nothing to compare against, so the report has no
+ * verdict, no gap, no offer band and no negotiation script. This used to be
+ * framed as protecting the RM0.81 provider call, which fired here; that call
+ * has moved to the Billplz webhook, and the requirement outlived its original
+ * justification because the underlying one was always the product, not the
+ * cost. Enforced at the route because the client gate is bypassable.
+ *
+ * WHY DISCARDED. The column is buyer_reports.asking_price_rm (migration 004),
+ * and a buyer_report does not exist yet at check creation. Persisting it here
+ * would need a new column on `checks` — a schema change this deliberately does
+ * not make. The existing path still owns storage: the form carries the value
+ * in the redirect query string and
+ * /api/laporan-pembeli/[checkId]/asking-price writes it via updateAskingPrice.
  */
-function triggerVehicleLookup(
-  plate: string,
-  ip: string,
-  ctx: { sessionId: string | null; journeyId: string | null; checkId: string; plateHash: string }
-) {
-  waitUntil((async () => {
-    try {
-      const { success } = await lookupLimit.limit(ip).catch(() => ({ success: true }))
-      if (!success) return
-      const outcome = await getOrFetchVehicleLookup(plate)
-
-      // A legacy/unknown (null) or pending status is deliberately silent.
-      if (!ctx.sessionId || !outcome.status || !isTerminalLookupStatus(outcome.status)) return
-      const mapped = eventForLookupStatus(outcome.status)
-      if (!mapped) return
-
-      await recordAdEvent({
-        sessionId:     ctx.sessionId,
-        eventName:     mapped.event,
-        // Keyed on journey + plate hash so the same outcome recorded twice is
-        // one event, while re-checking the same plate in a new journey is not.
-        eventId:       derive.plateLookup(mapped.event, ctx.journeyId ?? ctx.checkId, ctx.plateHash),
-        checkId:       ctx.checkId,
-        journeyId:     ctx.journeyId,
-        valuationPath: VALUATION_PATHS.plateReport,
-        errorStage:    mapped.errorStage ?? null,
-        errorCode:     outcome.errorCode ?? mapped.errorCode ?? null,
-      })
-    } catch (err) {
-      console.error('[checks] vehicle lookup event failed', err)
-    }
-  })())
-}
-
 const requestSchema = z.object({
-  plate:           plateSchema,
+  /**
+   * OPTIONAL now, and that is the point.
+   *
+   * The plate used to be the only way to identify a car, so it was required —
+   * and identifying the car cost RM0.81 on every stranger who typed one,
+   * spent before anybody paid anything. brand/model/year identify it for
+   * nothing, so the plate is now a VERIFICATION input: supplied, it lets the
+   * paid report check what the seller claims against the official record.
+   */
+  plate:           plateSchema.optional(),
+  brand:           z.string().min(1).max(50),
+  model:           z.string().min(1).max(50),
+  year:            z.string().regex(/^\d{4}$/),
   idempotencyKey:  z.string().uuid().optional(),
+  askingPriceRm:   z.number().int().min(1000).max(2_000_000),
+  /**
+   * Both OPTIONAL, and both persisted — unlike askingPriceRm above.
+   *
+   * They are accepted loosely on purpose. A buyer who pastes a broken link or
+   * types nothing must still get a check; refusing the submission would trade
+   * a sale for a field that only makes the reviewer's job easier. Anything
+   * unusable is normalised to null rather than rejected.
+   *
+   * Validated by lib/listing-intake, not here, because normaliseListingUrl
+   * enforces a scheme allowlist that exists for a security reason: this value
+   * becomes an href in the authenticated /admin/review page.
+   */
+  listingUrl:      z.string().max(4096).optional(),
+  buyerConcern:    z.string().max(8000).optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -91,7 +90,9 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { plate, idempotencyKey } = parsed.data
+  const { plate, brand, model, year, idempotencyKey } = parsed.data
+  const listingUrl   = normaliseListingUrl(parsed.data.listingUrl)
+  const buyerConcern = normaliseConcern(parsed.data.buyerConcern)
 
   // Idempotency check
   if (idempotencyKey) {
@@ -101,9 +102,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1'
-
-  const plateHash = hash(plate)
+  const plateHash = plate ? hash(plate) : null
   const sessionId = request.cookies.get(SESSION_COOKIE)?.value ?? null
 
   // Reuse this visitor's OWN earlier check for the plate, never a stranger's:
@@ -113,12 +112,13 @@ export async function POST(request: NextRequest) {
   // checkHasPaidReport stays as defence in depth. It covers the same-session
   // case — one visitor who paid and then re-checks the same plate gets a fresh
   // check rather than being handed back into a paid one.
-  const cached = await getCachedCheck(plateHash, sessionId)
+  //
+  // Only a plate can key this. Without one there is nothing to match on, and
+  // every submission is its own check — which is correct: two buyers looking
+  // at two different Honda City 2019 adverts are not the same enquiry.
+  const cached = plateHash ? await getCachedCheck(plateHash, sessionId) : null
 
   if (cached && !(await checkHasPaidReport(cached.id))) {
-    triggerVehicleLookup(plate, ip, {
-      sessionId, journeyId: idempotencyKey ?? null, checkId: cached.id, plateHash,
-    })
     return NextResponse.json({ checkId: cached.id, claimToken: cached.claim_token })
   }
 
@@ -130,11 +130,16 @@ export async function POST(request: NextRequest) {
   try {
     await createCheck({
       id:             checkId,
-      plateEncrypted: encrypt(plate),
+      plateEncrypted: plate ? encrypt(plate) : null,
       plateHash,
+      brand,
+      model,
+      year,
       claimToken,
       idempotencyKey,
       sessionId,
+      listingUrl,
+      buyerConcern,
       expiresAt,
     })
     await setCheckComplete(checkId)
@@ -143,9 +148,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create check' }, { status: 500 })
   }
 
-  triggerVehicleLookup(plate, ip, {
-    sessionId, journeyId: idempotencyKey ?? null, checkId, plateHash,
-  })
-
+  // NO PROVIDER CALL HERE. The RM0.81 lookup fires from the Billplz webhook
+  // once the buyer has paid — see lib/vehicle-lookup-trigger for why.
   return NextResponse.json({ checkId, claimToken }, { status: 201 })
 }

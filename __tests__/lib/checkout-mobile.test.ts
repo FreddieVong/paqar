@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { BASE_REPORT_CENTS } from '@/lib/pricing'
 
 /**
  * The optional WhatsApp field at checkout must never be able to cost a sale.
@@ -135,7 +136,12 @@ describe('Billplz rejecting the mobile cannot cost the sale', () => {
     const { mobile: _second, ...secondRest } = createBill.mock.calls[1]![0]
     expect(secondRest).toEqual(firstRest)
     // Amount above all: a retry must never re-price the sale.
-    expect(secondRest.amountCents).toBe(1200)
+    // Read from lib/pricing rather than pinned to a literal: this assertion is
+    // about the retry being IDENTICAL to the first attempt, not about the base
+    // report costing any particular amount. A literal here turned a price
+    // change into a spurious failure of a test that has nothing to say about
+    // pricing.
+    expect(secondRest.amountCents).toBe(BASE_REPORT_CENTS)
   })
 
   it('does not retry when no mobile was attached', async () => {

@@ -171,11 +171,13 @@ describe('the RM12 CTA no longer sells the now-free verdict', () => {
     // That is shown free directly above this block now; charging for it reads
     // as a bait.
     expect(pitch).not.toContain('Tahu sama ada harga kereta itu mahal, wajar atau berbaloi')
-    expect(pitch).not.toContain('Harga pasaran sebenar')
+    // Case-INSENSITIVE: the old sweep matched 'harga pasaran sebenar' in
+    // lowercase and missed four capitalised copies in OverpricedCheckerForm.
+    expect(pitch).not.toMatch(/harga pasaran sebenar/i)
   })
 
   it('sells the next action instead', () => {
-    expect(pitch).toContain('Lihat harga pasaran sebenar')
+    expect(pitch).toContain('Lihat harga tengah iklan setanding')
     expect(pitch).toContain('jumlah yang patut anda tawarkan')
     expect(pitch).toContain('Anggaran rundingan')
     expect(pitch).toContain('Skrip bercakap dengan penjual')

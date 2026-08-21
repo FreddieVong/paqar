@@ -46,67 +46,57 @@ describe('isPrivateAddress', () => {
  * unbounded; the set of listing sites Paqar has a documented reason to read is
  * two hostnames.
  */
+/**
+ * NOTHING is server-fetched.
+ *
+ * mudah.my was allowlisted here. Its robots.txt opens "It is expressly
+ * forbidden to use spiders or other automated methods to access mudah.my", and
+ * it returns 403 to every non-browser request — so the feature never worked in
+ * production, and should not have been attempted. Carlist and Facebook were
+ * already refused on identical reasoning; the one host on the list was the one
+ * whose terms were never checked.
+ */
+/**
+ * The app itself fetches NOTHING. Reading is delegated to the scraper service,
+ * which already runs a real browser against Mudah for comparables — the
+ * pipeline the coverage gate depends on. mudah.my is listed here because that
+ * service can read it, not because this process may.
+ *
+ * A direct fetch from Vercel returns 403 every time and mudah.my/robots.txt
+ * forbids automated access outright, so the app spoofing a browser is never the
+ * answer.
+ */
 describe('isFetchableHost', () => {
   it.each(['mudah.my', 'www.mudah.my', 'MUDAH.MY', 'www.mudah.my.'])(
-    'allows %s', (h) => expect(isFetchableHost(h)).toBe(true),
+    'marks %s as readable via the scraper', (h) => expect(isFetchableHost(h)).toBe(true),
   )
 
   it.each([
-    'localhost',
-    'evil.com',
-    // The classic suffix trick — must not match on substring.
-    'mudah.my.evil.com',
-    'notmudah.my',
-    '169.254.169.254',
-  ])('refuses %s', (h) => expect(isFetchableHost(h)).toBe(false))
+    'carlist.my', 'www.carlist.my', 'facebook.com', 'www.facebook.com',
+    'somedealer.com.my', 'localhost', 'evil.com', '169.254.169.254',
+    'mudah.my.evil.com', 'notmudah.my',
+  ])('does not read %s', (h) => expect(isFetchableHost(h)).toBe(false))
 
   /**
-   * Carlist answers 403 behind Cloudflare and Facebook requires auth. Getting
-   * past either is bypassing an access control, so neither is FETCHED — those
-   * sources reach the REVIEWER as a link a human opens.
+   * Presenting a browser user-agent from the APP would be this process
+   * circumventing an access control. Delegating to the service that already
+   * holds that access is a different decision, and one the owner made.
    */
-  it.each(['carlist.my', 'www.carlist.my', 'facebook.com', 'www.facebook.com'])(
-    'does not fetch %s', (h) => expect(isFetchableHost(h)).toBe(false),
-  )
-})
-
-/**
- * ACCEPTANCE IS A DIFFERENT QUESTION FROM FETCHING.
- *
- * A Carlist link is useful precisely because a human opens it during review.
- * Refusing to STORE it because we cannot FETCH it would discard the product's
- * main advantage for no security benefit — storing a string is not a request.
- */
-describe('unfetchable URLs are still accepted and stored', () => {
-  it.each([
-    'https://www.carlist.my/used-cars/honda/city/2019/1234567',
-    'https://www.facebook.com/marketplace/item/1234567890/',
-    'https://somedealer.com.my/stok/honda-city-2019',
-  ])('accepts %s for the reviewer', async (url) => {
-    const { normaliseListingUrl } = await import('@/lib/listing-intake')
-    expect(normaliseListingUrl(url)).toBe(url)
+  it('the app identifies itself honestly and never spoofs a browser', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const src = readFileSync(join(__dirname, '..', '..', 'lib/listing-fetch.ts'), 'utf8')
+    expect(src).toContain('PaqarBot/1.0')
+    expect(src).not.toMatch(/Mozilla\/5\.0|Chrome\/1|Safari\/5/)
   })
 
-  it.each([
-    'https://www.carlist.my/used-cars/honda/city/2019/1234567',
-    'https://www.facebook.com/marketplace/item/1234567890/',
-  ])('but does not attempt to fetch %s', async (url) => {
-    const { isExtractable } = await import('@/lib/listing-fetch')
-    expect(isExtractable(url)).toBe(false)
+  it('reading goes through the scraper, not through the app', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const route = readFileSync(join(__dirname, '..', '..', 'app/api/listing-intake/[id]/extract/route.ts'), 'utf8')
+    expect(route).toContain('extractListingViaScraper')
+    expect(route).not.toContain('fetchListingHtml')
   })
-
-  it('marks an allowlisted URL as extractable', async () => {
-    const { isExtractable } = await import('@/lib/listing-fetch')
-    expect(isExtractable('https://www.mudah.my/honda-city-2019-108451234.htm')).toBe(true)
-  })
-
-  /** Acceptance still refuses genuinely dangerous shapes. */
-  it.each(['javascript:alert(1)', 'data:text/html,x', 'file:///etc/passwd'])(
-    'still refuses %s at acceptance', async (url) => {
-      const { normaliseListingUrl } = await import('@/lib/listing-intake')
-      expect(normaliseListingUrl(url)).toBeNull()
-    },
-  )
 })
 
 describe('screenUrl', () => {
@@ -115,9 +105,8 @@ describe('screenUrl', () => {
     return r.ok ? null : r.reason
   }
 
-  it('accepts a real listing URL', () => {
-    const r = screenUrl('https://www.mudah.my/honda-city-2019-108451234.htm')
-    expect(r.ok).toBe(true)
+  it('accepts a scraper-readable listing URL', () => {
+    expect(screenUrl('https://www.mudah.my/honda-city-2019-108451234.htm').ok).toBe(true)
   })
 
   it.each([

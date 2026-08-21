@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { VALID_AMOUNTS_CENTS } from '@/lib/pricing'
 import { z } from 'zod'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
@@ -76,7 +77,15 @@ const schema = z.object({
   billId:    z.string().max(100).optional(),
   // Tier price in sen. Bounded to the two real tiers plus the upgrade so this
   // can never become a free-form numeric channel out of the browser.
-  amountCents: z.union([z.literal(1200), z.literal(8800), z.literal(10000)]).optional(),
+  // Derived from lib/pricing so a price change cannot silently start
+  // rejecting the purchase events it is supposed to record. A bare literal
+  // union here would have kept validating 1200 after the product moved to
+  // RM29, dropping every real purchase event on the floor.
+  amountCents: z.union([
+    z.literal(VALID_AMOUNTS_CENTS[0]),
+    z.literal(VALID_AMOUNTS_CENTS[1]),
+    z.literal(VALID_AMOUNTS_CENTS[2]),
+  ]).optional(),
   // The sending page's document.referrer, already reduced to a hostname by the
   // client. Nullable and optional so an older cached bundle that omits it keeps
   // working unchanged. Only ever reaches ad_sessions.referrer, which is written

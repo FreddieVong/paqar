@@ -75,15 +75,73 @@ export type VehicleLookupOutcome =
   | { status: 'provider_timeout' }
   | { status: 'provider_error';   errorCode: 'provider_error' | 'malformed_response' | 'network_error' }
 
+/** One attempt's ceiling. Unchanged — see LOOKUP_TIME_BUDGET_MS. */
+const ATTEMPT_TIMEOUT_MS = 10_000
+
+/**
+ * One retry, never more.
+ *
+ * 16 of the last 116 lookups failed (13.8%): 13 provider_timeout and 3
+ * provider_error. On 2026-08-12, the first day of paid traffic, 3 of 8 failed.
+ * Every one of those is a buyer who typed a plate — the most expensive point
+ * in the funnel to lose someone, because the ad has already been paid for.
+ *
+ * A timeout says nothing about the plate; it says the provider was briefly
+ * unreachable. Asking once more costs RM0.81 in the worst case and recovers a
+ * journey worth far more. Two attempts rather than three because a provider
+ * that has failed twice in 20 seconds is having an outage, not a blip, and the
+ * buyer is waiting.
+ */
+const MAX_ATTEMPTS = 2
+
+/** Short on purpose: a human is watching a spinner, not a queue worker. */
+const RETRY_BACKOFF_MS = 400
+
+/**
+ * Worst-case wall time for a full lookup.
+ *
+ * Every route that awaits a lookup MUST declare a maxDuration above this, or
+ * the retry converts a slow provider into a killed function — a 504 where the
+ * buyer previously at least got a usable error card. __tests__ pins the two
+ * call sites to this number.
+ */
+export const LOOKUP_TIME_BUDGET_MS =
+  MAX_ATTEMPTS * ATTEMPT_TIMEOUT_MS + (MAX_ATTEMPTS - 1) * RETRY_BACKOFF_MS
+
+/**
+ * Transient means "the provider did not answer", never "the provider said no".
+ *
+ * not_found, malformed_response and a non-OK HTTP status are all ANSWERS. They
+ * would return identically on a second call, so retrying them would double the
+ * RM0.81 to hear the same thing.
+ */
+function isTransient(outcome: VehicleLookupOutcome): boolean {
+  return outcome.status === 'provider_timeout'
+      || (outcome.status === 'provider_error' && outcome.errorCode === 'network_error')
+}
+
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
+
 export async function lookupVehicleDetailed(plate: string): Promise<VehicleLookupOutcome> {
   const username = env.VEHICLEAPI_USERNAME
   // No credential is a configuration fault, not a missing vehicle.
   if (!username) return { status: 'provider_error', errorCode: 'provider_error' }
 
+  let outcome = await attemptLookup(plate, username)
+
+  for (let attempt = 2; attempt <= MAX_ATTEMPTS && isTransient(outcome); attempt++) {
+    await sleep(RETRY_BACKOFF_MS)
+    outcome = await attemptLookup(plate, username)
+  }
+
+  return outcome
+}
+
+async function attemptLookup(plate: string, username: string): Promise<VehicleLookupOutcome> {
   let res: Response
   try {
     const url = `${ENDPOINT}?RegistrationNumber=${encodeURIComponent(plate.replace(/\s+/g, ''))}&username=${encodeURIComponent(username)}`
-    res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
+    res = await fetch(url, { signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS) })
   } catch (err) {
     // AbortSignal.timeout raises TimeoutError; anything else is transport.
     const isTimeout = err instanceof Error && err.name === 'TimeoutError'

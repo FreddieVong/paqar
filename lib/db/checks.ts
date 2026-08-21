@@ -3,22 +3,41 @@ import type { Check } from '@/types/domain'
 
 export async function createCheck(params: {
   id: string
-  plateEncrypted: string
-  plateHash: string
+  /** Null when the buyer identified the car by brand/model/year instead. */
+  plateEncrypted: string | null
+  plateHash: string | null
   claimToken: string
   idempotencyKey: string | undefined
   expiresAt: Date
   /** paqar_sid of the visitor. Scopes reuse — see getCachedCheck and migration 027. */
   sessionId?: string | null
+  /**
+   * The advert the buyer is considering (migration 032). Stored as text and
+   * never parsed — a human opens it, which is how Paqar covers Carlist and
+   * Facebook Marketplace despite having no scraper that can read either.
+   * Pre-validated by normaliseListingUrl; this layer does not re-check.
+   */
+  listingUrl?: string | null
+  /** What the buyer is worried about. The reviewer's brief. */
+  buyerConcern?: string | null
+  /** Car identity from intake — what replaces the plate as the cheap identifier. */
+  brand?: string | null
+  model?: string | null
+  year?:  string | null
 }): Promise<void> {
   const supabase = createServiceClient()
   const { error } = await supabase.from('checks').insert({
     id:               params.id,
     plate_encrypted:  params.plateEncrypted,
     plate_hash:       params.plateHash,
+    brand:            params.brand ?? null,
+    model:            params.model ?? null,
+    year:             params.year ?? null,
     claim_token:      params.claimToken,
     idempotency_key:  params.idempotencyKey ?? null,
     session_id:       params.sessionId ?? null,
+    listing_url:      params.listingUrl ?? null,
+    buyer_concern:    params.buyerConcern ?? null,
     expires_at:       params.expiresAt.toISOString(),
     status:           'pending',
   })

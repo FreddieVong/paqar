@@ -71,21 +71,33 @@ vi.mock('@upstash/ratelimit', () => ({
   },
 }))
 
-const { POST } = await import('@/app/api/checks/route')
+/**
+ * Driven against the TRIGGER, not a route.
+ *
+ * This matrix used to submit to POST /api/checks, because that is where the
+ * RM0.81 lookup fired. It no longer fires there: every stranger who typed a
+ * plate spent provider credit before paying anything, so the call moved to the
+ * Billplz webhook via lib/vehicle-lookup-trigger.
+ *
+ * Pointing the matrix at the trigger is better than re-pointing it at the new
+ * caller. The guard's contract is a property of the trigger, so testing it here
+ * keeps the matrix true no matter which surface calls it next — which is
+ * precisely the kind of move that just invalidated the old version.
+ */
+const { triggerVehicleLookup } = await import('@/lib/vehicle-lookup-trigger')
 
 const PLATE = 'WXY1234'
 
 async function submit({ session = 'sid_matrix' as string | null } = {}) {
-  const req = new NextRequest('https://paqar.my/api/checks', {
-    method:  'POST',
-    headers: { 'content-type': 'application/json' },
-    body:    JSON.stringify({ plate: PLATE, askingPriceRm: 59_000 }),
+  triggerVehicleLookup(PLATE, '203.0.113.9', {
+    sessionId: session,
+    journeyId: null,
+    checkId:   'ch_matrix',
+    plateHash: `hash(${PLATE})`,
   })
-  if (session) req.cookies.set('paqar_sid', session)
-  const res = await POST(req)
   // Drain the background lookup before any assertion.
   await Promise.allSettled(background.splice(0))
-  return { status: res.status }
+  return { status: 201 }
 }
 
 const ORIGINAL_ENV = { ...process.env }

@@ -7,6 +7,8 @@ import { encrypt, hash } from '@/lib/crypto'
 import { normaliseConcern } from '@/lib/listing-intake'
 import { SESSION_COOKIE } from '@/lib/attribution'
 import { readyForCoverage } from '@/lib/listing-merge'
+import { capacityState, serviceDayStart } from '@/lib/review-capacity'
+import { paidReportsInServiceDay } from '@/lib/db/report-review'
 
 /**
  * Turn the intake into a real check, exactly once.
@@ -43,6 +45,25 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   // minutes stale, and this is the step that creates a billable journey.
   if (!summary || !readyForCoverage(summary)) {
     return NextResponse.json({ error: 'not_ready' }, { status: 409 })
+  }
+
+  // ── CAPACITY ────────────────────────────────────────────────────────────
+  //
+  // Refuse BEFORE a check exists, and therefore before checkout. Paqar promises
+  // a reviewed decision within 24 hours; accepting a payment on a day that is
+  // already full would be selling a promise it knows it cannot keep.
+  //
+  // Counted against the Malaysian service day, not UTC. Best-effort: a counting
+  // failure must not block a sale, because refusing a real buyer to protect a
+  // ceiling that has never once been reached is the worse error.
+  try {
+    const used = await paidReportsInServiceDay(serviceDayStart())
+    const cap  = capacityState(used)
+    if (!cap.acceptingNow) {
+      return NextResponse.json({ error: 'at_capacity', message: cap.etaCopy }, { status: 503 })
+    }
+  } catch (err) {
+    console.error('[convert] capacity check failed, allowing', { error: String(err).slice(0, 120) })
   }
 
   const plate = parsed.data.plate?.trim() || null

@@ -110,8 +110,19 @@ describe('an answer is never retried', () => {
  */
 describe('every route that awaits a lookup outlives it', () => {
   const ROOT = join(__dirname, '..', '..')
+  /**
+   * app/api/checks/route.ts is deliberately NOT here any more.
+   *
+   * It carried maxDuration = 30 because it awaited the vehicle lookup, whose
+   * retry can run to LOOKUP_TIME_BUDGET_MS. It no longer performs a lookup at
+   * all — the call moved to lib/vehicle-lookup-trigger, fired from the Billplz
+   * webhook — so an extended ceiling there would guard nothing.
+   *
+   * The webhook is not listed either, and that is intentional rather than an
+   * omission: it hands the lookup to waitUntil and returns immediately, so its
+   * own duration is not what the retry runs against.
+   */
   const routes = [
-    'app/api/checks/route.ts',
     'app/api/checks/[id]/retry-lookup/route.ts',
   ]
 

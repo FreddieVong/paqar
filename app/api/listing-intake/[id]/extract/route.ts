@@ -5,7 +5,8 @@ import { setIntakeExtraction } from '@/lib/db/listing-intake'
 import { listScreenshots, markExtracted } from '@/lib/db/listing-screenshots'
 import { readScreenshot } from '@/lib/screenshot-storage'
 import { extractFromScreenshots, ocrToExtracted } from '@/lib/listing-ocr'
-import { isExtractable, fetchListingHtml } from '@/lib/listing-fetch'
+import { isExtractable } from '@/lib/listing-fetch'
+import { extractListingViaScraper } from '@/lib/listing-scraper'
 import { extractFromHtml } from '@/lib/listing-extract'
 import { mergeListing, readyForCoverage } from '@/lib/listing-merge'
 
@@ -45,11 +46,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: 'busy' }, { status: 429 })
   }
 
-  // ── URL, when the host is one Paqar may fetch ──────────────────────────
+  // ── URL, read through the scraper service ──────────────────────────────
+  //
+  // Never fetched from here: Mudah answers non-browser clients with 403 and its
+  // robots.txt forbids automated access, so a direct fetch produced nothing on
+  // every request in production. The scraper already runs a real browser
+  // against Mudah for comparables; this is that same access, for one advert.
   let fromUrl = null
   if (intake.listing_url && isExtractable(intake.listing_url)) {
-    const fetched = await fetchListingHtml(intake.listing_url)
-    if (fetched.ok) fromUrl = extractFromHtml(fetched.html)
+    const scraped = await extractListingViaScraper(intake.listing_url)
+    if (scraped.ok) fromUrl = scraped.extracted
   }
 
   // ── Screenshots: only the ones not yet read ────────────────────────────

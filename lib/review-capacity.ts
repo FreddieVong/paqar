@@ -110,3 +110,18 @@ export function capacityState(usedToday: number, now: Date = new Date()): Capaci
       : `Semakan manusia bermula ${REVIEW_OPENS_HOUR} pagi. Keputusan anda dihantar dalam tempoh ${MAX_PROMISE_HOURS} jam.`,
   }
 }
+
+/**
+ * The UTC instant the current service day began (10:00 MYT).
+ *
+ * Used to count how many reports today's sitting already carries.
+ */
+export function serviceDayStart(now: Date = new Date()): Date {
+  const { hour } = klParts(now)
+  // Before 02:00 the sitting began yesterday at 10:00.
+  const base = hour < REVIEW_CLOSES_HOUR ? new Date(now.getTime() - 86_400_000) : now
+  const { dayKey } = klParts(base)
+  const [y, m, d] = dayKey.split('-').map(Number) as [number, number, number]
+  // 10:00 MYT == 02:00 UTC the same calendar day.
+  return new Date(Date.UTC(y, m - 1, d, REVIEW_OPENS_HOUR - 8, 0, 0))
+}
