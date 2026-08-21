@@ -50,6 +50,13 @@ export async function getOrCreateVehicleForUser(userId: string): Promise<{
     .select('plate_encrypted, plate_hash')
     .eq('user_id', userId)
     .eq('status', 'complete')
+    // A VEHICLE IS ITS PLATE, and since migration 032 a complete check may
+    // have none — brand/model/year identify the car for a report, but there is
+    // nothing to register against an account without a registration number.
+    // Without this the dashboard picked a plateless check and decrypt(null)
+    // threw on the page rather than showing the buyer they have no saved
+    // vehicle yet.
+    .not('plate_encrypted', 'is', null)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(1)

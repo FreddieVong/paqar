@@ -183,7 +183,12 @@ export async function POST(request: NextRequest) {
           // Manual JomCheck fulfilment: alert the owner + set buyer expectation
           try {
             const checkRow = await getCheck(upgradeReport.check_id)
-            const plate = checkRow ? decrypt(checkRow.check.plate_encrypted as string).toUpperCase() : '(plat)'
+            // Guarded on the PLATE, not on the row. A row can exist without
+            // one since migration 032, and decrypt(null) throws — contained by
+            // the catch below, but it would lose the fulfilment alert silently.
+            const plate = checkRow?.check.plate_encrypted
+              ? decrypt(checkRow.check.plate_encrypted as string).toUpperCase()
+              : '(plat)'
             const reportUrl = buildBuyerReportAccessUrl({
               checkId:    upgradeReport.check_id,
               claimToken: checkRow?.check.claim_token,

@@ -264,8 +264,8 @@ async function initiateBuyerReportImpl(
   // Cache reads only — no provider call, no scrape. A checkout attempt is not a
   // reason to queue a scraper job.
   const offerCheck = await resolveOfferForCheck({
-    plateEncrypted: row.check.plate_encrypted as string,
-    askingPriceRm:  params.askingPriceRm ?? null,
+    check:         row.check,
+    askingPriceRm: params.askingPriceRm ?? null,
   }).catch(() => null)
 
   // Fail CLOSED. An unresolved gate is not permission to sell.
@@ -411,10 +411,25 @@ async function initiateBuyerReportImpl(
       valuationPath: params.valuationPath ?? null,
     })
 
-    // Pre-warm vehicle data and market prices during the Billplz payment window (~30-60s).
-    // By the time the user lands on the report page, the data is already cached.
-    const plate = decrypt(row.check.plate_encrypted as string).toUpperCase()
-    void prewarmReportData(plate, report.id)
+    // Pre-warm vehicle data and market prices during the Billplz payment window
+    // (~30-60s), so the report is already cached when the buyer lands on it.
+    //
+    // AFTER THE BILL EXISTS, AND UNABLE TO UNDO IT.
+    //
+    // This read `decrypt(row.check.plate_encrypted as string)` unguarded. Since
+    // migration 032 the plate is optional, so on the default journey decrypt
+    // received null, threw, and the catch below returned "Ralat membuat
+    // pembayaran" — for a bill Billplz had ALREADY created. The buyer was told
+    // payment failed, pressed again, and minted a second live bill.
+    //
+    // An optimisation must never be able to fail a sale that already happened.
+    if (row.check.plate_encrypted) {
+      try {
+        void prewarmReportData(decrypt(row.check.plate_encrypted as string).toUpperCase(), report.id)
+      } catch (err) {
+        console.error('[initiateBuyerReport] prewarm skipped', err)
+      }
+    }
 
     return { error: null, billUrl: bill.url, billId: bill.id }
   } catch (err) {

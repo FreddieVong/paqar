@@ -87,7 +87,12 @@ describe('an offer opens checkout', () => {
     resolveOfferForCheck.mockResolvedValue(available)
     await initiateBuyerReport({ ...BASE })
     const arg = resolveOfferForCheck.mock.calls[0]![0]
-    expect(arg.plateEncrypted).toBe('enc')
+    // The CHECK ROW, not the plate. Passing plate_encrypted alone made the
+    // gate return 'no_vehicle' for every plateless check — and it fails
+    // closed, so the majority journey could see a pay button and never be
+    // able to use it. The row identifies the car since migration 032.
+    expect(arg.check).toBeTruthy()
+    expect(arg.check.plate_encrypted).toBe('enc')
     expect(arg.askingPriceRm).toBe(55_000)
   })
 })

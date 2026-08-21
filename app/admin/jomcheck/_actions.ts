@@ -60,6 +60,12 @@ export async function submitJomCheckResult(formData: FormData): Promise<void> {
 
   const row = await getCheck(report.check_id)
   if (!row) throw new Error(`Check ${report.check_id} not found`)
+  // JomCheck IS a registration lookup, so a check without a plate cannot have
+  // one — but since migration 032 such a check can exist, and decrypt(null)
+  // throws a TypeError that says nothing about why. Fail with the reason.
+  if (!row.check.plate_encrypted) {
+    throw new Error(`Check ${report.check_id} has no plate — JomCheck needs one`)
+  }
   const plate = decrypt(row.check.plate_encrypted as string).toUpperCase()
 
   const result = buildManualJomCheckResult(plate, counts)
@@ -118,6 +124,9 @@ export async function submitReviewedJomCheckResult(formData: FormData): Promise<
 
   const check = await getCheck(report.check_id)
   if (!check) throw new Error(`Check ${report.check_id} not found`)
+  if (!check.check.plate_encrypted) {
+    throw new Error('This check has no plate — JomCheck needs one')
+  }
   const plate = decrypt(check.check.plate_encrypted as string).toUpperCase()
 
   const result = buildResultFromIncidents(plate, buildIncidents(rows))
