@@ -70,13 +70,23 @@ export function ListingIntakeForm({
 
   const [listingUrl, setListingUrl] = useState('')
   const [phase,      setPhase]      = useState<Phase>('start')
-  const [summary,    setSummary]    = useState<MergedListing | null>(null)
+  const [summaryState, setSummary]  = useState<MergedListing | null>(null)
+  const summary = summaryState
   const [needShots,  setNeedShots]  = useState(false)
   // Which input the buyer actually used, so a failure can name the right thing.
   const [shotCount,  setShotCount]  = useState(0)
   // True when the read failed on OUR side (no API key, timeout, rate limit) —
   // as opposed to a screenshot we genuinely could not read.
   const [ourFault,   setOurFault]   = useState(false)
+  /**
+   * Did the BUYER change a field, or is this just what extraction found?
+   *
+   * "any field is non-empty" cannot tell the difference: a successful
+   * extraction prefills brand, model, year and price, so that test is always
+   * true and every buyer paid for a pointless round trip saving Paqar's own
+   * output back to Paqar.
+   */
+  const [dirty,      setDirty]      = useState(false)
   const [editing,    setEditing]    = useState(false)
   const [coverage,   setCoverage]   = useState<Coverage | null>(null)
   const [busy,       setBusy]       = useState(false)
@@ -222,8 +232,9 @@ export function ListingIntakeForm({
   }, [phase])
 
   /** Apply the buyer's corrections and re-merge. */
-  async function saveEdits() {
-    if (!intakeId) return
+  /** Returns the re-merged summary, or null if the save failed. */
+  async function saveEdits(): Promise<MergedListing | null> {
+    if (!intakeId) return null
     setBusy(true)
     const patch: Record<string, unknown> = {}
     if (brand) patch.brand = brand
@@ -236,21 +247,56 @@ export function ListingIntakeForm({
       method: 'PATCH', headers: authHeaders(), body: JSON.stringify(patch),
     })
     setBusy(false)
-    if (!res.ok) { setError('Tak dapat simpan. Cuba lagi.'); return }
+    if (!res.ok) { setError('Tak dapat simpan. Cuba lagi.'); return null }
     const j = await res.json() as { summary: MergedListing; ready: boolean }
-    setSummary(j.summary); setEditing(false)
+    setSummary(j.summary); setEditing(false); setDirty(false)
+    return j.summary
   }
 
   /** RM0 coverage, from the merged data. */
-  async function checkCoverage() {
+  /**
+   * Save whatever the buyer typed, then check coverage — in that order.
+   *
+   * saveEdits re-merges server-side and returns the updated summary, so
+   * checking coverage before it lands would ask about the values extraction
+   * produced rather than the ones the buyer just corrected.
+   */
+  async function saveThenCheck() {
+    if (dirty && intakeId) {
+      const saved = await saveEdits()
+      if (!saved) return
+      // The RETURNED summary, not the state one. setSummary has not landed by
+      // the time this line runs, so reading state here would check coverage
+      // against the values extraction produced and silently ignore the
+      // correction the buyer just typed.
+      await checkCoverage(saved)
+      return
+    }
+    await checkCoverage()
+  }
+
+  async function checkCoverage(override?: MergedListing) {
+    const summary = override ?? summaryState
     if (!summary) return
+    // String(null) IS "null", four characters, which sails through the route's
+    // min(1) check and comes back as "Paqar belum boleh bantu untuk BMW null
+    // 2020" — the word null shown to a buyer, blamed on a market that was
+    // never searched. A missing field is a reason not to ask, not a value.
+    const q = {
+      brand: summary.brand.value, model: summary.model.value,
+      year: summary.year.value,   askingPrice: summary.askingPriceRm.value,
+    }
+    if (q.brand == null || q.model == null || q.year == null || q.askingPrice == null) {
+      setError('Lengkapkan butiran kereta dahulu.')
+      return
+    }
     setBusy(true); setError(null)
     try {
       const res = await fetch('/api/price-check', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          brand: String(summary.brand.value), model: String(summary.model.value),
-          year: String(summary.year.value), askingPrice: Number(summary.askingPriceRm.value),
+          brand: String(q.brand), model: String(q.model),
+          year: String(q.year), askingPrice: Number(q.askingPrice),
         }),
       })
       if (!res.ok) { setError('Ralat — sila cuba semula'); return }
@@ -489,28 +535,36 @@ export function ListingIntakeForm({
         {/* FALLBACK: only the fields extraction could not settle. */}
         {(editing || (phase === 'summary' && (missing('brand') || missing('model') || missing('year') || missing('askingPriceRm')))) && (
           <div className="space-y-3">
-            {(editing || missing('brand') || missing('model')) && (
+            {/* EACH FIELD ON ITS OWN. Brand and year were rendered whenever
+                the MODEL was missing, so a buyer whose advert gave up only its
+                model was shown three inputs, two of them already correct, and
+                asked to confirm work Paqar had already done. */}
+            {(editing || missing('brand') || missing('year')) && (
               <div className="grid grid-cols-2 gap-3">
+                {(editing || missing('brand')) && (
                 <div>
                   <label htmlFor="li-brand" className={LABEL_CLS}>Jenama</label>
-                  <select id="li-brand" value={brand} onChange={e => { setBrand(e.target.value); setModel('') }} className={INPUT_CLS}>
+                  <select id="li-brand" value={brand} onChange={e => { setBrand(e.target.value); setModel(''); setDirty(true) }} className={INPUT_CLS}>
                     <option value="">Pilih…</option>
                     {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </div>
+                )}
+                {(editing || missing('year')) && (
                 <div>
                   <label htmlFor="li-year" className={LABEL_CLS}>Tahun</label>
-                  <select id="li-year" value={year} onChange={e => setYear(e.target.value)} className={INPUT_CLS}>
+                  <select id="li-year" value={year} onChange={e => { setYear(e.target.value); setDirty(true) }} className={INPUT_CLS}>
                     <option value="">Pilih…</option>
                     {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>
+                )}
               </div>
             )}
             {(editing || missing('model')) && (
               <div>
                 <label htmlFor="li-model" className={LABEL_CLS}>Model</label>
-                <input id="li-model" list="li-models" value={model} onChange={e => setModel(e.target.value)}
+                <input id="li-model" list="li-models" value={model} onChange={e => { setModel(e.target.value); setDirty(true) }}
                        placeholder={brand ? 'cth: City' : 'Pilih jenama dahulu'} className={INPUT_CLS} />
                 <datalist id="li-models">{models.map(m => <option key={m} value={m} />)}</datalist>
               </div>
@@ -518,21 +572,23 @@ export function ListingIntakeForm({
             {(editing || missing('askingPriceRm')) && (
               <div>
                 <label htmlFor="li-price" className={LABEL_CLS}>Harga Yang Penjual Minta (RM)</label>
-                <input id="li-price" type="number" value={price} onChange={e => setPrice(e.target.value)}
+                <input id="li-price" type="number" value={price} onChange={e => { setPrice(e.target.value); setDirty(true) }}
                        placeholder="cth: 59000" min={1000} max={2000000} inputMode="numeric" className={INPUT_CLS} />
               </div>
             )}
-            <button type="button" onClick={() => void saveEdits()} disabled={busy}
-                    className="w-full min-h-[44px] bg-[#F0FDF4] border border-[#BBF7D0] text-[#15803D] font-heading font-bold text-[14px] rounded-[12px] py-3 disabled:opacity-60">
-              {busy ? 'Menyimpan…' : 'Simpan butiran'}
-            </button>
           </div>
         )}
 
         {error && <p role="alert" className="font-body text-[13px] text-[#DC2626]">{error}</p>}
 
-        {phase === 'summary' && summary && !editing && (
-          <button type="button" onClick={() => void checkCoverage()} disabled={busy}
+        {/* ONE BUTTON, ONE INTENT.
+            There were two: "Simpan butiran" to save the fields, then "Semak
+            kereta ini" to go on — two taps for a buyer who wants one thing,
+            and a save step that does nothing they asked for. The primary
+            action now saves anything typed and continues; a buyer who filled
+            nothing in skips the save entirely. */}
+        {phase === 'summary' && summary && (
+          <button type="button" onClick={() => void saveThenCheck()} disabled={busy}
                   className="w-full min-h-[44px] bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60">
             {busy ? 'Menyemak…' : 'Semak kereta ini →'}
           </button>

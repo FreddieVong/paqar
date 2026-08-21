@@ -61,6 +61,19 @@ export async function POST(request: NextRequest) {
 
   const { brand, model, year, askingPrice } = parsed.data
 
+  // "null" and "undefined" are four and nine characters, so min(1) accepts
+  // them — and a client that stringifies a missing field sends exactly that.
+  // The result was "Paqar belum boleh bantu untuk BMW null 2020": a refusal
+  // shown to a buyer, naming a market nobody searched. Refuse the query
+  // instead of answering it about a car that was never described.
+  if (['null', 'undefined', 'NaN'].includes(model.trim().toLowerCase())
+   || ['null', 'undefined', 'NaN'].includes(brand.trim().toLowerCase())) {
+    return NextResponse.json(
+      { error: 'Invalid input', details: { model: ['Missing vehicle details'] } },
+      { status: 400 },
+    )
+  }
+
   // Echoed back so the buyer sees WHICH car Paqar matched before paying.
   // Silently analysing the wrong model is the failure this experiment most
   // needs to avoid, and showing the match is the cheapest guard against it —

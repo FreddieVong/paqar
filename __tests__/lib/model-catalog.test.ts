@@ -67,8 +67,13 @@ describe('it never merges two genuinely different models', () => {
   })
 
   it('leaves an unknown model exactly as typed', () => {
-    expect(canonicalModelKeyword('Perodua', 'Kelisa')).toBe('Kelisa')
-    expect(canonicalModelKeyword('Honda',   'Odyssey Absolute')).toBe('Odyssey Absolute')
+    // Kelisa and "Odyssey Absolute" used to sit here. Both are now KNOWN —
+    // Kelisa was added to the catalogue, and "Odyssey Absolute" canonicalises
+    // to "Odyssey", which is this function working, not failing: a variant
+    // reaching the same warm cache row as the plain model is the whole point.
+    // These two are genuinely absent, so they exercise the passthrough.
+    expect(canonicalModelKeyword('Perodua', 'Rusa')).toBe('Rusa')
+    expect(canonicalModelKeyword('Honda',   'Legend Exclusive')).toBe('Legend Exclusive')
   })
 
   it('leaves everything alone for an unknown brand', () => {
