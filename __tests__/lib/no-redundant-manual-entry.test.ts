@@ -49,6 +49,29 @@ describe('the form asks only for what it could not read', () => {
   })
 })
 
+describe('a step that is finished leaves the screen', () => {
+  it('retires the screenshot box and the link field once the car is known', () => {
+    // They stayed on screen underneath the answer they had produced — the
+    // buyer had already given us the car and was still looking at an upload
+    // box and a link field. Clutter on the one screen that has to be simple,
+    // and an accidental second upload would restart extraction and overwrite
+    // a summary that was already correct.
+    expect(CODE).toContain("{(phase === 'start' || phase === 'working') && (")
+
+    // The gate must OPEN the block that holds both inputs, not just one.
+    const gate = CODE.indexOf("{(phase === 'start' || phase === 'working') && (")
+    const after = CODE.slice(gate)
+    expect(after.indexOf('li-shots')).toBeGreaterThan(-1)
+    expect(after.indexOf('li-url')).toBeGreaterThan(after.indexOf('li-shots'))
+  })
+
+  it('still offers a correction path from the summary itself', () => {
+    // Retiring the inputs is only safe because the cheaper path — fixing a
+    // value rather than re-uploading — is on the summary card.
+    expect(FORM).toContain('Maklumat salah? Ubah')
+  })
+})
+
 describe('a missing field is never sent as the word "null"', () => {
   it('the form refuses to ask about a car it cannot name', () => {
     // String(null) is "null" — four characters, so the route's min(1) accepts

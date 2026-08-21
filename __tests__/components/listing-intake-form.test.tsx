@@ -386,7 +386,11 @@ describe('the loading state is visible', () => {
 
     await screen.findByText(/Paqar akan semak/i, undefined, { timeout: 5000 })
     expect(screen.queryByRole('status')).toBeNull()
-    expect((screen.getByLabelText(/Tampal link iklan/i) as HTMLInputElement).disabled).toBe(false)
+    // The link field being re-enabled used to stand in for "the working phase
+    // ended". The inputs now RETIRE when the car is known, so their absence is
+    // the same signal and a stronger one: a finished step leaves the screen.
+    expect(screen.queryByLabelText(/Tampal link iklan/i)).toBeNull()
+    expect(screen.queryByLabelText(/Muat naik screenshot/i)).toBeNull()
   })
 })
 

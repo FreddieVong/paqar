@@ -358,6 +358,19 @@ export function ListingIntakeForm({
           and it is the buyer's own content rather than something taken from a
           site that declined to serve it.
         */}
+        {/* ── THE INPUTS RETIRE ONCE THE CAR IS KNOWN ──────────────────────
+            They stayed on screen under the answer they had produced: the
+            buyer had already given us the car, and was still looking at an
+            upload box and a link field. Clutter on the one screen that has to
+            be simple — and an accidental second upload would restart
+            extraction and overwrite a summary that was already correct.
+
+            A buyer who wants to send something different reloads; a buyer who
+            wants to correct a value has "Maklumat salah? Ubah" on the summary
+            itself, which is the cheaper of the two paths and the one they
+            actually want. */}
+        {(phase === 'start' || phase === 'working') && (
+        <>
         <div>
           <label htmlFor="li-shots" className={LABEL_CLS}>
             Muat naik screenshot iklan
@@ -430,6 +443,8 @@ export function ListingIntakeForm({
             </button>
           )}
         </div>
+        </>
+        )}
 
         {/*
           THE WAIT NEEDS TO LOOK LIKE A WAIT.
