@@ -94,3 +94,37 @@
   summary::-webkit-details-marker { display: none; }
   summary { list-style: none; }
 }
+
+/*
+ * Indeterminate progress, for a wait whose length we genuinely do not know.
+ *
+ * A rotating ring is easy to read as "stuck" — it looks identical at second
+ * one and second forty. A bar travelling across a track cannot: the motion has
+ * a direction and crosses the full width of the card, so it is legible from
+ * the corner of the eye while the buyer is looking at something else.
+ *
+ * NOT a percentage. Reading a listing is one request whose duration is
+ * unknown, and a bar that claims 60% would be inventing a number.
+ */
+@keyframes paqar-indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.paqar-indeterminate::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  width: 33%;
+  border-radius: 9999px;
+  background: #064E4A;
+  animation: paqar-indeterminate 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paqar-indeterminate::after {
+    animation: none;
+    width: 100%;
+    opacity: 0.35;
+  }
+}

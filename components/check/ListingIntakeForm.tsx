@@ -223,6 +223,32 @@ export function ListingIntakeForm({
    * fields visible underneath when extraction only half-succeeded.
    */
   const summaryRef = useRef<HTMLDivElement | null>(null)
+  const statusRef  = useRef<HTMLDivElement | null>(null)
+
+  /**
+   * Seconds since the wait started.
+   *
+   * A spinner looks the same at second one and second forty, so it cannot
+   * prove it is still alive — the only honest evidence of liveness is a number
+   * that keeps changing. It is elapsed time, never a countdown or a
+   * percentage: reading a listing is a single request whose duration is not
+   * known, and inventing "60%" would be a claim we cannot support.
+   */
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    if (!status) { setElapsed(0); return }
+    const t = setInterval(() => setElapsed(n => n + 1), 1000)
+    return () => clearInterval(t)
+  }, [status])
+
+  // Bring the wait to the buyer, exactly as the summary is brought to them.
+  // The status card renders BELOW the upload box, and a buyer who has just
+  // dropped a screenshot is looking at the drop zone — which is why a wait
+  // sitting off-screen reads as nothing happening at all.
+  useEffect(() => {
+    if (!status) return
+    statusRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+  }, [status])
   useEffect(() => {
     if (phase !== 'summary') return
     // Optional-called: jsdom does not implement scrollIntoView, and an
@@ -462,21 +488,36 @@ export function ListingIntakeForm({
         */}
         {status && (
           <div
+            ref={statusRef}
             role="status"
             aria-live="polite"
-            className="bg-[#F8FAF7] border border-[#E5E7EB] rounded-[12px] p-4 flex items-start gap-3"
+            className="bg-white border-2 border-[#064E4A] rounded-[14px] p-4 shadow-[0_2px_12px_rgba(6,78,74,0.12)]"
           >
-            <span
+            {/* The bar first, and full width. It is the part visible from the
+                corner of the eye — a buyer still looking at the drop zone sees
+                movement travelling across the card before they read a word. */}
+            <div
               aria-hidden="true"
-              className="w-5 h-5 mt-0.5 rounded-full border-2 border-[#BBF7D0] border-t-[#064E4A] animate-spin flex-shrink-0 motion-reduce:animate-none"
+              className="paqar-indeterminate relative h-1.5 w-full rounded-full bg-[#E5F2F0] overflow-hidden mb-3"
             />
-            <div className="min-w-0">
-              <p className="font-heading font-bold text-[15px] text-[#111827] leading-snug">
-                {status}
-              </p>
-              <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-0.5">
-                Ambil masa sehingga seminit. Jangan tutup halaman ini.
-              </p>
+            <div className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className="w-6 h-6 mt-0.5 rounded-full border-[3px] border-[#BBF7D0] border-t-[#064E4A] animate-spin flex-shrink-0 motion-reduce:animate-none"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="font-heading font-extrabold text-[16px] text-[#064E4A] leading-snug">
+                  {status}
+                </p>
+                <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-0.5">
+                  Ambil masa sehingga seminit. Jangan tutup halaman ini.
+                </p>
+              </div>
+              {/* Proof of life. A number that keeps moving is the one thing a
+                  spinner cannot be: unambiguously not frozen. */}
+              <span className="font-heading font-bold text-[13px] text-[#064E4A] tabular-nums flex-shrink-0 mt-1">
+                {elapsed}s
+              </span>
             </div>
           </div>
         )}
