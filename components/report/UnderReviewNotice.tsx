@@ -15,6 +15,13 @@ import { REVIEW_SLA_HOURS } from '@/lib/report-release'
  * makes this screen reassuring; a number appearing for the first time after the
  * money has moved would read as a walk-back.
  *
+ * E-MAIL ONLY, because e-mail is the only channel that exists. This screen
+ * used to promise "mesej WhatsApp dan e-mel"; sendReportReadyEmail is the
+ * whole of the release notification and no WhatsApp sender is implemented
+ * anywhere in the codebase. The operator can still message a buyer by hand
+ * from the queue, but a promise the code cannot keep is not the place to say
+ * so.
+ *
  * The report URL is stable and revisitable: the claim token in it still governs
  * access, so the same link the buyer already has flips from this screen to the
  * full report with nothing for them to do. Saying so removes the obvious worry
@@ -54,9 +61,8 @@ export function UnderReviewNotice({ checkId }: { checkId: string }) {
           Anda tidak perlu buat apa-apa
         </p>
         <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
-          Kami hantar mesej WhatsApp dan e-mel sebaik sahaja laporan siap.
-          Simpan pautan halaman ini &mdash; ia akan bertukar kepada laporan
-          penuh dengan sendirinya.
+          Kami e-mel anda sebaik sahaja laporan siap. Simpan pautan halaman
+          ini &mdash; ia akan bertukar kepada laporan penuh dengan sendirinya.
         </p>
       </div>
 

@@ -96,6 +96,8 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
     if (room <= 0) { setError(`Maksimum ${MAX_FILES} screenshot.`); return }
 
     setBusy(true); setError(null)
+    let uploaded = 0
+    let latest   = count
     try {
       for (const file of files.slice(0, room)) {
         const body = new FormData()
@@ -111,8 +113,19 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
         })
         const json = await res.json().catch(() => ({})) as { error?: string; count?: number }
         if (!res.ok) { setError(json.error ?? 'Gambar ini tidak dapat dibaca.'); break }
-        if (typeof json.count === 'number') { setCount(json.count); onUploaded(json.count) }
+        if (typeof json.count === 'number') { setCount(json.count); latest = json.count }
+        uploaded++
       }
+
+      // ONE notification for the whole selection, not one per file.
+      //
+      // onUploaded triggers OCR. Calling it inside the loop meant a buyer who
+      // selected three screenshots paid for three metered Anthropic calls
+      // where one is needed, and three overlapping extractions raced to write
+      // the same summary. Batching is also the point of the feature: the price
+      // may be on one screen and the mileage on another, and a model that sees
+      // them together can reconcile them.
+      if (uploaded > 0) onUploaded(latest)
     } catch {
       setError('Muat naik gagal. Cuba lagi.')
     } finally {

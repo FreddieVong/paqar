@@ -13,12 +13,14 @@ import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
 import { FreeResultGate }      from '@/components/report/FreeResultGate'
 import { UnderReviewNotice }   from '@/components/report/UnderReviewNotice'
+import { UndeliverableNotice } from '@/components/report/UndeliverableNotice'
 import { ReviewerNote }        from '@/components/report/ReviewerNote'
 import { DecisionImpact }      from '@/components/report/DecisionImpact'
 import { PaidReportCtaTracker } from '@/components/report/PaidReportCtaTracker'
 import { BuyerReportPitch }     from '@/components/report/BuyerReportPitch'
 import { VehiclePreviewTeaser } from '@/components/report/VehiclePreviewTeaser'
 import { mayRenderReport, wasHumanReviewed } from '@/lib/report-release'
+import { parseOverrides, applyOverrides, correctedCarLabel } from '@/lib/reviewed-overrides'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
@@ -95,12 +97,30 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
   const adminPreview = searchParams.admin_preview === '1' && isAdminAuthenticated()
 
   if (isPaid && report && !mayRenderReport(report) && !adminPreview) {
+    // UNDELIVERABLE IS NOT "STILL WAITING".
+    //
+    // Both states are "paid, nothing released", so both used to land on
+    // UnderReviewNotice — which repeats the 24-hour promise. For a report a
+    // reviewer had already given up on, that screen kept promising a decision
+    // that was never coming, to the one buyer Paqar had already let down. And
+    // the refund guarantee that justifies the price arrived as an unexplained
+    // bank transfer, if the buyer noticed it at all.
+    const undeliverable = report.review_status === 'unable_to_complete'
     return (
       <>
         <Nav />
         <Shell>
-          <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: true, released: false }} />
-          <UnderReviewNotice checkId={params.checkId} />
+          <AnalyticsEvent
+            event="report_page_viewed"
+            properties={{ is_paid: true, released: false, undeliverable }}
+          />
+          {undeliverable
+            ? <UndeliverableNotice
+                checkId={params.checkId}
+                reason={report.reviewer_note ?? null}
+                refundStatus={report.refund_status ?? null}
+              />
+            : <UnderReviewNotice checkId={params.checkId} />}
         </Shell>
       </>
     )
@@ -108,6 +128,22 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
 
   // ── Paid AND released — full report ───────────────────────────────────────
   if ((mayRenderReport(report) || (adminPreview && isPaid)) && report) {
+    // WHAT THE REVIEWER CORRECTED, applied to what the buyer reads.
+    //
+    // reviewed_overrides used to be written on release and read by nothing, so
+    // a reviewer could fix the price or the model, press release, and the buyer
+    // received the uncorrected machine output under a note implying a human had
+    // checked it. That is worse than having no correction feature: both parties
+    // believe something untrue.
+    const overrides     = parseOverrides(report.reviewed_overrides)
+    const reviewed      = applyOverrides({
+      overrides,
+      askingPriceRm: report.asking_price_rm ?? null,
+      mileageKm:     report.claimed_mileage_km ?? null,
+    })
+    const reviewedLabel = correctedCarLabel(overrides, {
+      brand: row.check.brand, model: row.check.model, year: row.check.year,
+    })
     // Lazy fetch: call VehicleAPI once, store in DB, serve from cache on subsequent views
     let vehicleData = report.vehicleapi_data as Record<string, unknown> | null ?? null
     if (!vehicleData) {
@@ -199,7 +235,18 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
         <Nav />
         <Shell>
           <div className="pt-5 pb-6 space-y-5">
-            <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: true }} />
+            {/* A REVIEWER IS NOT A BUYER.
+                Every paid report is opened here by whoever works the queue, via
+                ?admin_preview=1. Firing the buyer's view event on those opens
+                would put a reviewer hit on every single paid row — and since
+                the experiment is measuring whether buyers come back to read the
+                decision they paid for, that one event is the measurement.
+                Suppressed rather than tagged: an is_admin property still has to
+                be filtered by every future query that touches this event, and
+                the one that forgets reports reviewer traffic as demand. */}
+            {!adminPreview && (
+              <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: true, released: true }} />
+            )}
             {/* The human note leads. Everything below it is machine output a
                 competitor could reproduce; this is the part that waited for a
                 person, and it is what the price difference bought. */}
@@ -217,9 +264,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             )}
             <MarketPricePoller active={!!vehicleData?.make && !marketPrices} />
             <BuyerReportContent
-              plate={carLabel}
+              plate={reviewedLabel ?? carLabel}
               plateSupplied={plate != null}
-              askingPriceRm={report.asking_price_rm ?? null}
+              askingPriceRm={reviewed.askingPriceRm}
               vehicleData={vehicleData}
               marketPrices={marketPrices}
               addJomCheck={report.add_jomcheck}
@@ -227,7 +274,8 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               jomcheckStatus={jomcheckStatus}
               jomcheckManualPending={jomcheckManualPending}
               generatedAt={report.created_at}
-              claimedMileageKm={report.claimed_mileage_km}
+              claimedMileageKm={reviewed.mileageKm}
+              rollbackSuppressed={reviewed.suppressMileageWarning}
               upsellJomCheck={
                 historyUpgradeAvailable() && !report.add_jomcheck
                   ? { checkId: params.checkId, claimToken: claimToken ?? '' }

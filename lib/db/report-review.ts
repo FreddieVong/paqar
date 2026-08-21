@@ -157,6 +157,7 @@ export async function releaseReport(params: {
   reportId:     string
   reviewerId:   string
   reviewerNote: string
+  /** Typed by lib/reviewed-overrides; stored as JSONB and read back there. */
   overrides:    Record<string, unknown> | null
 }): Promise<boolean> {
   const supabase = createServiceClient()
@@ -327,4 +328,23 @@ export async function getReportForReview(reportId: string): Promise<BuyerReport 
     .maybeSingle()
   if (error) throw error
   return (data as BuyerReport | null) ?? null
+}
+
+/**
+ * How many paid reports belong to the current service day.
+ *
+ * Counted from paid_at against the Malaysian service-day boundary (10:00–02:00,
+ * see lib/review-capacity), not a UTC calendar day — Vercel runs in UTC, where
+ * "today" ends at 08:00 in Kuala Lumpur and would reset the count in the middle
+ * of a reviewer's morning.
+ */
+export async function paidReportsInServiceDay(since: Date): Promise<number> {
+  const supabase = createServiceClient()
+  const { count, error } = await supabase
+    .from('buyer_reports')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'paid')
+    .gte('paid_at', since.toISOString())
+  if (error) throw error
+  return count ?? 0
 }

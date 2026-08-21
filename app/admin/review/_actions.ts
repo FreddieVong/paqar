@@ -8,8 +8,11 @@ import {
 } from '@/lib/db/report-review'
 import { REVIEWER_ID } from '@/lib/admin-auth'
 import { getCheck } from '@/lib/db/checks'
+import { validateForRelease } from '@/lib/release-validation'
+import { parseOverrides as parseOverrideJson } from '@/lib/reviewed-overrides'
 import { decrypt } from '@/lib/crypto'
 import { buildBuyerReportAccessUrl } from '@/lib/report-access'
+import { sendUndeliverableEmail, sendRefundCompletedEmail } from '@/lib/email/refund-notice'
 import { sendReportReadyEmail } from '@/lib/email/report-ready'
 
 const PATH = '/admin/review'
@@ -55,13 +58,76 @@ export async function releaseReportAction(formData: FormData): Promise<void> {
     return
   }
 
-  const overrides = parseOverrides(formData)
+  // Typed and bounds-checked, so validation below reasons about numbers rather
+  // than about whatever the form happened to submit.
+  const overrides = parseOverrideJson(parseOverrides(formData) ?? {})
+
+  // ── RELEASE VALIDATION ──────────────────────────────────────────────────
+  //
+  // This module existed with 21 tests and was called by nothing, which meant a
+  // reviewer could release a report carrying any of the failures it was written
+  // to stop — a silently changed asking price, a tampering warning with no
+  // dated record behind it, a registration claim on an order that never
+  // supplied a plate.
+  //
+  // Checked at the moment of release rather than displayed beside the button,
+  // because a reviewer working through a queue will not re-derive these each
+  // time, and the cost of missing one is a buyer paying for a document that
+  // misstates their car or defames a seller.
+  const check    = await getCheck(report.check_id).catch(() => null)
+  const priceNow = overrides.askingPriceRm ?? report.asking_price_rm ?? null
+
+  const blocks = validateForRelease({
+    sellerAskingPriceRm: report.asking_price_rm ?? null,
+    finalAskingPriceRm:  priceNow,
+    // A reviewer changing the price must say why. The reason travels with the
+    // note, which is the only free text they write.
+    priceCorrectionReason: overrides.askingPriceRm != null ? note : null,
+
+    // Mileage from the listing or the buyer is a CLAIM. It can never support a
+    // tampering finding — see lib/mileage-provenance.
+    mileageReading: (overrides.currentMileageKm ?? report.claimed_mileage_km) != null
+      ? { km: (overrides.currentMileageKm ?? report.claimed_mileage_km)!, source: 'listing_claimed' }
+      : null,
+    incidents: [],
+    mileageWarningSuppressed: overrides.suppressMileageWarning === true,
+
+    listingIdentity: {
+      brand: overrides.brand ?? check?.check.brand ?? null,
+      model: overrides.model ?? check?.check.model ?? null,
+      year:  overrides.year  ?? check?.check.year  ?? null,
+    },
+    // Provider identity is compared inside the report itself; the reviewer
+    // resolves any conflict by correcting the fields above.
+    providerIdentity: null,
+    identityConflictResolved: true,
+    identityRecheckCount: report.identity_recheck_count ?? 0,
+
+    plateSupplied: !!check?.check.plate_encrypted,
+    // The report only claims a registration check when a plate produced one.
+    claimsRegistrationCheck: !!check?.check.plate_encrypted,
+
+    reviewerNote: note,
+    hasMarketEvidence: true,
+    statesVerdict: false,
+  })
+
+  if (blocks.length > 0) {
+    // Nothing is released. The reviewer sees the queue again with the report
+    // still pending, which is the correct outcome — the alternative is a buyer
+    // receiving it.
+    console.error('[admin/review] release blocked', {
+      reportId, codes: blocks.map(b => b.code),
+    })
+    revalidatePath(PATH)
+    return
+  }
 
   // The guarded UPDATE decides the race, not this process. `won` is false when
   // a double-tap lost, and then nothing is sent — a buyer must never receive
   // two "laporan anda siap" messages for one report.
   const won = await releaseReport({
-    reportId, reviewerId: REVIEWER_ID, reviewerNote: note, overrides,
+    reportId, reviewerId: REVIEWER_ID, reviewerNote: note, overrides: { ...overrides },
   })
   if (!won) { revalidatePath(PATH); return }
 
@@ -89,10 +155,24 @@ export async function markUnableAction(formData: FormData): Promise<void> {
   const report = await getReportForReview(reportId)
   if (!report) { revalidatePath(PATH); return }
 
-  await markUnableToComplete({
+  const won = await markUnableToComplete({
     reportId, reviewerId: REVIEWER_ID, reasonCode, note,
     amountCents: report.amount_cents,
   })
+
+  // TELL THE BUYER. Release e-mailed; both failure paths were silent, so the
+  // buyer Paqar had already let down was the only one it never wrote to — left
+  // on a page still promising a decision in 24 hours.
+  //
+  // Gated on the guarded UPDATE, like release: a double-tapped phone must not
+  // send two apologies for one failure. Non-blocking for the same reason too —
+  // the state is already recorded, and a mail outage must not make the action
+  // look failed and invite a second attempt.
+  if (won) {
+    notifyUndeliverable(report.check_id, report.buyer_email, note)
+      .catch(err => console.error('[admin/review] undeliverable notice failed', err))
+  }
+
   revalidatePath(PATH)
 }
 
@@ -112,11 +192,24 @@ export async function startRefundAction(formData: FormData): Promise<void> {
  */
 export async function completeRefundAction(formData: FormData): Promise<void> {
   if (!isAdminAuthenticated()) throw new Error('Unauthorized')
-  await completeRefund({
-    reportId:  String(formData.get('reportId') ?? ''),
-    operator:  REVIEWER_ID,
-    reference: String(formData.get('reference') ?? ''),
-  })
+  const reportId  = String(formData.get('reportId') ?? '')
+  const reference = String(formData.get('reference') ?? '')
+
+  // Read BEFORE the transition: completeRefund is guarded, and reading after
+  // would not tell us whether this call was the one that won. Only the winner
+  // may send — a second "your money is back" for one refund reads as a second
+  // refund.
+  const report = await getReportForReview(reportId)
+
+  const won = await completeRefund({ reportId, operator: REVIEWER_ID, reference })
+
+  // An unexplained credit days after an unexplained silence is not a guarantee
+  // the buyer can feel. The reference is what lets them find it on a statement.
+  if (won && report) {
+    sendRefundCompletedEmail({ toEmail: report.buyer_email, checkId: report.check_id, reference })
+      .catch(err => console.error('[admin/review] refund notice failed', err))
+  }
+
   revalidatePath(PATH)
 }
 
@@ -161,6 +254,20 @@ function parseOverrides(formData: FormData): Record<string, unknown> | null {
  * a different event and must not consume it. The receipt already went out at
  * payment, reframed as proof of payment plus the 24-hour promise.
  */
+/**
+ * The undeliverable message. Plate is cosmetic — it heads the subject line so
+ * a buyer with more than one check open knows which car this is about.
+ */
+async function notifyUndeliverable(checkId: string, toEmail: string, reason: string): Promise<void> {
+  const row = await getCheck(checkId)
+  let plate: string | null = null
+  try { plate = decrypt(row!.check.plate_encrypted as string).toUpperCase() } catch { /* cosmetic */ }
+
+  // No report link, deliberately: the draft was rejected, and handing it over
+  // would give away the work being refunded and contradict the reason above it.
+  await sendUndeliverableEmail({ toEmail, plate, reason, checkId })
+}
+
 async function notifyBuyer(checkId: string, toEmail: string, reviewerNote: string): Promise<void> {
   const row = await getCheck(checkId)
   const claimToken = row?.check.claim_token ?? null
