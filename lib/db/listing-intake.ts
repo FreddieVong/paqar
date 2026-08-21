@@ -1,6 +1,7 @@
 import 'server-only'
 import { nanoid } from 'nanoid'
 import { createServiceClient } from '@/lib/supabase/server'
+import { extendRetention } from '@/lib/db/listing-screenshots'
 import { mintIntakeToken, hashIntakeToken, verifyIntakeToken } from '@/lib/intake-token'
 import type { MergedListing } from '@/lib/listing-merge'
 
@@ -163,6 +164,18 @@ export async function convertIntakeToCheck(params: {
   if (updErr) throw updErr
 
   if ((won?.length ?? 0) > 0) {
+    // The screenshots are now a paid order's evidence, not an abandoned
+    // upload, so take them off the 24-hour abandonment clock. Best-effort:
+    // this runs with the buyer mid-checkout and the conversion has already
+    // won its race, so a retention failure must not throw the check away.
+    // The sweep independently refuses to delete a converted intake's
+    // screenshots inside the paid window, so a lost call here costs a log
+    // line rather than the evidence.
+    await extendRetention(params.intake.id).catch(err =>
+      console.error('[listing-intake] retention extension failed', {
+        intakeId: params.intake.id, error: String(err).slice(0, 200),
+      }),
+    )
     return { ok: true, checkId, claimToken, reused: false }
   }
 

@@ -28,13 +28,14 @@ import { deleteScreenshots, verifyDeleted } from '@/lib/screenshot-storage'
  * ── RETENTION ──────────────────────────────────────────────────────────────
  *
  *   24 hours  abandoned intake — uploaded, never paid
- *   30 days   released or refunded — extended when the case reaches a terminal
- *             state, so a buyer querying a decision can still be shown what it
- *             rested on
+ *   30 days   converted intake — the evidence a paid decision rests on, and
+ *             the window the buyer is shown at upload and on /privasi
  *
- * Both live as expires_at on the row, so this route has one rule rather than a
- * policy engine. A converted intake is never swept while its screenshots are
- * still within retention, because extendRetention moves their expiry out.
+ * Both live as expires_at, set by extendRetention at conversion, so this route
+ * has one rule rather than a policy engine. listExpiredScreenshots does not
+ * trust that column on its own: it re-derives the paid window from the
+ * intake's created_at, because a lost extension would otherwise let this sweep
+ * delete a live order's evidence, and deletion is final.
  *
  * NOT SCHEDULED. vercel.json is unchanged deliberately: adding a cron is a
  * deployment concern and this pass does not deploy.

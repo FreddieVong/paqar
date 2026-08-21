@@ -84,12 +84,36 @@ export async function listExpiredScreenshots(limit = 200): Promise<ScreenshotRow
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('listing_screenshots')
-    .select('*')
+    // The intake's status comes back with the row so the sweep can tell a paid
+    // order's evidence from an abandoned upload without a second round trip.
+    .select('*, listing_intake!inner(status, created_at)')
     .is('deleted_at', null)
     .lt('expires_at', new Date().toISOString())
     .limit(limit)
   if (error) throw error
-  return (data ?? []) as ScreenshotRow[]
+
+  const rows = (data ?? []) as (ScreenshotRow & {
+    listing_intake: { status: string; created_at: string } | null
+  })[]
+
+  // SECOND OPINION ON PAID EVIDENCE, deliberately not derived from expires_at.
+  //
+  // expires_at is authoritative only if extendRetention actually ran at
+  // conversion. If that call is ever lost — a thrown request, a future code
+  // path that converts by another route — every row still carries the 24-hour
+  // default, and this sweep would destroy the screenshots a paid decision
+  // rests on while the buyer is still waiting for it. Deletion is final, so
+  // the sweep re-derives the paid window from the intake's own created_at
+  // rather than trusting a column something else was supposed to update.
+  //
+  // Not a filter on status alone: converted rows must still age out at
+  // PAID_RETENTION_DAYS, because the buyer was told they would.
+  const cutoff = Date.now() - PAID_RETENTION_DAYS * 86_400_000
+  return rows.filter(r => {
+    const intake = r.listing_intake
+    if (intake?.status !== 'converted') return true
+    return new Date(intake.created_at).getTime() < cutoff
+  })
 }
 
 /**
@@ -109,8 +133,38 @@ export async function markScreenshotsDeleted(ids: string[]): Promise<void> {
   if (error) throw error
 }
 
-/** Extend retention once a case reaches a terminal state. */
-export async function extendRetention(intakeId: string, days: number): Promise<void> {
+/**
+ * How long a paid order's screenshots live, counted from the intake.
+ *
+ * Fixed by what the buyer is told, in two places: the upload widget says
+ * "dipadam selepas 30 hari", and /privasi says data is kept "30 hari selepas
+ * semakan dibuat". Both anchor on the check, not on the decision — so this
+ * window is NOT re-extended at release. A report released on day 20 keeps its
+ * evidence to day 30, which is the promise, rather than to day 50, which is
+ * not.
+ */
+export const PAID_RETENTION_DAYS = 30
+
+/**
+ * Move a converted intake's screenshots off the 24-hour abandonment clock.
+ *
+ * Every screenshot starts with a 24-hour expiry, which is right for the common
+ * case: someone uploads, does not pay, and their listing photos should not sit
+ * in a bucket. The moment an intake converts, those same objects become the
+ * evidence a paid decision rests on and the 24-hour clock becomes a bug —
+ * a reviewer opening the queue against a 24-hour promise can arrive after the
+ * screenshots are gone, and the buyer can never be shown what the decision
+ * was based on.
+ *
+ * Called at conversion rather than at release: conversion is the single point
+ * every paid order passes through, and it is the earliest moment the evidence
+ * is known to matter. Waiting for release would leave the whole review window
+ * — exactly the window where the objects are actually needed — unprotected.
+ */
+export async function extendRetention(
+  intakeId: string,
+  days: number = PAID_RETENTION_DAYS,
+): Promise<void> {
   const supabase = createServiceClient()
   const { error } = await supabase
     .from('listing_screenshots')
