@@ -83,6 +83,25 @@ export function parseRinggit(text: string): number | null {
 
 /** "85,000 km" / "85k km" / "85000km". */
 export function parseMileage(text: string): number | null {
+  // MUDAH'S BANDED FORM: "100k - 109k", with no "km" after it.
+  //
+  // It is how Mudah displays mileage on essentially every advert, and nothing
+  // here matched it — so the single most common Malaysian listing format
+  // returned null while the exact-figure patterns below handled the rare case.
+  //
+  // The midpoint, because the seller stated a band and the midpoint is the
+  // only point estimate that does not take a side. Rounding down would flatter
+  // the seller on the one number a buyer uses to judge wear; rounding up would
+  // manufacture a concern the advert never claimed. Provenance stays
+  // listing_claimed either way, so no finding is ever built on it alone —
+  // see lib/mileage-provenance.
+  const band = text.match(/\b(\d{1,3})\s*k\s*[-–—]\s*(\d{1,3})\s*k\b/i)
+  if (band?.[1] && band[2]) {
+    const lo = parseInt(band[1], 10) * 1000
+    const hi = parseInt(band[2], 10) * 1000
+    if (hi >= lo && hi <= 1_500_000) return Math.round((lo + hi) / 2)
+  }
+
   const k = text.match(/\b(\d{1,3})\s*k\s*km\b/i)
   if (k?.[1]) return parseInt(k[1], 10) * 1000
   const m = text.match(/\b([\d,]{3,9})\s*km\b/i)

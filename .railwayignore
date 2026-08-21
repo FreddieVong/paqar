@@ -1,0 +1,26 @@
+# Railway builds ONLY the scraper service from this repo (root directory
+# "scraper"), so `railway up` must run from here — the builder resolves
+# "scraper/" inside the uploaded archive and uploading from within scraper/
+# gives it an archive whose contents ARE scraper, with no such subdirectory.
+#
+# Everything the Next.js app needs and the scraper does not is excluded, so
+# the upload stays small.
+node_modules
+.next
+.git
+.vercel
+public
+app
+components
+supabase
+__tests__
+docs
+scripts
+types
+lib
+hooks
+styles
+*.png
+*.jpg
+*.webp
+.env*

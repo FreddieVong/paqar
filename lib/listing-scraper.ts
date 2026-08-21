@@ -83,11 +83,30 @@ export async function extractListingViaScraper(rawUrl: string): Promise<ScrapeOu
   // Rebuild a minimal document so ONE extractor serves both paths. A second
   // parser for scraper output would drift from the first, and the rules that
   // stop a monthly instalment becoming an asking price live in that one.
-  const metaTags = Object.entries(payload.meta ?? {})
+  //
+  // ONE og:description, not two.
+  //
+  // The site's own tags were emitted first and the page text appended after as
+  // a second og:description — and lib/listing-extract's meta() takes the FIRST
+  // match. So on every site that publishes an og:description of its own (which
+  // is most of them) the page text was shadowed and never read. Measured on a
+  // real Mudah advert: brand, model and price came through from the curated
+  // description while the year and the mileage, both present in the page text
+  // twelve words later, came back missing — and year is required for coverage,
+  // so the buyer was asked to type in details Paqar already had.
+  //
+  // The two are merged instead of one replacing the other. The site's
+  // description is curated and higher signal; the page text is richer. Losing
+  // either costs a field.
+  const siteMeta = Object.entries(payload.meta ?? {})
+    .filter(([k]) => k.toLowerCase() !== 'og:description')
+  const metaTags = siteMeta
     .map(([k, v]) => `<meta property="${esc(k)}" content="${esc(v)}">`)
     .join('\n')
+  const siteDescription = payload.meta?.['og:description'] ?? ''
+  const description = `${siteDescription} ${(payload.text ?? '').slice(0, 1500)}`.trim()
   const html = `<html><head><title>${esc(payload.title ?? '')}</title>${metaTags}`
-    + `<meta property="og:description" content="${esc((payload.text ?? '').slice(0, 1500))}">`
+    + `<meta property="og:description" content="${esc(description)}">`
     + `</head><body></body></html>`
 
   return { ok: true, extracted: extractFromHtml(html) }
