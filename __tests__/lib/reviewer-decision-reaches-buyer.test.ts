@@ -92,14 +92,16 @@ describe('a plateless check is a first-class buyer', () => {
     // enough ads for this car.
     // Anchored on the declaration, not the import of MarketPricePoller which
     // sits at the top of the file and made this slice empty.
-    const block = page.slice(
-      page.indexOf('let marketPrices'),
-      page.indexOf('<MarketPricePoller'),
-    )
-    expect(block).toContain('row.check.brand')
-    expect(block).toContain('row.check.year')
-    expect(block, 'the reviewer’s corrections must pick the cohort')
-      .toContain('overrides.year')
+    // The identity resolver now owns this, shared with the reviewer's queue so
+    // the two surfaces cannot compute different cohorts for one car.
+    expect(page).toContain('resolveCarIdentity({ check: row.check, vehicleData, overrides })')
+    const identity = read('lib/report-identity.ts')
+    expect(identity, 'the check row must be the floor').toContain('params.check.brand')
+    expect(identity, 'the check row must be the floor').toContain('params.check.year')
+    expect(identity, 'the reviewer’s corrections must pick the cohort').toContain('o.year')
+    // And the report must actually use it, rather than the plate lookup alone.
+    const report = read('components/report/BuyerReportContent.tsx')
+    expect(report).toContain('cohortYear   ?? vehicleData?.registrationYear')
   })
 
   it('does not claim a plate lookup failed when no plate was given', () => {

@@ -108,9 +108,20 @@ interface Props {
   reviewerNextAction?: string | null
   /** Questions the reviewer wrote for THIS advert. Shown above the generic set. */
   reviewerSellerQuestions?: string | null
+  /**
+   * The car this report is about, resolved by lib/report-identity — the check
+   * row, refined by the registered record, corrected by the reviewer.
+   *
+   * Passed in rather than derived here because the same resolution has to feed
+   * the reviewer's queue: a reviewer approving a decision computed from one
+   * cohort while the buyer reads another is a failure neither of them can see.
+   */
+  cohortYear?:    string | null
+  cohortModel?:   string | null
+  cohortVariant?: string | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null }: Props) {
   // The reading that may support a TAMPERING claim — null unless a human
   // confirmed it. Distinct from claimedMileageKm, which is still displayed as
   // context. Conflating the two is what published a false rollback warning
@@ -163,10 +174,23 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   // ── Market comparison — ONE cohort; median, range, chips, count, confidence,
   // banner and methodology all derive from it, so math and copy can never
   // describe different listing sets (lib/comparables.ts).
+  //
+  // YEAR AND MODEL COME FROM THE RESOLVED IDENTITY, not from the plate lookup.
+  //
+  // They were `vehicleData?.registrationYear` and `vehicleData?.model`, which
+  // are null for a plateless check — and since migration 032 that is the
+  // default journey. A null year means buildComparableCohort applies NO year
+  // filter, so the buyer's 2019 Honda City was priced against City listings of
+  // every year: it pulled in a RM56,980 car, raised the top of the range above
+  // the asking price, and turned an overpriced listing into "WAJAR".
+  //
+  // It was caught by putting the same numbers on the reviewer's card and
+  // watching the two surfaces disagree — 13 comparables and a RM49,900 ceiling
+  // in the queue against a RM56,980 ceiling in the report, for one car.
   const cohort           = buildComparableCohort(marketPrices?.listings ?? [], {
-    year:             vehicleData?.registrationYear ?? null,
-    officialVariant,
-    model:            vehicleData?.model ?? null,
+    year:             cohortYear   ?? vehicleData?.registrationYear ?? null,
+    officialVariant:  officialVariant ?? cohortVariant ?? null,
+    model:            cohortModel  ?? vehicleData?.model ?? null,
     isSpecialVariant,
   })
   const relevantListings = cohort.listings

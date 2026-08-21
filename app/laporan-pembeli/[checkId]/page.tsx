@@ -30,8 +30,7 @@ import { getValuationByNvic }         from '@/lib/db/vehicle-valuations'
 import { getCachedMarketPrices,
          fetchAndCacheMarketPrices }  from '@/lib/db/market-prices'
 import type { CachedMarketPrices }    from '@/lib/db/market-prices'
-import { buildMarketModelKeyword }    from '@/lib/market-keyword'
-import { canonicalModelKeyword }     from '@/lib/model-catalog'
+import { resolveCarIdentity }        from '@/lib/report-identity'
 import { AnalyticsEvent }             from '@/components/layout/AnalyticsEvent'
 import { AskingPriceForm }            from '@/components/report/AskingPriceForm'
 import { MarketPricePoller }          from '@/components/report/MarketPricePoller'
@@ -232,6 +231,8 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
     // The reviewer's corrections win over both. If a human changed the year
     // from 2019 to 2018, the comparables must be 2018 cars; pulling the
     // uncorrected cohort would quietly undo the correction the buyer paid for.
+    const identity = resolveCarIdentity({ check: row.check, vehicleData, overrides })
+
     let marketPrices: CachedMarketPrices | null = null
     // Whether a background scrape is genuinely in flight. The spinner and the
     // poller below hang off THIS, not off the plate lookup: a car we never
@@ -239,27 +240,25 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
     // run for ever on the page the buyer already paid for.
     let marketRefreshStarted = false
     {
-      const hasLookup = !!(vehicleData?.make && vehicleData?.model && vehicleData?.registrationYear)
-
-      const mk = overrides.brand ?? (hasLookup ? vehicleData!.make as string : row.check.brand)
-      const yr = overrides.year  ?? (hasLookup ? vehicleData!.registrationYear as string : row.check.year)
-      const rawModel = overrides.model ?? (hasLookup ? vehicleData!.model as string : row.check.model)
-
-      // Same keyword the FREE coverage answer was computed from when there is
-      // no lookup, so the report cannot come up empty on a car Paqar just said
-      // it could handle. buildMarketModelKeyword needs the registered
-      // description and only exists on the lookup path.
-      const mo = hasLookup && !overrides.model
-        ? buildMarketModelKeyword(vehicleData!.model as string, (vehicleData!.description as string) ?? '')
-        : canonicalModelKeyword(String(mk ?? ''), String(rawModel ?? ''))
-
-      if (mk && mo && yr && /^\d{4}$/.test(String(yr))) {
-        marketPrices = await getCachedMarketPrices(String(mk), mo, String(yr)).catch(() => null)
+      // ── THE SECTION THE BUYER ACTUALLY PAID FOR ─────────────────────────
+      //
+      // This was gated on the plate lookup having succeeded. Since migration
+      // 032 the plate is optional and plateless is the DEFAULT journey, so for
+      // most buyers marketPrices stayed null and "PERBANDINGAN HARGA" rendered
+      // as a heading with nothing under it — while the free coverage check,
+      // minutes earlier, had told them Paqar had enough ads for this car.
+      //
+      // resolveCarIdentity is shared with the reviewer's queue for exactly
+      // that reason: a reviewer approving a decision computed from one cohort
+      // while the buyer reads another is a failure neither of them can see.
+      if (identity) {
+        const { brand: mk, modelKeyword: mo, year: yr } = identity
+        marketPrices = await getCachedMarketPrices(mk, mo, yr).catch(() => null)
         if (!marketPrices) {
           marketRefreshStarted = true
-          const scrape = fetchAndCacheMarketPrices(String(mk), mo, String(yr)).catch(() => {})
+          const scrape = fetchAndCacheMarketPrices(mk, mo, yr).catch(() => {})
           await Promise.race([scrape, new Promise(r => setTimeout(r, 8_000))])
-          marketPrices = await getCachedMarketPrices(String(mk), mo, String(yr)).catch(() => null)
+          marketPrices = await getCachedMarketPrices(mk, mo, yr).catch(() => null)
         }
       }
     }
@@ -303,6 +302,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               reviewerDecision={overrides.finalDecision ?? null}
               reviewerNextAction={overrides.nextAction ?? null}
               reviewerSellerQuestions={overrides.sellerQuestions ?? null}
+              cohortYear={identity?.year ?? null}
+              cohortModel={identity?.model ?? null}
+              cohortVariant={identity?.model ?? null}
               askingPriceRm={reviewed.askingPriceRm}
               vehicleData={vehicleData}
               marketPrices={marketPrices}

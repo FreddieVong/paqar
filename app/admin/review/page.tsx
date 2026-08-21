@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
+import { reviewPriceContext } from '@/lib/review-price-context'
 import { listReportsAwaitingReview, listReportsAwaitingRefund, listRecentlyReleased, type ReviewQueueRow } from '@/lib/db/report-review'
 import { hoursAwaitingReview, REVIEW_SLA_HOURS } from '@/lib/report-release'
 import { ringgit } from '@/lib/pricing'
@@ -58,6 +59,15 @@ function AgeBadge({ hours }: { hours: number | null }) {
   )
 }
 
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="font-body text-[11px] text-[#9CA3AF]">{label}</p>
+      <p className="font-heading font-bold text-[14px] text-[#111827]">{value}</p>
+    </div>
+  )
+}
+
 /** One correctable field. Blank means "no correction" — the draft value stands. */
 function Override({ name, label, draft }: { name: string; label: string; draft?: string | number | null }) {
   return (
@@ -73,8 +83,16 @@ function Override({ name, label, draft }: { name: string; label: string; draft?:
   )
 }
 
-function QueueCard({ row }: { row: ReviewQueueRow }) {
+async function QueueCard({ row }: { row: ReviewQueueRow }) {
   const { report, check } = row
+  // Cache-only, and the same cohort the buyer's report reads. Without it a
+  // reviewer had to open the draft in a second tab to learn whether the asking
+  // price was high — per report, against a 20-a-day ceiling and a 24-hour
+  // promise.
+  const prices = check
+    ? await reviewPriceContext({ check, askingPriceRm: report.asking_price_rm ?? null })
+        .catch(() => null)
+    : null
   const hours       = hoursAwaitingReview(report)
   const status      = report.review_status ?? 'pending'
   const refund      = report.refund_status ?? 'not_required'
@@ -125,6 +143,53 @@ function QueueCard({ row }: { row: ReviewQueueRow }) {
           <p className="font-body text-[13px] text-[#374151] leading-relaxed whitespace-pre-wrap">
             {check.buyer_concern}
           </p>
+        </div>
+      )}
+
+      {/* THE NUMBERS, ON THE CARD.
+          Placed above the screenshots because it is what decides the verdict,
+          and stated as counts rather than percentiles — "11 of 15 ads are
+          cheaper than this one" is a sentence that can go straight into the
+          note, and it claims no more strength than 15 listings carry. */}
+      {prices && (
+        <div className="bg-white border border-[#E5E7EB] rounded-[12px] p-3.5 mb-3">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+            Harga pasaran — {prices.label}
+          </p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            {/* asking_price_rm is already ringgit — unlike amount_cents above,
+                which is why ringgit() is not used here. */}
+            <Stat
+              label="Seller minta"
+              value={report.asking_price_rm != null
+                ? `RM${report.asking_price_rm.toLocaleString('en-MY')}` : '—'}
+            />
+            <Stat label="Harga tengah" value={prices.median != null ? `RM${prices.median.toLocaleString('en-MY')}` : '—'} />
+            <Stat
+              label="Julat iklan"
+              value={prices.min != null && prices.max != null
+                ? `RM${prices.min.toLocaleString('en-MY')} – RM${prices.max.toLocaleString('en-MY')}`
+                : '—'}
+            />
+            <Stat label="Iklan setanding" value={String(prices.count)} />
+          </div>
+          {prices.gapFromMedian != null && (
+            <p className={`font-heading font-bold text-[13px] mt-2.5 ${prices.gapFromMedian > 0 ? 'text-[#B91C1C]' : 'text-[#15803D]'}`}>
+              {prices.gapFromMedian > 0
+                ? `RM${prices.gapFromMedian.toLocaleString('en-MY')} DI ATAS harga tengah`
+                : `RM${Math.abs(prices.gapFromMedian).toLocaleString('en-MY')} di bawah harga tengah`}
+              {prices.cheaperThanAsking != null && prices.count > 0 && (
+                <span className="font-body font-normal text-[12px] text-[#6B7280]">
+                  {' · '}{prices.cheaperThanAsking} daripada {prices.count} iklan lebih murah
+                </span>
+              )}
+            </p>
+          )}
+          {prices.mixedVariants && (
+            <p className="font-body text-[12px] text-[#B45309] mt-1.5">
+              Kohort campur varian — jangan guna julat ini terus tanpa semak varian.
+            </p>
+          )}
         </div>
       )}
 
