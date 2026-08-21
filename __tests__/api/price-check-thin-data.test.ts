@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
+// lib/coverage is server-only; the route reaches it now that both free
+// surfaces share one assessment.
+vi.mock('server-only', () => ({}))
+
 vi.mock('@vercel/functions', () => ({ waitUntil: vi.fn() }))
 vi.mock('@/lib/db/market-prices', () => ({
   getCachedMarketPrices:      vi.fn(),

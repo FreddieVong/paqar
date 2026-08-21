@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, type ReactNode } from 'react'
-import { FreePriceEvidence } from '@/components/report/FreePriceEvidence'
+import { CoverageSignal }    from '@/components/report/CoverageSignal'
 import { analytics }         from '@/lib/analytics'
 import { whatsappUrl }       from '@/lib/site'
 import { trackAdEvent, type ValuationPathKey } from '@/lib/meta-events'
@@ -11,8 +11,14 @@ import {
 } from '@/lib/free-result'
 
 /**
- * Renders the buyer's own free result, and only then a paid offer — and only
+ * Renders the buyer's own free answer, and only then a paid offer — and only
  * when there is a paid product to deliver.
+ *
+ * WHAT THE FREE ANSWER IS NOW. Coverage — "Paqar boleh semak kereta ini" —
+ * not the verdict. The gate's shape is unchanged and its guarantee is
+ * unchanged; only the thing it waits for is different. That swap is the whole
+ * of the RM29 repositioning at this layer: the buyer learns Paqar can help,
+ * and pays to learn what to do.
  *
  * THIS IS THE INVARIANT, not a layout helper. Before it existed, "result above
  * paywall" was a fact about the order of JSX in two route files, and one of
@@ -69,8 +75,12 @@ export function FreeResultGate({
       // query. Never used to decide anything — isPaidReportEligible is.
       paid_report_eligible: isPaidReportEligible(result),
       valuation_path:      valuationPath,
-      verdict:             result.verdict ?? null,
-      confidence:          result.confidence ?? null,
+      // verdict and confidence are gone from the free surface, not merely
+      // unreported: there is no free verdict to name, and confidence described
+      // the size of Paqar's sample. Both are nulled rather than dropped so the
+      // event's shape — and anything already querying it — stays stable.
+      verdict:             null,
+      confidence:          null,
     })
     trackAdEvent('free_result_presented', { checkId, valuationPath })
   }, [checkId, valuationPath])
@@ -80,10 +90,9 @@ export function FreeResultGate({
 
   return (
     <>
-      <FreePriceEvidence
+      <CoverageSignal
         checkId={checkId}
         claimToken={claimToken}
-        valuationPath={valuationPath}
         initialAskingPrice={initialAskingPrice}
         onPresented={handlePresented}
       />

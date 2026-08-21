@@ -7,7 +7,7 @@ import { join } from 'node:path'
 /**
  * An unmounted poller must stop polling.
  *
- * THE DEFECT THIS PINS. FreePriceEvidence retried with setTimeout(load, 2500)
+ * THE DEFECT THIS PINS. The evidence poller retried with setTimeout(load, 2500)
  * and never cleared the timer; cleanup set a `stop` flag that was only checked
  * AFTER the await. A timer firing post-unmount therefore issued a real request
  * before discovering it had been cancelled — up to twelve of them across thirty
@@ -17,6 +17,11 @@ import { join } from 'node:path'
  * inside the next test's global fetch mock and consumes it, so a different
  * assertion failed on each parallel run. That looked like flakiness and was
  * actually a resource leak.
+ *
+ * The component was FreePriceEvidence, which served the free verdict and has
+ * since been deleted. CoverageSignal inherited its polling loop verbatim, so
+ * it inherits this test — the leak is a property of the loop, not of what the
+ * loop was fetching.
  */
 
 vi.mock('@/lib/analytics', () => ({
@@ -27,7 +32,7 @@ vi.mock('@/lib/analytics', () => ({
 }))
 vi.mock('@/lib/meta-events', () => ({ trackAdEvent: vi.fn() }))
 
-const { FreePriceEvidence } = await import('@/components/report/FreePriceEvidence')
+const { CoverageSignal } = await import('@/components/report/CoverageSignal')
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers() })
 beforeEach(() => { vi.useFakeTimers({ shouldAdvanceTime: true }) })
@@ -36,13 +41,13 @@ describe('the evidence poller stops when unmounted', () => {
   it('issues no further requests after cleanup', async () => {
     // A state that keeps the poller retrying rather than settling.
     const fetchMock = vi.fn(async () => ({
-      ok: true, json: async () => ({ state: 'pending_market' }),
+      ok: true, json: async () => ({ state: 'needs_asking_price', modelLabel: 'Honda City 2019' }),
     }))
     vi.stubGlobal('fetch', fetchMock)
 
     const { unmount } = render(
-      <FreePriceEvidence
-        checkId="ch_1" claimToken="t" valuationPath="plate_check"
+      <CoverageSignal
+        checkId="ch_1" claimToken="t"
         initialAskingPrice={45000} onPresented={() => {}}
       />,
     )
@@ -63,12 +68,12 @@ describe('the evidence poller stops when unmounted', () => {
 
 describe('the cleanup is structurally correct', () => {
   const src = readFileSync(
-    join(__dirname, '..', '..', 'components/report/FreePriceEvidence.tsx'), 'utf8',
+    join(__dirname, '..', '..', 'components/report/CoverageSignal.tsx'), 'utf8',
   )
 
   it('tracks and clears the retry timer', () => {
     expect(src).toContain('clearTimeout(timer)')
-    expect(src).toMatch(/timer = setTimeout\(load, 2500\)/)
+    expect(src).toMatch(/timer = setTimeout\(load, POLL_MS\)/)
   })
 
   it('checks the cancelled flag before spending a request, not only after', () => {

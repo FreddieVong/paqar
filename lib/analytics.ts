@@ -109,15 +109,23 @@ export const analytics = {
    * plate, a price, a token or an address could later be added by accident.
    */
   freeResultPresented: (props: {
-    result_state:         'verdict' | 'suppressed' | 'insufficient_data' | 'unavailable'
     /**
-     * Whether the RM12 report could actually be delivered for this result.
+     * 'verdict' and 'suppressed' were retired when the free surface stopped
+     * issuing a verdict; both now arrive as 'covered'. They stay in the union
+     * because historical rows carry them and a query spanning the change must
+     * still type-check against what the table actually holds.
+     */
+    result_state:         'covered' | 'insufficient_data' | 'unavailable'
+                        | 'verdict' | 'suppressed'
+    /**
+     * Whether the paid report could actually be delivered for this result.
      * Recorded, never decided from — lib/free-result owns the policy. It is
      * here so "eligible paywall journeys preceded by a truthful presentation"
      * can be read without re-deriving business rules inside a SQL query.
      */
     paid_report_eligible: boolean
     valuation_path:       'plate_report' | 'model_price' | 'plate_check'
+    /** Always null since the verdict left the free surface. Kept for shape. */
     verdict:              'good_deal' | 'fair_price' | 'slightly_high' | 'overpriced' | null
     confidence:           'low' | 'medium' | 'high' | null
   }) => posthog.capture('free_result_presented', props),

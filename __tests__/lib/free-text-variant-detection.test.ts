@@ -124,15 +124,24 @@ describe('a mainstream trim gets a verdict instead of a suppression', () => {
   })
 })
 
-describe('both free-text routes use the marker, not the token', () => {
+describe('the free-text path uses the marker, not the token', () => {
   const ROOT = join(__dirname, '..', '..')
+
+  it('the shared coverage assessment applies the marker test', () => {
+    // Both free surfaces run through lib/coverage now. They used to hold two
+    // copies of this, which is how they drifted apart once already.
+    const src = readFileSync(join(ROOT, 'lib/coverage.ts'), 'utf-8')
+    expect(src).toContain('isPerformanceModelText(params.variantSource ?? model)')
+    expect(src).not.toMatch(/isSpecialVariant\s*=\s*variantToken\s*!=\s*null/)
+  })
+
   it.each([
     'app/api/price-check/route.ts',
-    'app/api/checks/[id]/price-evidence/route.ts',
-  ])('%s', (path) => {
+    'app/api/checks/[id]/coverage/route.ts',
+  ])('%s hands it free text rather than a structured token', (path) => {
     const src = readFileSync(join(ROOT, path), 'utf-8')
-    expect(src).toContain('isPerformanceModelText(variantSource)')
-    expect(src).not.toMatch(/isSpecialVariant\s*=\s*variantToken\s*!=\s*null/)
+    expect(src).toContain('variantSource')
+    expect(src).not.toContain('extractVariantToken')
   })
 
   it('the structured NVIC path is untouched', () => {

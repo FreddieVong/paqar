@@ -8,9 +8,15 @@ import { trackAdEvent } from '@/lib/meta-events'
  * Measures the RM12 offer itself, separately from paywall_viewed (which fires
  * on the payment form below it).
  *
- * `hasFreeVerdict` is the experiment variable: the plate path now shows a free
- * verdict above this CTA, and the question this instrumentation exists to
- * answer is whether seeing it makes people more or less likely to buy.
+ * `hasFreeVerdict` WAS the experiment variable: the plate path showed a free
+ * verdict above this CTA, and the question was whether seeing it made people
+ * more or less likely to buy.
+ *
+ * The experiment is over — not by reaching significance, but because the free
+ * verdict was removed from every surface. It is now always false, and the prop
+ * survives so historical rows carrying `true` stay comparable against the
+ * coverage-only journeys that follow them. That comparison is the closest
+ * thing to a read-out this change will get.
  */
 export function PaidReportCtaTracker({
   checkId, hasFreeVerdict,

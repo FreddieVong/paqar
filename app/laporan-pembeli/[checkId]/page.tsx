@@ -340,7 +340,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               <>
                 {/* plate="" — the page header above already shows the plate;
                     the pitch's plate block is only load-bearing on /check/[id] */}
-                <PaidReportCtaTracker checkId={params.checkId} hasFreeVerdict={true} />
+                {/* false everywhere now — no surface shows a free verdict.
+                    See PaidReportCtaTracker on why the prop stays. */}
+                <PaidReportCtaTracker checkId={params.checkId} hasFreeVerdict={false} />
                 <BuyerReportPitch plate="" />
                 <PaymentForm
                   checkId={params.checkId}

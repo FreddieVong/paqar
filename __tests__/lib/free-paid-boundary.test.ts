@@ -17,7 +17,7 @@ const read = (p: string) => readFileSync(join(ROOT, p), 'utf8')
 
 const FREE_UI = [
   'components/check/OverpricedCheckerForm.tsx',
-  'components/report/FreePriceEvidence.tsx',
+  'components/report/CoverageSignal.tsx',
 ]
 
 /** Strip comments — several of these files document the removed markup on purpose. */
@@ -63,7 +63,10 @@ describe('free UI renders no market figures', () => {
 describe('free APIs return a judgement, not data', () => {
   const routes = [
     'app/api/price-check/route.ts',
-    'app/api/checks/[id]/price-evidence/route.ts',
+    'app/api/checks/[id]/coverage/route.ts',
+    // Where both of them actually compute it. A figure could only reach a
+    // response through here.
+    'lib/coverage.ts',
   ]
 
   it.each(routes)('%s serialises no market figure', (path) => {
@@ -81,10 +84,6 @@ describe('free APIs return a judgement, not data', () => {
     for (const field of ['medianPrice', 'minPrice', 'maxPrice', 'listingCount']) {
       expect(block, `PriceCheckResult still declares ${field}`).not.toContain(field)
     }
-    // What it does keep.
-    for (const kept of ['verdict', 'verdictStatus', 'confidence']) {
-      expect(block).toContain(kept)
-    }
   })
 })
 
@@ -95,21 +94,28 @@ describe('the count still works internally', () => {
     expect(src).toContain('cohort.count')
   })
 
-  it('the paid evidence route still calls both helpers', () => {
-    const src = read('app/api/checks/[id]/price-evidence/route.ts')
-    expect(src).toContain('comparableConfidence(cohort.count)')
-    expect(src).toContain('evaluateVerdictEligibility')
+  it('the paid report still derives confidence from it', () => {
+    // The count did not stop mattering — it stopped being FREE. Every figure
+    // it drives now lives behind the paywall.
+    const src = read('components/report/BuyerReportContent.tsx')
+    expect(src).toContain('comparableConfidence')
   })
 
   /**
-   * /api/price-check is no longer a "free verdict" route — it answers coverage
-   * only. Confidence is a property OF a verdict, so computing one there would
+   * Neither free surface issues a verdict any more — they answer coverage.
+   * Confidence is a property OF a verdict, so computing one on either would
    * mean a verdict had crept back in.
    */
-  it('the coverage route derives eligibility but never a confidence', () => {
-    const src = read('app/api/price-check/route.ts')
+  it('the shared coverage assessment derives eligibility but never a confidence', () => {
+    const src = read('lib/coverage.ts')
     expect(src).toContain('evaluateVerdictEligibility')
     expect(src).not.toContain('comparableConfidence')
+  })
+
+  it('and neither free route computes one behind its back', () => {
+    for (const path of ['app/api/price-check/route.ts', 'app/api/checks/[id]/coverage/route.ts']) {
+      expect(code(read(path)), `${path} computes a confidence`).not.toContain('comparableConfidence')
+    }
   })
 })
 
@@ -284,14 +290,66 @@ describe('nav does not contradict "Tanpa daftar"', () => {
   })
 })
 
-describe('confidence carries the provisional signal', () => {
-  it.each(FREE_UI)('%s has no separate provisional caution', (path) => {
+/**
+ * Confidence used to be the free surface's honesty valve: a verdict was shown,
+ * and a "Anggaran awal sahaja" caution beside it said how much to trust it.
+ *
+ * There is no free verdict any more, so there is nothing to qualify — and a
+ * confidence badge with no judgement beside it would be the comparable count
+ * wearing a different hat, describing the size of Paqar's sample rather than
+ * anything about the buyer's car.
+ */
+describe('the free surface carries no confidence signal at all', () => {
+  /**
+   * Scoped to what is actually MOUNTED. OverpricedCheckerForm still carries
+   * its RM12-era confidence copy, and it is unreachable — nothing renders it
+   * but HomeCheckerTabs, which nothing renders either. Both carry DO NOT
+   * REVIVE headers saying so. Asserting against a component no buyer can see
+   * would either force a cosmetic edit to dead code or, worse, invite deleting
+   * the assertion. What matters is that it stays unreachable, which the next
+   * test pins.
+   */
+  const MOUNTED_FREE_UI = ['components/report/CoverageSignal.tsx']
+
+  it.each(MOUNTED_FREE_UI)('%s has no provisional or confidence caution', (path) => {
     const src = code(read(path))
     expect(src).not.toMatch(/verdictStatus === 'provisional'/)
     expect(src).not.toContain('isProvisional')
+    expect(src).not.toContain('Keyakinan data')
+    expect(src).not.toContain('Anggaran awal')
   })
 
-  it.each(FREE_UI)('%s low-confidence copy explains itself', (path) => {
-    expect(read(path)).toContain('Anggaran awal sahaja')
+  it('the paid report keeps it, where a judgement stands beside it', () => {
+    expect(read('components/report/BuyerReportContent.tsx')).toMatch(/Anggaran awal/)
+  })
+
+  it('the retired verdict-era forms are still mounted nowhere', () => {
+    // They pre-date RM29, call /api/price-check expecting a `verdict` field it
+    // no longer returns, and would put a free verdict back on screen. Reviving
+    // one is the cheapest way to undo this entire change.
+    const { readdirSync, statSync, readFileSync } = require('node:fs') as typeof import('node:fs')
+    const ROOT_DIR = join(__dirname, '..', '..')
+    const files: string[] = []
+    const walk = (d: string) => {
+      for (const e of readdirSync(d)) {
+        if (e === 'node_modules' || e === '.next') continue
+        const full = join(d, e)
+        if (statSync(full).isDirectory()) walk(full)
+        else if (/\.tsx$/.test(e)) files.push(full)
+      }
+    }
+    walk(join(ROOT_DIR, 'app')); walk(join(ROOT_DIR, 'components'))
+
+    for (const retired of ['OverpricedCheckerForm', 'PlateCheckerForm', 'HomeCheckerTabs']) {
+      const mounters = files.filter(f => {
+        if (f.endsWith(`${retired}.tsx`)) return false
+        // A JSX mount, not an import or a comment.
+        return new RegExp(`<${retired}[\\s/>]`).test(readFileSync(f, 'utf8'))
+      }).map(f => f.replace(ROOT_DIR + '/', ''))
+      // HomeCheckerTabs mounts the two forms; it is itself mounted nowhere, so
+      // the chain is dead at the root.
+      const live = mounters.filter(m => !m.endsWith('HomeCheckerTabs.tsx'))
+      expect(live, `${retired} is reachable again`).toEqual([])
+    }
   })
 })

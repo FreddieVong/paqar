@@ -24,10 +24,19 @@ const code = (src: string) =>
  * behavioural test would only cover whichever one it rendered.
  */
 
-/** Every surface allowed to state a verdict, plus the shared module. */
+/**
+ * Every surface allowed to state a verdict, plus the shared module.
+ *
+ * FreePriceEvidence left this list by being deleted — the verdict is no longer
+ * free. What remains is the shared wording and its one consumer, and that
+ * consumer is itself retired, so these rules now guard the wording against the
+ * day a verdict is surfaced again rather than a surface shipping today. The
+ * paid report is deliberately NOT here: it states its verdict beside the
+ * cohort it was computed from, with its own methodology line, so the
+ * scope-of-claim rule below does not apply to it.
+ */
 const VERDICT_SURFACES = [
   'lib/verdict-copy.ts',
-  'components/report/FreePriceEvidence.tsx',
   'components/check/OverpricedCheckerForm.tsx',
 ]
 
@@ -82,8 +91,7 @@ describe('no verdict surface claims more than the cohort', () => {
 
 describe('the verdict wording is stated once', () => {
   it('both tabs import the shared lines rather than declaring their own', () => {
-    for (const p of ['components/report/FreePriceEvidence.tsx',
-                     'components/check/OverpricedCheckerForm.tsx']) {
+    for (const p of ['components/check/OverpricedCheckerForm.tsx']) {
       const src = read(p)
       expect(src).toContain("from '@/lib/verdict-copy'")
       // No local re-declaration to drift from the shared one.
@@ -113,19 +121,24 @@ describe('the free/paid boundary is unchanged', () => {
   })
 
   it('verdict THRESHOLDS were not touched — this change is wording only', () => {
-    // computeVerdict left /api/price-check with the free verdict itself: that
-    // route now answers coverage only, so there is no classification there to
-    // protect. The thresholds still govern the PAID report, and the
-    // price-evidence route is where they live.
-    const evidence = read('app/api/checks/[id]/price-evidence/route.ts')
-    expect(evidence).toMatch(/askingPrice < min\s*\)?\s*\??\s*'good_deal'/)
-    expect(evidence).toMatch(/max \* 1\.08/)
+    // The verdict is now entirely paid, so the thresholds live where it is
+    // rendered. Both free routes classify nothing, which is the point.
+    const report = read('components/report/BuyerReportContent.tsx')
+    expect(report).toMatch(/askingPriceRm!? *<= *marketMax!? *\* *1\.08/)
+    expect(report).toContain("'good_deal'")
   })
 
-  it('the free coverage route classifies nothing at all', () => {
-    const priceCheck = read('app/api/price-check/route.ts')
-    expect(priceCheck).not.toContain('good_deal')
-    expect(priceCheck).not.toContain('1.08')
+  it('no free surface classifies anything at all', () => {
+    for (const path of [
+      'app/api/price-check/route.ts',
+      'app/api/checks/[id]/coverage/route.ts',
+      'lib/coverage.ts',
+      'components/report/CoverageSignal.tsx',
+    ]) {
+      const src = read(path)
+      expect(src, `${path} classifies`).not.toContain('good_deal')
+      expect(src, `${path} carries a threshold`).not.toContain('1.08')
+    }
   })
 })
 
