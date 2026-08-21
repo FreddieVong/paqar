@@ -119,9 +119,10 @@ interface Props {
   cohortYear?:    string | null
   cohortModel?:   string | null
   cohortVariant?: string | null
+  cohortBrand?:   string | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null, cohortBrand = null }: Props) {
   // The reading that may support a TAMPERING claim — null unless a human
   // confirmed it. Distinct from claimedMileageKm, which is still displayed as
   // context. Conflating the two is what published a false rollback warning
@@ -819,12 +820,17 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               </p>
             )}
 
-            {vehicleData?.make && (() => {
-              const mk           = vehicleData.make ?? ''
-              const modelKeyword = vehicleData.model
-                ? (vehicleData.model.match(/^\d+/)?.[0] ?? vehicleData.model.split(/[\s-]/)[0] ?? vehicleData.model)
+            {/* The car's name is enough to build a search; a plate is not
+                needed, and requiring one hid these links from the default
+                journey. They matter more than they look — they are how a buyer
+                checks Paqar's comparables against the market themselves. */}
+            {(vehicleData?.make || cohortBrand) && (() => {
+              const mk        = String(vehicleData?.make ?? cohortBrand ?? '')
+              const rawModel  = String(vehicleData?.model ?? cohortModel ?? '')
+              const modelKeyword = rawModel
+                ? (rawModel.match(/^\d+/)?.[0] ?? rawModel.split(/[\s-]/)[0] ?? rawModel)
                 : ''
-              const yr       = vehicleData.registrationYear ?? ''
+              const yr        = String(vehicleData?.registrationYear ?? cohortYear ?? '')
               const searchTm = [mk, modelKeyword, yr].filter(Boolean).join(' ')
               const mudahUrl = `https://www.mudah.my/Malaysia/Cars-for-sale?q=${encodeURIComponent(searchTm)}`
               const carlistUrl = `https://www.carlist.my/used-cars-for-sale/${mk.toLowerCase().replace(/\s+/g, '-')}/${modelKeyword.toLowerCase().replace(/\s+/g, '-')}${yr ? `/year-${yr}` : ''}/malaysia`
@@ -845,11 +851,21 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         )
       })()}
 
-      {/* 3. Skrip Rundingan */}
-      {(effectiveVerdict || variantSuppressed || showDepreciationEstimate) && askingPriceRm != null && vehicleData?.make && (() => {
-        const make    = String(vehicleData.make ?? '')
-        const model   = String(vehicleData.model ?? '')
-        const year    = String(vehicleData.registrationYear ?? '')
+      {/* 3. Skrip Rundingan
+          GATED ON THE CAR'S NAME, NOT ON THE PLATE LOOKUP.
+          This required vehicleData?.make, so on a plateless check — the
+          default journey since migration 032 — the whole section vanished.
+          The report then told the buyer, in Langkah Seterusnya step 1, to
+          "hantar skrip rundingan ke seller" and never gave them one: an
+          instruction to use something it had silently withheld, and one of the
+          four things the paywall names.
+          All the script needs is what to call the car, and resolveCarIdentity
+          supplies that without a registration number. */}
+      {(effectiveVerdict || variantSuppressed || showDepreciationEstimate) && askingPriceRm != null
+        && (vehicleData?.make || cohortBrand) && (() => {
+        const make    = String(vehicleData?.make ?? cohortBrand ?? '')
+        const model   = String(vehicleData?.model ?? cohortModel ?? '')
+        const year    = String(vehicleData?.registrationYear ?? cohortYear ?? '')
         const carName = [make, model, year].filter(Boolean).join(' ')
 
         // Special variant: quoting the generic median at the seller would

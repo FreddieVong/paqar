@@ -86,6 +86,32 @@ describe('no unguarded decrypt of a plate that may not exist', () => {
     expect(around).toMatch(/try\s*\{/)
   })
 
+  it('the paid report delivers its script without a plate', () => {
+    // The script section required vehicleData?.make, so on the default journey
+    // it vanished — while "Langkah Seterusnya" step 1 still told the buyer to
+    // send the seller a negotiation script the report had never given them.
+    // It is also one of the four things the paywall names.
+    const report = read('components/report/BuyerReportContent.tsx')
+    const i = report.indexOf('3. Skrip Rundingan')
+    const guard = report.slice(i, i + 900)
+    expect(guard).toContain('(vehicleData?.make || cohortBrand)')
+    expect(guard).toContain('cohortBrand')
+  })
+
+  it('lets the buyer check our comparables against the market', () => {
+    // The Mudah/Carlist links are how a buyer verifies the cohort themselves.
+    const report = read('components/report/BuyerReportContent.tsx')
+    expect(report).toContain('(vehicleData?.make || cohortBrand) && (() => {')
+  })
+
+  it('still gates the registration section on an actual plate', () => {
+    // The one section that genuinely cannot be produced without one. Loosening
+    // this would promise a record Paqar never looked up.
+    const report = read('components/report/BuyerReportContent.tsx')
+    const i = report.indexOf('4. Data Kenderaan Rasmi')
+    expect(report.slice(i, i + 200)).toContain('{vehicleData?.make && (')
+  })
+
   it('the dashboard does not adopt a plateless check as a vehicle', () => {
     // A vehicle IS its plate; there is nothing to register without one.
     expect(read('lib/db/vehicles.ts')).toContain("not('plate_encrypted', 'is', null)")
