@@ -19,8 +19,19 @@ import { join } from 'node:path'
  * An inflated ceiling is the worst direction for this error: it tells a buyer
  * an overpriced car is normal, on a site whose entire promise is the opposite.
  *
- * Ranges now come from getCoverageModelSpans() at render time. Same guard, same
- * reasoning, as the model-hub and comparison-page versions.
+ * Ranges then came from getCoverageModelSpans() at render time, and this file
+ * guarded that they were live rather than hand-typed.
+ *
+ * THAT GUARANTEE HAS BEEN SUPERSEDED BY A STRONGER ONE. A live range is still a
+ * range: the minimum and maximum of a scraped cohort is the evidence the RM12
+ * report sells, whether it was typed by hand or computed at render time. These
+ * pages now publish no market figure from any source, and getCoverageModelSpans
+ * is no longer called from any of them.
+ *
+ * The assertions below therefore changed direction — from "the figure must be
+ * live" to "there must be no figure" — which is strictly stronger and still
+ * catches the original defect. See __tests__/app/free-paid-boundary.test.ts and
+ * the boundary section of scripts/seo-check.mjs.
  */
 
 const PAGES = [
@@ -56,8 +67,14 @@ describe.each(PAGES)('%s', (path) => {
     expect(literals, `hardcoded Ringgit amounts: ${literals.join(', ')}`).toEqual([])
   })
 
-  it('reads spans through the shared helper', () => {
-    expect(src).toContain('getCoverageModelSpans')
+  it('no longer reads market spans at all', () => {
+    // Stronger than the rule this replaced: the figures cannot be rendered
+    // because the page never obtains them.
+    expect(src).not.toContain('getCoverageModelSpans')
+  })
+
+  it('interpolates no Ringgit figure', () => {
+    expect(src).not.toMatch(/RM\$\{/)
   })
 
   it('revalidates on the shared market-page window', () => {
@@ -72,13 +89,17 @@ describe.each(PAGES)('%s', (path) => {
 describe('the shared row component', () => {
   const src = stripComments(read('components/layout/BrandModelList.tsx'))
 
-  it('takes spans as a prop rather than reading a field off the model', () => {
-    expect(src).toContain('spans')
+  it('cannot receive a price at all', () => {
+    // The `spans` prop and the ModelPriceSpan type are both gone, so the
+    // figures cannot reach the component even by mistake.
+    expect(src).not.toMatch(/\bspans\b/)
+    expect(src).not.toMatch(/ModelPriceSpan/)
     expect(src).not.toMatch(/m\.range/)
   })
 
-  it('renders the tag alone when a model has no span', () => {
-    expect(src).toContain('span ? ')
+  it('renders the model tag alone', () => {
+    expect(src).toContain('{m.tag}')
+    expect(src).not.toMatch(/RM/)
   })
 })
 

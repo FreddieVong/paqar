@@ -11,7 +11,9 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESC,
   alternates: { canonical: 'https://paqar.my/api-docs' },
-  openGraph: { title: TITLE, description: DESC, url: 'https://paqar.my/api-docs' },
+  openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY', title: TITLE, description: DESC, url: 'https://paqar.my/api-docs' },
 }
 
 // Shared so the page and its structured data can never drift apart.

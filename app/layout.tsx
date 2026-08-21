@@ -26,14 +26,22 @@ export const metadata: Metadata = {
   title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
   description: 'Dah jumpa kereta terpakai? Hantar pada Paqar sebelum bayar deposit. Kami beritahu sama ada patut diteruskan, apa yang perlu ditanya dan berapa patut anda tawarkan. Disemak oleh manusia, RM29.',
   metadataBase: new URL('https://paqar.my'),
+  // NO title, description or url here — same reasoning as the canonical note
+  // below, which was written for `alternates` and never applied to openGraph.
+  // Next.js replaces `openGraph` wholesale when a child declares one, and
+  // INHERITS it wholesale when a child does not. A url set here therefore
+  // became og:url on every page that forgot, and the built output showed all
+  // seven /faq/* guides telling Facebook and WhatsApp they were the homepage.
+  //
+  // What stays is only what is true of every page: the site name, the locale,
+  // the type and a branded fallback image. Title and description now resolve
+  // from each page's own, which is the correct default. Pages should use
+  // lib/seo/page-metadata.ts, which emits a complete and self-consistent set.
   openGraph: {
-    title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
-    description: 'Dah jumpa kereta terpakai? Hantar pada Paqar sebelum bayar deposit. Kami beritahu sama ada patut diteruskan, apa yang perlu ditanya dan berapa patut anda tawarkan. Disemak oleh manusia, RM29.',
-    url: 'https://paqar.my',
     siteName: 'Paqar',
     locale: 'ms_MY',
     type: 'website',
-    images: [{ url: '/api/og', width: 1200, height: 630 }],
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
   },
   // Twitter title/description/images intentionally omitted — Next.js falls back
   // to each page's resolved openGraph values, keeping cards page-specific.

@@ -1,15 +1,11 @@
 'use client'
 
 /**
- * NOT REACHABLE. Superseded by components/check/ListingIntakeForm.
- *
- * Nothing renders this any more — the only references are comments in other
- * files. It is kept rather than deleted because seven test files still exercise
- * it, and deleting it is a cleanup that does not serve the current work.
+ * NOT REACHABLE on any live surface. Superseded by ListingIntakeForm.
  *
  * DO NOT REVIVE without checking two things: its copy predates the RM29 price,
  * and it calls /api/price-check expecting a `verdict` field that route no
- * longer returns.
+ * longer returns — the free surface answers coverage only.
  */
 
 import { useRef, useState } from 'react'
@@ -18,12 +14,7 @@ import type { CreateCheckResponse } from '@/types/api'
 import { analytics } from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
 import { trackAdEvent } from '@/lib/meta-events'
-
-const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
-  font-heading font-semibold text-[16px] text-[#111827]
-  placeholder:text-[#D1D5DB] placeholder:font-normal
-  focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
-  transition-all`
+import { AskingPriceInput, PRICE_INPUT_CLS } from './AskingPriceInput'
 
 const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.5'
 
@@ -31,8 +22,6 @@ export function PlateCheckerForm() {
   const router = useRouter()
   const [plate, setPlate]             = useState('')
   const [askingPrice, setAskingPrice] = useState('')
-  const [listingUrl,  setListingUrl]  = useState('')
-  const [concern,     setConcern]     = useState('')
   const [plateFocused, setPlateFocused] = useState(false)
   const [busy, setBusy]               = useState(false)
   const [error, setError]             = useState<string | null>(null)
@@ -134,16 +123,7 @@ export function PlateCheckerForm() {
         // discarded there — the RM0.81 provider call must not fire without it
         // — and persisted later by /api/laporan-pembeli/[checkId]/asking-price,
         // which owns the column (buyer_reports.asking_price_rm).
-        // listingUrl and buyerConcern are sent raw and normalised server-side
-        // (lib/listing-intake). Neither is required: a buyer who skips both
-        // still gets a check, they just give the reviewer less to work with.
-        body:    JSON.stringify({
-          plate:         plate.trim(),
-          idempotencyKey: attemptId,
-          askingPriceRm: priceRm,
-          listingUrl:    listingUrl.trim() || undefined,
-          buyerConcern:  concern.trim()    || undefined,
-        }),
+        body:    JSON.stringify({ plate: plate.trim(), idempotencyKey: attemptId, askingPriceRm: priceRm }),
       })
       if (!res.ok) {
         const data = await res.json() as { error?: string }
@@ -165,7 +145,7 @@ export function PlateCheckerForm() {
     <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className={LABEL_CLS}>Taip Nombor Plat Kereta</label>
+          <label className={LABEL_CLS}>Nombor plat kereta</label>
           <div className="bg-[#1a1a1a] rounded-[7px] p-[5px] border border-transparent focus-within:border-[#064E4A] focus-within:shadow-[0_0_0_3px_rgba(6,78,74,0.15)] transition-all duration-150">
             <div className="relative bg-[#1a1a1a] rounded-[3px] flex items-center justify-center min-h-[60px] px-3">
               <input
@@ -176,6 +156,9 @@ export function PlateCheckerForm() {
                 onBlur={() => setPlateFocused(false)}
                 maxLength={10}
                 required
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
                 aria-label="Nombor plat kenderaan"
                 className="w-full self-stretch min-h-[44px] bg-transparent border-none outline-none text-center font-black text-[22px] sm:text-[28px] tracking-[.15em] sm:tracking-[.2em] text-white uppercase caret-white"
                 style={{ fontFamily: "'Arial Black', Arial, sans-serif" }}
@@ -197,78 +180,17 @@ export function PlateCheckerForm() {
 
         <div>
           <label htmlFor="pc-price" className={LABEL_CLS}>
-            Harga Yang Penjual Minta (RM)
+            Harga yang penjual minta
           </label>
-          <input
+          <AskingPriceInput
             id="pc-price"
-            type="number"
             value={askingPrice}
-            onChange={e => setAskingPrice(e.target.value)}
-            placeholder="cth: 59000"
-            min={1000}
-            max={2000000}
-            required
-            inputMode="numeric"
-            className={INPUT_CLS}
+            onChange={setAskingPrice}
+            className={PRICE_INPUT_CLS}
           />
-          <p className="font-body text-[11px] text-[#9CA3AF] mt-1.5 leading-relaxed">
+          <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
             Diperlukan untuk kami semak sama ada harganya berpatutan.
           </p>
-        </div>
-
-        {/*
-          THE LISTING LINK IS THE PRODUCT'S ONE REAL ADVANTAGE.
-
-          Paqar cannot scrape the sites buyers actually use — Carlist returns
-          403 behind Cloudflare, and Facebook Marketplace is not parseable at
-          all. A reviewer opening the link has none of those limits, so this
-          single optional field is what lets a human-reviewed report cover every
-          platform a competitor's automation cannot reach.
-
-          The label names all three platforms deliberately. Naming only Mudah
-          would tell the Carlist and Facebook buyers — the ones this field helps
-          most — that they are not catered for.
-        */}
-        <div>
-          <label htmlFor="pc-listing" className={LABEL_CLS}>
-            Link Iklan Kereta{' '}
-            <span className="font-normal text-[#9CA3AF]">(pilihan)</span>
-          </label>
-          <input
-            id="pc-listing"
-            type="url"
-            value={listingUrl}
-            onChange={e => setListingUrl(e.target.value)}
-            placeholder="Mudah, Carlist, Facebook Marketplace…"
-            inputMode="url"
-            autoComplete="off"
-            className={INPUT_CLS}
-          />
-          <p className="font-body text-[11px] text-[#9CA3AF] mt-1.5 leading-relaxed">
-            Kami buka iklan ini dan semak sendiri — gambar, mileage dan apa yang
-            seller tulis.
-          </p>
-        </div>
-
-        {/*
-          The buyer's own words, unrewritten. This is the reviewer's brief AND
-          the single richest piece of product signal the experiment produces:
-          what people type here is what they would actually pay to have
-          answered.
-        */}
-        <div>
-          <label htmlFor="pc-concern" className={LABEL_CLS}>
-            Apa yang buat anda ragu?{' '}
-            <span className="font-normal text-[#9CA3AF]">(pilihan)</span>
-          </label>
-          <textarea
-            id="pc-concern"
-            value={concern}
-            onChange={e => setConcern(e.target.value)}
-            rows={3}
-            placeholder="cth: seller kata takde accident tapi bumper nampak lain warna"
-            className={`${INPUT_CLS} resize-none`}
-          />
         </div>
 
         {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
@@ -278,10 +200,10 @@ export function PlateCheckerForm() {
           disabled={busy}
           className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60"
         >
-          {busy ? 'Memproses…' : 'Semak Plat Percuma →'}
+          {busy ? 'Memproses…' : 'Semak Harga Percuma →'}
         </button>
-        <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-          Percuma untuk semak · Laporan dari RM29 — bayar hanya jika mahu
+        <p className="font-body text-[11px] text-[#6B7280] text-center leading-relaxed">
+          Percuma untuk semak · Laporan dari RM12 — bayar hanya jika mahu
         </p>
       </form>
     </div>

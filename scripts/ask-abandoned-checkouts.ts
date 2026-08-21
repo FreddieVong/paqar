@@ -15,14 +15,23 @@
  * RM12" message. It has not converted anyone. This is deliberately NOT that:
  * one question, no pitch, reply-to set to a human.
  *
- *   npx tsx scripts/ask-abandoned-checkouts.ts            # dry run, prints only
- *   npx tsx scripts/ask-abandoned-checkouts.ts --send     # actually sends
+ *   npx tsx scripts/ask-abandoned-checkouts.ts                        # dry run
+ *   npx tsx scripts/ask-abandoned-checkouts.ts --send --confirm-count N
  *
  * Dry run by default so the recipient list can be inspected before anything
- * leaves the building.
+ * leaves the building. --send alone is not enough: --confirm-count must match
+ * the number of recipients the query returns at that moment, so a cohort that
+ * grew between the review and the send fails loudly instead of quietly
+ * emailing strangers.
+ *
+ * Output carries no addresses. Recipients appear as a stable sha256 prefix,
+ * which is enough to count them, spot duplicates across runs and trace a
+ * failure, and identifies nobody on its own.
  */
 import { readFileSync } from 'fs'
+import { createHash } from 'crypto'
 import { createClient } from '@supabase/supabase-js'
+import { isTeamEmail } from '../lib/team-emails'
 
 try {
   const lines = readFileSync('.env.local', 'utf-8').split('\n')
@@ -39,18 +48,19 @@ const sb = createClient(
 )
 
 /**
- * Freddie's own addresses and the friends who tested. Excluded because
- * emailing yourself "why didn't you pay?" is not market research, and because
- * every historical conversion rate that included them was meaningless.
+ * Team addresses come from lib/team-emails.ts, never a copy.
+ *
+ * This file used to hold its own hardcoded Set of the same five addresses —
+ * exactly the drift lib/team-emails.ts was extracted to prevent, and its own
+ * header warns that duplicating the list "would eventually misclassify a real
+ * customer as a test". A second list only has to be forgotten once.
+ *
+ * isTeamEmail answers `true` for a null address, which is correct for its
+ * original caller ("should I email this person?") and wrong for "was this
+ * internal testing?". Both readings agree here — an address we cannot read is
+ * an address we must not email — but the empty-string guard below states that
+ * intent rather than leaning on a default that belongs to a different question.
  */
-const OURS = new Set([
-  'invisible4v@gmail.com',
-  'test@example.com',
-  'lyethengchoo@gmail.com',
-  'liyingaun@gmail.com',
-  'freddie.vong@yahoo.com',
-])
-
 const REPLY_TO = 'freddie.vong@yahoo.com'
 const FROM     = 'Freddie dari Paqar <noreply@paqar.my>'
 const SUBJECT  = 'Boleh saya tanya satu soalan?'
@@ -82,6 +92,17 @@ ${billUrl}
 
 interface Lead { email: string; billId: string; amountCents: number; createdAt: string }
 
+/**
+ * A stable pseudonym for console output.
+ *
+ * The script used to print every recipient's real address to the terminal on
+ * an ordinary dry run — which is where operator notes, screenshots and pasted
+ * transcripts come from. The digest is enough to count rows, spot duplicates
+ * across runs and match a send failure back to a record, and identifies nobody
+ * on its own.
+ */
+const pid = (email: string) => createHash('sha256').update(email).digest('hex').slice(0, 8)
+
 async function collectLeads(): Promise<Lead[]> {
   const { data, error } = await sb
     .from('buyer_reports')
@@ -95,7 +116,7 @@ async function collectLeads(): Promise<Lead[]> {
   const seen = new Map<string, Lead>()
   for (const r of data ?? []) {
     const email = (r.buyer_email ?? '').trim().toLowerCase()
-    if (!email || OURS.has(email) || email.startsWith('freddie')) continue
+    if (!email || isTeamEmail(email)) continue
     if (!r.billplz_bill_id) continue
     if (!seen.has(email)) {
       seen.set(email, {
@@ -141,6 +162,21 @@ async function send(lead: Lead): Promise<string> {
   return json.id ?? 'sent'
 }
 
+/**
+ * The exact recipient count the operator reviewed, as `--confirm-count N`.
+ *
+ * Sending is gated on this matching what the query returns right now. The
+ * cohort is built live from the database, so a row added between the review
+ * and the send would silently widen the audience — this makes that a hard
+ * failure instead. Absent or mismatched means nothing is sent.
+ */
+function confirmedCount(argv: string[]): number | null {
+  const i = argv.indexOf('--confirm-count')
+  if (i === -1) return null
+  const n = Number(argv[i + 1])
+  return Number.isInteger(n) && n >= 0 ? n : null
+}
+
 async function main() {
   const live = process.argv.includes('--send')
   const leads = await collectLeads()
@@ -154,16 +190,39 @@ async function main() {
   const sendable: Lead[] = []
   for (const l of leads) {
     const unpaid = await stillUnpaid(l.billId)
-    console.log(`  ${l.email.padEnd(30)} RM${(l.amountCents / 100).toFixed(0).padStart(3)}  `
+    console.log(`  id=${pid(l.email)}  RM${(l.amountCents / 100).toFixed(0).padStart(3)}  `
       + `tried ${l.createdAt.slice(0, 10)}  ${unpaid ? 'unpaid' : 'ALREADY PAID — skipping'}`)
     if (unpaid) sendable.push(l)
   }
 
   if (!live) {
-    console.log(`\nDRY RUN — nothing sent. Re-run with --send to email these ${sendable.length}.`)
-    console.log('\nPreview:\n')
+    console.log(`\nDRY RUN — nothing sent.`)
+    console.log(`To send, BOTH flags are required:\n`)
+    console.log(`  npx tsx scripts/ask-abandoned-checkouts.ts --send --confirm-count ${sendable.length}\n`)
+    console.log('Preview:\n')
     console.log(`Subject: ${SUBJECT}`)
     console.log(body('https://www.billplz.com/bills/<their-own-bill>'))
+    console.log(`
+NOTE — THIS SCRIPT KEEPS NO RECORD OF WHAT IT SENT.
+
+Nothing is written when an email goes out, so a second run emails the same
+people again. Whoever runs it with --send owns that: check when this cohort was
+last contacted before running it twice. The retarget cron, by contrast, stamps
+checks.lead_email_sent_at and cannot repeat itself.`)
+    return
+  }
+
+  const confirmed = confirmedCount(process.argv)
+  if (confirmed === null) {
+    console.error(`REFUSING TO SEND — --confirm-count is required.`)
+    console.error(`  ${sendable.length} recipients currently match. Re-run with --confirm-count ${sendable.length}.`)
+    process.exitCode = 1
+    return
+  }
+  if (confirmed !== sendable.length) {
+    console.error(`REFUSING TO SEND — cohort changed since it was reviewed.`)
+    console.error(`  confirmed ${confirmed}, but ${sendable.length} recipients match now.`)
+    process.exitCode = 1
     return
   }
 
@@ -178,10 +237,10 @@ async function main() {
   for (const l of sendable) {
     try {
       const id = await send(l)
-      console.log(`  SENT   ${l.email.padEnd(30)} id=${id}`)
+      console.log(`  SENT   id=${pid(l.email)} resend=${id}`)
       ok++
     } catch (err) {
-      console.error(`  FAILED ${l.email.padEnd(30)} ${err instanceof Error ? err.message : String(err)}`)
+      console.error(`  FAILED id=${pid(l.email)} ${err instanceof Error ? err.message : String(err)}`)
     }
     await new Promise((r) => setTimeout(r, 600)) // stay under Resend's rate limit
   }

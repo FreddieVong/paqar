@@ -1,15 +1,11 @@
 'use client'
 
 /**
- * NOT REACHABLE. Superseded by components/check/ListingIntakeForm.
- *
- * Nothing renders this any more — the only references are comments in other
- * files. It is kept rather than deleted because seven test files still exercise
- * it, and deleting it is a cleanup that does not serve the current work.
+ * NOT REACHABLE on any live surface. Superseded by ListingIntakeForm.
  *
  * DO NOT REVIVE without checking two things: its copy predates the RM29 price,
  * and it calls /api/price-check expecting a `verdict` field that route no
- * longer returns.
+ * longer returns — the free surface answers coverage only.
  */
 
 import { useState, useEffect, useRef } from 'react'
@@ -20,6 +16,7 @@ import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
 import { trackAdEvent } from '@/lib/meta-events'
 import { BRANDS, MODELS_BY_BRAND } from '@/lib/model-catalog'
 import { VERDICT_LINE, PAID_REPORT_CTA_SUB } from '@/lib/verdict-copy'
+import { AskingPriceInput, PRICE_INPUT_CLS } from './AskingPriceInput'
 
 // Shared by the verdict and the suppressed-verdict branches: a mixed-variant
 // cohort still has a real, useful range, and the buyer deserves to know how
@@ -44,7 +41,7 @@ function ConfidenceChip({ level }: { level: 'low' | 'medium' | 'high' }) {
         <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${conf.dot}`} />
         <span className={`font-body text-[11px] font-semibold ${conf.labelCls}`}>{conf.label}</span>
       </div>
-      <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">{conf.text}</p>
+      <p className="font-body text-[11px] text-[#6B7280] mt-0.5 leading-relaxed">{conf.text}</p>
     </div>
   )
 }
@@ -107,9 +104,18 @@ type Props = {
   initialModel?:  string
   initialYear?:   string
   onStateChange?: (state: FormState) => void
+  /**
+   * Fire `seo_page_cta_engaged` on first interaction with the price field.
+   *
+   * Set by the SEO landing pages carrying the direct-answer treatment. It
+   * measures the step between landing and starting — without it, a page where
+   * fifty people opened the form and left is indistinguishable from one nobody
+   * looked at. Off everywhere else, so no other surface's event counts change.
+   */
+  trackCtaEngagement?: boolean
 }
 
-export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', initialYear = '', onStateChange }: Props) {
+export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', initialYear = '', onStateChange, trackCtaEngagement = false }: Props) {
   const router = useRouter()
 
   // Read the query string at submit time rather than via useSearchParams():
@@ -135,6 +141,21 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
   const [model,       setModel]       = useState(initialModel)
   const [year,        setYear]        = useState(initialYear)
   const [askingPrice, setAskingPrice] = useState('')
+
+  /**
+   * One CTA-engagement event per mount, at most.
+   *
+   * The ref is the guard that matters: onFocus fires again every time the user
+   * tabs back into the field, and the server's derived event_id would collapse
+   * the repeats anyway — but sending them would still put avoidable traffic
+   * through the endpoint for no additional signal.
+   */
+  const ctaEngagementSent = useRef(false)
+  function handleCtaEngagement() {
+    if (!trackCtaEngagement || ctaEngagementSent.current) return
+    ctaEngagementSent.current = true
+    trackAdEvent('seo_page_cta_engaged')
+  }
   const [formState,   setFormState]   = useState<FormState>('idle')
   const [result,      setResult]      = useState<PriceCheckResult | null>(null)
   const [checkError,  setCheckError]  = useState<string | null>(null)
@@ -183,6 +204,15 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault()
     setCheckError(null)
+
+    // The field is text now (so it can show "59,000"), so the browser no longer
+    // enforces min/max. Same bounds and same wording as the plate path below.
+    const priceRm = parseInt(askingPrice, 10)
+    if (!Number.isFinite(priceRm) || priceRm < 1000 || priceRm > 2_000_000) {
+      setCheckError('Masukkan harga yang penjual minta (RM1,000 – RM2,000,000).')
+      return
+    }
+
     setFormState('loading')
     analytics.checkStarted({ country: 'MY', is_test: false })
 
@@ -369,11 +399,13 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             </>
           )}
           <div>
-            <label htmlFor="oc-price" className={LABEL_CLS}>Harga Diminta (RM)</label>
-            <input
+            <label htmlFor="oc-price" className={LABEL_CLS}>Harga diminta (RM)</label>
+            <AskingPriceInput
               id="oc-price"
-              type="number" value={askingPrice} onChange={e => setAskingPrice(e.target.value)}
-              placeholder="cth: 59000" min={1000} max={2000000} required className={INPUT_CLS}
+              value={askingPrice}
+              onChange={setAskingPrice}
+              onFocus={handleCtaEngagement}
+              className={PRICE_INPUT_CLS}
             />
           </div>
           {checkError && <p className="font-body text-[13px] text-[#DC2626]">{checkError}</p>}
@@ -383,8 +415,8 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
           >
             Semak Harga Percuma →
           </button>
-          <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-            Percuma untuk semak harga · Dari RM29 untuk Laporan Pembeli dengan bukti harga &amp; skrip rundingan
+          <p className="font-body text-[11px] text-[#6B7280] text-center leading-relaxed">
+            Percuma untuk semak harga · Dari RM12 untuk Laporan Pembeli dengan bukti harga &amp; skrip rundingan
           </p>
         </form>
       </div>
@@ -415,7 +447,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
   const noData        = dataResult == null
 
   // NegotiationNudge and computeSuggestedOffer used to live here. Both are
-  // built from the median, which is the negotiation anchor RM29 sells — giving
+  // built from the median, which is the negotiation anchor RM12 sells — giving
   // away a target offer while charging for "suggested offer" was a distinction
   // without a difference.
 
@@ -512,7 +544,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
               Malaysia
             </p>
           </div>
-          <p className="font-body text-[9px] text-[#9CA3AF] text-center leading-relaxed">
+          <p className="font-body text-[11px] text-[#6B7280] text-center leading-relaxed">
             Diperlukan untuk jana laporan kereta ini.
           </p>
           {plateError && (
@@ -522,12 +554,12 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
             type="submit" disabled={plateBusy}
             className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center transition-colors disabled:opacity-60"
           >
-            {plateBusy ? 'Memproses…' : 'Lihat harga tengah iklan setanding dan jumlah yang patut anda tawarkan — RM29'}
+            {plateBusy ? 'Memproses…' : 'Lihat harga tengah iklan setanding dan jumlah yang patut anda tawarkan — RM12'}
           </button>
         </form>
 
-        <p className="font-body text-[9px] text-[#9CA3AF] text-center mt-2">
-          {'Harga tengah & julat pasaran · Jumlah patut ditawar · Skrip untuk penjual'}
+        <p className="font-body text-[11px] text-[#6B7280] text-center mt-2">
+          {'Harga tengah & julat iklan setanding · Jumlah patut ditawar · Skrip untuk penjual'}
         </p>
 
         {/* Email lead capture — below the RM12 CTA so it never interrupts a buyer */}

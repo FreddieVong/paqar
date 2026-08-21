@@ -70,7 +70,6 @@ const PLATE = 'WXY1234'
  * they are actually about.
  */
 const CAR = { brand: 'Honda', model: 'City', year: '2019' }
-
 async function post(body: Record<string, unknown>) {
   const req = new NextRequest('https://paqar.my/api/checks', {
     method:  'POST',

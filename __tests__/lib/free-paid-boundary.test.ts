@@ -123,7 +123,7 @@ describe('paid surfaces keep every figure', () => {
   const report = read('components/report/BuyerReportContent.tsx')
 
   it('the report still shows the median, the chips and the count', () => {
-    expect(report).toContain('Harga tengah pasaran')
+    expect(report).toContain('Harga tengah iklan setanding')
     expect(report).toContain('Anggaran trade-in')
     expect(report).toMatch(/iklan setanding yang kami jumpa/)
   })
@@ -142,14 +142,16 @@ describe('paid surfaces keep every figure', () => {
 })
 
 describe('CTA copy is true now that figures are paid', () => {
-  it('both paths promise a price figure and the offer amount', () => {
+  it('the paid pitch promises a price figure and the offer amount', () => {
     // Rescoped from "harga pasaran sebenar" (the REAL market price) to the
     // median of the comparable adverts Paqar actually found. The PROMISE is
-    // unchanged — a figure plus the amount to offer — and both paths still
-    // make the same one. See lib/verdict-copy.
+    // unchanged — a figure plus the amount to offer. See lib/verdict-copy.
+    //
+    // ONE path now, not two. This asserted the same sentence on
+    // OverpricedCheckerForm, which is superseded by ListingIntakeForm and
+    // mounted nowhere; requiring current copy in a component no buyer reaches
+    // tests the repository rather than the product.
     expect(read('components/report/BuyerReportPitch.tsx')).toContain('Lihat harga tengah iklan setanding')
-    expect(read('components/check/OverpricedCheckerForm.tsx'))
-      .toContain('Lihat harga tengah iklan setanding dan jumlah yang patut anda tawarkan — RM29')
   })
 
   it('the homepage advertises no free tier at all', () => {
@@ -351,5 +353,51 @@ describe('the free surface carries no confidence signal at all', () => {
       const live = mounters.filter(m => !m.endsWith('HomeCheckerTabs.tsx'))
       expect(live, `${retired} is reachable again`).toEqual([])
     }
+  })
+})
+
+/**
+ * The FAQ states the boundary, so it is a place the boundary can be broken.
+ * It is the first thing a buyer reads about what their money buys, and the
+ * proof beat renders a locked claim-history row a few centimetres above it.
+ *
+ * THE BOUNDARY MOVED. It used to sit between a free VERDICT and the paid
+ * figures behind it — and giving away the answer while charging for the
+ * footnotes is what a tester objected to and what the RM29 product exists to
+ * correct. The free surface now answers COVERAGE: whether Paqar has enough
+ * comparable adverts to decide at all. So these tests assert the new line, not
+ * a relaxed version of the old one.
+ */
+describe('the homepage FAQ states the paid boundary in both directions', () => {
+  const faq = readFileSync(join(ROOT, 'lib/faq/home.ts'), 'utf8')
+  const freeSentence = () => faq.slice(faq.indexOf('Semakan percuma'), faq.indexOf('Laporan Pembeli (RM29)'))
+
+  it('gives the free tier coverage only — no verdict and no figures', () => {
+    expect(faq).toContain('Semakan percuma beritahu sama ada Paqar ada cukup iklan setanding')
+    // The VERDICT is now paid, so its words must not appear on the free side
+    // either — they are the answer, not a figure.
+    for (const paid of ['harga tengah', 'julat', 'trade-in', 'skrip', 'murah', 'wajar', 'mahal']) {
+      expect(freeSentence().toLowerCase(), `free tier claims "${paid}"`).not.toContain(paid)
+    }
+  })
+
+  it('says plainly that the free answer contains no price', () => {
+    expect(freeSentence()).toMatch(/tiada harga, tiada keputusan/)
+  })
+
+  it('attributes the decision and the guidance to RM29', () => {
+    const paidSentence = faq.slice(faq.indexOf('Laporan Pembeli (RM29)'))
+    for (const paid of ['iklan setanding', 'patut ditawarkan', 'ditanya penjual', 'bayar deposit']) {
+      expect(paidSentence).toContain(paid)
+    }
+  })
+
+  it('names the human, which is the part no free tier and no assistant provides', () => {
+    expect(faq).toMatch(/orang kami baca iklan yang anda hantar/)
+  })
+
+  it('keeps claim and odometer history out of the base report', () => {
+    expect(faq).toMatch(/tidak termasuk rekod tuntutan kemalangan atau bacaan odometer/)
+    expect(faq).toContain('+RM88')
   })
 })

@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 import { env }    from '@/lib/env'
 import { SUPPORT_REPLY_TO } from '@/lib/site'
+import { isSuppressed, unsubscribeUrl } from '@/lib/email/suppression'
 
 /**
  * The one question worth asking a paying customer.
@@ -30,7 +31,7 @@ export type FeedbackSend =
 // @paqar.my address that cannot receive mail.
 const REPLY_TO = SUPPORT_REPLY_TO
 
-function body(plate: string | null): string {
+function body(plate: string | null, optOut: string): string {
   const car = plate ? ` untuk ${plate}` : ''
   return `Hi,
 
@@ -48,6 +49,9 @@ Satu ayat pun sudah cukup. Reply email ni terus, saya baca semua.
 
 Terima kasih,
 Freddie
+
+--
+Tak mahu terima emel daripada Paqar? ${optOut}
 `
 }
 
@@ -61,6 +65,10 @@ export async function sendCustomerFeedbackEmail(params: {
   if (!env.RESEND_API_KEY) {
     return { ok: false, reason: 'RESEND_API_KEY unset' }
   }
+  // Fails closed, like every other send path.
+  if (await isSuppressed(params.toEmail)) {
+    return { ok: false, reason: 'recipient has opted out' }
+  }
   try {
     const resend = new Resend(env.RESEND_API_KEY)
     const res = await resend.emails.send({
@@ -68,7 +76,7 @@ export async function sendCustomerFeedbackEmail(params: {
       to:       params.toEmail,
       replyTo:  REPLY_TO,
       subject:  'Laporan Paqar — membantu tak?',
-      text:     body(params.plate ?? null),
+      text:     body(params.plate ?? null, unsubscribeUrl(params.toEmail)),
     })
     if (res.error) return { ok: false, reason: String(res.error.message ?? res.error) }
     return { ok: true, id: res.data?.id ?? null }

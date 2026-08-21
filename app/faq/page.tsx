@@ -10,7 +10,9 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESC,
   alternates: { canonical: 'https://paqar.my/faq' },
-  openGraph: { title: TITLE, description: DESC, url: 'https://paqar.my/faq' },
+  openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY', title: TITLE, description: DESC, url: 'https://paqar.my/faq' },
 }
 
 // Titles/descriptions mirror each guide's own metadata so this hub never
@@ -21,8 +23,8 @@ const GROUPS = [
   {
     heading: 'Panduan model',
     items: [
-      { slug: 'best-first-car-under-30k',   title: 'Kereta pertama terbaik bawah RM30k',            desc: 'Pilihan kereta pertama bawah RM30,000 — banding Myvi, City dan Vios dengan harga pasaran sebenar.' },
-      { slug: 'honda-city-buying-guide',    title: 'Panduan beli Honda City terpakai',              desc: 'Tahun mana patut beli, varian 1.5 S atau 1.5 H, harga pasaran sebenar, dan apa perlu disemak.' },
+      { slug: 'best-first-car-under-30k',   title: 'Kereta pertama terbaik bawah RM30k',            desc: 'Pilihan kereta pertama bawah RM30,000 — banding Myvi, City dan Vios dengan harga iklan setanding.' },
+      { slug: 'honda-city-buying-guide',    title: 'Panduan beli Honda City terpakai',              desc: 'Tahun mana patut beli, varian 1.5 S atau 1.5 H, harga iklan setanding, dan apa perlu disemak.' },
       { slug: 'toyota-vios-buying-guide',   title: 'Panduan beli Toyota Vios terpakai',             desc: 'Generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, serta tanda bahaya Vios.' },
       { slug: 'honda-city-vs-toyota-vios',  title: 'Honda City vs Toyota Vios — mana satu?',        desc: 'Perbandingan terus: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penggunaan minyak.' },
     ],

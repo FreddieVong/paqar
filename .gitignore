@@ -58,3 +58,11 @@ node_modules/
 *.tmp.mjs
 *.tmp.ts
 *.tmp.cjs
+
+# Search Console service-account key.
+#
+# scripts/gsc-verify.mjs defaults to ~/.config/paqar/gsc-service-account.json —
+# OUTSIDE the repo, deliberately: a key inside a worktree is one `git add -A`
+# from being committed. These patterns are the second line of defence.
+gsc-service-account*.json
+*service-account*.json

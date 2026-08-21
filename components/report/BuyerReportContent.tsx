@@ -358,7 +358,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             Anggaran berdasarkan susut nilai
           </p>
           <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-4">
-            Belum cukup iklan setanding untuk beri keputusan harga pasaran. Anggaran ini
+            Belum cukup iklan setanding untuk beri keputusan harga. Anggaran ini
             berdasarkan harga baharu dan umur kenderaan sahaja — bukan harga pasaran semasa.
           </p>
           <div className="space-y-2.5">
@@ -683,7 +683,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                         it to be evidence. Otherwise this is simply the ads we
                         found, and must not be titled as proof of a price. */}
                     <p className="font-heading font-bold text-[12px] text-[#111827]">
-                      {showAggregate ? 'Bukti Harga Pasaran' : 'Iklan Dijumpai'}
+                      {showAggregate ? 'Bukti daripada Iklan Setanding' : 'Iklan Dijumpai'}
                     </p>
                     <p className="font-body text-[10px] text-[#9CA3AF]">
                       {daysAgo === 0 ? 'Hari ini' : `${daysAgo} hari lalu`}
@@ -694,7 +694,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       Paqar would issue a verdict on. */}
                   {showAggregate && (
                     <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2">
-                      <p className="font-body text-[12px] text-[#6B7280]">Harga tengah pasaran</p>
+                      <p className="font-body text-[12px] text-[#6B7280]">Harga tengah iklan setanding</p>
                       <p className="font-heading font-bold text-[14px] text-[#064E4A]">RM{fmt(marketMedian)}</p>
                     </div>
                   )}
@@ -739,6 +739,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                         ? `Berdasarkan ${mPrices.length} iklan ${vehicleData?.model ?? 'model'} ${vehicleData?.registrationYear ?? ''} yang kami jumpa (pelbagai varian)`.replace(/\s+/g, ' ').trim()
                         : `Berdasarkan ${mPrices.length} iklan setanding yang kami jumpa`}
                     {excludedCount > 0 ? ` · ${excludedCount} listing ditapis (tahun/varian berbeza atau harga luar biasa)` : ''}
+                  </p>
+                  {/* The one sentence that qualifies every figure above: these
+                      are asking prices, so the median, the range and the gap
+                      describe what sellers WANT, not what cars sold for. */}
+                  <p className="font-body text-[11px] text-[#6B7280]">
+                    Berdasarkan harga yang diiklankan, bukan harga jualan akhir.
                   </p>
                   <div>
                     <div className="flex items-center gap-1.5">

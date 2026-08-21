@@ -32,10 +32,14 @@ export type AdEventName =
   | 'valuation_completed'
   | 'paywall_viewed'
   | 'payment_form_focused'
+  // Pay pressed, BEFORE Billplz is called. checkout_started still means a bill
+  // exists; the two together bracket createBill.
+  | 'payment_form_submitted'
   // Free plate-path evidence, recorded so we can measure whether proving
   // capability before the RM12 ask changes conversion. Campaign attribution
   // rides on the session cookie, so these join to creative like every other
   // stage. Diagnostic only — never forwarded to Meta.
+  | 'seo_page_cta_engaged'
   | 'plate_price_evidence_viewed'
   | 'plate_verdict_viewed'
   | 'plate_verdict_suppressed'
@@ -141,6 +145,27 @@ export const eventId = {
 
   paymentFormFocused: (sessionId: string, checkId: string) =>
     digest(['payment_form_focused', sessionId, checkId]),
+
+  /**
+   * First interaction with the checker on an SEO landing page carrying the
+   * direct-answer treatment.
+   *
+   * Keyed on (session, path, MYT day) exactly like landingPageView, and for the
+   * same reason: this measures whether a landing page moved someone from
+   * reading to acting, so a refresh is the same visit and tomorrow's return is
+   * a new one. Without it, a page where fifty people opened the form and left
+   * is indistinguishable from one nobody looked at — which is precisely the
+   * gap this iteration either closes or does not.
+   *
+   * Named for the surface, not the treatment: it was year_teaser_cta_clicked
+   * when the work targeted year pages, and Search Console then showed those
+   * pages take ~46 impressions in 56 days. Carrying the old name onto
+   * /varian/* and /bandingkan/* would have made every later query read wrong.
+   *
+   * Diagnostic only. Not in META_EVENT, so it never reaches Meta.
+   */
+  seoPageCtaEngaged: (sessionId: string, path: string, at?: Date) =>
+    digest(['seo_page_cta_engaged', sessionId, path, myatDate(at)]),
 
   /**
    * The free-evidence and CTA stages, all keyed on (session, check) for the

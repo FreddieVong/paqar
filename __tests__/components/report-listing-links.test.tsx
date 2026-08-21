@@ -233,7 +233,10 @@ describe('the rest of the RM12 report is unchanged', () => {
   it('still renders median, range, trade-in, confidence and methodology', () => {
     const { container } = renderReport(mixed)
     const text = container.textContent ?? ''
-    expect(text).toContain('Harga tengah pasaran')
+    // "iklan setanding", not "pasaran". The figure is the median of the
+    // comparable ADVERTS Paqar found, not a market price — the same scope
+    // correction lib/comparables makes everywhere else.
+    expect(text).toContain('Harga tengah iklan setanding')
     expect(text).toContain('Anggaran trade-in')
     expect(text).toMatch(/Berdasarkan \d+ iklan/)
     expect(text).toMatch(/Keyakinan data|Data pasaran terhad/)

@@ -56,10 +56,23 @@ describe('model hub config states no market prices', () => {
     expect(ranges, `range-shaped claims: ${ranges.join(' | ')}`).toEqual([])
   })
 
-  it('still allows Paqar product prices outside the config region', () => {
-    // Guard the guard: this test must not become a blanket ban on 'RM' in the
-    // file, or a legitimate 'RM12' CTA elsewhere would be unfixable.
-    expect(stripComments(RAW)).toMatch(/RM\{/)   // the live table's RM{row.min}
+  it('checks the config region only, not the whole file', () => {
+    // Guard the guard: this must not become a blanket ban on 'RM' in the file,
+    // or a legitimate 'RM12' CTA elsewhere would be unfixable.
+    //
+    // It used to prove the scoping by requiring an RM{...} interpolation to
+    // exist somewhere — the live table's RM{row.min}. That is gone: the hub
+    // rows link to each year page instead of printing its range, because a
+    // live range is still the RM12 report's range. The scoping is asserted
+    // directly instead.
+    expect(CONFIG.length).toBeGreaterThan(500)
+    expect(CONFIG.length).toBeLessThan(stripComments(RAW).length)
+  })
+
+  it('renders a per-year link where it used to render a range', () => {
+    const src = stripComments(RAW)
+    expect(src).not.toMatch(/RM\{row\.(min|max)/)
+    expect(src).toContain('harga-${cfg.yearKey}-${row.year}')
   })
 
   it('does not mention PDRM as a false positive', () => {

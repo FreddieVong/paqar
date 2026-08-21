@@ -32,6 +32,13 @@ import { FakeSupabase } from '../helpers/fake-supabase'
 const fake = new FakeSupabase()
 const createBill = vi.fn()
 
+// Checkout freezes the cohort before a bill can exist and fails closed if it
+// cannot. These suites are about billing, not freezing, so the freeze succeeds.
+vi.mock('@/lib/db/offer-snapshots', () => ({
+  freezeOfferSnapshot: vi.fn(async () => ({ status: 'inserted', snapshot: {} })),
+  readOfferSnapshot:   vi.fn(async () => null),
+}))
+
 vi.mock('server-only', () => ({}))
 vi.mock('next/headers', () => ({ cookies: () => ({ get: () => undefined }) }))
 vi.mock('@/lib/supabase/server', () => ({
@@ -47,6 +54,18 @@ vi.mock('@/lib/db/ad-attribution', () => ({
   recordAdEvent: vi.fn(async () => ({ status: 'inserted' })),
   markCapiSent: vi.fn(async () => {}),
 }))
+
+// The offer gate recomputes sellability server-side before any bill is created
+// (see lib/server/offer-for-check). These suites exercise BILL mechanics, not
+// the gate, so they present a check that can be sold. The gate's own behaviour
+// — including that it fails closed — is covered in checkout-offer-gate.
+vi.mock('@/lib/server/offer-for-check', () => ({
+  resolveOfferForCheck: vi.fn(async () => ({
+    status: 'resolved' as const,
+    offer:  { available: true as const, low: 40_000, high: 45_000 },
+  })),
+}))
+
 vi.mock('@/lib/meta-capi', () => ({ sendMetaEvent: vi.fn(async () => false) }))
 vi.mock('@/lib/db/plate-lookups', () => ({ getOrFetchVehicleData: vi.fn(async () => null) }))
 vi.mock('@/lib/db/vehicle-valuations', () => ({ getValuationByNvic: vi.fn(async () => null) }))

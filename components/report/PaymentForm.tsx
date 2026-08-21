@@ -113,7 +113,6 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
       attemptId,
       amountCents: addJomCheck ? COMBINED_CENTS : BASE_REPORT_CENTS,
     })
-
     // Meta funnel signal — no-op unless the pixel is loaded. The eventID is
     // derived from (check, product) rather than generated per click, so a
     // user who returns to this form and clicks again is deduplicated by Meta

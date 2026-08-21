@@ -2,6 +2,9 @@
 
 import { BASE_REPORT_CENTS, COMBINED_CENTS, historyUpgradeAvailable } from '@/lib/pricing'
 import { createBill, getBill }    from '@/lib/billplz'
+import { resolveOfferForCheck }  from '@/lib/server/offer-for-check'
+import { freezeOfferSnapshot }   from '@/lib/db/offer-snapshots'
+import { OFFER_UNAVAILABLE_MESSAGE } from '@/lib/offer'
 import { createBuyerReport,
          getBuyerReport,
          getReusableBaseBill,
@@ -211,6 +214,7 @@ export async function initiateBuyerReport(
   return run
 }
 
+
 async function initiateBuyerReportImpl(
   params: InitiateBuyerReportParams,
 ): Promise<{ error: string | null; billUrl?: string; billId?: string }> {
@@ -244,6 +248,52 @@ async function initiateBuyerReportImpl(
   // by a stale tab, a back button, or a page that forgot to ask.
   if (await checkHasPaidReport(params.checkId).catch(() => false)) {
     return { error: 'Laporan ini sudah dibayar — buka laporan anda dari pautan asal atau e-mel resit.' }
+  }
+
+  // OFFER GATE — the server decides whether Paqar may sell, every time.
+  //
+  // The paywall promises a negotiation target. If the report cannot produce
+  // one, taking RM12 is charging for a headline the product cannot deliver.
+  //
+  // Recomputed HERE from the database rather than trusting anything the client
+  // sent: `offerAvailable` crosses to the browser only so the paywall can
+  // render honestly, and a rendering hint is not authorisation. A stale tab, an
+  // edited response, or a cohort that changed since the pitch rendered must not
+  // be able to open a charge.
+  //
+  // Cache reads only — no provider call, no scrape. A checkout attempt is not a
+  // reason to queue a scraper job.
+  const offerCheck = await resolveOfferForCheck({
+    plateEncrypted: row.check.plate_encrypted as string,
+    askingPriceRm:  params.askingPriceRm ?? null,
+  }).catch(() => null)
+
+  // Fail CLOSED. An unresolved gate is not permission to sell.
+  if (!offerCheck || offerCheck.status !== 'resolved' || !offerCheck.offer.available) {
+    return { error: OFFER_UNAVAILABLE_MESSAGE }
+  }
+
+  // FREEZE THE EVIDENCE BEFORE A BILL CAN EXIST.
+  //
+  // The gate above proves an offer exists RIGHT NOW. The paid report recomputes
+  // from the live cache when it renders, and between those two moments the
+  // cohort can move — the warm-cache cron overwrites it, another visitor
+  // refreshes it, or CACHE_TTL_DAYS expires. Freezing here is what makes the
+  // report show what was bought rather than what the market looks like later.
+  //
+  // This ALSO fails closed, and deliberately so: selling first and freezing
+  // afterwards would take the money and leave the promise unbacked, which is
+  // the failure this whole feature exists to prevent. A snapshot that cannot be
+  // written is a sale that must not happen.
+  const frozen = await freezeOfferSnapshot({
+    checkId:         params.checkId,
+    cohort:          offerCheck.cohort,
+    offer:           offerCheck.offer,
+    sourceFetchedAt: offerCheck.sourceFetchedAt,
+  })
+  if (frozen.status === 'failed') {
+    console.error('[checkout] refusing to sell — snapshot not frozen:', frozen.reason)
+    return { error: OFFER_UNAVAILABLE_MESSAGE }
   }
 
   // Hoisted above the reuse check: which product the buyer is asking for

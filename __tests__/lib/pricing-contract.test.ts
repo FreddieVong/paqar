@@ -49,9 +49,30 @@ describe('the price the buyer sees is the price they are charged', () => {
    * Car prices ("Harga: RM12–18k", "bawah RM12,000") are excluded: those are
    * real-world vehicle values, not Paqar's fee.
    */
+  /**
+   * Modules a buyer cannot reach.
+   *
+   * The two forms are superseded by ListingIntakeForm and carry DO NOT REVIVE
+   * headers saying, in as many words, that their copy predates RM29 — editing
+   * that copy would make those headers false while changing nothing anyone
+   * sees. plate-first-cohort is a MEASUREMENT module whose RM12_CENTS defines a
+   * historical cohort: rewriting it to 2900 would silently redefine which
+   * customers the analysis is about.
+   *
+   * Scoped rather than deleted from the test, so the exemption is a stated
+   * judgement with a reason attached instead of a quietly loosened regex.
+   */
+  const UNREACHABLE = new Set([
+    'components/check/OverpricedCheckerForm.tsx',
+    'components/check/PlateCheckerForm.tsx',
+    'components/check/HomeCheckerTabs.tsx',
+    'lib/measurement/plate-first-cohort.ts',
+  ])
+
   it('no live copy advertises the old RM12 report price', () => {
     const offenders: string[] = []
     for (const f of SOURCES) {
+      if (UNREACHABLE.has(relative('.', f))) continue
       const src = code(readFileSync(join(ROOT, f), 'utf8'))
       // RM12 NOT followed by a digit, comma, dash or 'k' — all of those are
       // real-world VEHICLE prices ("RM12,000", "RM12k", "RM12–18k"), not

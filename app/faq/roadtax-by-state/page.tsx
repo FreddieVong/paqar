@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: 'Harga Roadtax Ikut Negeri Malaysia 2026 — Berapa Perlu Bayar? | Paqar',
   description: 'Kadar roadtax mengikut negeri: Selangor, KL, Johor, Pulau Pinang, Kedah. Berapa roadtax untuk kereta anda ikut kapasiti enjin dan jenis kenderaan.',
   alternates: { canonical: 'https://paqar.my/faq/roadtax-by-state' },
+  // These guides previously declared no openGraph at all, so they inherited
+  // the ROOT layout's — which named the homepage as og:url, og:title and
+  // og:description. Every share of this guide advertised the homepage.
+  openGraph: {
+    title: 'Harga Roadtax Ikut Negeri Malaysia 2026 — Berapa Perlu Bayar? | Paqar',
+    description: 'Kadar roadtax mengikut negeri: Selangor, KL, Johor, Pulau Pinang, Kedah. Berapa roadtax untuk kereta anda ikut kapasiti enjin dan jenis kenderaan.',
+    url: 'https://paqar.my/faq/roadtax-by-state',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'article',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+  },
 }
 
 export default function RoadtaxByState() {

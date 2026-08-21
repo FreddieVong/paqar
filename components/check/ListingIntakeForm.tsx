@@ -50,8 +50,8 @@ type Coverage = { eligible: boolean; modelLabel: string }
 type Phase = 'start' | 'working' | 'summary' | 'coverage'
 
 export function ListingIntakeForm({
-  initialBrand = '', initialModel = '',
-}: { initialBrand?: string; initialModel?: string } = {}) {
+  initialBrand = '', initialModel = '', initialYear = '',
+}: { initialBrand?: string; initialModel?: string; initialYear?: string } = {}) {
   const router = useRouter()
 
   const [intakeId, setIntakeId] = useState<string | null>(null)
@@ -85,7 +85,10 @@ export function ListingIntakeForm({
 
   const [brand, setBrand] = useState(initialBrand)
   const [model, setModel] = useState(initialModel)
-  const [year,  setYear]  = useState('')
+  // Prefilled on the year pages (/harga-model/honda-city-2019), which know the
+  // year from their own route. Extraction still overwrites it — what the advert
+  // says beats what the page it was reached from assumed.
+  const [year,  setYear]  = useState(initialYear)
   const [price, setPrice] = useState('')
   const [plate, setPlate] = useState('')
   const [concern, setConcern] = useState('')

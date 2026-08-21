@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/tentang' },
   openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
     title: 'Tentang Paqar — Semak Harga Kereta Terpakai Malaysia',
     description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
     url: 'https://paqar.my/tentang',

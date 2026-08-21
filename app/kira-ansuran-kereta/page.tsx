@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: 'Kalkulator ansuran kereta percuma — kira bayaran bulanan loan kereta, jumlah faedah, roadtax dan anggaran insurans. Tahu kos sebenar sebulan sebelum beli.',
   alternates: { canonical: 'https://paqar.my/kira-ansuran-kereta' },
   openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
     title: 'Kira Ansuran Kereta — Kalkulator Loan Kereta Malaysia',
     description: 'Kira bayaran bulanan loan kereta, jumlah faedah, roadtax dan anggaran insurans. Tahu kos sebenar sebulan sebelum beli.',
     url: 'https://paqar.my/kira-ansuran-kereta',

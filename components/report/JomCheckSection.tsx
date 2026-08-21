@@ -188,7 +188,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
               </div>
             )
           })}
-          <p className="font-body text-[11px] text-[#9CA3AF] leading-relaxed">
+          <p className="font-body text-[11px] text-[#6B7280] leading-relaxed">
             Severity ialah anggaran kos claim berbanding nilai insurans kereta pada masa itu — bukan jumlah RM sebenar.
           </p>
         </div>
@@ -272,7 +272,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
             <ul className="space-y-1">
               {SELLER_QUESTIONS.map(q => (
                 <li key={q} className="font-body text-[12px] text-[#4B5563] leading-relaxed flex gap-2">
-                  <span aria-hidden="true" className="text-[#9CA3AF]">•</span>
+                  <span aria-hidden="true" className="text-[#D1D5DB]">•</span>
                   <span>{q}</span>
                 </li>
               ))}
@@ -283,7 +283,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
 
       {/* Footer meta */}
       {checkedAt && (
-        <p className="font-body text-[11px] text-[#9CA3AF] mt-4">
+        <p className="font-body text-[11px] text-[#6B7280] mt-4">
           Disemak: {checkedAt}
         </p>
       )}

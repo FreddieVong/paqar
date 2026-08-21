@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description: 'Cara semak geran kereta Malaysia — apa yang perlu disemak, cara baca geran, tanda-tanda geran palsu, dan cara lindungi diri semasa beli kereta terpakai.',
   alternates: { canonical: 'https://paqar.my/cara-semak-geran-kereta' },
   openGraph: {
+      locale: 'ms_MY',
     title: `Cara Semak Geran Kereta Malaysia ${YEAR} — Panduan Lengkap`,
     description: 'Cara semak geran kereta Malaysia — apa yang perlu disemak, cara baca geran, tanda-tanda geran palsu, dan cara lindungi diri semasa beli kereta terpakai.',
     url: 'https://paqar.my/cara-semak-geran-kereta',

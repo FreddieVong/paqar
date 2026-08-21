@@ -35,6 +35,10 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
   const previewPollsRef = useRef(0)
   const teaserTrackedRef = useRef(false)
 
+  // Whether the RM12 report can produce a negotiation target for this check.
+  // A hint for rendering only — checkout re-derives it server-side and ignores
+  // anything the browser believed.
+
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import type { BrandModel } from '@/lib/model-hubs'
-import type { ModelPriceSpan } from '@/lib/db/market-prices'
 
 // Shared model list for the five brand hub pages (/harga-{brand}-terpakai).
 //
@@ -12,31 +11,26 @@ import type { ModelPriceSpan } from '@/lib/db/market-prices'
 // year chips. It simply is not a link, because there is nowhere to go. The
 // year pages it points to are real and stay clickable.
 //
-// `spans` is keyed on yearKey and comes from getCoverageModelSpans(). A model
-// with no entry renders its tag alone: the row, the link and every year chip
-// survive, only the unevidenced figure goes. Dropping the row instead would
-// cost internal links to pages that are perfectly fine.
+// Each row used to carry a rounded market span — "RM29k - RM42k" — beside the
+// model tag. Rounding to the nearest thousand does not change what it is: the
+// minimum and maximum of a scraped cohort, which is the range the RM12 report
+// sells. It is gone, and `spans` with it, so the component can no longer
+// receive the figures at all. The rows, the links and every year chip survive
+// unchanged; only the disclosure goes.
 
-function formatSpan(span: ModelPriceSpan): string {
-  const k = (n: number) => `RM${Math.round(n / 1000)}k`
-  return `${k(span.min)} – ${k(span.max)}`
-}
-
-export function BrandModelList({ brand, models, spans }: {
+export function BrandModelList({ brand, models }: {
   brand:  string
   models: BrandModel[]
-  spans:  Map<string, ModelPriceSpan>
 }) {
   return (
     <div className="flex flex-col gap-3">
       {models.map((m) => {
-        const span = spans.get(m.yearKey)
         const heading = (
           <>
             <div>
               <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">{brand} {m.model}</p>
               <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">
-                {span ? `${formatSpan(span)} · ${m.tag}` : m.tag}
+                {m.tag}
               </p>
             </div>
             {m.hubSlug && (
@@ -63,9 +57,17 @@ export function BrandModelList({ brand, models, spans }: {
             )}
             <div className="flex gap-1.5 flex-wrap px-1">
               {m.years.map(y => (
+                // The chip stays a bare year — it is a tight wrapping row and
+                // "Harga Myvi 2021 terpakai" in every pill would wreck it. The
+                // label carries the meaning instead, which fixes the same
+                // problem for two different audiences: a screen reader
+                // otherwise announces "link, 2021" with no idea what it opens,
+                // and these were the ONLY inbound links most year pages had —
+                // 58 pages whose entire anchor text was a repeated numeral.
                 <Link
                   key={y}
                   href={`/harga-${m.yearKey}-${y}`}
+                  aria-label={`Harga ${m.model} ${y} terpakai`}
                   className="font-body text-[11px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[6px] px-2 py-0.5 hover:bg-[#DCFCE7] transition-colors"
                 >
                   {y}

@@ -5,8 +5,6 @@ import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
 import { BrandModelList, brandCollectionItems } from '@/components/layout/BrandModelList'
-import { getCoverageModelSpans }   from '@/lib/db/market-prices'
-import { MARKET_COVERAGE }         from '@/lib/market-coverage'
 import { MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
 import type { BrandModel } from '@/lib/model-hubs'
 
@@ -17,6 +15,8 @@ export const metadata: Metadata = {
   description: 'Harga pasaran kereta terpakai Honda — City, Jazz, HR-V, Civic mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/harga-honda-terpakai' },
   openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
     title: `Harga Honda Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
     description: 'Harga pasaran kereta terpakai Honda — City, Jazz, HR-V, Civic mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
     url: 'https://paqar.my/harga-honda-terpakai',
@@ -26,7 +26,6 @@ export const metadata: Metadata = {
 // `hubSlug` is the all-years model hub, and it is optional on purpose: Civic
 // has year pages but no hub page, so linking one would 404. Typing it as
 // ModelHubSlug means an invented slug fails typecheck rather than shipping.
-// Price spans are read from market_price_cache at render time; the warm-cache
 // cron refreshes it daily, so anything faster than hourly re-renders identical
 // data. Same window as every other market page.
 export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
@@ -40,10 +39,6 @@ const MODELS: BrandModel[] = [
 
 export default async function HargaHonda() {
   // Keyed on yearKey, the same key MARKET_COVERAGE and the year pages use.
-  const spans = await getCoverageModelSpans(
-    MARKET_COVERAGE.filter(c => c.make === 'Honda'),
-    MARKET_PAGE_REVALIDATE_SECONDS,
-  )
 
   return (
     <>
@@ -67,7 +62,7 @@ export default async function HargaHonda() {
             </p>
           </div>
 
-          <BrandModelList brand="Honda" models={MODELS} spans={spans} />
+          <BrandModelList brand="Honda" models={MODELS} />
 
           <div className="space-y-3">
             <p className="font-heading font-bold text-[14px] text-[#111827]">Semak harga Honda yang nak anda beli:</p>

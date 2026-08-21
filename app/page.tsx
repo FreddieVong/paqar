@@ -9,11 +9,26 @@ import { getCheckCount } from '@/lib/db/checks'
 import { organizationSchema, whatsappUrl } from '@/lib/site'
 import { BASE_REPORT_LABEL, REVIEW_SLA_HOURS, REFUND_WORKING_DAYS } from '@/lib/pricing'
 
-// Only the canonical is declared here — title/description/openGraph are
-// inherited from the root layout, which describes the homepage anyway.
-// This used to live in the layout, where it leaked onto every other page.
+// Title, description and the social image are inherited from the root layout,
+// which describes the homepage anyway. og:url is declared HERE because the root
+// no longer sets one: a url in the layout became og:url on every page that
+// declared no openGraph of its own, and all seven FAQ guides were shipping
+// the homepage's URL as their own. The homepage is the one page for which
+// https://paqar.my is genuinely correct, so it says so itself.
 export const metadata: Metadata = {
   alternates: { canonical: 'https://paqar.my' },
+  // Restated in full, not partially. A child `openGraph` REPLACES the root's
+  // rather than merging into it, so declaring only `url` here erased the
+  // locale and the image — scripts/seo-check.mjs caught exactly that. Title
+  // and description still resolve from `metadata.title`/`description`, which
+  // the root supplies and which genuinely describe this page.
+  openGraph: {
+    url: 'https://paqar.my',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'website',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+  },
 }
 
 // ISR: without this the page is fully static and the social-proof check count
@@ -31,11 +46,6 @@ const homeSchema = {
       '@type': 'WebSite',
       name: 'Paqar',
       url: 'https://paqar.my',
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: { '@type': 'EntryPoint', urlTemplate: 'https://paqar.my/?q={search_term_string}' },
-        'query-input': 'required name=search_term_string',
-      },
     },
     // sameAs is what tells Google the site, the three social profiles and the
     // Google Business Profile are one entity. The ContactPoint that used to
@@ -421,7 +431,7 @@ export default async function HomePage() {
 
           <div className="space-y-5">
             <div>
-              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280] mb-2">
                 Beza varian
               </p>
               <div className="flex flex-wrap gap-2">
@@ -443,7 +453,7 @@ export default async function HomePage() {
             </div>
 
             <div>
-              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280] mb-2">
                 Bandingkan model
               </p>
               <div className="flex flex-wrap gap-2">
@@ -489,15 +499,15 @@ export default async function HomePage() {
       {/* ── FOOTER ── */}
       <footer className="bg-white border-t border-[#E5E7EB] px-5 py-6 text-center">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-4">
-          <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Checklist</Link>
+          <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Checklist</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Cara Beli</Link>
+          <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Cara Beli</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Risiko</Link>
+          <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Risiko</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Harga Model</Link>
+          <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Harga Model</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Kira Ansuran</Link>
+          <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Kira Ansuran</Link>
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/pemeriksaan-fizikal" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Pemeriksaan Fizikal</Link>
           <span className="text-[#E5E7EB]">·</span>
@@ -505,22 +515,22 @@ export default async function HomePage() {
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Bandingkan</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/panduan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Semua Panduan</Link>
+          <Link href="/panduan" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Semua Panduan</Link>
         </div>
         <p className="font-body text-[12px] text-[#D1D5DB] leading-relaxed mb-2">
           © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
         </p>
         <SocialLinks className="mb-2" />
         <div className="flex items-center justify-center gap-4">
-          <Link href="/tentang" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Tentang</Link>
+          <Link href="/tentang" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Tentang</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/privasi" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Privasi</Link>
+          <Link href="/privasi" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Privasi</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/terma" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Terma</Link>
+          <Link href="/terma" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Terma</Link>
           {contactHref && (
             <>
               <span className="text-[#E5E7EB]">·</span>
-              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Hubungi Kami</a>
+              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Hubungi Kami</a>
             </>
           )}
         </div>

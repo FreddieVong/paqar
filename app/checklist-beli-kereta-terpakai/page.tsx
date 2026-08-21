@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   description: 'Checklist lengkap sebelum beli kereta terpakai — semak saman, geran, pinjaman, kondisi, harga, dan deposit. Jangan terlepas satu pun.',
   alternates: { canonical: 'https://paqar.my/checklist-beli-kereta-terpakai' },
   openGraph: {
+      locale: 'ms_MY',
     title: `Checklist Beli Kereta Terpakai Malaysia ${YEAR}`,
     description: 'Checklist lengkap sebelum beli kereta terpakai — semak saman, geran, pinjaman, kondisi, harga, dan deposit. Jangan terlepas satu pun.',
     url: 'https://paqar.my/checklist-beli-kereta-terpakai',

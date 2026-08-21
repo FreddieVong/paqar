@@ -4,8 +4,20 @@ import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 
 export const metadata: Metadata = {
   title: 'Panduan Beli Honda City Terpakai 2026 — Tahun & Varian Mana | Paqar',
-  description: 'Panduan penuh Honda City terpakai: tahun mana paling berbaloi, varian 1.5 S atau 1.5 H, harga pasaran sebenar, susut nilai, dan apa perlu disemak sebelum beli.',
+  description: 'Panduan penuh Honda City terpakai: tahun mana paling berbaloi, varian 1.5 S atau 1.5 H, harga iklan setanding, susut nilai, dan apa perlu disemak sebelum beli.',
   alternates: { canonical: 'https://paqar.my/faq/honda-city-buying-guide' },
+  // These guides previously declared no openGraph at all, so they inherited
+  // the ROOT layout's — which named the homepage as og:url, og:title and
+  // og:description. Every share of this guide advertised the homepage.
+  openGraph: {
+    title: 'Panduan Beli Honda City Terpakai 2026 — Tahun & Varian Mana | Paqar',
+    description: 'Panduan penuh Honda City terpakai: tahun mana paling berbaloi, varian 1.5 S atau 1.5 H, harga iklan setanding, susut nilai, dan apa perlu disemak sebelum beli.',
+    url: 'https://paqar.my/faq/honda-city-buying-guide',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'article',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+  },
 }
 
 export default function HondaCityGuide() {
@@ -37,7 +49,7 @@ export default function HondaCityGuide() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div>
         <h1 className="text-4xl font-bold mb-6">Panduan Beli Honda City Terpakai: Tahun &amp; Varian Terbaik</h1>
-        <p className="text-lg text-[#6B7280] mb-6">Panduan penuh beli Honda City terpakai: generasi mana, varian mana, harga pasaran sebenar, dan apa perlu disemak.</p>
+        <p className="text-lg text-[#6B7280] mb-6">Panduan penuh beli Honda City terpakai: generasi mana, varian mana, harga iklan setanding, dan apa perlu disemak.</p>
 
         <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
           <p className="font-semibold text-[#064E4A] mb-2">Jawapan Ringkas</p>

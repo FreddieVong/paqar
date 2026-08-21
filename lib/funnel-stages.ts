@@ -46,6 +46,9 @@ export const FUNNEL_STAGES = [
   // measure whether proving capability first changes what happens at the
   // paywall — the whole point of showing it. Diagnostic only, like the three
   // below; none are forwarded to Meta.
+  // First interaction with the checker on an SEO landing page — the step
+  // between landing and starting that this iteration is trying to move.
+  'seo_page_cta_engaged',
   'plate_price_evidence_viewed',
   'plate_verdict_viewed',
   'plate_verdict_suppressed',

@@ -4,10 +4,13 @@ import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { DirectAnswerBlock } from '@/components/seo/DirectAnswer'
+import { directAnswerFor } from '@/lib/direct-answers'
 import { coveredModelByHub, sharedCoveredYears } from '@/lib/market-coverage'
 import { getModelYearCohorts } from '@/lib/db/market-prices'
 import { formatFetchedAt, oldestFetchedAt, MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
 import type { ModelHubSlug } from '@/lib/model-hubs'
+import { guidesForComparison } from '@/lib/related-guides'
 
 export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
 
@@ -229,19 +232,24 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   const cfg = COMPARISONS[params.slug]
   if (!cfg) return {}
   return {
-    title: `${cfg.titleA} vs ${cfg.titleB} Terpakai — Harga & Perbandingan | Paqar`,
+    // Kept under ~60 characters so Google renders it whole. The previous
+    // template ran 65-69 and was cut mid-phrase in the SERP, losing the price
+    // intent that follows the model names — on pages that DO rank (Search
+    // Console, 3 months to 2026-08-14: /bandingkan/alza-vs-x50 sits at average
+    // position 8.8 yet draws 1.1% CTR, against roughly 2-2.5% typical there).
+    // Model names stay first because that is what the query matches
+    // ("saga vs bezza", "alza vs x50").
+    title: `${cfg.titleA} vs ${cfg.titleB} — Harga Terpakai | Paqar`,
     description: cfg.description,
     alternates: { canonical: `https://paqar.my/bandingkan/${params.slug}` },
     openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
       title: `${cfg.titleA} vs ${cfg.titleB} Terpakai`,
       description: cfg.description,
       url: `https://paqar.my/bandingkan/${params.slug}`,
     },
   }
-}
-
-function fmt(n: number) {
-  return `RM${(n / 1000).toFixed(0)}k`
 }
 
 /**
@@ -284,7 +292,13 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
   const cfg = COMPARISONS[params.slug]
   if (!cfg) notFound()
 
+  // See lib/direct-answers.ts — only the pages Search Console shows ranking.
+  const directAnswer = directAnswerFor(`/bandingkan/${params.slug}`)
+
   const { rows: priceRows, updatedLabel } = await comparisonRows(cfg)
+  // yearKeys for the per-year links that replaced the price columns.
+  const yearKeyA = coveredModelByHub(cfg.slugA)?.yearKey
+  const yearKeyB = coveredModelByHub(cfg.slugB)?.yearKey
 
   const schema = {
     '@context': 'https://schema.org',
@@ -329,9 +343,23 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
             </p>
           </div>
 
-          {/* Price table — live cohort data only. See the note on ComparisonConfig. */}
+          {/* The direct answer, first screen, before anything is asked. */}
+          {directAnswer && <DirectAnswerBlock answer={directAnswer} />}
+
+          {/*
+            Year table.
+
+            Each row used to carry both models' min-max range for that year —
+            the RM12 report's range, twice per row, on the pages that rank best
+            on the site. The rows are now navigation: same years, same shape,
+            but each cell links to that model-year's own page instead of
+            answering the price question in the cell.
+
+            This also adds internal links the year pages did not have. That is a
+            side effect, not the reason; the reason is the boundary.
+          */}
           <div>
-            <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-3">Harga pasaran mengikut tahun</h2>
+            <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-3">Semak harga mengikut tahun</h2>
             {priceRows.length > 0 ? (
               <>
                 <div className="overflow-hidden rounded-[12px] border border-[#E5E7EB]">
@@ -347,15 +375,27 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
                       {priceRows.map((row, i) => (
                         <tr key={row.year} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}>
                           <td className="font-body font-semibold text-[#374151] px-3 py-2.5">{row.year}</td>
-                          <td className="font-body text-center text-[#064E4A] px-3 py-2.5">{fmt(row.a.min)} – {fmt(row.a.max)}</td>
-                          <td className="font-body text-center text-[#1D4ED8] px-3 py-2.5">{fmt(row.b.min)} – {fmt(row.b.max)}</td>
+                          <td className="font-body text-center px-3 py-2.5">
+                            {yearKeyA ? (
+                              <Link href={`/harga-${yearKeyA}-${row.year}`}
+                                aria-label={`Semak harga ${cfg.titleA} ${row.year} terpakai`}
+                                className="text-[#064E4A] underline underline-offset-2">Semak →</Link>
+                            ) : '—'}
+                          </td>
+                          <td className="font-body text-center px-3 py-2.5">
+                            {yearKeyB ? (
+                              <Link href={`/harga-${yearKeyB}-${row.year}`}
+                                aria-label={`Semak harga ${cfg.titleB} ${row.year} terpakai`}
+                                className="text-[#1D4ED8] underline underline-offset-2">Semak →</Link>
+                            ) : '—'}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
                 <p className="font-body text-[10px] text-[#9CA3AF] mt-2">
-                  Dikira dari iklan pasaran semasa{updatedLabel ? ` · Dikemaskini: ${updatedLabel}` : ''}.
+                  Paqar menjejaki iklan kedua-dua model ini{updatedLabel ? ` · Dikemaskini: ${updatedLabel}` : ''}.
                   Harga sebenar bergantung kepada varian, jarak tempuh dan kondisi — semak kereta pilihan anda di bawah.
                 </p>
               </>
@@ -436,6 +476,25 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
                 ))}
             </div>
           </div>
+
+          {/*
+            The long-form guide covering these same two cars, where one exists.
+
+            /faq/honda-city-vs-toyota-vios had zero editorial inbound links on
+            2026-08-14 while /bandingkan/vios-vs-city — the page about exactly
+            that comparison — linked everywhere except to it.
+          */}
+          {guidesForComparison(params.slug).length > 0 && (
+            <div>
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">Panduan penuh</p>
+              {guidesForComparison(params.slug).map(g => (
+                <Link key={g.href} href={g.href}
+                  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+                  {g.label} →
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* Related model pages */}
           <div>

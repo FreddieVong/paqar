@@ -67,6 +67,12 @@ export interface RetargetEmailInsight {
 }
 
 export interface RetargetEmailContent {
+  /**
+   * One-click opt-out. Optional so existing callers and tests keep compiling,
+   * but every live send supplies it — an e-mail that cannot be stopped is the
+   * problem this was added to fix.
+   */
+  unsubscribeUrl?: string
   plate?:     string
   reportUrl:  string
   /** Omitted whenever the price picture cannot be stated safely — see
@@ -312,7 +318,7 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
                   <td class="pad-lg" style="padding:20px;">
                     <div class="t-dim" style="font-family:${HEAD};font-size:9px;font-weight:700;letter-spacing:0.14em;color:${C.dim};line-height:1;padding-bottom:14px;">DALAM LAPORAN</div>
                     ${benefit('Verdict harga &mdash; berbaloi, wajar atau mahal')}
-                    ${benefit('Julat dan harga tengah pasaran semasa')}
+                    ${benefit('Julat dan harga tengah iklan setanding')}
                     ${benefit('Skrip rundingan siap pakai')}
                     ${benefit('Checklist sebelum bayar deposit')}
                     <!-- Text link, not an embedded screenshot: images are blocked
@@ -359,8 +365,10 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
           <tr>
             <td class="gutter" style="padding:16px 24px 26px;">
               <div class="t-dim" style="font-family:${BODY};font-size:11px;font-weight:400;color:${C.dim};line-height:1.7;">
-                Anda menerima emel ini kerana mendaftar minat di Paqar.<br>
-                <a href="https://paqar.my" class="t-mute" style="color:${C.muted};text-decoration:none;">paqar.my</a>
+                Anda menerima emel ini kerana anda memasukkan alamat emel semasa menyemak sebuah kereta di Paqar.<br>
+                ${content.unsubscribeUrl
+                  ? `<a href="${content.unsubscribeUrl}" class="t-mute" style="color:${C.muted};text-decoration:underline;">Berhenti terima emel</a>&nbsp;&middot;&nbsp;`
+                  : ''}<a href="https://paqar.my" class="t-mute" style="color:${C.muted};text-decoration:none;">paqar.my</a>
                 &nbsp;&middot;&nbsp;Bukan platform rasmi kerajaan
               </div>
             </td>

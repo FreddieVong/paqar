@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   description: 'Laporan Pembeli Paqar RM29 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
   alternates: { canonical: 'https://paqar.my/laporan-pembeli-kereta-terpakai' },
   openGraph: {
+    locale: 'ms_MY',
     title: 'Laporan Pembeli Kereta Terpakai Malaysia RM29',
     description: 'Laporan Pembeli Paqar RM29 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
     url: 'https://paqar.my/laporan-pembeli-kereta-terpakai',
@@ -105,12 +106,12 @@ export default function LaporanPembelihPage() {
             <div className="px-5 py-1">
               {[
                 {
-                  title: 'Keputusan harga pasaran',
+                  title: 'Keputusan harga',
                   desc: 'Murah, wajar, atau mahal — berdasarkan listing semasa untuk model dan tahun yang sama.',
                 },
                 {
-                  title: 'Harga tengah & julat harga pasaran',
-                  desc: 'Tahu harga tengah dan julat harga — bukan sekadar "harga pasaran dalam RM30k-50k".',
+                  title: 'Harga tengah & julat iklan setanding',
+                  desc: 'Tahu harga tengah dan julat harga — bukan sekadar "harga dalam RM30k-50k".',
                 },
                 {
                   title: 'Anggaran trade-in',

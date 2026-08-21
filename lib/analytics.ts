@@ -1,4 +1,5 @@
 import posthog from 'posthog-js'
+import type { OfferStateMeasurement } from '@/lib/offer-state'
 
 let initialised = false
 
@@ -76,6 +77,32 @@ export const analytics = {
    * plate, a price or an identifier could later be added by accident.
    */
   plateFormEngaged: () => posthog.capture('plate_form_engaged'),
+
+  /**
+   * Which paywall state the buyer actually landed in.
+   *
+   * WHY IT HAS PROPERTIES WHEN plate_form_engaged DELIBERATELY HAS NONE
+   *
+   * A measurement gap was proven, not assumed: `plate_verdict_suppressed`
+   * collapses mixed_variants and insufficient_data into one bucket, so the
+   * suppression rate could be reported (1 of 18) without saying what it was
+   * suppression OF. Those two need different product responses — one is a
+   * scraper-coverage problem, the other is structural — so they have to be
+   * distinguishable.
+   *
+   * BOTH PROPERTIES ARE CLOSED ENUMS. No plate, price, check id, session id,
+   * vehicle data or free-text ever enters this event, and `measurementFor()` in
+   * lib/offer-state is the only thing that builds the payload.
+   *
+   * PostHog only. Absent from FUNNEL_STAGES, AdEventName, BrowserEvent and the
+   * event route's schema, so it never reaches ad_events or Meta.
+   *
+   * Emitted once per DISTINCT resolved state — the caller dedupes, so a poll or
+   * a re-render repeats nothing, while a genuine transition (offer_pending →
+   * offer_available after a retry) is recorded as its own data point.
+   */
+  offerStateResolved: (props: OfferStateMeasurement) =>
+    posthog.capture('offer_state_resolved', props),
 
   // ── Free plate-path evidence ───────────────────────────────────────────
   // Separate from verdictViewed, which belongs to the model tab. Keeping them
@@ -180,7 +207,9 @@ export const analytics = {
   // sample report? Deliberately NOT forwarded to Meta CAPI (which needs an
   // explicit trackAdEvent call) — it is not a conversion signal and must not
   // be mapped onto Lead/ViewContent/Purchase.
-  sampleReportClicked: (props: { source: 'paywall' }) =>
+  // 'homepage_proof' distinguishes the new above-the-fold proof beat from the
+  // paywall expander, so the two can be compared rather than summed.
+  sampleReportClicked: (props: { source: 'paywall' | 'homepage_proof' }) =>
     posthog.capture('sample_report_clicked', props),
 
   tabSelected: (props: { tab: 'model' | 'plate' }) =>

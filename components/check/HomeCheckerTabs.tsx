@@ -3,9 +3,9 @@
 /**
  * NOT REACHABLE. Superseded by components/check/ListingIntakeForm.
  *
- * Nothing renders this any more — the only references are comments in other
- * files. It is kept rather than deleted because seven test files still exercise
- * it, and deleting it is a cleanup that does not serve the current work.
+ * Nothing renders this any more. Kept rather than deleted because several test
+ * files still exercise it, and deleting it is a cleanup that does not serve the
+ * current work.
  *
  * DO NOT REVIVE without checking two things: its copy predates the RM29 price,
  * and it calls /api/price-check expecting a `verdict` field that route no
@@ -18,7 +18,6 @@ import { PlateCheckerForm }      from './PlateCheckerForm'
 import { analytics }             from '@/lib/analytics'
 
 type Tab = 'model' | 'plate'
-type FormState = 'idle' | 'loading' | 'result' | 'error'
 
 /**
  * ONE journey, not two tabs.
@@ -47,15 +46,14 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
       setTab('model')
     }
   }, [])
-  const [modelFormState, setModelFormState] = useState<FormState>('idle')
-
-  // Hide the how-it-works strip once the user is past those steps
-  const showSteps = !(tab === 'model' && (modelFormState === 'result' || modelFormState === 'loading'))
+  // No form state is tracked here any more: the only reader was the 1-2-3
+  // how-it-works strip, removed because the hero support line and the proof
+  // beat directly below it now say the same thing twice over.
 
   return (
     <div>
       {/* The single journey. No tab bar — the plate form IS the page. */}
-      {tab === 'plate' ? <PlateCheckerForm /> : <OverpricedCheckerForm onStateChange={setModelFormState} />}
+      {tab === 'plate' ? <PlateCheckerForm /> : <OverpricedCheckerForm />}
 
       {/* The fallback, as one quiet link rather than an equal choice. */}
       {tab === 'plate' ? (
@@ -81,30 +79,6 @@ export function HomeCheckerTabs({ countDisplay }: { countDisplay: string | null 
         <p className="font-body text-[11px] text-[#9CA3AF] text-center mt-4">
           {countDisplay} semakan dibuat
         </p>
-      )}
-
-      {/* How it works — hidden once a check is running/showing a verdict,
-          because steps 1-2 are already done at that point */}
-      {showSteps && (
-        <div className="mt-6 flex flex-col gap-2">
-          {[
-            // Step 1 names the plate, because the plate is now the journey.
-            // Kept accurate for the fallback too: the model form asks for the
-            // same asking price.
-            tab === 'plate'
-              ? 'Masukkan nombor plat & harga yang penjual minta'
-              : 'Masukkan model, tahun & harga yang penjual minta',
-            'Dapat keputusan harga serta-merta',
-            'Nak skrip rundingan & data penuh? RM29',
-          ].map((step, i) => (
-            <div key={i} className="flex items-center gap-2.5">
-              <span className="w-[18px] h-[18px] rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-[#15803D] font-heading font-bold text-[10px] flex items-center justify-center flex-shrink-0">
-                {i + 1}
-              </span>
-              <p className="font-body text-[12px] text-[#6B7280]">{step}</p>
-            </div>
-          ))}
-        </div>
       )}
     </div>
   )

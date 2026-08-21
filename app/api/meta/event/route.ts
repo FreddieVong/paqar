@@ -65,6 +65,7 @@ const schema = z.object({
     'plate_submitted', 'plate_result_poll_timed_out',
     'paywall_viewed', 'payment_form_focused', 'payment_form_submitted',
     'billplz_navigation_started',
+    'seo_page_cta_engaged',
     'model_result_shown', 'model_result_no_data',
     ...PER_CHECK_STAGES,
   ]),
@@ -189,6 +190,9 @@ export async function POST(request: NextRequest) {
 
   if (event === 'landing_page_view') {
     id = derive.landingPageView(sessionId, path)
+  } else if (event === 'seo_page_cta_engaged') {
+    // Keyed on path and day like landing_page_view: same visit, same event.
+    id = derive.seoPageCtaEngaged(sessionId, path)
   } else if (event === 'valuation_started') {
     if (!attemptId) return NextResponse.json({ error: 'attemptId required' }, { status: 400 })
     id = derive.valuationStarted(sessionId, attemptId)

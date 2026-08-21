@@ -5,13 +5,17 @@ import { Nav }            from '@/components/layout/Nav'
 import { Shell }          from '@/components/layout/Shell'
 import { ListingIntakeForm } from '@/components/check/ListingIntakeForm'
 import { getCachedMarketPrices } from '@/lib/db/market-prices'
-import { buildMarketYearStats }  from '@/lib/comparables'
+import { buildMarketYearStats, buildComparableCohort }  from '@/lib/comparables'
 import { formatFetchedAt, MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
 import { coveredYearSlugs } from '@/lib/market-coverage'
 import { VARIANT_GUIDES } from '@/lib/variant-guides'
+import { variantLabelListFrom } from '@/lib/variant-label'
 import { parseSlug }      from '@/lib/year-model-slug'
 import type { ModelHubSlug } from '@/lib/model-hubs'
 import { modelYearBreadcrumbs } from '@/lib/breadcrumbs'
+import { isTierAYearPage, adjacentYears } from '@/lib/year-page-tiers'
+import { buildYearPriceContext, yearPriceContextLines, confidenceLabel, type YearCohortPoint } from '@/lib/year-price-context'
+import { buildMarketTeaser, formatTeaserBand } from '@/lib/market-teaser'
 
 export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
 
@@ -260,6 +264,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     alternates: { canonical: `https://paqar.my/harga-${params.slug}` },
     openGraph: {
+      locale: 'ms_MY',
       title,
       description,
       url: `https://paqar.my/harga-${params.slug}`,
@@ -295,15 +300,21 @@ export default async function YearModelPage({ params }: Props) {
     ? buildMarketYearStats(cached.listings, year, cached.fetchedAt)
     : null
 
+  // Only the freshness label survives to the page.
+  //
+  // This used to expose minPrice, maxPrice, medianPrice, listingCount and an
+  // overpricedThreshold derived from the max, all rendered in full and repeated
+  // inside FAQPage JSON-LD. Those are the RM29 report's evidence — median,
+  // range, price gap, the sample behind them — published for nothing on a page
+  // Google indexes. The free tier is a qualitative verdict, a qualitative
+  // explanation and a confidence band; the figures are what is sold.
+  //
+  // yearStats itself is still computed, because the qualitative conclusion and
+  // the confidence band have to be DECIDED from the cohort. It simply never
+  // reaches the markup. scripts/seo-check.mjs enforces that against the built
+  // HTML, where a template's interpolation is finally visible.
   const stats = yearStats
-    ? {
-        minPrice:            yearStats.min,
-        maxPrice:            yearStats.max,
-        medianPrice:         yearStats.median,
-        listingCount:        yearStats.count,
-        overpricedThreshold: Math.round(yearStats.max * 1.08 / 1000) * 1000,
-        updatedLabel:        formatFetchedAt(yearStats.fetchedAt),
-      }
+    ? { updatedLabel: formatFetchedAt(yearStats.fetchedAt) }
     : null
 
   const displayModel = `${info.brand} ${info.model}`
@@ -311,27 +322,121 @@ export default async function YearModelPage({ params }: Props) {
   // model has year pages but no all-years hub.
   const modelHubSlug = info.hubSlug
 
+  // ── Tier A pilot ─────────────────────────────────────────────────────────
+  //
+  // Twelve of the 58 year pages (Myvi, Bezza, City) carry a year-over-year
+  // price context block and adjacent-year navigation. See lib/year-page-tiers.ts
+  // for why those twelve and not others, and lib/year-price-context.ts for why
+  // this block exists at all: a year page answers its query completely and
+  // leaves the reader nothing to do, and content-page sessions started zero
+  // valuations in the 19 days to 2026-08-14.
+  //
+  // Adjacent cohorts are read only for Tier A, and only for years the coverage
+  // list actually keeps warm, so this adds at most two cached reads to twelve
+  // prerendered pages and none anywhere else.
+  const isTierA  = isTierAYearPage(modelKey)
+  const adjacent = isTierA ? adjacentYears(modelKey, year) : { previous: null, next: null }
+
+  const adjacentPoint = async (adjYear: string | null): Promise<YearCohortPoint | null> => {
+    if (!adjYear) return null
+    const c = await getCachedMarketPrices(info.make, info.model, adjYear, MARKET_PAGE_REVALIDATE_SECONDS)
+    if (!c) return null
+    const s = buildMarketYearStats(c.listings, adjYear, c.fetchedAt)
+    return s ? { year: s.year, median: s.median, min: s.min, max: s.max, count: s.count } : null
+  }
+
+  const [previousPoint, nextPoint] = yearStats
+    ? await Promise.all([adjacentPoint(adjacent.previous), adjacentPoint(adjacent.next)])
+    : [null, null]
+
+  const priceContext = yearStats
+    ? buildYearPriceContext({
+        current:  { year: yearStats.year, median: yearStats.median, min: yearStats.min, max: yearStats.max, count: yearStats.count },
+        previous: previousPoint,
+        next:     nextPoint,
+      })
+    : null
+
+  // Trim labels for the pilot copy, so the conclusion names this model's actual
+  // variants rather than reading identically on all twelve pages.
+  const guide        = modelHubSlug ? VARIANT_GUIDES[modelHubSlug] : undefined
+  const newestGen    = guide?.generations[guide.generations.length - 1]
+  const variantHint  = newestGen ? variantLabelListFrom(newestGen.variants).replace(/ vs /g, ', ') : undefined
+
+  const contextLines = priceContext ? yearPriceContextLines(priceContext, displayModel, variantHint) : []
+
+  // The public teaser band — EVERY year page, not just the pilot.
+  //
+  // It was Tier A only for one build, on the theory that the other 46 pages
+  // made a control group. They do not: different models, different search
+  // demand, different page strength and inbound links, no random assignment,
+  // and organic volume too low to separate any of it. Withholding a basic price
+  // answer from 46 pages bought no causal read and cost every one of them the
+  // ability to answer the query it ranks for.
+  //
+  // What stays Tier A is the ENHANCED treatment — the qualitative block, the
+  // adjacent-year links, the moved CTA and the diagnostic event. That is what
+  // the pilot tests: whether enhanced content and conversion design move the
+  // funnel. Not whether a searcher deserves an answer.
+  //
+  // Same eligibility everywhere: 8+ comparables, data no older than 14 days,
+  // cleaned cohort, interquartile band rounded outward to RM5,000. See
+  // lib/market-teaser.ts; the raw bounds, the median and the count never
+  // leave it.
+  const teaser = cached && yearStats
+    ? buildMarketTeaser({
+        prices:    buildComparableCohort(cached.listings, { year }).prices,
+        count:     yearStats.count,
+        fetchedAt: yearStats.fetchedAt,
+      })
+    : null
+
+  // One CTA, rendered in one of two positions. Tier A places it directly under
+  // the price-context block — the moment the page has just given the reader a
+  // reason to check a specific car — instead of below two more sections of
+  // market commentary. Everywhere else keeps the existing position exactly.
+  // Defined once so the two placements can never drift into two different CTAs.
+  const ctaBlock = (
+    <div className="space-y-3">
+      <p className="font-heading font-bold text-[14px] text-[#111827]">
+        {isTierA
+          ? `Semak harga unit yang anda jumpa`
+          : `Ada ${info.model} ${year} yang nak dibeli? Masukkan harga penjual:`}
+      </p>
+      <ListingIntakeForm
+        initialBrand={info.brand}
+        initialModel={info.model}
+        initialYear={year}
+      />
+    </div>
+  )
+
   const schema = {
     '@context': 'https://schema.org',
     '@graph': [
       modelYearBreadcrumbs({ displayModel, year, slug: params.slug, hubSlug: modelHubSlug }),
+      // JSON-LD is rendered content, so the boundary applies to it exactly as
+      // it applies to the visible page. These two answers previously quoted the
+      // min, the max, the median and a threshold derived from the max — machine
+      // readable, indexable, and quotable verbatim by an AI surface. They now
+      // answer the same two questions qualitatively.
       ...(stats ? [{
         '@type': 'FAQPage',
         mainEntity: [
           {
             '@type': 'Question',
-            name:    `Berapa harga ${displayModel} ${year} terpakai?`,
+            name:    `Apa yang menentukan harga ${displayModel} ${year} terpakai?`,
             acceptedAnswer: {
               '@type': 'Answer',
-              text:    `Berdasarkan listing pasaran terkini, harga ${displayModel} ${year} terpakai berada antara RM${stats.minPrice.toLocaleString()} hingga RM${stats.maxPrice.toLocaleString()}. Harga tengah ialah RM${stats.medianPrice.toLocaleString()}.${stats.updatedLabel ? ` Data dikemaskini ${stats.updatedLabel}.` : ''}`,
+              text:    `Harga bergantung kepada varian, jarak tempuh, rekod servis dan keadaan unit — bukan tahun model sahaja. Dua unit ${displayModel} ${year} boleh berbeza harganya walaupun tahun dan model sama. Paqar menyemak harga yang diminta untuk satu unit tertentu berbanding unit setara di pasaran semasa.`,
             },
           },
           {
             '@type': 'Question',
-            name:    `Berapa harga yang dianggap mahal untuk ${displayModel} ${year}?`,
+            name:    `Macam mana nak tahu harga ${displayModel} ${year} yang diminta berpatutan?`,
             acceptedAnswer: {
               '@type': 'Answer',
-              text:    `Harga melebihi RM${stats.overpricedThreshold.toLocaleString()} — lebih 8% dari paras tertinggi pasaran — patut dipersoalkan. Gunakan Paqar untuk semak sama ada harga yang ditawarkan berpatutan.`,
+              text:    `Masukkan harga yang diminta penjual dan Paqar akan bandingkan dengan unit setara di pasaran semasa, kemudian beritahu sama ada harga itu di atas, dalam, atau di bawah paras pasaran. Semakan ini percuma.`,
             },
           },
         ],
@@ -358,93 +463,152 @@ export default async function YearModelPage({ params }: Props) {
               Harga {info.model} {year} Terpakai di Malaysia
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              {info.description} Semak harga pasaran sebenar sebelum beli.
+              {info.description} Semak kedudukan harga berbanding iklan setanding sebelum beli.
             </p>
           </div>
 
-          {/* Live price card — fallback shown while cache data is unavailable */}
-          {stats ? (
-            <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-[#F3F4F6]">
-                <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">
-                  Harga Pasaran Semasa
+          {/*
+            Market-evidence card.
+
+            This used to print the range in 28px, the median under it, and the
+            listing count under that. All three are RM29 evidence. What remains
+            is what the free tier is: a statement of what Paqar checks, the
+            confidence band for this cohort, and the freshness date — no figure
+            a reader could use to reconstruct the distribution.
+          */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">
+              {teaser ? 'Anggaran Harga Iklan Umum' : 'Data Pasaran Belum Cukup'}
+            </p>
+            {teaser ? (
+              <>
+                {/*
+                  The public band. Two numbers, both multiples of RM5,000, from
+                  the interquartile range of the cleaned cohort — never the raw
+                  minimum and maximum, which are the RM29 report's range and the
+                  least stable figures in any cohort.
+
+                  The qualifier sits immediately under it and is not optional:
+                  a band without it reads as a valuation, which is the one thing
+                  it must not be.
+                */}
+                <p className="font-heading font-extrabold text-[26px] text-[#064E4A] leading-none mb-2">
+                  Sekitar {formatTeaserBand(teaser)}
                 </p>
-              </div>
-              <div className="px-5 py-4">
-                <p className="font-heading font-extrabold text-[28px] text-[#064E4A] leading-none mb-1">
-                  RM{stats.minPrice.toLocaleString()} – RM{stats.maxPrice.toLocaleString()}
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                  Anggaran umum untuk model dan tahun ini, berdasarkan harga yang diiklankan di
+                  pasaran. Harga sebenar bergantung pada varian, keadaan, jarak tempuh dan rekod
+                  kenderaan — ini bukan penilaian untuk mana-mana unit tertentu.
                 </p>
-                <p className="font-body text-[13px] text-[#374151] mb-3">
-                  Median: <span className="font-semibold">RM{stats.medianPrice.toLocaleString()}</span>
+                {priceContext && (
+                  <p className="font-body text-[11px] text-[#9CA3AF] mt-3">
+                    {confidenceLabel(priceContext.confidence)}
+                    {stats?.updatedLabel ? ` · Dikemaskini: ${stats.updatedLabel}` : ''}
+                  </p>
+                )}
+              </>
+            ) : (
+              /*
+                Truthful insufficient-data state.
+
+                Reached when the cohort is too small, too stale, or unusable —
+                the same suppression rules that apply everywhere. It says which
+                is true and offers the thing that still works: a check of the
+                one unit the reader is actually looking at. It does not show an
+                empty price card, and it does not imply a price it cannot
+                support.
+              */
+              <>
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                  Data pasaran {displayModel} {year} belum cukup untuk memberi anggaran umum yang
+                  boleh dipercayai buat masa ini.
                 </p>
-                <p className="font-body text-[11px] text-[#9CA3AF]">
-                  Berdasarkan {stats.listingCount} listing pasaran terkini
-                  {stats.updatedLabel ? ` · Dikemaskini: ${stats.updatedLabel}` : ''}
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
+                  Anda masih boleh semak unit tertentu: masukkan harga yang diminta penjual di bawah
+                  dan Paqar akan bandingkan dengan iklan setara yang ada. Semakan ini percuma.
                 </p>
-              </div>
-            </div>
-          ) : (
+                {stats?.updatedLabel && (
+                  <p className="font-body text-[11px] text-[#9CA3AF] mt-3">
+                    Dikemaskini: {stats.updatedLabel}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          {/*
+            Tier A: qualitative price context, then the CTA.
+
+            Decided from the cohort, stated without it. See
+            lib/year-price-context.ts — an earlier version of this block printed
+            the within-year spread, the step to each adjacent year and the ratio
+            between them, which is the RM29 report's evidence rederived rather
+            than withheld. Nothing rendered here contains a figure.
+          */}
+          {isTierA && contextLines.length > 0 && (
             <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
-              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">
-                Harga Pasaran Semasa
-              </p>
-              <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Data harga pasaran {displayModel} {year} sedang dikemaskini. Masukkan harga
-                penjual di bawah — kami akan semak harga pasaran terkini untuk anda secara percuma.
-              </p>
+              <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-2">
+                Tahun {year} atau tahun lain — mana lebih penting?
+              </h2>
+              <div className="space-y-2">
+                {contextLines.map((line, i) => (
+                  <p key={i} className="font-body text-[13px] text-[#374151] leading-relaxed">
+                    {line}
+                  </p>
+                ))}
+              </div>
             </div>
           )}
 
+          {isTierA && ctaBlock}
+
+          {/*
+            Both sections answered their headings with figures: section 1 quoted
+            the count, the range and the median; section 2 quoted a threshold
+            computed as max x 1.08, which is the price gap the RM29 report
+            sells. They now answer the same two buyer questions with what
+            actually helps a buyer decide, and route the numeric question to the
+            check that is built to answer it for one specific car.
+          */}
           {stats && (
             <>
-              {/* Section 1: Berapa harga pasaran? */}
+              {/* Section 1: what actually sets the price */}
               <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
                 <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-2">
-                  Berapa harga pasaran {info.model} {year} sekarang?
+                  Apa yang menentukan harga {info.model} {year}?
                 </h2>
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                  Berdasarkan {stats.listingCount} listing pasaran{stats.updatedLabel ? ` pada ${stats.updatedLabel}` : ''},
-                  harga pasaran {displayModel} {year} terpakai berada antara{' '}
-                  <strong>RM{stats.minPrice.toLocaleString()}</strong> hingga{' '}
-                  <strong>RM{stats.maxPrice.toLocaleString()}</strong>. Harga tengah ialah{' '}
-                  <strong>RM{stats.medianPrice.toLocaleString()}</strong>.
+                  Varian, jarak tempuh, rekod servis dan keadaan badan kereta. Unit dengan rekod
+                  servis penuh dan jarak tempuh rendah berada di hujung atas pasaran; unit tanpa
+                  rekod, bekas e-hailing, atau pernah terlibat kemalangan berada di hujung bawah.
                 </p>
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-2">
-                  Harga ini merangkumi pelbagai varian dan jarak tempuh. Kereta dengan rekod servis penuh,
-                  jarak tempuh rendah, dan tiada kemalangan biasanya ada harga lebih tinggi dalam julat ini.
+                  Sebab itu tahun model sahaja tidak memberitahu anda sama ada satu harga itu
+                  berpatutan — ia bergantung kepada unit yang mana.
                 </p>
               </div>
 
-              {/* Section 2: Bila harga mahal? */}
+              {/* Section 2: how to judge one asking price */}
               <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
                 <h2 className="font-heading font-bold text-[15px] text-[#111827] mb-2">
-                  Bila harga {info.model} {year} dianggap mahal?
+                  Macam mana nak tahu harga {info.model} {year} yang diminta berpatutan?
                 </h2>
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                  Sebarang tawaran melebihi{' '}
-                  <strong>RM{stats.overpricedThreshold.toLocaleString()}</strong> — lebih 8% dari
-                  paras tertinggi pasaran — patut dipersoalkan. Harga tinggi tidak semestinya salah
-                  jika kereta ada rekod servis penuh atau jarak tempuh sangat rendah, tetapi
-                  penjual perlu beri justifikasi yang jelas.
+                  Masukkan harga yang diminta penjual. Paqar semak sama ada kami ada cukup
+                  iklan setanding untuk buat keputusan tentang unit itu &mdash; percuma.
                 </p>
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-2">
-                  Gunakan Paqar untuk semak sama ada harga yang ditawarkan berpatutan, mahal,
-                  atau murah berbanding pasaran semasa.
+                  Laporan RM29 pula memberi keputusan untuk unit anda: orang kami baca iklan
+                  yang anda hantar, banding dengan harga iklan setanding, dan beritahu berapa
+                  patut anda tawarkan serta apa yang perlu ditanya sebelum bayar deposit.
                 </p>
               </div>
             </>
           )}
 
-          {/* CTA — pre-filled with this page's model + year */}
-          <div className="space-y-3">
-            <p className="font-heading font-bold text-[14px] text-[#111827]">
-              Ada {info.model} {year} yang nak dibeli? Masukkan harga penjual:
-            </p>
-            <ListingIntakeForm
-              initialBrand={info.brand}
-              initialModel={info.model}
-            />
-          </div>
+          {/* CTA — pre-filled with this page's model + year. Tier A renders it
+              higher up, immediately after the price-context block. */}
+          {!isTierA && ctaBlock}
 
           {/* Buyer tips */}
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -461,13 +625,53 @@ export default async function YearModelPage({ params }: Props) {
             </ul>
           </div>
 
+          {/*
+            Adjacent years — Tier A only.
+
+            These are the two links a buyer comparing model years actually
+            wants, and they are the reason the year pages stop being a set of
+            58 leaves hanging off a hub: each Tier A page now links its
+            neighbours, so the run reads as a sequence rather than a list.
+            Anchors name the model, the year and the intent, because the hub's
+            existing links to these same pages are anchored on a bare year
+            ("2021"), which tells a crawler nothing about what it points at.
+
+            Only years in MARKET_COVERAGE are linked — an uncovered year would
+            land the reader on the empty-data fallback.
+          */}
+          {isTierA && (adjacent.previous || adjacent.next) && (
+            <div className="space-y-2">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">
+                Banding tahun berdekatan
+              </p>
+              {adjacent.previous && (
+                <Link
+                  href={`/harga-${modelKey}-${adjacent.previous}`}
+                  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+                >
+                  Harga {displayModel} {adjacent.previous} terpakai →
+                </Link>
+              )}
+              {adjacent.next && (
+                <Link
+                  href={`/harga-${modelKey}-${adjacent.next}`}
+                  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+                >
+                  Harga {displayModel} {adjacent.next} terpakai →
+                </Link>
+              )}
+            </div>
+          )}
+
           {/* Related links */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">
               Panduan berkaitan
             </p>
             <Link
-              href={stats ? `/kira-ansuran-kereta?harga=${stats.medianPrice}` : '/kira-ansuran-kereta'}
+              // Was `?harga=${medianPrice}` — the median, published in a query
+              // string, on a link Google follows and indexes.
+              href="/kira-ansuran-kereta"
               className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
             >
               Kira ansuran bulanan untuk {info.model} {year} →

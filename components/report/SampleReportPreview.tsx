@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useId } from 'react'
 import { CopyButton } from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
 import { HistoryRiskBanner } from './HistoryRiskBanner'
 import type { JomCheckResult } from '@/lib/jomcheck/core'
+import { SampleVerdictCard } from './SampleVerdictCard'
 
 const MARKET_PRICES = ['RM37,500', 'RM38,000', 'RM39,800', 'RM41,500', 'RM42,000', 'RM43,000', 'RM44,500', 'RM45,000', 'RM46,200', 'RM47,000']
 
@@ -52,11 +53,37 @@ const SAMPLE_JOMCHECK: JomCheckResult = {
     { dateOfLoss: '2020-08-02', type: 'windscreen', accidentType: 'Windscreen (WS)', mileageAtClaim: null,   severity: null,   constructiveTotalLoss: false },
   ],
 }
+type Tier = 'asas' | 'premium'
+const TIERS: readonly Tier[] = ['asas', 'premium']
+
 const SAMPLE_CURRENT_ODOMETER = 78_000  // below the 95,000 km claim → rollback flag fires
 
-export function SampleReportPreview() {
-  const [tab, setTab] = useState<'asas' | 'premium'>('asas')
+/**
+ * @param showVerdictCard - false on the homepage, where the proof beat already
+ *   renders the card above the expander. Without this the card appears twice
+ *   the moment the buyer expands the full sample.
+ */
+export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCard?: boolean } = {}) {
+  const [tab, setTab] = useState<Tier>('asas')
   const topRef = useRef<HTMLDivElement>(null)
+  const baseId  = useId()
+  const tabId   = (t: Tier) => `${baseId}-tab-${t}`
+  const panelId = `${baseId}-panel`
+
+  // Left/Right move between tabs and take focus with them, per the WAI-ARIA
+  // tabs pattern. Home/End cost nothing once the tier list is the source.
+  function onTabKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const i = TIERS.indexOf(tab)
+    let next: Tier | null = null
+    if      (e.key === 'ArrowRight') next = TIERS[(i + 1) % TIERS.length]!
+    else if (e.key === 'ArrowLeft')  next = TIERS[(i - 1 + TIERS.length) % TIERS.length]!
+    else if (e.key === 'Home')       next = TIERS[0]!
+    else if (e.key === 'End')        next = TIERS[TIERS.length - 1]!
+    if (!next) return
+    e.preventDefault()
+    setTab(next)
+    document.getElementById(tabId(next))?.focus()
+  }
 
   function switchToPremium() {
     setTab('premium')
@@ -70,7 +97,7 @@ export function SampleReportPreview() {
         {/* Header */}
         <div className="px-5 pt-4 pb-3 border-b border-[#F3F4F6] flex items-center justify-between">
           <div>
-            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-0.5">
+            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-0.5">
               Contoh Laporan
             </p>
             <p className="font-heading font-extrabold text-[18px] text-[#111827]">WXY 1234</p>
@@ -80,14 +107,31 @@ export function SampleReportPreview() {
           </span>
         </div>
 
-        {/* Segmented toggle */}
+        {/* Tier selector — real tab semantics, not two buttons that merely look
+            selected. Roving tabIndex plus arrow keys is the expected pattern:
+            one Tab stop for the group, arrows to move within it.
+
+            Ids come from useId because this preview renders on the homepage,
+            /contoh-laporan and the paywall, and two on one page would otherwise
+            share ids and cross-wire their aria-controls. */}
         <div className="px-5 py-3 border-b border-[#F3F4F6]">
-          <div className="flex rounded-[10px] bg-[#F3F4F6] p-1 gap-1">
-            {(['asas', 'premium'] as const).map(t => (
+          <div
+            role="tablist"
+            aria-label="Pilih jenis laporan"
+            onKeyDown={onTabKeyDown}
+            className="flex rounded-[10px] bg-[#F3F4F6] p-1 gap-1"
+          >
+            {TIERS.map(t => (
               <button
                 key={t}
+                type="button"
+                role="tab"
+                id={tabId(t)}
+                aria-selected={tab === t}
+                aria-controls={panelId}
+                tabIndex={tab === t ? 0 : -1}
                 onClick={() => setTab(t)}
-                className={`flex-1 py-2 rounded-[8px] font-heading font-bold text-[12px] transition-colors ${
+                className={`flex-1 py-2 rounded-[8px] font-heading font-bold text-[12px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064E4A]/40 ${
                   tab === t
                     ? 'bg-white text-[#111827] shadow-sm'
                     : 'text-[#6B7280] hover:text-[#374151]'
@@ -99,10 +143,14 @@ export function SampleReportPreview() {
           </div>
           {tab === 'premium' && (
             <p className="font-body text-[11px] text-[#064E4A] font-semibold mt-2">
-              Termasuk semakan Accident/Claim Insurans
+              Termasuk semakan Accident/Claim Insurans · jumlah RM100
             </p>
           )}
         </div>
+
+        {/* One panel for both tabs: the tier changes what is inside it, not
+            which region it is. aria-labelledby names the selected tab. */}
+        <div role="tabpanel" id={panelId} aria-labelledby={tabId(tab)}>
 
         {/* History risk — leads the premium report, above the price verdict.
             Renders the REAL HistoryRiskBanner so the sample can't drift. The
@@ -113,44 +161,19 @@ export function SampleReportPreview() {
           </div>
         )}
 
-        {/* 1. Keputusan Paqar */}
-        <div className="px-5 py-4 border-b border-[#F3F4F6] bg-[#FEF2F2]">
-          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
-            Keputusan Paqar
-          </p>
-          <p className="font-heading font-extrabold text-[20px] leading-tight text-[#DC2626] mb-0.5">
-            MAHAL
-          </p>
-          <p className="font-heading font-bold text-[13px] text-[#111827] mb-4">
-            Jangan bayar deposit dulu.
-          </p>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="font-body text-[12px] text-[#6B7280]">Seller minta</p>
-              <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="font-body text-[12px] text-[#6B7280]">Julat biasa</p>
-              <p className="font-heading font-bold text-[13px] text-[#111827]">RM38,000 – RM46,000</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="font-body text-[12px] text-[#6B7280]">Anggaran lebih tinggi</p>
-              <p className="font-heading font-bold text-[13px] text-[#DC2626]">RM9,000+</p>
-            </div>
-            <div className="pt-2 border-t border-[#FECACA]">
-              <p className="font-body text-[11px] text-[#6B7280] mb-0.5">Cadangan</p>
-              <p className="font-heading font-bold text-[12px] text-[#111827]">
-                Target RM38,000–RM43,000. Kalau seller tak boleh turun, cari unit lain.
-              </p>
-            </div>
+        {/* 1. Keputusan Paqar — the shared card, so this preview and the
+            homepage proof beat can never disagree about the sample figures. */}
+        {showVerdictCard && (
+          <div className="border-b border-[#F3F4F6]">
+            <SampleVerdictCard />
           </div>
-        </div>
+        )}
 
         {/* 2. Rekod Accident / Claim Insurans — Premium only. Renders the REAL
             JomCheckSection so the preview is always identical to a paid report. */}
         {tab === 'premium' && (
           <div className="px-5 py-4 border-b border-[#F3F4F6]">
-            <p className="font-body text-[10px] text-[#9CA3AF] mb-2 italic">
+            <p className="font-body text-[12px] text-[#6B7280] mb-2 italic">
               Data contoh — bukan kereta sebenar. Laporan anda gunakan rekod plat yang anda semak.
             </p>
             <JomCheckSection data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
@@ -159,7 +182,7 @@ export function SampleReportPreview() {
 
         {/* 3. Perbandingan Harga */}
         <div className="px-5 py-4 border-b border-[#F3F4F6]">
-          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-3">
             Perbandingan Harga
           </p>
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 bg-[#F9FAFB] rounded-lg px-3 py-2 mb-3">
@@ -175,9 +198,9 @@ export function SampleReportPreview() {
             <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
             <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
           </div>
-          <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti Harga Pasaran</p>
+          <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti daripada Iklan Setanding</p>
           <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2 mb-2">
-            <p className="font-body text-[12px] text-[#6B7280]">Harga tengah pasaran</p>
+            <p className="font-body text-[12px] text-[#6B7280]">Harga tengah iklan setanding</p>
             <p className="font-heading font-bold text-[13px] text-[#064E4A]">RM42,750</p>
           </div>
           <div className="flex flex-wrap gap-1.5 mb-2">
@@ -187,32 +210,37 @@ export function SampleReportPreview() {
               </span>
             ))}
           </div>
-          <p className="font-body text-[11px] text-[#9CA3AF] mb-1">
+          <p className="font-body text-[11px] text-[#6B7280] mb-1">
             Berdasarkan 10 iklan setanding yang kami jumpa
+          </p>
+          {/* Same qualifier as the real report, in the same place — the sample
+              must not promise a provenance the report then walks back. */}
+          <p className="font-body text-[11px] text-[#6B7280] mb-2">
+            Berdasarkan harga yang diiklankan, bukan harga jualan akhir.
           </p>
           <div className="mb-3">
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#22C55E]" />
               <span className="font-body text-[11px] font-semibold text-[#15803D]">Keyakinan data: Tinggi</span>
             </div>
-            <p className="font-body text-[10px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+            <p className="font-body text-[11px] text-[#6B7280] mt-0.5 leading-relaxed">
               Cukup stabil untuk dijadikan panduan.
             </p>
           </div>
           <div className="pt-3 border-t border-[#F3F4F6]">
             <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
             <p className="font-heading font-bold text-[13px] text-[#111827]">RM34,000 – RM37,000</p>
-            <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+            <p className="font-body text-[11px] text-[#6B7280] mt-0.5 leading-relaxed">
               Lebih kurang harga yang dealer akan bagi untuk kereta ni. Boleh guna ni bila nak tawar harga.
             </p>
-            <p className="font-body text-[10px] text-[#9CA3AF] mt-1 leading-relaxed">
+            <p className="font-body text-[11px] text-[#6B7280] mt-1 leading-relaxed">
               Anggaran sahaja. Bergantung pada kondisi, mileage dan pasaran semasa.
             </p>
           </div>
           <div className="pt-3 mt-3 border-t border-[#F3F4F6]">
             <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Harga ketika baru (anggaran)</p>
             <p className="font-heading font-bold text-[13px] text-[#111827]">RM46,000</p>
-            <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5 leading-relaxed">
+            <p className="font-body text-[11px] text-[#6B7280] mt-0.5 leading-relaxed">
               Model ni pegang nilai berbanding kereta lain seusia — biasanya senang jual balik nanti.
             </p>
           </div>
@@ -240,7 +268,7 @@ export function SampleReportPreview() {
 
         {/* 4. Skrip Rundingan */}
         <div className="px-5 py-4 border-b border-[#F3F4F6]">
-          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-3">
             Skrip Rundingan
           </p>
           <div className="bg-[#F9FAFB] rounded-lg p-4 mb-3">
@@ -253,7 +281,7 @@ export function SampleReportPreview() {
 
         {/* 5. Soalan untuk Penjual */}
         <div className="px-5 py-4 border-b border-[#F3F4F6]">
-          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-4">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-4">
             Soalan untuk Penjual
           </p>
           <div className="space-y-3">
@@ -268,7 +296,7 @@ export function SampleReportPreview() {
 
         {/* 6. Checklist Deposit */}
         <div className="px-5 py-4 border-b border-[#F3F4F6]">
-          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-4">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-4">
             Checklist Deposit
           </p>
           <div className="space-y-3">
@@ -284,10 +312,10 @@ export function SampleReportPreview() {
         {/* 7. Maklumat Kenderaan */}
         <div className="px-5 py-4 border-b border-[#F3F4F6]">
           <div className="flex items-center justify-between mb-3">
-            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF]">
+            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280]">
               Maklumat Kenderaan
             </p>
-            <span className="font-body text-[10px] text-[#9CA3AF]">Maklumat pendaftaran kenderaan</span>
+            <span className="font-body text-[11px] text-[#6B7280]">Maklumat pendaftaran kenderaan</span>
           </div>
           <p className="font-heading font-extrabold text-[16px] text-[#111827] mb-3 leading-tight">
             PERODUA MYVI 1.3X AT
@@ -300,7 +328,7 @@ export function SampleReportPreview() {
               { label: 'Nombor Rangka', value: 'MBBFE****' },
             ].map(row => (
               <div key={row.label} className="bg-[#F9FAFB] rounded-lg px-3 py-2">
-                <p className="font-body text-[10px] text-[#9CA3AF] uppercase tracking-[.05em]">{row.label}</p>
+                <p className="font-body text-[11px] text-[#6B7280] uppercase tracking-[.05em]">{row.label}</p>
                 <p className="font-heading font-bold text-[13px] text-[#111827] mt-0.5">{row.value}</p>
               </div>
             ))}
@@ -309,7 +337,7 @@ export function SampleReportPreview() {
 
         {/* 8. Semakan Varian */}
         <div className="px-5 py-4">
-          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-3">
             Semakan Varian
           </p>
           <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Varian mengikut rekod</p>
@@ -334,7 +362,7 @@ export function SampleReportPreview() {
               >
                 <p className={`font-body text-[13px] ${v.isThis ? 'font-bold text-[#064E4A]' : 'text-[#374151]'}`}>
                   {v.name}
-                  <span className="text-[#9CA3AF] font-normal"> — {v.verdict}</span>
+                  <span className="text-[#6B7280] font-normal"> — {v.verdict}</span>
                 </p>
                 {v.isThis && (
                   <span className="font-heading font-bold text-[11px] text-[#15803D] flex-shrink-0">
@@ -357,9 +385,10 @@ export function SampleReportPreview() {
           </p>
         </div>
 
+        </div>
       </div>
 
-      <p className="font-body text-[11px] text-[#9CA3AF] text-center mt-3 leading-relaxed">
+      <p className="font-body text-[12px] text-[#6B7280] text-center mt-3 leading-relaxed">
         Ini contoh sahaja. Laporan sebenar dijana berdasarkan nombor plat dan harga yang anda semak.
       </p>
     </div>

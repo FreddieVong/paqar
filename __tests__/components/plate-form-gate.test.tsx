@@ -53,7 +53,7 @@ function fill(plate: string, price?: string) {
 // on a click and never runs onSubmit, which would leave the component's OWN
 // validation untested. The browser-level block is asserted separately below.
 const submit = () => fireEvent.submit(
-  screen.getByRole('button', { name: /Semak Plat Percuma/i }).closest('form')!,
+  screen.getByRole('button', { name: /Semak .*Percuma/i }).closest('form')!,
 )
 
 afterEach(() => cleanup())
@@ -98,7 +98,11 @@ describe('the buyer enters the asking price exactly once', () => {
     submit()
     await waitFor(() => expect(screen.getByText(/Ralat/)).toBeTruthy())
     // The fields still hold what the buyer typed; retry does not clear them.
-    expect((screen.getByLabelText(/Harga Yang Penjual Minta/i) as HTMLInputElement).value).toBe('59000')
+    // Digits, not the exact string: AskingPriceInput displays "59,000" with
+    // thousands separators. What this asserts is that the retry did not CLEAR
+    // the field, which is true either way.
+    expect((screen.getByLabelText(/Harga Yang Penjual Minta/i) as HTMLInputElement)
+      .value.replace(/[^\d]/g, '')).toBe('59000')
     submit()
     await waitFor(() => expect(push).toHaveBeenCalled())
     expect(push.mock.calls[0]![0]).toContain('asking_price=59000')

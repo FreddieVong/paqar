@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: 'Cara Rundingkan Harga Kereta Terpakai | Panduan Paqar',
   description: 'Teknik rundingan harga kereta terpakai: guna harga pasaran sebagai asas, berapa peratus diskaun realistik ikut kondisi, dan bila patut berundur.',
   alternates: { canonical: 'https://paqar.my/faq/how-to-negotiate-used-car' },
+  // These guides previously declared no openGraph at all, so they inherited
+  // the ROOT layout's — which named the homepage as og:url, og:title and
+  // og:description. Every share of this guide advertised the homepage.
+  openGraph: {
+    title: 'Cara Rundingkan Harga Kereta Terpakai | Panduan Paqar',
+    description: 'Teknik rundingan harga kereta terpakai: guna harga pasaran sebagai asas, berapa peratus diskaun realistik ikut kondisi, dan bila patut berundur.',
+    url: 'https://paqar.my/faq/how-to-negotiate-used-car',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'article',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+  },
 }
 
 export default function HowToNegotiate() {
@@ -44,7 +56,7 @@ export default function HowToNegotiate() {
         name: 'Bila patut berundur daripada satu-satu deal kereta terpakai?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Berundur kalau penjual enggan benarkan pemeriksaan bebas, kalau mereka jual sebab transmisi bermasalah, kalau mekanik mereka bercanggah dengan pemeriksaan bebas, atau kalau harganya RM5,000 atau lebih bawah harga tengah pasaran — harga yang terlalu murah selalunya menandakan masalah tersembunyi.',
+          text: 'Berundur kalau penjual enggan benarkan pemeriksaan bebas, kalau mereka jual sebab transmisi bermasalah, kalau mekanik mereka bercanggah dengan pemeriksaan bebas, atau kalau harganya RM5,000 atau lebih bawah harga tengah iklan setanding — harga yang terlalu murah selalunya menandakan masalah tersembunyi.',
         },
       },
     ],
@@ -166,7 +178,7 @@ export default function HowToNegotiate() {
           <li>❌ Penjual enggan benarkan pemeriksaan ("Takpe, percaya saya")</li>
           <li>❌ Jual sebab transmisi "ada bunyi sikit" (kos baiki besar menanti)</li>
           <li>❌ "Mekanik saya kata elok" tapi semakan jumpa masalah (berat sebelah)</li>
-          <li>❌ Harga RM5k+ bawah harga tengah pasaran ("kalau bunyi terlalu bagus, memang ada sebabnya")</li>
+          <li>❌ Harga RM5k+ bawah harga tengah iklan setanding ("kalau bunyi terlalu bagus, memang ada sebabnya")</li>
         </ul>
       </div>
 

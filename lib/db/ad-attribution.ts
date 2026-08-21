@@ -285,34 +285,19 @@ export async function recordCheckoutAttribution(params: {
   if (error) throw error
 }
 
-export async function getCheckoutAttribution(
-  billId: string
-): Promise<CheckoutAttribution | null> {
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('checkout_attributions')
-    .select('*')
-    .eq('billplz_bill_id', billId)
-    .maybeSingle()
-
-  return (data as CheckoutAttribution | null) ?? null
-}
-
 /**
  * The journey a bill was created from, read back off its own funnel events.
  *
- * WHY NOT checkout_attributions. That table is the natural home for this and
- * has no column for it, and adding one is a production migration this change
- * does not otherwise need. ad_events already carries valuation_path on every
- * row, and checkout_started is written with the same bill id in the same
- * server action — so the value is already stored, one join away, the moment
- * captureCheckout passes it.
+ * checkout_attributions is the natural home and has no column for it; adding
+ * one is a production migration this change does not otherwise need. ad_events
+ * already carries valuation_path on every row and checkout_started is written
+ * with the same bill id in the same server action, so the value is one join
+ * away the moment captureCheckout passes it.
  *
- * Inheritance rather than re-derivation is the point: the webhook fires from
- * Billplz with no session, no route and no referrer, so it has no honest way
- * to work out a path on its own. Returning null when nothing is recorded is
- * correct and expected — every bill created before this shipped will do so,
- * and no historical row is backfilled.
+ * Inheritance rather than re-derivation is the point: the Billplz webhook has
+ * no session, no route and no referrer, so it has no honest way to work a path
+ * out on its own. Null is correct and expected for every bill created before
+ * this shipped; nothing is backfilled.
  */
 export async function getBillValuationPath(billId: string): Promise<ValuationPath | null> {
   const supabase = createServiceClient()
@@ -327,3 +312,17 @@ export async function getBillValuationPath(billId: string): Promise<ValuationPat
 
   return (data?.valuation_path as ValuationPath | null) ?? null
 }
+
+export async function getCheckoutAttribution(
+  billId: string
+): Promise<CheckoutAttribution | null> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('checkout_attributions')
+    .select('*')
+    .eq('billplz_bill_id', billId)
+    .maybeSingle()
+
+  return (data as CheckoutAttribution | null) ?? null
+}
+

@@ -4,14 +4,13 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
 import type { ModelHubSlug } from '@/lib/model-hubs'
-import { getCoverageModelSpans }   from '@/lib/db/market-prices'
-import { MARKET_COVERAGE, coveredModelByHub } from '@/lib/market-coverage'
 import { MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
 
 const YEAR = new Date().getFullYear()
 
-// Price spans come from market_price_cache at render time. Same window as the
-// brand hubs and the year pages.
+// ISR only — this index no longer reads market_price_cache at all. It used to,
+// for the "RM29k - RM42k" span beside each model, which is the RM12 report's
+// range published free on the site's own price index.
 export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
 
 export const metadata: Metadata = {
@@ -19,6 +18,8 @@ export const metadata: Metadata = {
   description: 'Panduan harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Semak harga percuma sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/harga-kereta-terpakai' },
   openGraph: {
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      locale: 'ms_MY',
     title: `Harga Kereta Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
     description: 'Panduan harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Semak harga percuma sebelum bayar deposit.',
     url: 'https://paqar.my/harga-kereta-terpakai',
@@ -47,12 +48,6 @@ const MODELS: { slug: ModelHubSlug; brand: string; model: string; tag: string }[
 ]
 
 export default async function HargaKeretaTerpakaiPage() {
-  const spans = await getCoverageModelSpans(MARKET_COVERAGE, MARKET_PAGE_REVALIDATE_SECONDS)
-  const spanFor = (slug: ModelHubSlug) => {
-    const key = coveredModelByHub(slug)?.yearKey
-    return key ? spans.get(key) : undefined
-  }
-
   return (
     <>
       <CollectionSchema
@@ -73,14 +68,12 @@ export default async function HargaKeretaTerpakaiPage() {
               Harga kereta terpakai Malaysia {YEAR}
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Pilih model untuk lihat anggaran harga pasaran mengikut tahun — kemudian semak harga kereta yang anda minat secara percuma.
+              Pilih model untuk semak harga mengikut tahun — kemudian semak harga kereta yang anda minat secara percuma.
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
-            {MODELS.map((m) => {
-              const span = spanFor(m.slug)
-              return (
+            {MODELS.map((m) => (
               <Link
                 key={m.slug}
                 href={`/harga-kereta-terpakai/${m.slug}`}
@@ -90,14 +83,16 @@ export default async function HargaKeretaTerpakaiPage() {
                   <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">
                     {m.brand} {m.model}
                   </p>
+                  {/* Was "RM29k - RM42k - {tag}". The rounded min and max of a
+                      scraped cohort is still the market range the RM12 report
+                      sells; rounding is not redaction. */}
                   <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">
-                    {span ? `RM${Math.round(span.min / 1000)}k – RM${Math.round(span.max / 1000)}k · ${m.tag}` : m.tag}
+                    {m.tag}
                   </p>
                 </div>
                 <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
               </Link>
-              )
-            })}
+            ))}
           </div>
 
           <div className="space-y-2">

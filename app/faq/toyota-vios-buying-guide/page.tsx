@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: 'Panduan Beli Toyota Vios Terpakai 2026 — Tahun & Harga Terbaik | Paqar',
   description: 'Panduan penuh Toyota Vios terpakai: generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, kebolehpercayaan, dan tanda bahaya sebelum beli.',
   alternates: { canonical: 'https://paqar.my/faq/toyota-vios-buying-guide' },
+  // These guides previously declared no openGraph at all, so they inherited
+  // the ROOT layout's — which named the homepage as og:url, og:title and
+  // og:description. Every share of this guide advertised the homepage.
+  openGraph: {
+    title: 'Panduan Beli Toyota Vios Terpakai 2026 — Tahun & Harga Terbaik | Paqar',
+    description: 'Panduan penuh Toyota Vios terpakai: generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, kebolehpercayaan, dan tanda bahaya sebelum beli.',
+    url: 'https://paqar.my/faq/toyota-vios-buying-guide',
+    siteName: 'Paqar',
+    locale: 'ms_MY',
+    type: 'article',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+  },
 }
 
 export default function ViosBuyingGuide() {

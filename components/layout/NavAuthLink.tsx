@@ -18,6 +18,19 @@ import { createClient } from '@/lib/supabase/client'
 // offers /dashboard to the few who registered for expiry reminders. So the only
 // thing left for this component to do is show Dashboard to someone already
 // signed in.
+
+/**
+ * Shared by Nav and by this link so the two can never disagree.
+ *
+ * #6B7280, not #9CA3AF: gray-400 on white is 2.54:1 and fails WCAG AA for
+ * body text. min-h-[44px] because a 12px link is a ~16px tap target, well
+ * under the 44px minimum this project already adopted elsewhere.
+ */
+export const NAV_LINK_CLS =
+  'font-heading font-semibold text-[12px] text-[#6B7280] hover:text-[#111827] transition-colors '
+  + 'min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 '
+  + 'focus-visible:ring-[#064E4A]/40 rounded'
+
 export function NavAuthLink() {
   const [loggedIn, setLoggedIn] = useState(false)
 
@@ -31,7 +44,7 @@ export function NavAuthLink() {
   return loggedIn ? (
     <Link
       href="/dashboard"
-      className="font-heading font-semibold text-[12px] text-[#9CA3AF] hover:text-[#374151] transition-colors"
+      className={NAV_LINK_CLS}
     >
       Dashboard
     </Link>

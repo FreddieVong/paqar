@@ -5,6 +5,7 @@ import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
 import { VARIANT_GUIDES } from '@/lib/variant-guides'
+import { guidesForModelHub } from '@/lib/related-guides'
 import { isModelHubSlug, type ModelHubSlug } from '@/lib/model-hubs'
 import { coveredModelByHub }   from '@/lib/market-coverage'
 import { getModelYearCohorts } from '@/lib/db/market-prices'
@@ -46,7 +47,7 @@ const MODELS: Record<ModelHubSlug, ModelConfig> = {
       { q: 'Berapa harga Myvi terpakai 2020?', a: 'Harga bergantung kepada varian (E, X, AV, H), jarak tempuh dan keadaan kereta. Rujuk jadual harga pasaran di atas untuk julat berdasarkan iklan semasa.' },
       { q: 'Varian Myvi mana yang paling berbaloi dibeli terpakai?', a: 'Varian H (1.5L) dan AV menawarkan nilai terbaik kerana ada VSC, ASA, dan pelek aloi. Varian X 1.3L lebih murah tapi ketiadaan VSC bermakna kurang selamat.' },
       { q: 'Apa yang perlu disemak sebelum beli Myvi terpakai?', a: 'Semak saman dengan PDRM dan JPJ, semak geran asal, rekod servis di Perodua, kondisi airbag, dan test drive untuk dengar bunyi gear atau enjin.' },
-      { q: 'Boleh tawar berapa untuk Myvi terpakai?', a: 'Bergantung kepada keputusan harga semasa. Jika Paqar tunjukkan harga MAHAL, anda ada asas untuk tawar turun menggunakan harga tengah pasaran sebagai rujukan.' },
+      { q: 'Boleh tawar berapa untuk Myvi terpakai?', a: 'Bergantung kepada keputusan harga semasa. Jika Paqar tunjukkan harga MAHAL, anda ada asas untuk tawar turun menggunakan harga tengah iklan setanding sebagai rujukan.' },
     ],
   },
   'perodua-axia': {
@@ -263,6 +264,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     alternates: { canonical: `https://paqar.my/harga-kereta-terpakai/${params.model}` },
     openGraph: {
+      locale: 'ms_MY',
       title,
       description,
       url: `https://paqar.my/harga-kereta-terpakai/${params.model}`,
@@ -348,11 +350,11 @@ export default async function ModelPage({ params }: Props) {
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
             <div className="px-5 py-3.5 border-b border-[#F3F4F6]">
               <h2 className="font-heading font-bold text-[14px] text-[#111827]">
-                Harga pasaran {cfg.model} terpakai
+                Semak harga {cfg.model} terpakai mengikut tahun
               </h2>
               <p className="font-body text-[11px] text-[#9CA3AF] mt-0.5">
                 {priceRows.length > 0
-                  ? <>Dikira dari iklan pasaran semasa{updatedLabel ? ` · Dikemaskini: ${updatedLabel}` : ''}. Harga sebenar bergantung kepada varian, jarak tempuh, dan kondisi.</>
+                  ? <>Paqar menjejaki iklan {cfg.model} yang sedang dijual{updatedLabel ? ` · Dikemaskini: ${updatedLabel}` : ''}. Harga sebenar bergantung kepada varian, jarak tempuh, dan kondisi unit.</>
                   : <>Harga sebenar bergantung kepada varian, jarak tempuh, dan kondisi.</>}
               </p>
             </div>
@@ -362,9 +364,31 @@ export default async function ModelPage({ params }: Props) {
                 href={`/harga-${cfg.yearKey}-${row.year}`}
                 className={`flex items-center justify-between px-5 py-3 hover:bg-[#F9FAFB] ${i < priceRows.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}
               >
-                <span className="font-heading font-bold text-[14px] text-[#064E4A]">{row.year}</span>
-                <span className="font-body text-[13px] text-[#374151]">
-                  RM{row.min.toLocaleString()} – RM{row.max.toLocaleString()} →
+                {/*
+                  Anchor text names the model and the year, not just the year.
+
+                  Measured 2026-08-14 (scripts/link-graph.mjs): every one of the
+                  58 year pages had 1-2 internal inbound links, and the anchor
+                  on this one was the bare numeral — "2021" — repeated across 16
+                  different models. An anchor that identical carries no signal
+                  about what it points at, for a crawler or for a reader
+                  scanning the table on a phone. The visible row is unchanged in
+                  shape; the model name is what a screen reader and a crawler
+                  now get instead of a lone number.
+                */}
+                {/*
+                  The row used to end "RM28,999 – RM41,800 →" for every year.
+                  That is the market range — RM12 evidence — published once per
+                  year per model across fourteen hubs, which made this the
+                  largest single disclosure on the site. The row is now
+                  navigation: it names its destination and says what the reader
+                  gets there.
+                */}
+                <span className="font-heading font-bold text-[14px] text-[#064E4A]">
+                  {cfg.model} {row.year}
+                </span>
+                <span className="font-body text-[13px] text-[#6B7280]">
+                  Semak harga →
                 </span>
               </Link>
             )) : (
@@ -421,6 +445,18 @@ export default async function ModelPage({ params }: Props) {
           {/* Related guides */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
+            {/*
+              Long-form guides about THIS model. Five of the eight /faq/*
+              guides had no editorial inbound link at all on 2026-08-14 — Paqar
+              had written a Honda City buying guide and then linked it from
+              nowhere a City shopper would be. Only models with a guide that
+              actually covers them appear here; see lib/related-guides.ts.
+            */}
+            {guidesForModelHub(params.model).map(g => (
+              <Link key={g.href} href={g.href} className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+                {g.label} →
+              </Link>
+            ))}
             {VARIANT_GUIDES[params.model] && (
               <Link href={`/varian/${params.model}`} className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
                 {cfg.model} varian mana patut beli? →

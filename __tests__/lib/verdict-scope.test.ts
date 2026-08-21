@@ -158,8 +158,13 @@ describe('the plate input is a real tap target', () => {
   })
 
   it('keeps mobile text at or above 16px, so iOS does not zoom on focus', () => {
+    // The INPUT's size, not the first font size in the file. Matching the file
+    // globally picked up a 12px label constant declared above the markup and
+    // failed for a rule it does not break — the plate field itself is 22px.
     const src = read('components/check/PlateCheckerForm.tsx')
-    const m = src.match(/text-\[(\d+)px\]/)
+    const input = src.split('\n').find(l => l.includes('self-stretch min-h-[44px]'))
+    expect(input, 'the plate input is no longer identifiable').toBeTruthy()
+    const m = input!.match(/text-\[(\d+)px\]/)
     expect(m).toBeTruthy()
     expect(Number(m![1])).toBeGreaterThanOrEqual(16)
   })
