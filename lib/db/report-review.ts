@@ -67,6 +67,38 @@ export async function listReportsAwaitingReview(): Promise<ReviewQueueRow[]> {
   return joinIntake((data ?? []) as BuyerReport[])
 }
 
+/**
+ * Reports where Paqar owes the buyer money.
+ *
+ * WHY THIS IS A SEPARATE QUERY. listReportsAwaitingReview filters on
+ * review_status in ('pending','in_review'), so the moment a reviewer marks a
+ * report unable_to_complete it LEAVES the queue — taking the outstanding
+ * refund with it. The card already had refund controls; no query ever returned
+ * a row that could render them.
+ *
+ * The refund flag exists to make an obligation impossible to forget, and it
+ * was doing the exact opposite: a real customer was owed RM29 and the only
+ * screen that tracks it showed nothing. Billplz API v3 has no refund endpoint,
+ * so a human moves this money by hand — which makes the reminder the entire
+ * mechanism.
+ *
+ * 'failed' is included deliberately. A bounced transfer is still money owed,
+ * and dropping it here would retire the debt by losing track of it.
+ */
+export async function listReportsAwaitingRefund(): Promise<ReviewQueueRow[]> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .select('*')
+    .eq('status', 'paid')
+    .in('refund_status', ['required', 'processing', 'failed'])
+    // Oldest first: the buyer who has waited longest for their money back is
+    // the one to pay next.
+    .order('paid_at', { ascending: true })
+  if (error) throw error
+  return joinIntake((data ?? []) as BuyerReport[])
+}
+
 /** Recently released reports — newest first. Read-only verification. */
 export async function listRecentlyReleased(days = 7): Promise<ReviewQueueRow[]> {
   const supabase = createServiceClient()

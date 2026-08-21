@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
-import { listReportsAwaitingReview, listRecentlyReleased, type ReviewQueueRow } from '@/lib/db/report-review'
+import { listReportsAwaitingReview, listReportsAwaitingRefund, listRecentlyReleased, type ReviewQueueRow } from '@/lib/db/report-review'
 import { hoursAwaitingReview, REVIEW_SLA_HOURS } from '@/lib/report-release'
 import { ringgit } from '@/lib/pricing'
 import { decrypt } from '@/lib/crypto'
@@ -308,8 +308,9 @@ export default async function AdminReviewPage() {
     )
   }
 
-  const [pending, released] = await Promise.all([
+  const [pending, owedRefunds, released] = await Promise.all([
     listReportsAwaitingReview(),
+    listReportsAwaitingRefund(),
     listRecentlyReleased(),
   ])
 
@@ -327,8 +328,33 @@ export default async function AdminReviewPage() {
             {overdue > 0 && (
               <span className="text-[#B91C1C] font-bold"> · {overdue} lewat melebihi {REVIEW_SLA_HOURS} jam</span>
             )}
+            {owedRefunds.length > 0 && (
+              <span className="text-[#B91C1C] font-bold"> · {owedRefunds.length} refund belum selesai</span>
+            )}
           </p>
         </div>
+
+        {/* MONEY OWED, ABOVE WORK PENDING.
+            Marking a report unable_to_complete moved it out of the review
+            queue and out of sight entirely — the card's refund controls were
+            unreachable because no query returned a row that could render them.
+            A real customer was owed RM29 and the only screen tracking it showed
+            nothing. Billplz API v3 has no refund endpoint, so a person moves
+            this money by hand and this reminder IS the mechanism. It sits above
+            the review queue because a debt outranks a task. */}
+        {owedRefunds.length > 0 && (
+          <div className="space-y-4">
+            <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-[12px] px-4 py-3">
+              <p className="font-heading font-bold text-[13px] text-[#B91C1C]">
+                Refund belum selesai — duit pembeli masih dengan kami
+              </p>
+              <p className="font-body text-[12px] text-[#7F1D1D] mt-0.5">
+                Billplz tiada API refund. Pindah duit sendiri, kemudian rekod rujukannya di bawah.
+              </p>
+            </div>
+            {owedRefunds.map(row => <QueueCard key={`refund-${row.report.id}`} row={row} />)}
+          </div>
+        )}
 
         {pending.length === 0 ? (
           <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-6 text-center">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
 import { BRANDS, MODELS_BY_BRAND } from '@/lib/model-catalog'
@@ -72,6 +72,8 @@ export function ListingIntakeForm({
   const [phase,      setPhase]      = useState<Phase>('start')
   const [summary,    setSummary]    = useState<MergedListing | null>(null)
   const [needShots,  setNeedShots]  = useState(false)
+  // Which input the buyer actually used, so a failure can name the right thing.
+  const [shotCount,  setShotCount]  = useState(0)
   const [editing,    setEditing]    = useState(false)
   const [coverage,   setCoverage]   = useState<Coverage | null>(null)
   const [busy,       setBusy]       = useState(false)
@@ -147,17 +149,38 @@ export function ListingIntakeForm({
    *
    * Either way the buyer hears nothing about hosts, HTTP or robots.
    */
-  async function onUrlBlur() {
+  /**
+   * Read the pasted link.
+   *
+   * WHY THIS IS NO LONGER BLUR-ONLY. It fired on blur and nothing else — no
+   * Enter key, no button. A buyer pastes a link, presses Enter or the phone
+   * keyboard's "Go", and the page sits there doing nothing; the only way to
+   * start was to tap some unrelated part of the page. That is the reported
+   * "when paste link nothing happens", and on a phone it is most of the time.
+   *
+   * `reading` guards the three entry points against each other: tapping the
+   * button blurs the input first, which would otherwise start the same
+   * extraction twice against one intake and race two summaries.
+   */
+  const reading = useRef(false)
+  async function readListingUrl() {
     const url = listingUrl.trim()
-    if (!url) return
+    if (!url || reading.current) return
+    reading.current = true
     setBusy(true)
-    const created = await ensureIntake(url)
-    setBusy(false)
-    if (!created) return
-    await runExtraction(created.id)
+    try {
+      const created = await ensureIntake(url)
+      if (!created) return
+      await runExtraction(created.id)
+    } finally {
+      setBusy(false)
+      reading.current = false
+    }
   }
 
-  async function onScreenshotUploaded() {
+  async function onScreenshotUploaded(count?: number) {
+    if (typeof count === 'number') setShotCount(count)
+    else setShotCount(n => n + 1)
     setStatus('Sedang baca screenshot…')
     // The REF, not the state: on the first upload the child created the intake
     // and this parent has not re-rendered, so `intakeId` is still null here.
@@ -165,6 +188,30 @@ export function ListingIntakeForm({
     if (id) await runExtraction(id)
     else setStatus(null)
   }
+
+  /**
+   * BRING THE ANSWER TO THE BUYER.
+   *
+   * Reading a listing takes up to half a minute, and the summary it produces
+   * renders BELOW the upload box that is still filling the screen. Measured on
+   * a 390x844 phone the primary CTA landed at 1065px — entirely off-screen. So
+   * a buyer uploaded a screenshot, waited thirty seconds, and was shown the
+   * same upload box they started at, with no sign anything had happened. That
+   * is indistinguishable from broken, and it is the second time this journey
+   * has failed by being silent rather than by being wrong.
+   *
+   * Scrolled, not jumped: an abrupt jump after a long wait reads as a page
+   * reload and loses the buyer's place. `block: 'center'` keeps the fallback
+   * fields visible underneath when extraction only half-succeeded.
+   */
+  const summaryRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (phase !== 'summary') return
+    // Optional-called: jsdom does not implement scrollIntoView, and an
+    // exception here would take the whole summary render down with it — the
+    // component would fail at exactly the moment it has an answer to show.
+    summaryRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+  }, [phase])
 
   /** Apply the buyer's corrections and re-merge. */
   async function saveEdits() {
@@ -287,12 +334,24 @@ export function ListingIntakeForm({
           <label htmlFor="li-url" className={LABEL_CLS}>
             Tampal link iklan
           </label>
+          {/* ANY platform, and that is not a fallback — it is the thing an
+              automated competitor cannot match. Only Mudah can be read without
+              a person; every other link is opened by the reviewer, which is
+              what RM29 buys. Saying so up front also means a failed automatic
+              read is not experienced as the product breaking. */}
+          <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-2">
+            Mana-mana platform. Kami buka link ini sendiri semasa semak &mdash;
+            kalau kami tak dapat baca automatik, anda cuma isi beberapa butiran.
+          </p>
           <input
             id="li-url"
             type="url"
             value={listingUrl}
             onChange={e => { setListingUrl(e.target.value); markEngaged() }}
-            onBlur={onUrlBlur}
+            onBlur={readListingUrl}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); void readListingUrl() }
+            }}
             placeholder="Mudah, Carlist, Facebook Marketplace…"
             inputMode="url"
             autoComplete="off"
@@ -301,6 +360,21 @@ export function ListingIntakeForm({
             disabled={phase === 'working'}
             className={`${INPUT_CLS} disabled:opacity-60`}
           />
+          {/* THE VISIBLE WAY TO START. Blur and Enter both work, but neither is
+              something a buyer can SEE — and a field that appears to do nothing
+              is indistinguishable from a broken one. The button only appears
+              once there is something to read, so the resting state stays as
+              quiet as it was. */}
+          {listingUrl.trim() !== '' && (
+            <button
+              type="button"
+              onClick={readListingUrl}
+              disabled={phase === 'working' || busy}
+              className="w-full min-h-[44px] mt-2 bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[10px] disabled:opacity-60"
+            >
+              {phase === 'working' || busy ? 'Sedang baca iklan…' : 'Baca iklan ini →'}
+            </button>
+          )}
         </div>
 
         {/*
@@ -340,7 +414,7 @@ export function ListingIntakeForm({
 
         {/* ONE SUMMARY. Everything found, editable, no confirmation step. */}
         {phase === 'summary' && summary && !editing && (
-          <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[12px] p-4">
+          <div ref={summaryRef} className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[12px] p-4">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#15803D] mb-1.5">
               Paqar akan semak
             </p>
@@ -374,13 +448,22 @@ export function ListingIntakeForm({
 
         {needShots && phase === 'summary' && (
           <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[12px] p-4">
+            {/* NAME WHAT ACTUALLY FAILED. This said "screenshot" whatever the
+                buyer had given us, so someone who pasted a link was told their
+                screenshot could not be read — at the exact moment they most
+                need to understand what went wrong. */}
             <p className="font-heading font-bold text-[14px] text-[#B45309] mb-1">
-              Kami tak dapat baca screenshot itu
+              {shotCount === 0
+                ? 'Kami tak dapat baca link itu'
+                : listingUrl.trim() !== ''
+                  ? 'Kami tak dapat baca iklan itu'
+                  : 'Kami tak dapat baca screenshot itu'}
             </p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-              Screenshot anda tetap disimpan dan akan dibaca oleh manusia semasa
-              menyemak. Isi butiran kereta di bawah supaya kami boleh semak
-              liputan dahulu.
+              {shotCount === 0
+                ? 'Link anda tetap disimpan dan akan dibuka oleh manusia semasa menyemak.'
+                : 'Apa yang anda hantar tetap disimpan dan akan dibaca oleh manusia semasa menyemak.'}
+              {' '}Isi butiran kereta di bawah supaya kami boleh semak liputan dahulu.
             </p>
           </div>
         )}
