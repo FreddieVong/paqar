@@ -258,7 +258,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!cfg) return {}
   const year        = new Date().getFullYear()
   const title       = `Harga ${cfg.brand} ${cfg.model} Terpakai Malaysia ${year} | Paqar`
-  const description = `Semak harga pasaran ${cfg.brand} ${cfg.model} terpakai Malaysia — anggaran harga mengikut tahun, tip pembeli, dan keputusan harga percuma.`
+  const description = `Semak harga pasaran ${cfg.brand} ${cfg.model} terpakai Malaysia — anggaran harga mengikut tahun, tip pembeli, dan semakan untuk unit yang anda nak beli.`
   return {
     title,
     description,
@@ -396,8 +396,8 @@ export default async function ModelPage({ params }: Props) {
               // 404. A cron lapse must not deindex a hub that ranks.
               <div className="px-5 py-4">
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                  Data pasaran sedang dikemaskini. Sementara itu, semak harga kereta
-                  yang anda nak beli terus di bawah — ia percuma.
+                  Data pasaran sedang dikemaskini. Sementara itu, hantar iklan kereta
+                  yang anda nak beli terus di bawah.
                 </p>
               </div>
             )}

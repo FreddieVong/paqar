@@ -405,7 +405,7 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
               <div className="bg-white border border-[#E5E7EB] rounded-[12px] p-4">
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                   Data harga pasaran sedang dikemaskini. Sementara itu, semak harga kereta
-                  yang anda nak beli terus di bawah — ia percuma.
+                  yang anda nak beli terus di bawah.
                 </p>
               </div>
             )}

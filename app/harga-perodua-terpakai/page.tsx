@@ -56,7 +56,7 @@ export default async function HargaPerodua() {
               Harga kereta terpakai Perodua Malaysia
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Perodua menguasai pasaran kereta terpakai Malaysia. Pilih model untuk lihat anggaran harga mengikut tahun — kemudian semak harga kereta anda minat secara percuma.
+              Perodua menguasai pasaran kereta terpakai Malaysia. Pilih model untuk lihat anggaran harga mengikut tahun — kemudian hantar iklan unit yang anda nak beli.
             </p>
           </div>
 

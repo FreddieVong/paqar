@@ -141,18 +141,31 @@ export default async function HomePage() {
           </div>
 
           <h1 className="font-heading font-extrabold text-[30px] md:text-[36px] leading-[1.1] tracking-[-0.03em] text-[#111827] mb-3">
-            <span className="block text-balance">Dah jumpa kereta?</span>
-            <span className="block text-[#064E4A]">Semak dulu.</span>
+            {/* THE RESULT, NOT THE PROCESS.
+                It read "Dah jumpa kereta? / Semak dulu." — and checking is
+                what PAQAR does, not what the buyer wants. Nobody wakes up
+                wanting to check a car; they want to not get it wrong.
+                "Tersalah beli" carries both halves of that fear in two words,
+                the money and the lemon, which a price-only line would not. */}
+            <span className="block text-balance">Semak dulu,</span>
+            <span className="block text-[#064E4A]">jangan tersalah beli kereta.</span>
           </h1>
 
+          {/* ONE PLAN, ONE OUTCOME.
+              This listed three deliverables joined by commas — a feature list,
+              which is strategy. And "Paqar beritahu" made Paqar the hero of a
+              story the buyer is in. What they are buying is not three
+              artefacts: it is knowing what to do about one car. */}
           <p className="font-body text-[15px] text-[#374151] mb-2 leading-relaxed text-balance">
-            Hantar kereta yang anda sedang pertimbangkan. Paqar beritahu sama ada
-            ia patut diteruskan, apa yang perlu ditanya, dan berapa patut anda
-            tawarkan&mdash;sebelum bayar deposit.
+            Hantar iklan kereta itu. Dalam {REVIEW_SLA_HOURS} jam kami beritahu
+            apa patut anda buat.
           </p>
 
+          {/* "Disemak oleh manusia" moves up here from the body copy. It is the
+              part no assistant and no portal can match, so it belongs beside
+              the price rather than buried in a paragraph. */}
           <p className="font-body text-[13px] text-[#6B7280] mb-7 leading-relaxed text-balance">
-            {BASE_REPORT_LABEL} · Dihantar dalam {REVIEW_SLA_HOURS} jam · Tanpa daftar akaun
+            {BASE_REPORT_LABEL} · Disemak oleh manusia · Tanpa daftar akaun
           </p>
 
           <ListingIntakeForm />

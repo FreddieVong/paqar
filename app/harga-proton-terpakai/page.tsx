@@ -56,7 +56,7 @@ export default async function HargaProton() {
               Harga kereta terpakai Proton Malaysia
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Proton menawarkan kereta nasional dengan nilai terbaik. Pilih model untuk lihat anggaran harga mengikut tahun — kemudian semak harga percuma.
+              Proton menawarkan kereta nasional dengan nilai terbaik. Pilih model untuk lihat anggaran harga mengikut tahun — kemudian hantar iklan unit yang anda nak beli.
             </p>
           </div>
 

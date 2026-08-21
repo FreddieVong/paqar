@@ -46,11 +46,12 @@ export async function sendCalculationEmail(params: {
       </table>
 
       <p style="color:#374151;font-size:14px;line-height:1.7;margin:0 0 12px;">
-        Dah jumpa kereta yang berkenan? Semak dulu sama ada harga penjual berpatutan — percuma.
+        Dah jumpa kereta yang berkenan? Hantar iklannya pada Paqar &mdash; dalam 24 jam
+        kami beritahu apa patut anda buat. Disemak oleh manusia, RM29.
       </p>
       <a href="https://paqar.my/#semak"
          style="display:block;background:#064E4A;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin-bottom:16px;">
-        Semak Harga Percuma →
+        Semak Kereta Itu →
       </a>
 
       <p style="color:#6B7280;font-size:13px;line-height:1.8;margin:0 0 4px;">

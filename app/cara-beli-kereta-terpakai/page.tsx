@@ -225,7 +225,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
           {/* CTA */}
           <div className="space-y-3">
             <p className="font-heading font-bold text-[14px] text-[#111827]">
-              Dah jumpa kereta? Semak plat sekarang:
+              Dah jumpa kereta? Hantar iklannya sekarang:
             </p>
             <DualCheckForm />
           </div>

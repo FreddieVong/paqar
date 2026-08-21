@@ -24,7 +24,7 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
-  description: 'Dah jumpa kereta terpakai? Hantar pada Paqar sebelum bayar deposit. Kami beritahu sama ada patut diteruskan, apa yang perlu ditanya dan berapa patut anda tawarkan. Disemak oleh manusia, RM29.',
+  description: 'Semak dulu, jangan tersalah beli kereta. Hantar iklan kereta terpakai yang anda nak beli — dalam 24 jam kami beritahu apa patut anda buat. Disemak oleh manusia, RM29.',
   metadataBase: new URL('https://paqar.my'),
   // NO title, description or url here — same reasoning as the canonical note
   // below, which was written for `alternates` and never applied to openGraph.

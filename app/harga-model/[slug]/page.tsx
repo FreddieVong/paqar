@@ -436,7 +436,7 @@ export default async function YearModelPage({ params }: Props) {
             name:    `Macam mana nak tahu harga ${displayModel} ${year} yang diminta berpatutan?`,
             acceptedAnswer: {
               '@type': 'Answer',
-              text:    `Masukkan harga yang diminta penjual dan Paqar akan bandingkan dengan unit setara di pasaran semasa, kemudian beritahu sama ada harga itu di atas, dalam, atau di bawah paras pasaran. Semakan ini percuma.`,
+              text:    `Masukkan harga yang diminta penjual dan Paqar akan semak sama ada ada cukup iklan setanding untuk buat keputusan tentang unit itu. Semakan liputan ini percuma; keputusan penuh RM29, disemak oleh manusia.`,
             },
           },
         ],
@@ -525,7 +525,8 @@ export default async function YearModelPage({ params }: Props) {
                 </p>
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
                   Anda masih boleh semak unit tertentu: masukkan harga yang diminta penjual di bawah
-                  dan Paqar akan bandingkan dengan iklan setara yang ada. Semakan ini percuma.
+                  dan Paqar akan semak sama ada ada cukup iklan setanding untuk unit itu.
+                  Semakan liputan ini percuma.
                 </p>
                 {stats?.updatedLabel && (
                   <p className="font-body text-[11px] text-[#9CA3AF] mt-3">

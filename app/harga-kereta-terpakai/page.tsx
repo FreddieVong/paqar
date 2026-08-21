@@ -68,7 +68,7 @@ export default async function HargaKeretaTerpakaiPage() {
               Harga kereta terpakai Malaysia {YEAR}
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Pilih model untuk semak harga mengikut tahun — kemudian semak harga kereta yang anda minat secara percuma.
+              Pilih model untuk semak harga mengikut tahun — kemudian hantar iklan unit yang anda nak beli.
             </p>
           </div>
 
