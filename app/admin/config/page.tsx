@@ -1,0 +1,186 @@
+import { notFound } from 'next/navigation'
+import { env } from '@/lib/env'
+import { isAdminAuthenticated } from '@/lib/admin-auth'
+
+export const dynamic = 'force-dynamic'
+export const metadata = { title: 'Admin — Konfigurasi', robots: { index: false, follow: false } }
+
+/**
+ * Does this deployment have what it needs to work?
+ *
+ * ── WHY THIS PAGE EXISTS ───────────────────────────────────────────────────
+ *
+ * A preview build went out without ANTHROPIC_API_KEY. The only symptom a human
+ * could see was a buyer being told their screenshot was unreadable — the
+ * screenshot was perfect, and the same message appears when a screenshot
+ * genuinely is bad. Finding the real cause took reproducing the upload locally
+ * against a replica of the buyer's image.
+ *
+ * Vercel bakes environment variables in AT BUILD TIME, so a variable added
+ * after a build is invisible to the deployment already running while showing
+ * as set in the dashboard. That gap is the whole reason for this page: it
+ * reports what THIS RUNNING BUILD actually holds, not what the dashboard says.
+ *
+ * ── IT VERIFIES, IT DOES NOT JUST CHECK PRESENCE ───────────────────────────
+ *
+ * A key that is present but wrong fails exactly like one that is absent. So
+ * the credentials that can be tested are tested, with the cheapest call each
+ * provider offers.
+ *
+ * ── NO VALUES, EVER ────────────────────────────────────────────────────────
+ *
+ * Booleans and outcomes only. Not the first characters, not the length — a
+ * page that leaks a prefix is a page that leaks a secret to whoever gets the
+ * admin cookie next.
+ */
+
+type Check = {
+  name:     string
+  required: boolean
+  ok:       boolean
+  detail:   string
+  /** What this breaks when it is wrong. */
+  breaks:   string
+}
+
+async function verifyAnthropic(): Promise<Check> {
+  const base = {
+    name: 'ANTHROPIC_API_KEY', required: true,
+    breaks: 'Muat naik screenshot — setiap upload akan kata gagal baca',
+  }
+  if (!env.ANTHROPIC_API_KEY) {
+    return { ...base, ok: false, detail: 'Tiada dalam build ini. Set di Vercel, kemudian REDEPLOY — env var lama tidak masuk ke build yang sedang jalan.' }
+  }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-5', max_tokens: 1,
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (res.ok) return { ...base, ok: true, detail: 'Ada dan disahkan oleh Anthropic.' }
+    if (res.status === 401) return { ...base, ok: false, detail: 'Ada, tetapi ditolak (401) — nilai salah atau tersalin dengan awalan.' }
+    if (res.status === 403) return { ...base, ok: false, detail: 'Ada, tetapi tiada akses kepada model ini (403).' }
+    if (res.status === 429) return { ...base, ok: true, detail: 'Ada dan sah — tetapi rate limited sekarang (429).' }
+    return { ...base, ok: false, detail: `Ada, tetapi Anthropic menjawab ${res.status}.` }
+  } catch {
+    return { ...base, ok: false, detail: 'Ada, tetapi panggilan gagal — rangkaian atau timeout.' }
+  }
+}
+
+async function verifyScraper(): Promise<Check> {
+  const base = {
+    name: 'SCRAPER_URL + SCRAPER_API_KEY', required: false,
+    breaks: 'Baca link iklan automatik — pembeli terpaksa isi butiran sendiri',
+  }
+  if (!env.SCRAPER_URL || !env.SCRAPER_API_KEY) {
+    return { ...base, ok: false, detail: 'Tidak dikonfigurasi. Link tetap disimpan untuk dibaca manusia.' }
+  }
+  try {
+    const health = await fetch(`${env.SCRAPER_URL.replace(/\/$/, '')}/health`, {
+      signal: AbortSignal.timeout(15_000),
+    })
+    const version = health.ok ? ((await health.json()) as { version?: string }).version ?? '?' : '?'
+
+    // /health needs no key, so it proves nothing about the credential. This does.
+    const authed = await fetch(`${env.SCRAPER_URL.replace(/\/$/, '')}/extract/listing`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': env.SCRAPER_API_KEY },
+      body: JSON.stringify({ url: 'https://www.mudah.my/' }),
+      signal: AbortSignal.timeout(25_000),
+    })
+    if (authed.status === 401 || authed.status === 403) {
+      return { ...base, ok: false, detail: `Servis hidup (${version}) tetapi kunci ditolak — SCRAPER_API_KEY tidak sama dengan API_KEY di Railway.` }
+    }
+    if (authed.status === 404) {
+      return { ...base, ok: false, detail: `Servis hidup (${version}) tetapi /extract/listing tiada — scraper belum di-deploy semula.` }
+    }
+    return { ...base, ok: true, detail: `Servis hidup dan kunci diterima. Versi ${version}.` }
+  } catch {
+    return { ...base, ok: false, detail: 'Servis tidak dapat dihubungi.' }
+  }
+}
+
+function present(name: string, value: unknown, required: boolean, breaks: string): Check {
+  return {
+    name, required, breaks,
+    ok: value != null && value !== '',
+    detail: value != null && value !== '' ? 'Ada dalam build ini.' : 'Tiada dalam build ini.',
+  }
+}
+
+export default async function AdminConfigPage() {
+  if (!env.ADMIN_SECRET) notFound()
+  if (!isAdminAuthenticated()) notFound()
+
+  const [anthropic, scraper] = await Promise.all([verifyAnthropic(), verifyScraper()])
+
+  const checks: Check[] = [
+    anthropic,
+    scraper,
+    present('BILLPLZ_X_SIGNATURE_KEY', env.BILLPLZ_X_SIGNATURE_KEY, true,
+      'Webhook pembayaran — bayaran tidak akan ditanda sebagai dibayar'),
+    present('RESEND_API_KEY', env.RESEND_API_KEY, true,
+      'Semua e-mel — resit, laporan siap, dan refund'),
+    present('CRON_SECRET', env.CRON_SECRET, false,
+      'Tugas berjadual — pembersihan screenshot'),
+  ]
+
+  const broken = checks.filter(c => !c.ok && c.required)
+
+  return (
+    <div className="min-h-screen bg-[#F9FAFB] px-4 py-8">
+      <div className="max-w-2xl mx-auto space-y-5">
+        <div>
+          <h1 className="font-heading font-extrabold text-[24px] text-[#111827]">Konfigurasi</h1>
+          <p className="font-body text-[13px] text-[#6B7280] mt-1">
+            Apa yang build ini benar-benar ada &mdash; bukan apa yang dashboard Vercel tunjuk.
+            Env var Vercel hanya masuk ke build BARU.
+          </p>
+        </div>
+
+        {broken.length > 0 && (
+          <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-[12px] px-4 py-3">
+            <p className="font-heading font-bold text-[13px] text-[#B91C1C]">
+              {broken.length} perkara wajib tidak berfungsi
+            </p>
+          </div>
+        )}
+
+        {checks.map(c => (
+          <div key={c.name}
+               className={`bg-white border rounded-[12px] p-4 ${c.ok ? 'border-[#E5E7EB]' : c.required ? 'border-[#FECACA]' : 'border-[#FDE68A]'}`}>
+            <div className="flex items-start gap-2.5">
+              <span className="text-[15px] leading-none mt-0.5" aria-hidden="true">
+                {c.ok ? '✅' : c.required ? '❌' : '⚠️'}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="font-heading font-bold text-[13px] text-[#111827]">
+                  {c.name}
+                  {!c.required && <span className="font-normal text-[#9CA3AF]"> · pilihan</span>}
+                </p>
+                <p className="font-body text-[13px] text-[#374151] mt-0.5 leading-relaxed">{c.detail}</p>
+                {!c.ok && (
+                  <p className="font-body text-[12px] text-[#9CA3AF] mt-1 leading-relaxed">
+                    Kesannya: {c.breaks}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed">
+          Halaman ini tidak pernah memaparkan nilai sebenar mana-mana kunci.
+        </p>
+      </div>
+    </div>
+  )
+}
