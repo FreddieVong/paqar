@@ -17,6 +17,8 @@ interface Props {
   checkId:             string
   claimToken:          string
   defaultAskingPrice?: number
+  /** What the buyer typed at intake. Never invented — see intakeMileageForCheck. */
+  defaultMileageKm?:  number
   /**
    * Which journey this paywall belongs to. Required because this form is a
    * paywall on TWO routes — /laporan-pembeli (plate_report) and /check/[id]
@@ -27,11 +29,11 @@ interface Props {
   valuationPath:       ValuationPathKey
 }
 
-export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuationPath }: Props) {
+export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMileageKm, valuationPath }: Props) {
   const [email,        setEmail]        = useState('')
   const [phone,        setPhone]        = useState('')
   const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
-  const [mileage,      setMileage]      = useState('')
+  const [mileage,      setMileage]      = useState(defaultMileageKm ? String(defaultMileageKm) : '')
   const [addJomCheck,  setAddJomCheck]  = useState(false)
   const [error,        setError]        = useState<string | null>(null)
   const [isPending,    startTransition] = useTransition()
@@ -306,14 +308,24 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, valuation
           as an apology for it.
         */}
         <div className="bg-[#F8FAF7] border border-[#E5E7EB] rounded-[12px] p-3.5">
+          {/* SAYS WHAT THE BLOCK ABOVE DOES NOT.
+              This used to repeat LockedReportPreview's human-review row almost
+              word for word — "bukan laporan auto", "kami baca iklan yang anda
+              hantar", "24 jam" — twice on one screen. The review is already
+              established by the time the buyer reaches this button; what is
+              still unanswered here is WHEN it arrives and WHERE to look for it.
+
+              E-mail only: no WhatsApp sender exists anywhere in this codebase,
+              and this was the second surface promising one. */}
           <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
-            Laporan anda disemak oleh manusia
+            Bila anda dapat keputusan
           </p>
           <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
-            Bukan laporan auto. Kami baca iklan yang anda hantar, sahkan varian
-            dan tahun kereta, dan hantar keputusan dalam tempoh{' '}
-            <span className="font-bold text-[#064E4A]">{REVIEW_SLA_HOURS} jam</span>{' '}
-            melalui WhatsApp dan e-mel.
+            Dalam tempoh{' '}
+            <span className="font-bold text-[#064E4A]">{REVIEW_SLA_HOURS} jam</span>,
+            melalui e-mel. Anda tak perlu tunggu di halaman ini &mdash; pautan
+            yang anda ada sekarang akan bertukar kepada laporan penuh dengan
+            sendirinya.
           </p>
         </div>
 

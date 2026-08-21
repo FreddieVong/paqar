@@ -12,6 +12,7 @@ import { PaymentForm }          from '@/components/report/PaymentForm'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
 import { FreeResultGate }      from '@/components/report/FreeResultGate'
+import { intakeMileageForCheck } from '@/lib/db/listing-intake'
 import { UnderReviewNotice }   from '@/components/report/UnderReviewNotice'
 import { UndeliverableNotice } from '@/components/report/UndeliverableNotice'
 import { ReviewerNote }        from '@/components/report/ReviewerNote'
@@ -297,6 +298,11 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
   // Require claim_token to pay (session-only users without claim_token can't pay)
   if (!claimToken) notFound()
 
+  // What the buyer already told us at intake. Asking twice is a second
+  // question with a known answer, and two different answers give the reviewer
+  // conflicting mileages for one car.
+  const intakeMileageKm = await intakeMileageForCheck(params.checkId).catch(() => null)
+
   const isPlateFlow = searchParams.source === 'plate'
 
   return (
@@ -314,8 +320,18 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             </h1>
           </div>
 
-          {/* Free teaser — proof the car was found, before asking for RM12 */}
-          <VehiclePreviewTeaser checkId={params.checkId} claimToken={claimToken} />
+          {/* Proof the car was found, before the ask — BUT ONLY IF THERE IS A
+              PLATE TO FIND IT BY.
+              Mounted unconditionally, it spent 24 seconds and 16 requests
+              spinning "Mencari maklumat kenderaan…" on every plateless check,
+              then landed on "Rekod kenderaan tidak dijumpai — sila semak semula
+              nombor plat": telling a buyer to re-check a plate they never
+              entered, at the top of the page where they are about to pay.
+              Since migration 032 the plate is optional and plateless is the
+              DEFAULT journey, so that was the majority experience.
+              Nothing is lost by withholding it — the coverage card below already
+              names the car Paqar matched. */}
+          {plate && <VehiclePreviewTeaser checkId={params.checkId} claimToken={claimToken} />}
 
           {/* Free price evidence BEFORE the ask. PlateCheckerForm promises
               that adding the asking price reveals whether the seller's price is
@@ -349,17 +365,23 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   claimToken={claimToken}
                   valuationPath="plate_report"
                   defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
+                  defaultMileageKm={intakeMileageKm ?? undefined}
                 />
                 <CollapsibleSampleReport />
               </>
             ) : (
               <>
-                <LockedReportPreview />
+                {/* hasPlate gates the registration row: without a plate
+                    there is no record to check, and promising one on the page
+                    that asks for money is the claim this product can least
+                    afford to get wrong. */}
+                <LockedReportPreview hasPlate={plate != null} />
                 <PaymentForm
                   checkId={params.checkId}
                   claimToken={claimToken}
                   valuationPath="plate_report"
                   defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
+                  defaultMileageKm={intakeMileageKm ?? undefined}
                 />
               </>
             )}

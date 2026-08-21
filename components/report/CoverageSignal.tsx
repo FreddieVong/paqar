@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { PresentedFreeResult } from '@/lib/free-result'
+import { whatsappUrl } from '@/lib/site'
 
 /**
  * The free answer, in full: can Paqar build this buyer's report?
@@ -170,6 +171,11 @@ export function CoverageSignal({
   // the unavailable notice above the withheld offer; this adds nothing.
   if (!data || data.state !== 'covered') return null
 
+  // Null when no WhatsApp number is configured — never render a dead link.
+  const correction = whatsappUrl(
+    `Hai Paqar, butiran kereta saya tak betul.\n\nPaqar tunjuk: ${data.modelLabel}\nRujukan: ${checkId}`,
+  )
+
   return (
     <div className="bg-white border border-[#BBF7D0] rounded-[14px] p-5">
       <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.5 mb-3">
@@ -178,18 +184,33 @@ export function CoverageSignal({
           Paqar boleh semak kereta ini
         </span>
       </div>
-      <p className="font-heading font-bold text-[15px] text-[#111827] mb-1.5">
-        {data.modelLabel}
+      <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+        Kami jumpa cukup iklan setanding untuk{' '}
+        <strong className="font-heading font-bold text-[#111827]">{data.modelLabel}</strong>,
+        jadi kami boleh bandingkan harga yang penjual minta dan beritahu anda apa
+        patut buat.
       </p>
-      <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
-        Kami jumpa cukup iklan setanding untuk kereta ini, jadi kami boleh
-        bandingkan harga yang penjual minta dan beritahu anda apa patut buat.
-      </p>
-      {/* The correction invitation. Cheaper to hear "salah model" now than
-          to refund a report about the wrong car later. */}
-      <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed mt-2.5">
-        Bukan kereta ini? Betulkan butiran sebelum bayar.
-      </p>
+      {/* THE CORRECTION INVITATION, AND IT MUST BE ACTIONABLE.
+          It first read "Betulkan butiran sebelum bayar" with nothing to click:
+          an instruction with no mechanism, on the page where the buyer is
+          about to pay. There is no self-serve edit here — the intake token
+          that authorises one does not travel to this page — so it points at
+          the channel that can actually fix it. Cheaper to hear "salah model"
+          now than to refund a report about the wrong car later, and a wrong
+          match is worth hearing about while this is still an experiment. */}
+      {correction && (
+        <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mt-2.5">
+          Bukan kereta ini?{' '}
+          <a
+            href={correction}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-heading font-bold text-[#064E4A] underline underline-offset-2"
+          >
+            Beritahu kami sebelum bayar
+          </a>
+        </p>
+      )}
     </div>
   )
 }

@@ -217,6 +217,34 @@ export async function deleteIntakes(ids: string[]): Promise<void> {
 }
 
 /** The intake a check came from, for reviewer screenshot resolution. */
+/**
+ * The mileage the buyer already typed at intake, for the check it became.
+ *
+ * WHY THIS EXISTS. The payment form asked for mileage again, with an empty
+ * field, on a journey where the buyer had already entered it minutes earlier.
+ * That is a second question with a known answer — and worse than merely
+ * annoying: a buyer who types a different number the second time leaves the
+ * reviewer two conflicting mileages for one car, with nothing to say which is
+ * right.
+ *
+ * Read from listing_intake rather than a column on checks, so this needs no
+ * migration. Returns null on anything unexpected: pre-filling a wrong number
+ * is worse than pre-filling nothing, because the buyer may not re-read a field
+ * that already looks answered.
+ */
+export async function intakeMileageForCheck(checkId: string): Promise<number | null> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('listing_intake')
+    .select('extracted')
+    .eq('converted_check_id', checkId)
+    .maybeSingle()
+  if (error || !data?.extracted) return null
+
+  const km = (data.extracted as { mileageKm?: { value?: unknown } }).mileageKm?.value
+  return typeof km === 'number' && Number.isFinite(km) && km > 0 ? km : null
+}
+
 export async function intakeIdForCheck(checkId: string): Promise<string | null> {
   const supabase = createServiceClient()
   const { data, error } = await supabase

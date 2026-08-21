@@ -87,4 +87,43 @@ describe('the waiting screen promises only channels that exist', () => {
     const senders = read('app/admin/review/_actions.ts')
     expect(senders).not.toMatch(/sendWhatsApp|whatsappSend/i)
   })
+
+  /**
+   * Scanned across every surface, because fixing one at a time did not work:
+   * UnderReviewNotice was corrected first, and PaymentForm and /laporan-saya
+   * were still promising WhatsApp delivery afterwards — on the page that takes
+   * the money and the page a buyer lands on when they cannot find their report.
+   */
+  it('no surface anywhere promises WhatsApp delivery', () => {
+    const { readdirSync, statSync } = require('node:fs') as typeof import('node:fs')
+    const files: string[] = []
+    const walk = (d: string) => {
+      for (const e of readdirSync(join(ROOT, d))) {
+        const rel = join(d, e)
+        if (statSync(join(ROOT, rel)).isDirectory()) walk(rel)
+        else if (/\.tsx?$/.test(e)) files.push(rel)
+      }
+    }
+    walk('app'); walk('components'); walk('lib')
+
+    const offenders = files.filter(f => {
+      const src = read(f)
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/(^|[^:])\/\/.*$/gm, '$1')
+      // Matched WITHIN A LINE, never across them. A window that spans
+      // newlines reaches from prose into code and flags `whatsappUrl(`, a
+      // share button and every support link — which is how the first version
+      // of this guard produced five false positives and zero real ones.
+      //
+      // Three legitimate uses must survive: a support link ("Hubungi kami di
+      // WhatsApp"), the share button a buyer uses on their own report, and the
+      // report's advice telling the buyer to WhatsApp the SELLER the script.
+      return src.split('\n').some(line => {
+        if (/seller|penjual/i.test(line)) return false          // buyer → seller
+        if (/WhatsApp dan e-?mel|e-?mel dan WhatsApp/i.test(line)) return true
+        return /(hantar|dihantar)[^\n]{0,60}melalui WhatsApp/i.test(line)
+      })
+    })
+    expect(offenders, 'these promise a WhatsApp message nothing sends').toEqual([])
+  })
 })

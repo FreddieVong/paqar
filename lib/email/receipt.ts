@@ -76,8 +76,8 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
         </p>
         <p style="color:#374151;font-size:13px;margin:0;line-height:1.6;">
           Kami baca iklan yang anda hantar, sahkan varian dan tahun kereta, dan
-          hantar keputusan dalam tempoh ${REVIEW_SLA_HOURS} jam melalui WhatsApp
-          dan e-mel. Anda tidak perlu buat apa-apa.
+          hantar keputusan dalam tempoh ${REVIEW_SLA_HOURS} jam melalui e-mel.
+          Anda tidak perlu buat apa-apa.
         </p>
       </div>
 

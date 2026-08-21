@@ -52,9 +52,9 @@ export default function MyReportPage() {
             </p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed">
               Paqar tidak memerlukan akaun, jadi laporan anda dibuka melalui
-              pautan peribadi yang kami hantar ke e-mel dan WhatsApp anda selepas
-              bayaran. Cari e-mel daripada <strong>Paqar</strong> &mdash; semak
-              folder spam kalau tiada dalam peti masuk.
+              pautan peribadi yang kami hantar ke e-mel anda selepas bayaran.
+              Cari e-mel daripada <strong>Paqar</strong> &mdash; semak folder
+              spam kalau tiada dalam peti masuk.
             </p>
           </div>
 
