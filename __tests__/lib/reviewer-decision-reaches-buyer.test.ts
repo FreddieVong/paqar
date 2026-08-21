@@ -72,6 +72,32 @@ describe('what the reviewer decides is what the buyer reads', () => {
     expect(report.slice(i, j)).toContain('return (')
   })
 
+  it('shows the evidence where the decision is typed', () => {
+    /**
+     * A DELIBERATE NON-CHECK.
+     *
+     * Nothing stops a reviewer naming a target the market does not support,
+     * and nothing should: a special variant can justify one, and parsing free
+     * text to police a human would raise false alarms while fighting the
+     * person who IS the product.
+     *
+     * What can be done is making the number impossible to miss at the moment
+     * of writing. The price panel higher on the card has been scrolled past by
+     * the time the decision field is reached, and a target read off the wrong
+     * row is the realistic error at twenty reviews a day.
+     */
+    const i = admin.indexOf('name="finalDecision"')
+    const after = admin.slice(i, i + 2000)
+    expect(after).toContain('Harga tengah')
+    expect(after).toContain('julat biasa')
+    expect(after).toContain('seller minta')
+
+    // And it is NOT a validator: release must not refuse a decision for
+    // disagreeing with the draft.
+    const validation = read('lib/release-validation.ts')
+    expect(validation.toLowerCase()).not.toContain('finaldecision')
+  })
+
   it('the reviewer’s questions come before the generic ones', () => {
     // The generic five are what any assistant writes. The reviewer's were
     // written after reading THIS advert, so they lead.

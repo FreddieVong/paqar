@@ -244,6 +244,25 @@ async function QueueCard({ row }: { row: ReviewQueueRow }) {
                 disagrees with the draft can say so and the buyer reads the
                 human's decision instead of two contradictory ones. */}
             <Override name="finalDecision" label="Keputusan akhir — ganti verdict auto" draft="" />
+
+            {/* THE EVIDENCE, WHERE THE DECISION IS TYPED.
+                Nothing stops a reviewer naming a target the market does not
+                support, and nothing should: a special variant can justify one,
+                and parsing free text to police a human would produce false
+                alarms while fighting the person who IS the product.
+                What it can do is make the number impossible to miss at the
+                moment of writing. The panel above the fold is scrolled past by
+                the time this field is reached, and a target typed from the
+                wrong row is the realistic error at twenty reviews a day. */}
+            {prices?.median != null && prices.min != null && prices.max != null && (
+              <p className="font-body text-[12px] text-[#6B7280] -mt-1.5 leading-relaxed">
+                Harga tengah <strong className="font-heading font-bold text-[#111827]">RM{prices.median.toLocaleString('en-MY')}</strong>
+                {' · '}julat biasa RM{prices.min.toLocaleString('en-MY')}–RM{prices.max.toLocaleString('en-MY')}
+                {report.asking_price_rm != null && prices.median != null && (
+                  <> · seller minta RM{report.asking_price_rm.toLocaleString('en-MY')}</>
+                )}
+              </p>
+            )}
             <Override name="nextAction"    label="Langkah seterusnya" draft="" />
 
             <label className="block">
