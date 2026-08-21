@@ -205,6 +205,27 @@ export default async function AdminConfigPage() {
       <div className="max-w-2xl mx-auto space-y-5">
         <div>
           <h1 className="font-heading font-extrabold text-[24px] text-[#111827]">Konfigurasi</h1>
+          {/* WHICH BUILD AM I LOOKING AT?
+              Without this you cannot tell a page served by the deployment you
+              just redeployed from one served by an older build — and that is
+              the exact question when a variable you have definitely set still
+              reads as missing. Vercel injects these itself; none is a secret. */}
+          <p className="font-body text-[12px] text-[#6B7280] mt-1">
+            Build:{' '}
+            <strong className="font-heading font-bold text-[#111827]">
+              {process.env.VERCEL_ENV ?? 'local'}
+            </strong>
+            {process.env.VERCEL_GIT_COMMIT_REF && <> · {process.env.VERCEL_GIT_COMMIT_REF}</>}
+            {process.env.VERCEL_GIT_COMMIT_SHA && (
+              <> · <span className="font-mono">{process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)}</span></>
+            )}
+          </p>
+          {process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production' && (
+            <p className="font-body text-[12px] text-[#B45309] mt-1 leading-relaxed">
+              Env var mesti ditanda <strong>{process.env.VERCEL_ENV}</strong> di Vercel &mdash;
+              menandakan Production sahaja tidak cukup untuk build ini.
+            </p>
+          )}
           <p className="font-body text-[13px] text-[#6B7280] mt-1">
             Apa yang build ini benar-benar ada &mdash; bukan apa yang dashboard Vercel tunjuk.
             Env var Vercel hanya masuk ke build BARU.
