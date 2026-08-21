@@ -534,13 +534,25 @@ export function ListingIntakeForm({
               </div>
 
               <div>
+                {/* MOTIVATE THE PLATE, do not merely permit it.
+                    It read "Nombor Plat (pilihan)" over "kami semak maklumat
+                    pendaftaran seller selepas bayaran" — a feature stated in
+                    Paqar's words, with the benefit buried behind a mention of
+                    payment. The registration record is one of the few things
+                    here that no chat assistant can produce, and a buyer only
+                    supplies a plate if they are told what it buys THEM: the
+                    means to check the seller's claims against a record instead
+                    of taking their word. Still optional, and still honest that
+                    the check happens after payment. */}
                 <label htmlFor="li-plate" className={LABEL_CLS}>
-                  Nombor Plat <span className="font-normal text-[#9CA3AF]">(pilihan)</span>
+                  Nombor plat <span className="font-normal text-[#9CA3AF]">(pilihan)</span>
                 </label>
                 <input id="li-plate" value={plate} onChange={e => setPlate(e.target.value.toUpperCase())}
                        maxLength={10} placeholder="WWW 1234" className={`${INPUT_CLS} uppercase tracking-[.12em]`} />
-                <p className="font-body text-[11px] text-[#9CA3AF] mt-1.5 leading-relaxed">
-                  Kalau ada, kami semak maklumat pendaftaran seller selepas bayaran.
+                <p className="font-body text-[12px] text-[#374151] mt-1.5 leading-relaxed">
+                  Ada plat? Kami sahkan tahun, enjin dan varian kereta ini dengan
+                  <strong> rekod rasmi</strong> &mdash; bukan dengan apa yang seller tulis
+                  dalam iklan.
                 </p>
               </div>
 

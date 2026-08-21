@@ -46,11 +46,14 @@ describe('an outstanding refund cannot fall off the queue', () => {
     expect(page).toContain('listReportsAwaitingRefund')
     expect(page).toContain('owedRefunds.map')
     // A debt outranks a task.
-    expect(page.indexOf('owedRefunds.map')).toBeLessThan(page.indexOf('pending.map'))
+    expect(page.indexOf('owedRefunds.map')).toBeLessThan(page.indexOf('realPending.map'))
   })
 
   it('counts them in the header so an empty review queue is not read as "nothing to do"', () => {
-    const header = page.slice(page.indexOf('menunggu'), page.indexOf('menunggu') + 700)
+    // Anchored on the rendered count, not the word "menunggu" — which also
+    // appears in the comments above it.
+    const header = page.slice(page.indexOf('{realPending.length} menunggu'))
+      .slice(0, 500)
     expect(header).toContain('owedRefunds.length')
   })
 })

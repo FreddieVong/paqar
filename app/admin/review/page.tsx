@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
+import { isTeamEmail } from '@/lib/team-emails'
 import { reviewPriceContext } from '@/lib/review-price-context'
 import { listReportsAwaitingReview, listReportsAwaitingRefund, listRecentlyReleased, type ReviewQueueRow } from '@/lib/db/report-review'
 import { hoursAwaitingReview, REVIEW_SLA_HOURS } from '@/lib/report-release'
@@ -379,7 +380,22 @@ export default async function AdminReviewPage() {
     listRecentlyReleased(),
   ])
 
-  const overdue = pending.filter(r => (hoursAwaitingReview(r.report) ?? 0) >= REVIEW_SLA_HOURS).length
+  // ── INTERNAL TESTS ARE NOT WORK ──────────────────────────────────────────
+  //
+  // Every end-to-end test of the paid journey leaves a real paid row behind —
+  // 24 of the first 27 payments this product ever took were exactly that. Those
+  // rows sat in the queue for ever, counted toward "N menunggu", and aged past
+  // the 24-hour promise, so the operator's own SLA readout drifted further from
+  // the truth with every test they ran.
+  //
+  // Shown rather than hidden, because testing the real queue is the point of
+  // having one — but badged, sorted last, and excluded from the counts. The
+  // classifier is lib/team-emails, never an ad-hoc filter: a second list is how
+  // a real customer eventually gets misclassified as a test.
+  const isInternal = (r: ReviewQueueRow) => isTeamEmail(r.report.buyer_email)
+  const realPending = pending.filter(r => !isInternal(r))
+  const testPending = pending.filter(isInternal)
+  const overdue = realPending.filter(r => (hoursAwaitingReview(r.report) ?? 0) >= REVIEW_SLA_HOURS).length
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] px-4 py-8">
@@ -389,7 +405,7 @@ export default async function AdminReviewPage() {
             Semakan Laporan
           </h1>
           <p className="font-body text-[13px] text-[#6B7280] mt-1">
-            {pending.length} menunggu
+            {realPending.length} menunggu
             {overdue > 0 && (
               <span className="text-[#B91C1C] font-bold"> · {overdue} lewat melebihi {REVIEW_SLA_HOURS} jam</span>
             )}
@@ -421,7 +437,7 @@ export default async function AdminReviewPage() {
           </div>
         )}
 
-        {pending.length === 0 ? (
+        {realPending.length === 0 ? (
           <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-6 text-center">
             <p className="font-body text-[14px] text-[#6B7280]">
               Tiada laporan menunggu semakan.
@@ -429,7 +445,21 @@ export default async function AdminReviewPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {pending.map(row => <QueueCard key={row.report.id} row={row} />)}
+            {realPending.map(row => <QueueCard key={row.report.id} row={row} />)}
+          </div>
+        )}
+
+        {testPending.length > 0 && (
+          <div className="space-y-4">
+            <div className="bg-[#F3F4F6] border border-[#E5E7EB] rounded-[12px] px-4 py-2.5">
+              <p className="font-heading font-bold text-[12px] text-[#6B7280] uppercase tracking-[.08em]">
+                Ujian dalaman — {testPending.length}
+              </p>
+              <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">
+                Tidak dikira dalam SLA. Alamat e-mel dalam lib/team-emails.
+              </p>
+            </div>
+            {testPending.map(row => <QueueCard key={row.report.id} row={row} />)}
           </div>
         )}
 
