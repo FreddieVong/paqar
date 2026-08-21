@@ -53,3 +53,8 @@ supabase/.temp/
 .env
 **/.env
 node_modules/
+
+# Scratch drivers used for local browser testing. They read .env.local.
+*.tmp.mjs
+*.tmp.ts
+*.tmp.cjs
