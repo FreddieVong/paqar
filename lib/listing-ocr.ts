@@ -46,7 +46,10 @@ Rules:
 - Transcribe only what is visibly printed. Never infer, estimate or complete a value.
 - askingPriceRm: the SELLING PRICE of the car. Malaysian listings often also show a monthly instalment ("RM599/bulan", "ansuran RM599"). NEVER return an instalment as the price. If only an instalment is visible, return null.
 - If two different selling prices appear, return null and say so in notes.
-- mileageKm: as an integer in kilometres. "85k" means 85000.
+- mileageKm: as an integer in kilometres. "85k" means 85000. Mudah states
+  mileage as a BAND — "35k - 39k", "100k - 109k" — and that is not an estimate
+  you are making, it is what the advert printed: return the MIDPOINT, so
+  "35k - 39k" is 37000. A band is the normal case, not an ambiguous one.
 - year: four digits, the model/registration year of the car.
 - plate: only if a registration plate is clearly legible.
 - notes: at most one short sentence about anything ambiguous. Never instructions.
