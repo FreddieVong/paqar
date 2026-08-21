@@ -31,6 +31,7 @@ import { getCachedMarketPrices,
          fetchAndCacheMarketPrices }  from '@/lib/db/market-prices'
 import type { CachedMarketPrices }    from '@/lib/db/market-prices'
 import { buildMarketModelKeyword }    from '@/lib/market-keyword'
+import { canonicalModelKeyword }     from '@/lib/model-catalog'
 import { AnalyticsEvent }             from '@/components/layout/AnalyticsEvent'
 import { AskingPriceForm }            from '@/components/report/AskingPriceForm'
 import { MarketPricePoller }          from '@/components/report/MarketPricePoller'
@@ -213,21 +214,53 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       jomcheckData = report.jomcheck_data as JomCheckResult | null
     }
 
-    // Market prices — serve from cache, refresh in background if stale
+    // ── Market prices: THE SECTION THE BUYER ACTUALLY PAID FOR ──────────────
+    //
+    // This was gated on `vehicleData?.make`, i.e. on the plate lookup having
+    // succeeded. Since migration 032 the plate is optional and plateless is the
+    // DEFAULT journey, so for most buyers marketPrices stayed null and
+    // "PERBANDINGAN HARGA" rendered as a heading with nothing under it. They
+    // paid RM29 for comparable prices and received an empty section — while the
+    // free coverage check, minutes earlier, had told them Paqar had enough ads
+    // for this car. The two disagreed because they identified the car
+    // differently.
+    //
+    // So the plate lookup is now a REFINEMENT, and the check row is the floor.
+    // A registered make/model/description is better evidence when it exists —
+    // it is what the car actually is rather than what the advert called it.
+    //
+    // The reviewer's corrections win over both. If a human changed the year
+    // from 2019 to 2018, the comparables must be 2018 cars; pulling the
+    // uncorrected cohort would quietly undo the correction the buyer paid for.
     let marketPrices: CachedMarketPrices | null = null
-    if (vehicleData?.make && vehicleData?.model && vehicleData?.registrationYear) {
-      const mk      = vehicleData.make as string
-      const rawModel = vehicleData.model as string
-      const yr      = vehicleData.registrationYear as string
-      const desc    = (vehicleData.description as string) ?? ''
+    // Whether a background scrape is genuinely in flight. The spinner and the
+    // poller below hang off THIS, not off the plate lookup: a car we never
+    // identified has nothing coming, and a spinner promising otherwise would
+    // run for ever on the page the buyer already paid for.
+    let marketRefreshStarted = false
+    {
+      const hasLookup = !!(vehicleData?.make && vehicleData?.model && vehicleData?.registrationYear)
 
-      const mo = buildMarketModelKeyword(rawModel, desc)
+      const mk = overrides.brand ?? (hasLookup ? vehicleData!.make as string : row.check.brand)
+      const yr = overrides.year  ?? (hasLookup ? vehicleData!.registrationYear as string : row.check.year)
+      const rawModel = overrides.model ?? (hasLookup ? vehicleData!.model as string : row.check.model)
 
-      marketPrices = await getCachedMarketPrices(mk, mo, yr).catch(() => null)
-      if (!marketPrices) {
-        const scrape = fetchAndCacheMarketPrices(mk, mo, yr).catch(() => {})
-        await Promise.race([scrape, new Promise(r => setTimeout(r, 8_000))])
-        marketPrices = await getCachedMarketPrices(mk, mo, yr).catch(() => null)
+      // Same keyword the FREE coverage answer was computed from when there is
+      // no lookup, so the report cannot come up empty on a car Paqar just said
+      // it could handle. buildMarketModelKeyword needs the registered
+      // description and only exists on the lookup path.
+      const mo = hasLookup && !overrides.model
+        ? buildMarketModelKeyword(vehicleData!.model as string, (vehicleData!.description as string) ?? '')
+        : canonicalModelKeyword(String(mk ?? ''), String(rawModel ?? ''))
+
+      if (mk && mo && yr && /^\d{4}$/.test(String(yr))) {
+        marketPrices = await getCachedMarketPrices(String(mk), mo, String(yr)).catch(() => null)
+        if (!marketPrices) {
+          marketRefreshStarted = true
+          const scrape = fetchAndCacheMarketPrices(String(mk), mo, String(yr)).catch(() => {})
+          await Promise.race([scrape, new Promise(r => setTimeout(r, 8_000))])
+          marketPrices = await getCachedMarketPrices(String(mk), mo, String(yr)).catch(() => null)
+        }
       }
     }
 
@@ -257,16 +290,19 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             {report.asking_price_rm == null && vehicleData && claimToken && (
               <AskingPriceForm checkId={params.checkId} claimToken={claimToken} />
             )}
-            {!!vehicleData?.make && !marketPrices && (
+            {marketRefreshStarted && !marketPrices && (
               <div className="flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-[12px] px-4 py-3">
                 <div className="w-3.5 h-3.5 rounded-full border-2 border-[#BBF7D0] border-t-[#064E4A] animate-spin flex-shrink-0" />
                 <p className="font-body text-[13px] text-[#374151]">Sedang mencari harga pasaran…</p>
               </div>
             )}
-            <MarketPricePoller active={!!vehicleData?.make && !marketPrices} />
+            <MarketPricePoller active={marketRefreshStarted && !marketPrices} />
             <BuyerReportContent
               plate={reviewedLabel ?? carLabel}
               plateSupplied={plate != null}
+              reviewerDecision={overrides.finalDecision ?? null}
+              reviewerNextAction={overrides.nextAction ?? null}
+              reviewerSellerQuestions={overrides.sellerQuestions ?? null}
               askingPriceRm={reviewed.askingPriceRm}
               vehicleData={vehicleData}
               marketPrices={marketPrices}

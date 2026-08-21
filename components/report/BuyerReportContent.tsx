@@ -93,9 +93,24 @@ interface Props {
    * "not found" to that buyer would be untrue.
    */
   plateSupplied?:      boolean
+  /**
+   * What the reviewer decided, when they disagreed with the draft.
+   *
+   * THESE ARE THE PRODUCT. A reviewer typed them into "Keputusan akhir" and
+   * "Langkah seterusnya", the release stored them in reviewed_overrides — and
+   * nothing read them, so the buyer got the machine's verdict under a note
+   * saying a human had decided. That produced reports where the human wrote
+   * "RM52,000 tinggi sikit, mula tawar RM47,500" while the card above it said
+   * "WAJAR — teruskan": two opposite decisions on one screen, in the product
+   * whose entire premise is that a person checked it.
+   */
+  reviewerDecision?:   string | null
+  reviewerNextAction?: string | null
+  /** Questions the reviewer wrote for THIS advert. Shown above the generic set. */
+  reviewerSellerQuestions?: string | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null }: Props) {
   // The reading that may support a TAMPERING claim — null unless a human
   // confirmed it. Distinct from claimedMileageKm, which is still displayed as
   // context. Conflating the two is what published a false rollback warning
@@ -228,7 +243,20 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   const depreciationInsight = (!isSpecialVariant && hasMarketData && wmNewPrice != null && marketMedian != null && regYear != null)
     ? assessDepreciation(Number(wmNewPrice), marketMedian, new Date().getFullYear() - regYear)
     : null
-  const vehicleNotFound  = !vehicleData?.make
+  // "NOT FOUND" REQUIRES HAVING LOOKED.
+  //
+  // This was `!vehicleData?.make`, which is true for every plateless check —
+  // and since migration 032 the plate is optional and plateless is the default
+  // journey. A buyer who never gave a plate opened the report they had just
+  // paid RM29 for and read "Kami tidak dapat mengesahkan maklumat kenderaan
+  // untuk plat Honda City 2018": a failure blamed on a plate they never
+  // supplied, with the car's NAME rendered where a registration number should
+  // be, directly under the human note they paid for.
+  //
+  // The registration section a few blocks down already said the right thing
+  // ("tidak disemak kerana nombor plat tidak diberikan"), so the report
+  // contradicted itself on the same screen.
+  const vehicleNotFound  = plateSupplied && !vehicleData?.make
 
   // Short identity (make + model) — the full official variant string lives in
   // the JPJ card; repeating the all-caps wall here would duplicate it
@@ -375,6 +403,50 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         // Reachable only with a verdict: a suppressed special variant already
         // returned the VARIAN KHAS card above.
         if (!effectiveVerdict) return null
+
+        // THE HUMAN'S DECISION REPLACES THE MACHINE'S — it does not sit beside
+        // it. Two decisions on one screen is worse than either alone, and the
+        // buyer has no way to know which one a person stood behind. The
+        // supporting figures stay: they are what the decision was made from,
+        // and withholding them would leave a bare assertion where the buyer
+        // paid for reasoning.
+        if (reviewerDecision) {
+          return (
+            <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-5">
+              <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
+                Keputusan Paqar
+              </p>
+              <p className="font-heading font-extrabold text-[19px] leading-tight text-[#064E4A] mb-1 whitespace-pre-line">
+                {reviewerDecision}
+              </p>
+              <p className="font-body text-[12px] text-[#15803D] mb-4">
+                Keputusan orang yang semak iklan anda.
+              </p>
+              <div className="space-y-2.5">
+                {askingPriceRm != null && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-body text-[12px] text-[#6B7280]">Seller minta</p>
+                    <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(askingPriceRm)}</p>
+                  </div>
+                )}
+                {hasMarketData && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-body text-[12px] text-[#6B7280]">Market semasa</p>
+                    <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(marketMin!)} – RM{fmt(marketMax!)}</p>
+                  </div>
+                )}
+                {reviewerNextAction && (
+                  <div className="pt-2 border-t border-black/10">
+                    <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Langkah seterusnya</p>
+                    <p className="font-heading font-bold text-[13px] text-[#111827] whitespace-pre-line">
+                      {reviewerNextAction}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        }
 
         // A price FAR below the market floor is a scam/hidden-problem
         // signature (deposit scams, accident/flood cars), not a bargain —
@@ -1019,7 +1091,21 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             ? ['Kenapa insurans dah tamat? Kereta ni lama tak diguna?'] : []),
         ].slice(0, 7)
 
-        const questionsText = questions.map((q, i) => `${i + 1}. ${q}`).join('\n')
+        // THE REVIEWER'S QUESTIONS COME FIRST, and they are the ones written
+        // after reading THIS advert and this buyer's stated worry. The generic
+        // five below are the part any assistant produces; these are not.
+        // One per line, blanks dropped, deduplicated against the generic set so
+        // a reviewer restating one does not print it twice.
+        const reviewerQuestions = (reviewerSellerQuestions ?? '')
+          .split('\n')
+          .map(q => q.replace(/^\s*\d+[.)]\s*/, '').trim())
+          .filter(q => q.length > 0)
+        const generic = questions.filter(
+          q => !reviewerQuestions.some(r => r.toLowerCase() === q.toLowerCase()),
+        )
+        const allQuestions = [...reviewerQuestions, ...generic].slice(0, 8)
+
+        const questionsText = allQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')
 
         return (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
@@ -1027,7 +1113,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               Soalan Wajib Tanya Seller
             </p>
             <div className="space-y-3 mb-4">
-              {questions.map((q, i) => (
+              {allQuestions.map((q, i) => (
                 <div key={i} className="flex gap-3">
                   <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">{i + 1}.</span>
                   <p className="font-body text-[13px] text-[#374151] leading-relaxed">{q}</p>

@@ -173,8 +173,27 @@ function QueueCard({ row }: { row: ReviewQueueRow }) {
               <Override name="currentMileageKm" label="Mileage iklan (km)" draft={report.claimed_mileage_km} />
             </div>
 
-            <Override name="finalDecision" label="Keputusan akhir" draft="" />
+            {/* These three ARE the product. The draft's own verdict is machine
+                output; whatever is typed here replaces it, so a reviewer who
+                disagrees with the draft can say so and the buyer reads the
+                human's decision instead of two contradictory ones. */}
+            <Override name="finalDecision" label="Keputusan akhir — ganti verdict auto" draft="" />
             <Override name="nextAction"    label="Langkah seterusnya" draft="" />
+
+            <label className="block">
+              <span className="font-heading font-bold text-[11px] text-[#6B7280]">
+                Soalan khas untuk iklan ini — satu per baris
+              </span>
+              <textarea
+                name="override_sellerQuestions"
+                rows={3}
+                placeholder="Kosongkan kalau soalan standard dah cukup"
+                className="w-full border border-[#D1D5DB] rounded-[8px] px-2.5 py-2 text-[14px] font-body mt-1"
+              />
+              <span className="font-body text-[11px] text-[#9CA3AF]">
+                Muncul di atas 5 soalan standard. Ini bahagian yang orang lain tak boleh tiru.
+              </span>
+            </label>
 
             <label className="flex items-start gap-2">
               <input type="checkbox" name="suppress_mileage_warning" value="1" className="mt-1" />
