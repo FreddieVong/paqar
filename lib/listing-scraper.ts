@@ -31,7 +31,8 @@ const TIMEOUT_MS = 30_000
 
 export type ScrapeOutcome =
   | { ok: true;  extracted: ExtractedListing }
-  | { ok: false; reason: 'unsupported' | 'unreachable' | 'blocked' | 'timeout' | 'not_configured' }
+  | { ok: false; reason: 'unsupported' | 'unreachable' | 'blocked' | 'timeout'
+                       | 'not_configured' | 'not_authorised' }
 
 export async function extractListingViaScraper(rawUrl: string): Promise<ScrapeOutcome> {
   const screened = screenUrl(rawUrl)
@@ -49,6 +50,26 @@ export async function extractListingViaScraper(rawUrl: string): Promise<ScrapeOu
       body:    JSON.stringify({ url: screened.url.toString() }),
       signal:  AbortSignal.timeout(TIMEOUT_MS),
     })
+    // A WRONG KEY IS NOT AN OUTAGE, and folding it into 'unreachable' cost
+    // real time: the service answers /health perfectly while every authed
+    // route 401s, so it looks alive and behaves dead. Only the log can tell
+    // the operator which it is, so it says so — loudly, because nothing
+    // self-heals from a stale credential.
+    if (res.status === 401 || res.status === 403) {
+      console.error('[listing-scraper] scraper rejected our API key', {
+        status: res.status,
+        hint: 'SCRAPER_API_KEY must equal the API_KEY set on the Railway service',
+      })
+      return { ok: false, reason: 'not_authorised' }
+    }
+    // 404 means the endpoint is not deployed, which is also a deployment fact
+    // rather than an outage — the service is up, this route is not on it.
+    if (res.status === 404) {
+      console.error('[listing-scraper] /extract/listing is not deployed on the scraper', {
+        hint: 'redeploy the scraper; check /health version',
+      })
+      return { ok: false, reason: 'not_configured' }
+    }
     if (!res.ok) return { ok: false, reason: res.status === 400 ? 'unsupported' : 'unreachable' }
     payload = await res.json()
   } catch (err) {

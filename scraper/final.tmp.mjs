@@ -1,0 +1,13 @@
+import { chromium } from 'playwright'
+const b = await chromium.launch()
+const p = await b.newPage({ viewport: { width: 390, height: 844 } })
+await p.goto('http://localhost:3000/', { waitUntil: 'networkidle', timeout: 60000 })
+await p.setInputFiles('input[type="file"]', process.argv[2])
+await p.waitForTimeout(42000)
+await p.click('button:has-text("Semak kereta ini")').catch(() => {})
+await p.waitForTimeout(3000)
+const body = await p.innerText('body')
+const i = body.indexOf('Paqar boleh semak')
+console.log(body.slice(i, i + 700).replace(/\n{2,}/g, '\n').trim())
+await p.screenshot({ path: process.env.SHOT, fullPage: false })
+await b.close()
