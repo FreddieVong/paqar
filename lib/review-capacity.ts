@@ -21,15 +21,26 @@
  *
  * ── THE PROMISE, AND WHAT IS NOT PROMISED ──────────────────────────────────
  *
- * Review hours are 10:00–02:00 MYT, typically 30 minutes inside them. The
+ * Review hours are 10:00–24:00 MYT, typically 30 minutes inside them. The
  * TYPICAL time is described, never guaranteed; the only commitment is the
  * 24-hour maximum. Stating "30 minutes" as a promise would break it routinely
- * at 01:55.
+ * at 23:55, and every night between midnight and ten.
+ *
+ * BOTH NUMBERS BELONG ON THE PAGE, THOUGH. For months only the maximum was
+ * shown, and "dalam 24 jam" describes a research tool — a buyer standing at
+ * the car reads it and leaves. Thirty minutes describes something they can use
+ * before the seller's patience runs out, and it is what actually happens. The
+ * honest form is the typical time led, the guarantee behind it, and the hours
+ * stated so a 2am buyer is not misled.
  */
 
 export const DAILY_CAPACITY   = 20
 export const REVIEW_OPENS_HOUR  = 10   // 10:00 MYT
-export const REVIEW_CLOSES_HOUR = 2    // 02:00 MYT, next day
+// 00:00 MYT. Corrected from 02:00 on the operator's own account of when they
+// actually stop: awake and reviewing 10:00–24:00, asleep 00:00–10:00. A
+// closing hour later than the truth turns "biasanya 30 minit" into a promise
+// nobody is awake to keep.
+export const REVIEW_CLOSES_HOUR = 0
 export const TYPICAL_MINUTES  = 30
 export const MAX_PROMISE_HOURS = 24
 
@@ -109,6 +120,75 @@ export function capacityState(usedToday: number, now: Date = new Date()): Capaci
       ? `Semakan manusia sedang berjalan. Biasanya siap dalam ${TYPICAL_MINUTES} minit; maksimum ${MAX_PROMISE_HOURS} jam.`
       : `Semakan manusia bermula ${REVIEW_OPENS_HOUR} pagi. Keputusan anda dihantar dalam tempoh ${MAX_PROMISE_HOURS} jam.`,
   }
+}
+
+/**
+ * When a report paid for `from` is realistically expected.
+ *
+ * Concrete, because "dalam 30 minit" read at 02:00 is wrong and "dalam 24 jam"
+ * read at 14:00 is a wild overstatement of the wait. A time the buyer can look
+ * at their own clock and check is the only version that is right at both.
+ *
+ * Inside hours: now + the typical 30 minutes. Outside: the reviewer is asleep,
+ * so it is the morning opening plus the same 30.
+ */
+export function expectedDeliveryAt(from: Date = new Date()): Date {
+  const candidate = new Date(from.getTime() + TYPICAL_MINUTES * 60_000)
+
+  // Inside hours AND still inside them when the thirty minutes are up. An
+  // order at 23:50 is not thirty minutes from done: the reviewer stops at
+  // midnight, so promising 00:20 promises a person who is asleep. It waits
+  // for the morning like any other after-hours order.
+  if (withinReviewHours(from) && withinReviewHours(candidate)) return candidate
+
+  return new Date(nextOpening(from).getTime() + TYPICAL_MINUTES * 60_000)
+}
+
+/** The next 10:00 MYT strictly after `from`. */
+function nextOpening(from: Date): Date {
+  const { dayKey } = klParts(from)
+  const [y, m, d] = dayKey.split('-').map(Number) as [number, number, number]
+  // 10:00 MYT == 02:00 UTC on the same calendar day.
+  const today = new Date(Date.UTC(y, m - 1, d, 2, 0, 0))
+  return today > from ? today : new Date(today.getTime() + 86_400_000)
+}
+
+/** "3:40 petang" — Malaysian 12-hour form, in Kuala Lumpur time. */
+export function klTimeCopy(at: Date): string {
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kuala_Lumpur', hour: 'numeric', minute: '2-digit', hour12: false,
+  }).formatToParts(at)
+  const h = Number(fmt.find(p => p.type === 'hour')?.value ?? 0)
+  const m = fmt.find(p => p.type === 'minute')?.value ?? '00'
+  // Malay day-parts, and they are not evenly spaced: tengah hari is the noon
+  // hour only. 14:40 is petang, not "2.40 tengah hari", which is what an
+  // even split produced.
+  const suffix = h < 12 ? 'pagi' : h === 12 ? 'tengah hari' : h < 19 ? 'petang' : 'malam'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  return `${h12}.${m} ${suffix}`
+}
+
+/**
+ * The one line a buyer is told about timing, correct at any hour.
+ *
+ * It never promises: "biasanya" carries the typical case and the guarantee is
+ * stated separately wherever money is involved.
+ */
+export function expectedDeliveryCopy(from: Date = new Date()): string {
+  const at = expectedDeliveryAt(from)
+
+  // Branch on whether the answer ROLLED to the morning, not on whether we are
+  // open right now. At 23:50 we are open and the answer still lands tomorrow,
+  // and "biasanya sebelum 10.30 pagi" with no other words reads as tonight.
+  const rolled = at.getTime() - from.getTime() > TYPICAL_MINUTES * 60_000 + 60_000
+  if (!rolled) return `Biasanya sebelum ${klTimeCopy(at)}.`
+
+  // "esok" only when it genuinely IS tomorrow in Kuala Lumpur. A 02:00 order
+  // is answered at 10:30 the SAME calendar day, and calling that tomorrow
+  // would add a day to the wait for no reason.
+  const tomorrow = klParts(from).dayKey !== klParts(at).dayKey
+  return `Semakan bermula ${REVIEW_OPENS_HOUR} pagi — biasanya anda dapat sebelum `
+    + `${klTimeCopy(at)}${tomorrow ? ' esok' : ''}.`
 }
 
 /**

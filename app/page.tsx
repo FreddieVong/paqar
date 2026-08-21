@@ -8,6 +8,7 @@ import { SocialLinks }    from '@/components/layout/SocialLinks'
 import { getCheckCount } from '@/lib/db/checks'
 import { organizationSchema, whatsappUrl } from '@/lib/site'
 import { BASE_REPORT_LABEL, REVIEW_SLA_HOURS, REFUND_WORKING_DAYS } from '@/lib/pricing'
+import { TYPICAL_MINUTES, REVIEW_OPENS_HOUR } from '@/lib/review-capacity'
 
 // Title, description and the social image are inherited from the root layout,
 // which describes the homepage anyway. og:url is declared HERE because the root
@@ -157,8 +158,8 @@ export default async function HomePage() {
               story the buyer is in. What they are buying is not three
               artefacts: it is knowing what to do about one car. */}
           <p className="font-body text-[15px] text-[#374151] mb-2 leading-relaxed text-balance">
-            Hantar iklan kereta itu. Dalam {REVIEW_SLA_HOURS} jam kami beritahu
-            apa patut anda buat.
+            Hantar iklan kereta itu. Biasanya dalam {TYPICAL_MINUTES} minit kami
+            beritahu apa patut anda buat.
           </p>
 
           {/* "Disemak oleh manusia" moves up here from the body copy. It is the
@@ -166,6 +167,13 @@ export default async function HomePage() {
               the price rather than buried in a paragraph. */}
           <p className="font-body text-[13px] text-[#6B7280] mb-7 leading-relaxed text-balance">
             {BASE_REPORT_LABEL} · Disemak oleh manusia · Tanpa daftar akaun
+          </p>
+
+          {/* The hours, stated plainly. Thirty minutes is the truth during the
+              day and a lie at 3am, and a buyer who sends one at 3am and hears
+              nothing for seven hours has been misled by an average. */}
+          <p className="font-body text-[12px] text-[#9CA3AF] mb-7 leading-relaxed text-balance">
+            Semakan manusia {REVIEW_OPENS_HOUR} pagi &ndash; 12 malam · dijamin dalam {REVIEW_SLA_HOURS} jam
           </p>
 
           <ListingIntakeForm />

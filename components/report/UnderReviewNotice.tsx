@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { whatsappUrl } from '@/lib/site'
 import { REVIEW_SLA_HOURS } from '@/lib/report-release'
+import { expectedDeliveryCopy } from '@/lib/review-capacity'
 
 /**
  * What the buyer sees between paying and a human releasing their report.
@@ -46,7 +47,14 @@ export function UnderReviewNotice({ checkId }: { checkId: string }) {
       </h1>
 
       <p className="font-body text-[15px] text-[#374151] leading-relaxed mb-4">
-        Keputusan akan dihantar dalam tempoh {REVIEW_SLA_HOURS} jam.
+        {expectedDeliveryCopy()}
+      </p>
+
+      {/* The guarantee sits behind the expected time rather than replacing it.
+          A concrete "sebelum 2.40 petang" is what the buyer wants to know now;
+          the 24-hour maximum is what protects them if today goes wrong. */}
+      <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed mb-4">
+        Dijamin dalam tempoh {REVIEW_SLA_HOURS} jam.
       </p>
 
       <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mb-5">

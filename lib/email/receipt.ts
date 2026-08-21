@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { env }    from '@/lib/env'
 import { SUPPORT_REPLY_TO, whatsappUrl, SITE_URL } from '@/lib/site'
 import { BASE_REPORT_CENTS, COMBINED_CENTS, JOMCHECK_UPGRADE_CENTS, REVIEW_SLA_HOURS, historyUpgradeAvailable } from '@/lib/pricing'
+import { expectedDeliveryCopy } from '@/lib/review-capacity'
 
 // timeZone is explicit because Vercel runs in UTC: without it a payment made
 // between 00:00 and 08:00 MYT is dated to the previous day on the customer's
@@ -76,7 +77,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
         </p>
         <p style="color:#374151;font-size:13px;margin:0;line-height:1.6;">
           Kami baca iklan yang anda hantar, sahkan varian dan tahun kereta, dan
-          hantar keputusan dalam tempoh ${REVIEW_SLA_HOURS} jam melalui e-mel.
+          hantar keputusan melalui e-mel. ${expectedDeliveryCopy()} Dijamin dalam tempoh ${REVIEW_SLA_HOURS} jam.
           Anda tidak perlu buat apa-apa.
         </p>
       </div>

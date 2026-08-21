@@ -8,7 +8,8 @@ import { ScreenshotUpload } from './ScreenshotUpload'
 import { analytics } from '@/lib/analytics'
 import { trackValuationStarted, getTrafficContext } from '@/lib/ga4-events'
 import { trackAdEvent } from '@/lib/meta-events'
-import { BASE_REPORT_LABEL, REVIEW_SLA_HOURS } from '@/lib/pricing'
+import { BASE_REPORT_LABEL } from '@/lib/pricing'
+import { TYPICAL_MINUTES } from '@/lib/review-capacity'
 import type { MergedListing } from '@/lib/listing-merge'
 
 /**
@@ -707,7 +708,7 @@ export function ListingIntakeForm({
                 {busy ? 'Memproses…' : `Dapatkan keputusan — ${BASE_REPORT_LABEL} →`}
               </button>
               <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
-                Disemak oleh manusia · Dihantar dalam {REVIEW_SLA_HOURS} jam ·
+                Disemak oleh manusia · Biasanya {TYPICAL_MINUTES} minit ·
                 Duit dikembalikan jika kami tidak dapat siapkan
               </p>
             </div>
