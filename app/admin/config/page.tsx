@@ -76,6 +76,38 @@ async function verifyAnthropic(): Promise<Check> {
   }
 }
 
+/**
+ * Bill CREATION, which is a different credential from webhook verification.
+ *
+ * The split matters and the first version of this page missed it: with the API
+ * key present and the signature key absent, a buyer pays successfully, Billplz
+ * takes the money, and every webhook is rejected — so the report is never
+ * marked paid and never produced. The money moves and nothing is delivered,
+ * which is the worst outcome this product can have.
+ */
+async function verifyBillplz(): Promise<Check> {
+  const base = {
+    name: 'BILLPLZ_API_KEY + BILLPLZ_COLLECTION_ID', required: true,
+    breaks: 'Butang bayar — bil tidak dapat dibuat, pembeli nampak ralat',
+  }
+  if (!env.BILLPLZ_API_KEY || !env.BILLPLZ_COLLECTION_ID) {
+    return { ...base, ok: false, detail: 'Tiada dalam build ini.' }
+  }
+  try {
+    const res = await fetch('https://www.billplz.com/api/v3/collections?page=1', {
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${env.BILLPLZ_API_KEY}:`).toString('base64')}`,
+      },
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (res.ok) return { ...base, ok: true, detail: 'Ada dan disahkan oleh Billplz.' }
+    if (res.status === 401) return { ...base, ok: false, detail: 'Ada, tetapi ditolak (401) — nilai salah.' }
+    return { ...base, ok: false, detail: `Ada, tetapi Billplz menjawab ${res.status}.` }
+  } catch {
+    return { ...base, ok: false, detail: 'Ada, tetapi panggilan gagal — rangkaian atau timeout.' }
+  }
+}
+
 async function verifyScraper(): Promise<Check> {
   const base = {
     name: 'SCRAPER_URL + SCRAPER_API_KEY', required: false,
@@ -150,13 +182,16 @@ export default async function AdminConfigPage() {
     )
   }
 
-  const [anthropic, scraper] = await Promise.all([verifyAnthropic(), verifyScraper()])
+  const [anthropic, scraper, billplz] = await Promise.all([
+    verifyAnthropic(), verifyScraper(), verifyBillplz(),
+  ])
 
   const checks: Check[] = [
     anthropic,
     scraper,
+    billplz,
     present('BILLPLZ_X_SIGNATURE_KEY', env.BILLPLZ_X_SIGNATURE_KEY, true,
-      'Webhook pembayaran — bayaran tidak akan ditanda sebagai dibayar'),
+      'BAHAYA — pembeli boleh bayar tetapi webhook ditolak, jadi laporan tidak pernah dibuat. Duit masuk, pembeli tak dapat apa-apa.'),
     present('RESEND_API_KEY', env.RESEND_API_KEY, true,
       'Semua e-mel — resit, laporan siap, dan refund'),
     present('CRON_SECRET', env.CRON_SECRET, false,
@@ -209,6 +244,9 @@ export default async function AdminConfigPage() {
 
         <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed">
           Halaman ini tidak pernah memaparkan nilai sebenar mana-mana kunci.
+          Supabase, AES_KEY dan Upstash tiada di sini kerana ia wajib &mdash;
+          tanpa mereka aplikasi ini langsung tidak akan naik, jadi halaman ini
+          sendiri membuktikannya.
         </p>
 
         <a href="/admin/review"
