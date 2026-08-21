@@ -90,14 +90,18 @@ export async function loadRetargetInsight(
     })
 
     if (cohort.count < MIN_LISTINGS) return null
-    if (cohort.min == null || cohort.max == null || cohort.median == null) return null
+    // Same band the report uses. A retargeting e-mail that classifies the
+    // price differently from the report it links to is worse than no e-mail.
+    const bandLow  = cohort.p10 ?? cohort.min
+    const bandHigh = cohort.p90 ?? cohort.max
+    if (bandLow == null || bandHigh == null || cohort.median == null) return null
 
     // Thresholds mirror the report's priceVerdict exactly. If these two ever
     // drift the e-mail promises one thing and the report shows another.
     const verdict: RetargetVerdict =
-      askingPriceRm <  cohort.min        ? 'good_deal'
-      : askingPriceRm <= cohort.max        ? 'fair_price'
-      : askingPriceRm <= cohort.max * 1.08 ? 'slightly_high'
+      askingPriceRm <  bandLow        ? 'good_deal'
+      : askingPriceRm <= bandHigh        ? 'fair_price'
+      : askingPriceRm <= bandHigh * 1.08 ? 'slightly_high'
       :                                      'overpriced'
 
     return {

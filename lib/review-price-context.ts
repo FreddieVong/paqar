@@ -30,8 +30,12 @@ import { resolveCarIdentity }    from '@/lib/report-identity'
 export interface ReviewPrices {
   label:      string
   median:     number | null
+  /** The typical band (p10–p90) — what the buyer's report shows. */
   min:        number | null
   max:        number | null
+  /** The true extremes, for context only. Never the basis of a judgement. */
+  fullMin:    number | null
+  fullMax:    number | null
   count:      number
   /** Asking price minus median. Positive means the seller is above it. */
   gapFromMedian: number | null
@@ -69,8 +73,13 @@ export async function reviewPriceContext(params: {
   return {
     label:  `${identity.brand} ${identity.model} ${identity.year}`,
     median: cohort.median,
-    min:    cohort.min,
-    max:    cohort.max,
+    // The band the verdict and the buyer's report both use, not the extremes
+    // — a reviewer judging against a wider range than the buyer reads is the
+    // drift this module exists to prevent.
+    min:    cohort.p10 ?? cohort.min,
+    max:    cohort.p90 ?? cohort.max,
+    fullMin: cohort.min,
+    fullMax: cohort.max,
     count:  cohort.count,
     gapFromMedian: asking != null && cohort.median != null ? asking - cohort.median : null,
     // Stated as a count rather than a percentile: "11 of 15 ads are cheaper

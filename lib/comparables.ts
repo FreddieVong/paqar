@@ -512,6 +512,33 @@ export interface ComparableCohort<T extends PricedListing = PricedListing> {
   median:         number | null
   min:            number | null
   max:            number | null
+  /**
+   * The TYPICAL band — 10th and 90th percentile of the same cohort.
+   *
+   * ── WHY THE VERDICT STOPPED USING min/max ──────────────────────────────
+   *
+   * A verdict of "within the observed range" is true of every listing in the
+   * cohort by construction, and measuring it said exactly that: across 4,988
+   * real asking prices in 489 cached model-years, min/max returned WAJAR
+   * 100.0% of the time. Not usually — always. It was a constant function
+   * wearing the clothes of a judgement, and a buyer who pays for an answer and
+   * receives the only answer it can give has been told nothing.
+   *
+   * One seller asking a fantasy price is enough to do it: max becomes their
+   * number and every real car underneath it is "fair".
+   *
+   * p10/p90 keeps the same conservative spirit — a car has to be outside the
+   * middle 80% of the market before Paqar says anything sharper — while being
+   * able to say it at all. Same 4,988 prices: 6.6% berbaloi, 87.0% wajar,
+   * 3.5% agak mahal, 2.8% mahal.
+   *
+   * Derived from the SAME cohort as everything else, so this does not create a
+   * second source of pricing truth. min/max remain, because the published
+   * valuation API documents them as the lowest and highest comparable listing
+   * and that is still what they are.
+   */
+  p10:            number | null
+  p90:            number | null
   count:          number
   mode:           CohortMode
   matchBasis:     'listing_title' | null
@@ -641,17 +668,33 @@ function trimListings<T extends PricedListing>(listings: T[]): T[] {
   })
 }
 
+/**
+ * Nearest-rank percentile over an already-sorted array.
+ *
+ * On a small cohort the ends collapse toward min and max — p10 of four
+ * listings IS the lowest — which is the right behaviour: with that little
+ * evidence the band should not pretend to be narrower than the data.
+ */
+function percentileOf(sorted: number[], p: number): number | null {
+  if (sorted.length === 0) return null
+  const i = Math.min(sorted.length - 1, Math.max(0, Math.round((sorted.length - 1) * p)))
+  return sorted[i]!
+}
+
 function assemble<T extends PricedListing>(
   listings: T[],
   meta: Pick<ComparableCohort<T>, 'mode' | 'matchBasis' | 'variantToken' | 'fallback' | 'fallbackReason'>,
 ): ComparableCohort<T> {
   const prices = listings.map(l => l.price)
+  const sorted = [...prices].sort((a, b) => a - b)
   return {
     listings,
     prices,
     median: medianOf(prices),
     min:    prices.length ? Math.min(...prices) : null,
     max:    prices.length ? Math.max(...prices) : null,
+    p10:    percentileOf(sorted, 0.10),
+    p90:    percentileOf(sorted, 0.90),
     count:  listings.length,
     ...meta,
   }

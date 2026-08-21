@@ -167,7 +167,7 @@ async function QueueCard({ row }: { row: ReviewQueueRow }) {
             />
             <Stat label="Harga tengah" value={prices.median != null ? `RM${prices.median.toLocaleString('en-MY')}` : '—'} />
             <Stat
-              label="Julat iklan"
+              label="Julat biasa"
               value={prices.min != null && prices.max != null
                 ? `RM${prices.min.toLocaleString('en-MY')} – RM${prices.max.toLocaleString('en-MY')}`
                 : '—'}

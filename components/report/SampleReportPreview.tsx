@@ -130,7 +130,7 @@ export function SampleReportPreview() {
               <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
             </div>
             <div className="flex items-center justify-between">
-              <p className="font-body text-[12px] text-[#6B7280]">Market semasa</p>
+              <p className="font-body text-[12px] text-[#6B7280]">Julat biasa</p>
               <p className="font-heading font-bold text-[13px] text-[#111827]">RM38,000 – RM46,000</p>
             </div>
             <div className="flex items-center justify-between">

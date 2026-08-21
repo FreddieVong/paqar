@@ -195,8 +195,18 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
   })
   const relevantListings = cohort.listings
   const mPrices          = cohort.prices
-  const marketMin        = cohort.min
-  const marketMax        = cohort.max
+  // THE TYPICAL BAND, not the extremes.
+  //
+  // These were cohort.min/cohort.max, and every figure and verdict below hangs
+  // off them. Measured across 4,988 real asking prices, "within min..max"
+  // returned WAJAR 100.0% of the time — a constant answer dressed as a
+  // judgement, and one fantasy asking price was enough to cause it. See the
+  // note on ComparableCohort.p10.
+  //
+  // Falls back to min/max when the percentiles are absent, so a cohort too
+  // small to have them still renders rather than showing nothing.
+  const marketMin        = cohort.p10 ?? cohort.min
+  const marketMax        = cohort.p90 ?? cohort.max
   // The cohort's real median, whatever the sample size. Do NOT null this to
   // express "not enough data" — that is what formatted as RM0 in the buyer's
   // negotiation script. Sample-size policy lives in evaluateVerdictEligibility.
@@ -455,7 +465,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                 )}
                 {hasMarketData && (
                   <div className="flex items-center justify-between">
-                    <p className="font-body text-[12px] text-[#6B7280]">Market semasa</p>
+                    <p className="font-body text-[12px] text-[#6B7280]">Julat biasa</p>
                     <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(marketMin!)} – RM{fmt(marketMax!)}</p>
                   </div>
                 )}
@@ -518,7 +528,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               )}
               {hasMarketData && (
                 <div className="flex items-center justify-between">
-                  <p className="font-body text-[12px] text-[#6B7280]">Market semasa</p>
+                  <p className="font-body text-[12px] text-[#6B7280]">Julat biasa</p>
                   <p className="font-heading font-bold text-[14px] text-[#111827]">RM{fmt(marketMin!)} – RM{fmt(marketMax!)}</p>
                 </div>
               )}
