@@ -29,6 +29,15 @@ yarn-error.log*
 .env*.local
 .env.local
 
+# Backups of .env.local hold the same live secrets as the original — the
+# service-role key, the Billplz keys, ADMIN_SECRET. `.env*.local` does not
+# match `.env.local.bak-1787201103`, because the suffix comes AFTER `.local`,
+# so two such files were sitting untracked-but-committable in the repo root.
+# One `git add -A` was all it would have taken.
+.env*.local.*
+.env.local.bak*
+*.env.bak*
+
 # vercel
 .vercel
 
