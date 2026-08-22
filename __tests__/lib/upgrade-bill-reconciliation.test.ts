@@ -1,6 +1,10 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { FakeSupabase } from '../helpers/fake-supabase'
+
+const ROOT = join(__dirname, '..', '..')
 
 /**
  * THE INVARIANT: every bill Paqar creates must remain reconcilable if Billplz
@@ -326,21 +330,37 @@ describe('a stored bill is only reused while it can still be paid', () => {
 /**
  * The gate itself, unmocked.
  *
- * Everything above runs with the add-on forced open. This confirms that in the
- * real module it is shut — so an accidental deletion of the gate would surface
- * here rather than as a customer paying RM88 for a revision nobody can produce.
+ * Everything above runs with the add-on forced open. This checks the real
+ * module's gate still takes BOTH inputs — so deleting half of it surfaces here
+ * rather than as a customer paying RM88 for a revision nobody can produce.
+ *
+ * It used to assert the add-on was off, because the second human review did not
+ * exist. That review now exists (lib/db/report-review: the history queue, the
+ * 'reviewed' state, and the release that sets it), so the constant is true and
+ * the assertion moves to the property that outlives either value.
  */
-describe('the add-on is genuinely disabled outside these tests', () => {
-  it('HISTORY_UPGRADE_OPERATIONAL is false in the real module', async () => {
-    const real = await vi.importActual<typeof import('@/lib/pricing')>('@/lib/pricing')
-    expect(real.HISTORY_UPGRADE_OPERATIONAL).toBe(false)
-  })
-
-  it('and the env var alone cannot switch it on', async () => {
+describe('the add-on gate needs both halves', () => {
+  it('config alone cannot switch it on', async () => {
     const real = await vi.importActual<typeof import('@/lib/pricing')>('@/lib/pricing')
     const prev = process.env.JOMCHECK_ENABLED
-    process.env.JOMCHECK_ENABLED = 'true'
+    process.env.JOMCHECK_ENABLED = 'false'
+    // Deliverable, but the data source is unreachable — still no sale.
     try { expect(real.historyUpgradeAvailable()).toBe(false) }
     finally { process.env.JOMCHECK_ENABLED = prev }
+  })
+
+  it('deliverability alone cannot either', async () => {
+    const real = await vi.importActual<typeof import('@/lib/pricing')>('@/lib/pricing')
+    const src = readFileSync(join(ROOT, 'lib/pricing.ts'), 'utf8')
+    // Both operands present, in one expression, so neither can be dropped
+    // without the other becoming the whole gate.
+    expect(src).toMatch(
+      /return\s+HISTORY_UPGRADE_OPERATIONAL\s*&&\s*process\.env\.JOMCHECK_ENABLED === 'true'/,
+    )
+    const prev = process.env.JOMCHECK_ENABLED
+    process.env.JOMCHECK_ENABLED = 'true'
+    try {
+      expect(real.historyUpgradeAvailable()).toBe(real.HISTORY_UPGRADE_OPERATIONAL)
+    } finally { process.env.JOMCHECK_ENABLED = prev }
   })
 })

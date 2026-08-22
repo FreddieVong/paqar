@@ -98,8 +98,37 @@ describe('the price the buyer sees is the price they are charged', () => {
  * revision nobody can produce.
  */
 describe('the history add-on cannot be sold while undeliverable', () => {
-  it('is switched off', () => {
-    expect(HISTORY_UPGRADE_OPERATIONAL).toBe(false)
+  /**
+   * The invariant was never "the add-on is off" — it is "the add-on is on only
+   * when the whole journey behind it exists". It was off because the second
+   * human review did not exist. It does now, so the assertion moves to the
+   * thing that actually matters: every step of that journey is present.
+   *
+   * Flipping the constant back to true with any of these missing is exactly
+   * the silent failure the constant was created to prevent.
+   */
+  it('is on only while every step of the journey exists', () => {
+    if (!HISTORY_UPGRADE_OPERATIONAL) return
+
+    const review = readFileSync(join(ROOT, 'lib/db/report-review.ts'), 'utf8')
+    // The records go back to a person...
+    expect(review, 'no second-review queue').toContain('listReportsAwaitingHistoryReview')
+    // ...who releases them, and only then.
+    expect(review, 'no history release').toContain('releaseHistoryReview')
+    expect(review).toContain("jomcheck_status: 'reviewed'")
+
+    // The reviewer has somewhere to do it.
+    expect(readFileSync(join(ROOT, 'app/admin/review/_actions.ts'), 'utf8'))
+      .toContain('releaseHistoryAction')
+    expect(readFileSync(join(ROOT, 'app/admin/review/page.tsx'), 'utf8'))
+      .toContain('historyReview')
+
+    // And the buyer sees the section only after that release — never on
+    // 'success', which means the data arrived and nobody has read it yet.
+    const report = readFileSync(join(ROOT, 'components/report/BuyerReportContent.tsx'), 'utf8')
+    expect(report).toContain("jomcheckStatus === 'reviewed'")
+    expect(report, 'raw records render before anyone reads them')
+      .not.toContain("jomcheckStatus === 'success' && jomcheckData\n          ? <JomCheckSection")
   })
 
   it.each([

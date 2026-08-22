@@ -68,6 +68,83 @@ export async function listReportsAwaitingReview(): Promise<ReviewQueueRow[]> {
 }
 
 /**
+ * Reports whose accident/claim add-on has arrived and is waiting for a person.
+ *
+ * ── THE SECOND REVIEW ──────────────────────────────────────────────────────
+ *
+ * The RM88 add-on buys claim records, but Paqar does not sell records — it
+ * sells a decision. A buyer who learns their car has a recorded flood claim
+ * needs to know what that means FOR THIS PURCHASE: does the reviewer still say
+ * proceed, does the negotiation target move, is it now a walk away.
+ *
+ * So claim data landing does not reach the buyer on its own. It puts the
+ * report back in front of a human with the records visible beside the decision
+ * they already wrote, exactly as the first review worked.
+ *
+ * The BASE report stays released throughout. The buyer keeps everything they
+ * paid RM29 for and never loses access while the second review runs — only the
+ * history section waits.
+ *
+ * Selected on jomcheck_status = 'success', which means the data arrived and
+ * nobody has read it yet. The reviewer moves it to 'reviewed', which is the
+ * only state that renders the section to the buyer.
+ */
+export async function listReportsAwaitingHistoryReview(): Promise<ReviewQueueRow[]> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .select('*')
+    .eq('status', 'paid')
+    .eq('add_jomcheck', true)
+    .eq('jomcheck_status', 'success')
+    .not('released_at', 'is', null)
+    .order('jomcheck_checked_at', { ascending: true })
+  if (error) throw error
+  return joinIntake((data ?? []) as BuyerReport[])
+}
+
+/**
+ * Release the history section, with the reviewer's revised note.
+ *
+ * The note REPLACES the original rather than appending to it: the buyer reads
+ * one decision, not a decision and a correction to it. What the claim records
+ * changed — or that they changed nothing, which is itself worth saying — is
+ * the reviewer's job to state in that one note.
+ *
+ * Guarded on 'success' so a double submit cannot re-release, and on a non-null
+ * released_at so the history can never appear before the base report it
+ * belongs to.
+ */
+export async function releaseHistoryReview(params: {
+  reportId:     string
+  reviewerId:   string
+  reviewerNote: string
+}): Promise<boolean> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('buyer_reports')
+    .update({
+      jomcheck_status: 'reviewed',
+      reviewer_note:   params.reviewerNote,
+      reviewer_id:     params.reviewerId,
+      updated_at:      new Date().toISOString(),
+    })
+    .eq('id', params.reportId)
+    .eq('status', 'paid')
+    .eq('add_jomcheck', true)
+    .eq('jomcheck_status', 'success')
+    .not('released_at', 'is', null)
+    .select('id')
+  if (error) throw error
+  if ((data?.length ?? 0) === 0) return false
+
+  return recordTransition({
+    buyerReportId: params.reportId, axis: 'review',
+    from: 'released', to: 'history_released', actor: params.reviewerId,
+  })
+}
+
+/**
  * Reports where Paqar owes the buyer money.
  *
  * WHY THIS IS A SEPARATE QUERY. listReportsAwaitingReview filters on

@@ -1,3 +1,4 @@
+import { REVIEW_SLA_HOURS } from '@/lib/report-release'
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
 import { buildComparableCohort, evaluateVerdictEligibility, comparableConfidence } from '@/lib/comparables'
@@ -340,7 +341,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       {/* History risk — a SEVERE / total-loss / rollback finding must lead the
           5-second scan, ABOVE the price verdict. Only when JomCheck was bought
           and succeeded; renders nothing for a clean or minor history. */}
-      {addJomCheck && jomcheckStatus === 'success' && jomcheckData && (
+      {addJomCheck && jomcheckStatus === 'reviewed' && jomcheckData && (
         <HistoryRiskBanner data={jomcheckData} currentOdometerKm={odometerForRollback} />
       )}
 
@@ -571,10 +572,32 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         )
       })()}
 
-      {/* JomCheck — shown only if purchased; hidden for RM12 basic reports */}
+      {/* ── THE HISTORY SECTION WAITS FOR A PERSON ──────────────────────
+          'reviewed', never 'success'. Claim records arriving is not the same
+          as a buyer being ready to read them: a recorded flood claim changes
+          what they should DO about this car, and the whole product is that
+          answer rather than the record. So the data goes back to the reviewer
+          with the decision they already wrote beside it, and only their
+          release renders it here.
+
+          The base report stays visible the entire time. Nobody loses what
+          they paid RM29 for while the second review runs. */}
       {addJomCheck && (
-        jomcheckStatus === 'success' && jomcheckData
+        jomcheckStatus === 'reviewed' && jomcheckData
           ? <JomCheckSection data={jomcheckData} currentOdometerKm={odometerForRollback} />
+          : jomcheckStatus === 'success'
+          ? (
+            <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">
+              <p className="font-heading font-bold text-[15px] text-[#111827] mb-2">
+                Rekod accident/claim dah sampai
+              </p>
+              <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+                Seorang manusia sedang baca rekod itu dan semak sama ada keputusan
+                di atas perlu berubah. Kami e-mel anda sebaik siap — dalam
+                {' '}{REVIEW_SLA_HOURS} jam.
+              </p>
+            </div>
+          )
           : jomcheckManualPending
           ? (
             <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">

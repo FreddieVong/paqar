@@ -4,14 +4,14 @@ import { isAdminAuthenticated } from '@/lib/admin-auth'
 import { isTeamEmail } from '@/lib/team-emails'
 import { serviceMinutesBetween, TYPICAL_MINUTES } from '@/lib/review-capacity'
 import { reviewPriceContext } from '@/lib/review-price-context'
-import { listReportsAwaitingReview, listReportsAwaitingRefund, listRecentlyReleased, type ReviewQueueRow } from '@/lib/db/report-review'
+import { listReportsAwaitingReview, listReportsAwaitingRefund, listRecentlyReleased, listReportsAwaitingHistoryReview, type ReviewQueueRow } from '@/lib/db/report-review'
 import { hoursAwaitingReview, REVIEW_SLA_HOURS } from '@/lib/report-release'
 import { resolveListingMarket } from '@/lib/listing-extract'
 import { ringgit } from '@/lib/pricing'
 import { decrypt } from '@/lib/crypto'
 import { ReviewerScreenshots } from '@/components/admin/ReviewerScreenshots'
 import {
-  adminLogin, startReviewAction, releaseReportAction, markUnableAction,
+  adminLogin, startReviewAction, releaseReportAction, releaseHistoryAction, markUnableAction,
   startRefundAction, completeRefundAction, failRefundAction,
 } from './_actions'
 
@@ -174,7 +174,7 @@ function VariantOverride(
   )
 }
 
-async function QueueCard({ row }: { row: ReviewQueueRow }) {
+async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; historyReview?: boolean }) {
   const { report, check } = row
   // Cache-only, and the same cohort the buyer's report reads. Without it a
   // reviewer had to open the draft in a second tab to learn whether the asking
@@ -314,7 +314,46 @@ async function QueueCard({ row }: { row: ReviewQueueRow }) {
         </form>
       )}
 
-      {inReview && (
+      {/* SECOND REVIEW. The base report is already out and its decision is
+          already written; what is being decided here is whether the claim
+          records change it. So this offers the note and nothing else — the
+          field corrections belong to the first review, and re-opening them
+          after release would let a reviewer silently rewrite a report the
+          buyer has already read. */}
+      {historyReview && (
+        <div className="border-t border-[#F3F4F6] pt-4 space-y-3">
+          <p className="font-heading font-bold text-[12px] uppercase tracking-[.08em] text-[#0F766E]">
+            Semakan kedua — rekod claim
+          </p>
+          <p className="font-body text-[12px] text-[#374151] leading-relaxed">
+            Keputusan asal: {report.reviewer_note
+              ? <span className="italic">&ldquo;{report.reviewer_note}&rdquo;</span>
+              : <span className="text-[#9CA3AF]">(tiada)</span>}
+          </p>
+          <form action={releaseHistoryAction} className="space-y-3">
+            <input type="hidden" name="reportId" value={report.id} />
+            <textarea
+              name="reviewerNote"
+              rows={4}
+              required
+              defaultValue={report.reviewer_note ?? ''}
+              placeholder="Tulis semula keputusan selepas baca rekod claim…"
+              className="w-full border border-[#D1D5DB] rounded-[10px] px-3 py-2.5 text-[14px] font-body leading-relaxed"
+            />
+            <p className="font-body text-[11px] text-[#6B7280] leading-relaxed">
+              Nota ini GANTI yang asal — pembeli baca satu keputusan, bukan keputusan
+              dan pindaan. Kalau rekod tak ubah apa-apa, tulis begitu; itu pun jawapan
+              yang mereka bayar untuk.
+            </p>
+            <button type="submit"
+                    className="w-full bg-[#0F766E] text-white font-heading font-extrabold text-[14px] rounded-[10px] py-3">
+              Lepaskan rekod claim &amp; hantar →
+            </button>
+          </form>
+        </div>
+      )}
+
+      {!historyReview && inReview && (
         <div className="border-t border-[#F3F4F6] pt-4 space-y-4">
           {/* Corrections rebuild the actual report. A note explaining a wrong
               report is not a fix — the reviewer changes the output itself. */}
@@ -489,10 +528,11 @@ export default async function AdminReviewPage() {
     )
   }
 
-  const [pending, owedRefunds, released] = await Promise.all([
+  const [pending, owedRefunds, released, historyPending] = await Promise.all([
     listReportsAwaitingReview(),
     listReportsAwaitingRefund(),
     listRecentlyReleased(),
+    listReportsAwaitingHistoryReview(),
   ])
 
   // ── INTERNAL TESTS ARE NOT WORK ──────────────────────────────────────────
@@ -544,8 +584,33 @@ export default async function AdminReviewPage() {
             {owedRefunds.length > 0 && (
               <span className="text-[#B91C1C] font-bold"> · {owedRefunds.length} refund belum selesai</span>
             )}
+            {historyPending.length > 0 && (
+              <span className="text-[#0F766E] font-bold"> · {historyPending.length} rekod claim menunggu semakan</span>
+            )}
           </p>
         </div>
+
+        {/* SECOND REVIEW — claim records that arrived and nobody has read.
+            The buyer has paid RM88 on top of RM29 and is holding a released
+            report whose history section says "seorang manusia sedang baca".
+            That sentence is only true while this queue is worked, so it sits
+            directly under the refunds and above ordinary pending work. */}
+        {historyPending.length > 0 && (
+          <div className="space-y-4">
+            <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[12px] px-4 py-3">
+              <p className="font-heading font-bold text-[13px] text-[#0F766E]">
+                Rekod claim dah sampai — perlu semakan kedua
+              </p>
+              <p className="font-body text-[12px] text-[#134E4A] mt-0.5">
+                Baca rekod, kemudian tulis semula keputusan. Kalau rekod tak ubah apa-apa,
+                itu pun jawapan — tulis begitu.
+              </p>
+            </div>
+            {historyPending.map(row => (
+              <QueueCard key={`history-${row.report.id}`} row={row} historyReview />
+            ))}
+          </div>
+        )}
 
         {/* MONEY OWED, ABOVE WORK PENDING.
             Marking a report unable_to_complete moved it out of the review

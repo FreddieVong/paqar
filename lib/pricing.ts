@@ -98,22 +98,34 @@ export const REFUND_GUARANTEE_LONG =
  *
  * ── WHY THIS IS A CONSTANT AND NOT AN ENV VAR ──────────────────────────────
  *
- * JOMCHECK_ENABLED already exists and is currently `true` in production, so the
- * add-on is purchasable today. What does NOT exist is the journey it now
- * promises: buying it is supposed to send the report back for a SECOND human
- * review that reconciles claim records against recorded mileage and the
- * seller's statements, then issues an updated decision. None of that is built.
- *
  * An environment variable is the wrong guard for this, because it can be
- * flipped by someone who does not know the review journey is missing — and the
- * failure is silent: money arrives, and the buyer waits for a revision that
- * nobody can produce. A constant in the codebase can only change in a commit,
- * where the missing half is visible.
+ * flipped by someone who does not know a half is missing — and the failure is
+ * silent: money arrives, and the buyer waits for a revision nobody can
+ * produce. A constant can only change in a commit, where what it depends on is
+ * visible beside it.
  *
- * Both gates must pass. Flip this to `true` in the same change that ships the
- * second review, not before.
+ * It said: "flip this to `true` in the same change that ships the second
+ * review, not before." This is that change.
+ *
+ * ── WHAT NOW EXISTS ────────────────────────────────────────────────────────
+ *
+ *   purchase        the webhook flips add_jomcheck and triggers fulfilment
+ *   records arrive  jomcheck_status = 'success' — NOT yet visible to the buyer
+ *   second review   listReportsAwaitingHistoryReview puts the report back in
+ *                   front of a person, with the records beside the decision
+ *                   they already wrote
+ *   release         releaseHistoryReview sets 'reviewed', the only state
+ *                   BuyerReportContent renders, and rewrites the note
+ *   notification    the same notifyBuyer the first release uses
+ *
+ * The base report stays released throughout, so nobody loses what they paid
+ * RM29 for while the second review runs.
+ *
+ * Both gates still must pass: JOMCHECK_ENABLED controls whether the data
+ * source is reachable at all, this controls whether the journey around it is
+ * real.
  */
-export const HISTORY_UPGRADE_OPERATIONAL = false
+export const HISTORY_UPGRADE_OPERATIONAL = true
 
 /** Server-side: may the add-on be sold at all? */
 export function historyUpgradeAvailable(): boolean {

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect }       from 'next/navigation'
 import { isAdminSecretValid, isAdminAuthenticated, setAdminCookie } from '@/lib/admin-auth'
 import {
-  getReportForReview, startReview, releaseReport, markUnableToComplete,
+  getReportForReview, startReview, releaseReport, releaseHistoryReview, markUnableToComplete,
   startRefund, completeRefund, failRefund,
 } from '@/lib/db/report-review'
 import { REVIEWER_ID } from '@/lib/admin-auth'
@@ -155,6 +155,51 @@ export async function releaseReportAction(formData: FormData): Promise<void> {
   // released_at, not the email.
   notifyBuyer(report.check_id, report.buyer_email, note)
     .catch(err => console.error('[admin/review] release notification failed', err))
+
+  revalidatePath(PATH)
+}
+
+/**
+ * Release the accident/claim section, with the decision revised in light of it.
+ *
+ * ── WHY THIS IS A SEPARATE ACTION ──────────────────────────────────────────
+ *
+ * releaseReportAction guards on `released_at` being null, so it cannot be used
+ * twice — and the base report is already out by the time claim records arrive.
+ * This is the second release: same shape, different gate.
+ *
+ * The note replaces the original. A buyer reads one decision, not a decision
+ * plus an amendment to it. If the records changed nothing, saying so IS the
+ * revision and is worth the RM88 on its own — "kereta ini tiada rekod claim
+ * yang direkodkan" is an answer.
+ */
+export async function releaseHistoryAction(formData: FormData): Promise<void> {
+  if (!isAdminAuthenticated()) throw new Error('Unauthorized')
+
+  const reportId = String(formData.get('reportId') ?? '')
+  const note     = String(formData.get('reviewerNote') ?? '').trim()
+  if (!note) { revalidatePath(PATH); return }
+
+  // Re-read rather than trusting a queue page that may be minutes stale.
+  const report = await getReportForReview(reportId)
+  if (
+    !report || report.status !== 'paid' || !report.released_at ||
+    report.jomcheck_status !== 'success'
+  ) {
+    revalidatePath(PATH)
+    return
+  }
+
+  const won = await releaseHistoryReview({
+    reportId, reviewerId: REVIEWER_ID, reviewerNote: note,
+  })
+  if (!won) { revalidatePath(PATH); return }
+
+  // Non-blocking, for the same reason as the first release: the section is
+  // already visible at the link the buyer holds, so a mail outage must not
+  // make this look failed and invite a second attempt.
+  notifyBuyer(report.check_id, report.buyer_email, note)
+    .catch(err => console.error('[admin/review] history notification failed', err))
 
   revalidatePath(PATH)
 }

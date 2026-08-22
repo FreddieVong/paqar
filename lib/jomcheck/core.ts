@@ -4,7 +4,15 @@
 // (token flow, lookupJomCheck, isJomCheckManual) lives in ./index and re-exports
 // everything here.
 
-export type JomCheckStatus = 'not_requested' | 'pending' | 'success' | 'failed'
+/**
+ * 'success' means the claim records ARRIVED. It does not mean the buyer may
+ * read them: Paqar sells a decision, not records, so the data goes back to a
+ * human who states what it means for this purchase before any of it renders.
+ * 'reviewed' is that person's release, and the only state the buyer's report
+ * treats as visible.
+ */
+export type JomCheckStatus =
+  | 'not_requested' | 'pending' | 'success' | 'reviewed' | 'failed'
 
 export interface JomCheckClaim {
   type:   'accident' | 'flood' | 'windscreen' | 'total_loss'

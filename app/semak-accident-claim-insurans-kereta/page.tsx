@@ -31,17 +31,16 @@ const DESCRIPTION_BASE =
   'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan.'
 
 /**
- * NOINDEX while the service does not exist.
+ * Indexable again: the service exists.
  *
- * lib/pricing sets HISTORY_UPGRADE_OPERATIONAL = false because the
- * purchase -> second human review -> revised decision -> release journey was
- * never built. A page ranking as a product page for something nobody can buy
- * sends real buyers to a dead end and teaches every AI crawler that Paqar
- * sells insurance-claim reports. Kept as an explanation of the risk, not as a
- * shopfront, and removed from the sitemap to match.
+ * This was noindex while HISTORY_UPGRADE_OPERATIONAL was false, because a page
+ * ranking as a product page for something nobody can buy sends real buyers to
+ * a dead end. The second human review now exists — records arrive, a person
+ * reads them against the decision already written, and their release is what
+ * the buyer sees — so the page describes something real and goes back in the
+ * sitemap with it.
  */
 export const metadata: Metadata = {
-  robots: { index: false, follow: true },
   title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia | Paqar',
   description: JOMCHECK_ON
     ? `${DESCRIPTION_BASE} Paqar Semakan Accident/Claim Insurans RM100 sebelum bayar deposit.`
