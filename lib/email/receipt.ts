@@ -77,7 +77,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
         </p>
         <p style="color:#374151;font-size:13px;margin:0;line-height:1.6;">
           Kami baca iklan yang anda hantar, sahkan varian dan tahun kereta, dan
-          hantar keputusan melalui e-mel. ${expectedDeliveryCopy()} Dijamin dalam tempoh ${REVIEW_SLA_HOURS} jam.
+          hantar keputusan melalui e-mel. ${expectedDeliveryCopy()} Dijamin dalam ${REVIEW_SLA_HOURS} jam.
           Anda tidak perlu buat apa-apa.
         </p>
       </div>

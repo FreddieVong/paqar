@@ -334,7 +334,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
           {!credentialWorks && (
             <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5 text-left">
               <p className="font-heading font-bold text-[14px] text-[#111827] mb-1.5">
-                Kami tidak dapat buka laporan dengan pautan ini
+                Kami tak dapat buka laporan dengan link ini
               </p>
               <p className="font-body text-[13px] text-[#78350F] leading-relaxed">
                 Pautan ini tidak sepadan dengan mana-mana semakan. Kalau anda sudah

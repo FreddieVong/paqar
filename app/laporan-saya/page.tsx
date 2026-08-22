@@ -64,7 +64,7 @@ export default function MyReportPage() {
             </p>
             <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
               Setiap laporan dibaca oleh manusia sebelum dihantar. Keputusan
-              sampai dalam tempoh {REVIEW_SLA_HOURS} jam &mdash; anda akan terima
+              sampai dalam {REVIEW_SLA_HOURS} jam &mdash; anda akan terima
               mesej sebaik ia siap. Tidak perlu buat apa-apa sementara menunggu.
             </p>
           </div>

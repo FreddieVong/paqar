@@ -43,7 +43,7 @@ export function UnderReviewNotice({ checkId }: { checkId: string }) {
       </div>
 
       <h1 className="font-heading font-extrabold text-[22px] md:text-[26px] leading-tight tracking-tight text-[#111827] mb-3">
-        Paqar sedang menyemak listing anda.
+        Paqar sedang semak iklan anda.
       </h1>
 
       <p className="font-body text-[15px] text-[#374151] leading-relaxed mb-4">
@@ -54,14 +54,13 @@ export function UnderReviewNotice({ checkId }: { checkId: string }) {
           A concrete "sebelum 2.40 petang" is what the buyer wants to know now;
           the 24-hour maximum is what protects them if today goes wrong. */}
       <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed mb-4">
-        Dijamin dalam tempoh {REVIEW_SLA_HOURS} jam.
+        Dijamin dalam {REVIEW_SLA_HOURS} jam.
       </p>
 
       <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mb-5">
-        Setiap laporan dibaca oleh manusia sebelum dihantar &mdash; kami semak
-        iklan yang anda hantar, sahkan varian dan tahun kereta itu, dan pastikan
-        apa yang Paqar cadangkan betul untuk unit tersebut. Itu sebabnya ia
-        mengambil sedikit masa.
+        Orang kami buka iklan yang anda hantar, sahkan varian dan tahun kereta,
+        dan pastikan apa yang kami cadangkan betul untuk kereta itu. Sebab itu
+        ia ambil sedikit masa.
       </p>
 
       <div className="bg-[#F8FAF7] border border-[#E5E7EB] rounded-[12px] p-4 mb-5">
@@ -69,8 +68,8 @@ export function UnderReviewNotice({ checkId }: { checkId: string }) {
           Anda tidak perlu buat apa-apa
         </p>
         <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
-          Kami e-mel anda sebaik sahaja laporan siap. Simpan pautan halaman
-          ini &mdash; ia akan bertukar kepada laporan penuh dengan sendirinya.
+          Kami e-mel anda bila laporan siap. Simpan link halaman ini &mdash;
+          ia akan bertukar jadi laporan penuh dengan sendirinya.
         </p>
       </div>
 

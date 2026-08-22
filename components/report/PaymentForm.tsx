@@ -322,7 +322,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
           <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
             Dalam tempoh{' '}
             <span className="font-bold text-[#064E4A]">{REVIEW_SLA_HOURS} jam</span>,
-            melalui e-mel. Anda tak perlu tunggu di halaman ini &mdash; pautan
+            melalui e-mel. Anda tak perlu tunggu di halaman ini &mdash; link
             yang anda ada sekarang akan bertukar kepada laporan penuh dengan
             sendirinya.
           </p>

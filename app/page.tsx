@@ -56,7 +56,7 @@ const homeSchema = {
     {
       '@type': 'Service',
       name: 'Semakan Pembeli Paqar',
-      description: 'Paqar semak satu iklan kereta terpakai yang anda pertimbangkan dan hantar keputusan: patut teruskan atau tidak, apa yang perlu disahkan, skrip rundingan, soalan untuk penjual dan checklist deposit. Setiap laporan disemak oleh manusia sebelum dihantar, dalam tempoh 24 jam.',
+      description: 'Hantar iklan kereta terpakai yang anda nak beli. Paqar beritahu sama ada patut diteruskan, berapa patut anda tawar, dan apa yang perlu ditanya penjual. Setiap laporan dibaca oleh orang kami — biasanya dalam 30 minit.',
       provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
       areaServed: { '@type': 'Country', name: 'Malaysia' },
       offers: { '@type': 'Offer', price: '29', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },

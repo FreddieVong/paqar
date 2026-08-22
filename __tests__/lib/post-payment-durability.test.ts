@@ -130,7 +130,7 @@ describe('payment recovery UI', () => {
 
   it('offers a route to support instead of a dead button', () => {
     expect(selesai).toMatch(/\{!credentialWorks && \(/)
-    expect(selesai).toContain('Kami tidak dapat buka laporan dengan pautan ini')
+    expect(selesai).toContain('Kami tak dapat buka laporan dengan link ini')
   })
 
   it('never lets a plate decrypt failure 500 the post-payment page', () => {

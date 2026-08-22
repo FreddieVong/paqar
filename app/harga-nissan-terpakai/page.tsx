@@ -12,13 +12,13 @@ const YEAR = new Date().getFullYear()
 
 export const metadata: Metadata = {
   title: `Harga Nissan Terpakai Malaysia ${YEAR} — Semak Harga Pasaran | Paqar`,
-  description: 'Harga pasaran kereta terpakai Nissan — Almera mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
+  description: 'Harga pasaran kereta terpakai Nissan — Almera mengikut tahun. Hantar iklan unit yang anda nak beli sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/harga-nissan-terpakai' },
   openGraph: {
       images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
       locale: 'ms_MY',
     title: `Harga Nissan Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
-    description: 'Harga pasaran kereta terpakai Nissan — Almera mengikut tahun. Semak sama ada harga penjual berpatutan sebelum bayar deposit.',
+    description: 'Harga pasaran kereta terpakai Nissan — Almera mengikut tahun. Hantar iklan unit yang anda nak beli sebelum bayar deposit.',
     url: 'https://paqar.my/harga-nissan-terpakai',
   },
 }

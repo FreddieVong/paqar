@@ -1,4 +1,5 @@
-import { BASE_REPORT_LABEL, REVIEW_SLA_HOURS } from '@/lib/pricing'
+import { BASE_REPORT_LABEL } from '@/lib/pricing'
+import { TYPICAL_MINUTES } from '@/lib/review-capacity'
 
 /**
  * What RM29 buys, ordered by what a buyer cannot get anywhere else.
@@ -81,7 +82,7 @@ export function LockedReportPreview({ hasPlate = false }: { hasPlate?: boolean }
           </p>
           <p className="font-body text-[12px] text-[#4B5563] leading-relaxed mt-0.5">
             Bukan jawapan auto. Kami buka iklan yang anda hantar, semak varian dan
-            tahun kereta itu, dan hantar keputusan dalam tempoh {REVIEW_SLA_HOURS} jam.
+            tahun kereta itu, dan hantar keputusan &mdash; biasanya dalam {TYPICAL_MINUTES} minit.
           </p>
         </div>
       </div>

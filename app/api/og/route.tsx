@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <span style={{ color: 'white', fontWeight: 900, fontSize: '48px', lineHeight: 1.08 }}>
-              Tahu sama ada harga penjual berpatutan
+              Semak dulu, jangan tersalah beli kereta
             </span>
             <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '22px', lineHeight: 1.4 }}>
               Disemak oleh manusia · Laporan Pembeli RM29

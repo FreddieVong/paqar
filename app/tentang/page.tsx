@@ -64,7 +64,7 @@ export default function TentangPage() {
             <div>
               <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Laporan Pembeli — RM29</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                Laporan satu bayaran untuk satu kereta: sama ada patut diteruskan, julat pasaran penuh, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Setiap laporan dibaca dan disemak oleh manusia sebelum dihantar, dalam tempoh 24 jam.
+                Satu bayaran, satu kereta. Kami beritahu sama ada patut diteruskan, berapa patut anda tawar, apa yang perlu ditanya penjual, dan apa yang perlu disemak sebelum bayar deposit. Setiap laporan dibaca oleh orang kami sebelum dihantar — biasanya dalam 30 minit.
               </p>
             </div>
 

@@ -123,7 +123,7 @@ export function capacityState(usedToday: number, now: Date = new Date()): Capaci
     acceptingNow: true, withinHours, usedToday, remainingToday: remaining,
     etaCopy: withinHours
       ? `Semakan manusia sedang berjalan. Biasanya siap dalam ${TYPICAL_MINUTES} minit; maksimum ${MAX_PROMISE_HOURS} jam.`
-      : `Semakan manusia bermula ${REVIEW_OPENS_HOUR} pagi. Keputusan anda dihantar dalam tempoh ${MAX_PROMISE_HOURS} jam.`,
+      : `Semakan manusia bermula ${REVIEW_OPENS_HOUR} pagi. Keputusan anda dihantar dalam ${MAX_PROMISE_HOURS} jam.`,
   }
 }
 

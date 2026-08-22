@@ -9,7 +9,7 @@ import type { RefundStatus } from '@/lib/report-workflow'
  * ── WHY THIS SCREEN EXISTS ─────────────────────────────────────────────────
  *
  * Marking a report unable_to_complete changed only the review queue. The buyer
- * kept seeing UnderReviewNotice — "Paqar sedang menyemak listing anda,
+ * kept seeing UnderReviewNotice — "Paqar sedang menyemak iklan anda,
  * keputusan dalam 24 jam" — indefinitely, for a decision that was never
  * coming. The screen that was written to be reassuring became the screen that
  * lies, and it lied to precisely the buyer who had already been let down.
@@ -23,7 +23,7 @@ import type { RefundStatus } from '@/lib/report-workflow'
  *
  * markUnableAction requires a note and this renders it. A generic apology
  * would leave the buyer unable to judge whether the same thing happens if they
- * try another listing — which is the only decision they still have to make.
+ * try another iklan — which is the only decision they still have to make.
  *
  * ── NO REPORT, NOT EVEN A PARTIAL ONE ──────────────────────────────────────
  *
