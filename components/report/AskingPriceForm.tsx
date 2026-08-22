@@ -55,13 +55,13 @@ export function AskingPriceForm({ checkId, claimToken }: Props) {
             aria-label="Harga yang penjual minta"
             value={formatPriceInput(value)}
             onChange={e => setValue(toDigits(e.target.value))}
-            className="w-full pl-9 pr-3 py-2.5 border border-[#E5E7EB] rounded-lg font-heading font-bold text-[13px] text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#064E4A]"
+            className="w-full pl-9 pr-3 py-2.5 border border-[#E5E7EB] rounded-lg font-heading font-bold text-[13px] text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#3D472F]"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2.5 bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-lg disabled:opacity-60 whitespace-nowrap"
+          className="px-4 py-2.5 bg-[#3D472F] text-white font-heading font-bold text-[13px] rounded-lg disabled:opacity-60 whitespace-nowrap"
         >
           {loading ? 'Menyimpan…' : 'Semak →'}
         </button>

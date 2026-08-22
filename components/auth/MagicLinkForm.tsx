@@ -65,11 +65,11 @@ export function MagicLinkForm({ claimToken, redirectTo, onBack: _onBack }: Props
         </div>
         {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
         <Button type="submit" disabled={loading}
-          className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold py-3">
+          className="w-full bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-bold py-3">
           {loading ? 'Mengesahkan…' : 'Sahkan →'}
         </Button>
         <button type="button" onClick={() => setState('email')}
-          className="w-full font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] text-center transition-colors">
+          className="w-full font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] text-center transition-colors">
           ← Tukar e-mel
         </button>
       </form>
@@ -88,7 +88,7 @@ export function MagicLinkForm({ claimToken, redirectTo, onBack: _onBack }: Props
       </div>
       {error && <p className="font-body text-[13px] text-[#DC2626]">{error}</p>}
       <Button type="submit" disabled={loading}
-        className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold py-3">
+        className="w-full bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-bold py-3">
         {loading ? 'Menghantar…' : 'Hantar Kod →'}
       </Button>
     </form>

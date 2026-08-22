@@ -66,11 +66,11 @@ export default async function HargaToyota() {
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Jenama lain</p>
-            <Link href="/harga-perodua-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua terpakai →</Link>
-            <Link href="/harga-proton-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton terpakai →</Link>
-            <Link href="/harga-honda-terpakai"   className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Honda terpakai →</Link>
-            <Link href="/harga-nissan-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Nissan terpakai →</Link>
-            <Link href="/harga-kereta-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semua model →</Link>
+            <Link href="/harga-perodua-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua terpakai →</Link>
+            <Link href="/harga-proton-terpakai"  className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Proton terpakai →</Link>
+            <Link href="/harga-honda-terpakai"   className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Honda terpakai →</Link>
+            <Link href="/harga-nissan-terpakai"  className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Nissan terpakai →</Link>
+            <Link href="/harga-kereta-terpakai"  className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Semua model →</Link>
           </div>
         </div>
       </Shell>

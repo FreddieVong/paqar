@@ -123,7 +123,7 @@ export default function CaraSemakInsuransPage() {
                 'Pilih pelan yang sesuai dan beli terus dalam talian',
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5 w-5">{i + 1}.</span>
+                  <span className="font-heading font-bold text-[12px] text-[#3D472F] flex-shrink-0 mt-0.5 w-5">{i + 1}.</span>
                   <p className="font-body text-[13px] text-[#374151] leading-relaxed">{step}</p>
                 </li>
               ))}
@@ -132,7 +132,7 @@ export default function CaraSemakInsuransPage() {
               href="https://bjak.my/?p=FREDDIE-0FC9AL"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-block w-full bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#053D3A] transition-colors"
+              className="mt-4 inline-block w-full bg-[#3D472F] text-white font-heading font-bold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#2E3523] transition-colors"
             >
               Bandingkan Insurans di Bjak →
             </a>
@@ -184,8 +184,8 @@ export default function CaraSemakInsuransPage() {
           </div>
 
           {/* Semakan Accident/Claim — different from status check */}
-          <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">
-            <h2 className="font-heading font-bold text-[16px] text-[#064E4A] mb-2">
+          <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-[14px] p-5">
+            <h2 className="font-heading font-bold text-[16px] text-[#3D472F] mb-2">
               Semak rekod claim insurans sebelum beli kereta terpakai
             </h2>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
@@ -196,7 +196,7 @@ export default function CaraSemakInsuransPage() {
             </p>
             <Link
               href="/semak-accident-claim-insurans-kereta"
-              className="inline-block w-full bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[12px] py-3 text-center hover:bg-[#053D3A] transition-colors"
+              className="inline-block w-full bg-[#3D472F] text-white font-heading font-bold text-[14px] rounded-[12px] py-3 text-center hover:bg-[#2E3523] transition-colors"
             >
               Semakan Accident/Claim Insurans →
             </Link>
@@ -204,17 +204,17 @@ export default function CaraSemakInsuransPage() {
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
-            <Link href="/cara-semak-roadtax-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak roadtax kereta →</Link>
-            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
+            <Link href="/cara-semak-roadtax-kereta" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara semak roadtax kereta →</Link>
+            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
           </div>
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Harga model popular</p>
-            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
-            <Link href="/bandingkan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Bandingkan model →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
+            <Link href="/bandingkan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Bandingkan model →</Link>
           </div>
 
         </div>

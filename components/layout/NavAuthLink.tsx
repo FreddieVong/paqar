@@ -29,7 +29,7 @@ import { createClient } from '@/lib/supabase/client'
 export const NAV_LINK_CLS =
   'font-heading font-semibold text-[12px] text-[#6B7280] hover:text-[#111827] transition-colors '
   + 'min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 '
-  + 'focus-visible:ring-[#064E4A]/40 rounded'
+  + 'focus-visible:ring-[#3D472F]/40 rounded'
 
 export function NavAuthLink() {
   const [loggedIn, setLoggedIn] = useState(false)

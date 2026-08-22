@@ -166,7 +166,7 @@ export default function RisikoBelihKeretaTerpakaiPage() {
           </div>
 
           {/* CTA */}
-          <div className="bg-[#064E4A] rounded-[16px] p-5 text-center">
+          <div className="bg-[#3D472F] rounded-[16px] p-5 text-center">
             <p className="font-heading font-extrabold text-[18px] text-white mb-2">
               Dah jumpa kereta?
             </p>
@@ -184,17 +184,17 @@ export default function RisikoBelihKeretaTerpakaiPage() {
           {/* Related guides */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
-            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
-            <Link href="/panduan-semak-saman" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak saman kereta →</Link>
+            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
+            <Link href="/panduan-semak-saman" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara semak saman kereta →</Link>
           </div>
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Harga model popular</p>
-            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
-            <Link href="/bandingkan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Bandingkan model →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
+            <Link href="/bandingkan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Bandingkan model →</Link>
           </div>
 
         </div>

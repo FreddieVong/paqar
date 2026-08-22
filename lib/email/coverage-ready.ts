@@ -31,7 +31,7 @@ export async function sendCoverageReadyEmail(params: {
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
-      <h2 style="color:#064E4A;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
+      <h2 style="color:#3D472F;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
       <p style="color:#6B7280;font-size:12px;margin:0 0 24px;text-transform:uppercase;letter-spacing:0.08em;">Semak Sebelum Beli</p>
 
       <p style="color:#111827;font-size:16px;font-weight:700;margin:0 0 12px;">
@@ -46,7 +46,7 @@ export async function sendCoverageReadyEmail(params: {
         patut teruskan, runding, atau lupakan. ${BASE_REPORT_LABEL}, disemak oleh manusia.
       </p>
 
-      <a href="${url}" style="display:inline-block;background:#064E4A;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 24px;border-radius:12px;">
+      <a href="${url}" style="display:inline-block;background:#3D472F;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 24px;border-radius:12px;">
         Semak kereta ini &rarr;
       </a>
 

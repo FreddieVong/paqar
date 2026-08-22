@@ -321,7 +321,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
     <div className="space-y-5">
 
       {/* 0. Report header — the buyer's car, front and centre */}
-      <div className="bg-[#14453d] rounded-[14px] p-5">
+      <div className="bg-[#3D472F] rounded-[14px] p-5">
         <div className="flex items-start justify-between gap-3 mb-2">
           <p className="font-heading font-bold text-[10px] uppercase tracking-[.12em] text-white/45">
             Laporan Pembeli
@@ -465,7 +465,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
               <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#6B7280] mb-2">
                 Keputusan Paqar
               </p>
-              <p className="font-heading font-extrabold text-[19px] leading-tight text-[#064E4A] mb-1 whitespace-pre-line">
+              <p className="font-heading font-extrabold text-[19px] leading-tight text-[#3D472F] mb-1 whitespace-pre-line">
                 {reviewerDecision}
               </p>
               <p className="font-body text-[12px] text-[#15803D] mb-4">
@@ -504,8 +504,8 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           && hasMarketData && askingPriceRm! < marketMin! * 0.8
 
         const kepConfig = ({
-          good_deal:     { headline: 'BERBALOI',    sub: suspiciouslyCheap ? 'Harga jauh di bawah pasaran — berhati-hati.' : 'Tapi semak condition dan dokumen sebelum deposit.', headlineColor: 'text-[#0891B2]', bg: 'bg-[#F0FAFA]', border: 'border-[#99D4D1]' },
-          fair_price:    { headline: 'WAJAR',       sub: 'Teruskan, tapi semak condition dan dokumen dulu.',  headlineColor: 'text-[#064E4A]', bg: 'bg-[#F0FDF4]', border: 'border-[#BBF7D0]' },
+          good_deal:     { headline: 'BERBALOI',    sub: suspiciouslyCheap ? 'Harga jauh di bawah pasaran — berhati-hati.' : 'Tapi semak condition dan dokumen sebelum deposit.', headlineColor: 'text-[#0891B2]', bg: 'bg-[#F4F6F0]', border: 'border-[#CBD4BB]' },
+          fair_price:    { headline: 'WAJAR',       sub: 'Teruskan, tapi semak condition dan dokumen dulu.',  headlineColor: 'text-[#3D472F]', bg: 'bg-[#F0FDF4]', border: 'border-[#BBF7D0]' },
           slightly_high: { headline: 'AGAK MAHAL',  sub: 'Ada ruang untuk tawar sebelum setuju.',            headlineColor: 'text-[#B45309]', bg: 'bg-[#FFFBEB]', border: 'border-[#FDE68A]' },
           overpriced:    { headline: 'MAHAL',       sub: 'Jangan bayar deposit dulu.',                       headlineColor: 'text-[#DC2626]', bg: 'bg-[#FEF2F2]', border: 'border-[#FECACA]' },
         } as const)[effectiveVerdict]
@@ -587,7 +587,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           ? <JomCheckSection data={jomcheckData} currentOdometerKm={odometerForRollback} />
           : jomcheckStatus === 'success'
           ? (
-            <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">
+            <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-[14px] p-5">
               <p className="font-heading font-bold text-[15px] text-[#111827] mb-2">
                 Rekod accident/claim dah sampai
               </p>
@@ -600,12 +600,12 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           )
           : jomcheckManualPending
           ? (
-            <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">
+            <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-[14px] p-5">
               <p className="font-heading font-bold text-[15px] text-[#111827] mb-2">
                 Semakan Accident/Claim Insurans
               </p>
               <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-[#99D4D1] border-t-[#064E4A] animate-spin flex-shrink-0" />
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-[#CBD4BB] border-t-[#3D472F] animate-spin flex-shrink-0" />
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                   Semakan sedang diproses — keputusan akan dikemaskini dalam laporan
                   ini dalam masa 24 jam. Kami akan e-mel anda bila ia siap.
@@ -669,8 +669,8 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                 claim, not verified). mixed_variants: comps are model-level and
                 may be other variants — warn before the buyer reads them. */}
             {cohort.mode === 'same_variant' && mPrices.length > 0 && (
-              <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-3 py-2.5 mb-3">
-                <p className="font-body text-[12px] text-[#064E4A] leading-relaxed">
+              <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-lg px-3 py-2.5 mb-3">
+                <p className="font-body text-[12px] text-[#3D472F] leading-relaxed">
                   Perbandingan ini menggunakan listing yang menyebut “{cohort.variantToken}” sahaja.
                 </p>
               </div>
@@ -730,9 +730,9 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                   {/* Median — prominent anchor. Only ever shown for a cohort
                       Paqar would issue a verdict on. */}
                   {showAggregate && (
-                    <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2">
+                    <div className="flex items-center justify-between bg-[#F4F6F0] rounded-lg px-3 py-2">
                       <p className="font-body text-[12px] text-[#6B7280]">Harga tengah iklan setanding</p>
-                      <p className="font-heading font-bold text-[14px] text-[#064E4A]">RM{fmt(marketMedian)}</p>
+                      <p className="font-heading font-bold text-[14px] text-[#3D472F]">RM{fmt(marketMedian)}</p>
                     </div>
                   )}
 
@@ -751,7 +751,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                       identical to the measured one. See lib/listing-url.ts. */}
                   <div className="flex flex-wrap gap-1.5">
                     {relevantListings.map((l, i) => {
-                      const chip = 'inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#064E4A]'
+                      const chip = 'inline-block bg-[#F4F6F0] border border-[#CBD4BB] rounded-lg px-2.5 py-1 font-heading font-bold text-[12px] text-[#3D472F]'
                       return isIndividualListingUrl(l.url) ? (
                         <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
                           className={`${chip} hover:bg-[#E0F2F1] transition-colors`}>
@@ -837,7 +837,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                   {askingPriceRm != null && (
                     <a
                       href={`/kira-ansuran-kereta?harga=${askingPriceRm}`}
-                      className="font-body text-[12px] text-[#064E4A] underline underline-offset-2 mt-1 inline-block"
+                      className="font-body text-[12px] text-[#3D472F] underline underline-offset-2 mt-1 inline-block"
                     >
                       Kira ansuran bulanan untuk harga ini →
                     </a>
@@ -888,9 +888,9 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                   <p className="font-body text-[12px] text-[#6B7280]">Tengok iklan serupa di pasaran</p>
                   <div className="flex items-center gap-3">
                     <a href={mudahUrl} target="_blank" rel="noopener noreferrer"
-                      className="font-heading font-bold text-[12px] text-[#064E4A]">Mudah →</a>
+                      className="font-heading font-bold text-[12px] text-[#3D472F]">Mudah →</a>
                     <a href={carlistUrl} target="_blank" rel="noopener noreferrer"
-                      className="font-heading font-bold text-[12px] text-[#064E4A]">Carlist →</a>
+                      className="font-heading font-bold text-[12px] text-[#3D472F]">Carlist →</a>
                   </div>
                 </div>
               ) : null
@@ -1219,7 +1219,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             <div className="space-y-3 mb-4">
               {allQuestions.map((q, i) => (
                 <div key={i} className="flex gap-3">
-                  <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">{i + 1}.</span>
+                  <span className="font-heading font-bold text-[12px] text-[#3D472F] flex-shrink-0 mt-0.5">{i + 1}.</span>
                   <p className="font-body text-[13px] text-[#374151] leading-relaxed">{q}</p>
                 </div>
               ))}

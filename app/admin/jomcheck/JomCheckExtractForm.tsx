@@ -79,7 +79,7 @@ export function JomCheckExtractForm({ reportId }: { reportId: string }) {
         <input ref={fileRef} type="file" accept="image/*" multiple
           className="text-[13px] flex-1 min-w-0" />
         <button type="button" onClick={extract} disabled={extracting}
-          className="bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-lg px-3 py-2 whitespace-nowrap disabled:opacity-50">
+          className="bg-[#3D472F] text-white font-heading font-bold text-[13px] rounded-lg px-3 py-2 whitespace-nowrap disabled:opacity-50">
           {extracting ? 'Membaca…' : 'Baca dari gambar'}
         </button>
       </div>
@@ -137,10 +137,10 @@ export function JomCheckExtractForm({ reportId }: { reportId: string }) {
           ))}
 
           <button type="button" onClick={() => setRows(rs => [...(rs ?? []), { ...EMPTY_ROW }])}
-            className="font-body text-[13px] text-[#064E4A] underline">+ Tambah baris</button>
+            className="font-body text-[13px] text-[#3D472F] underline">+ Tambah baris</button>
 
           <button type="button" onClick={submit} disabled={submitting}
-            className="w-full bg-[#064E4A] text-white font-heading font-bold text-[15px] rounded-[10px] py-3 disabled:opacity-50">
+            className="w-full bg-[#3D472F] text-white font-heading font-bold text-[15px] rounded-[10px] py-3 disabled:opacity-50">
             {submitting ? 'Menghantar…' : 'Semak selesai — Simpan & Hantar E-mel'}
           </button>
         </div>

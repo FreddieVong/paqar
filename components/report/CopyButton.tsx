@@ -16,7 +16,7 @@ export function CopyButton({ text }: Props) {
   return (
     <button
       onClick={handleCopy}
-      className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[13px] rounded-[10px] py-2.5 transition-colors"
+      className="w-full bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-bold text-[13px] rounded-[10px] py-2.5 transition-colors"
     >
       {copied ? 'Disalin ✓' : 'Salin Skrip'}
     </button>

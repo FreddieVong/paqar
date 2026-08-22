@@ -91,7 +91,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-[#064E4A]"><ShieldCheck /></span>
+        <span className="text-[#3D472F]"><ShieldCheck /></span>
         <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280]">
           Semakan Accident / Claim Insurans
         </p>

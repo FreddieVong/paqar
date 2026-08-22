@@ -54,7 +54,7 @@ export default async function AdminJomCheckPage() {
           />
           <button
             type="submit"
-            className="w-full bg-[#064E4A] text-white font-heading font-bold text-[15px] rounded-[10px] py-3"
+            className="w-full bg-[#3D472F] text-white font-heading font-bold text-[15px] rounded-[10px] py-3"
           >
             Log Masuk
           </button>
@@ -92,7 +92,7 @@ export default async function AdminJomCheckPage() {
           return (
             <div key={report.id} className="bg-white border border-[#E5E7EB] rounded-[16px] p-5 space-y-4">
               <div>
-                <p className="font-heading font-extrabold text-[20px] tracking-[.08em] text-[#064E4A]">
+                <p className="font-heading font-extrabold text-[20px] tracking-[.08em] text-[#3D472F]">
                   {plate}
                 </p>
                 <p className="font-body text-[13px] text-[#374151]">{report.buyer_email}</p>
@@ -103,7 +103,7 @@ export default async function AdminJomCheckPage() {
                   href="https://www.jomcheck.com.my"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 mt-2 font-heading font-bold text-[13px] text-[#064E4A] underline underline-offset-2"
+                  className="inline-flex items-center gap-1 mt-2 font-heading font-bold text-[13px] text-[#3D472F] underline underline-offset-2"
                 >
                   Buka JomCheck untuk plat ini →
                 </a>

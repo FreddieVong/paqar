@@ -39,7 +39,7 @@ export function ReviewerScreenshots({ checkId }: { checkId: string }) {
         type="button"
         onClick={() => void load()}
         disabled={busy}
-        className="font-heading font-bold text-[12px] text-[#064E4A] underline underline-offset-2 min-h-[44px]"
+        className="font-heading font-bold text-[12px] text-[#3D472F] underline underline-offset-2 min-h-[44px]"
       >
         {busy ? 'Memuatkan…' : 'Lihat screenshot pembeli →'}
       </button>

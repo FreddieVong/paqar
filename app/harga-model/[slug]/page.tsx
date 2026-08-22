@@ -492,7 +492,7 @@ export default async function YearModelPage({ params }: Props) {
                   a band without it reads as a valuation, which is the one thing
                   it must not be.
                 */}
-                <p className="font-heading font-extrabold text-[26px] text-[#064E4A] leading-none mb-2">
+                <p className="font-heading font-extrabold text-[26px] text-[#3D472F] leading-none mb-2">
                   Sekitar {formatTeaserBand(teaser)}
                 </p>
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
@@ -619,7 +619,7 @@ export default async function YearModelPage({ params }: Props) {
             <ul className="space-y-3">
               {info.tips.map((tip, i) => (
                 <li key={i} className="flex gap-2.5 font-body text-[13px] text-[#374151] leading-relaxed">
-                  <span className="text-[#064E4A] font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
+                  <span className="text-[#3D472F] font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
                   {tip}
                 </li>
               ))}
@@ -648,7 +648,7 @@ export default async function YearModelPage({ params }: Props) {
               {adjacent.previous && (
                 <Link
                   href={`/harga-${modelKey}-${adjacent.previous}`}
-                  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+                  className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2"
                 >
                   Harga {displayModel} {adjacent.previous} terpakai →
                 </Link>
@@ -656,7 +656,7 @@ export default async function YearModelPage({ params }: Props) {
               {adjacent.next && (
                 <Link
                   href={`/harga-${modelKey}-${adjacent.next}`}
-                  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+                  className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2"
                 >
                   Harga {displayModel} {adjacent.next} terpakai →
                 </Link>
@@ -673,14 +673,14 @@ export default async function YearModelPage({ params }: Props) {
               // Was `?harga=${medianPrice}` — the median, published in a query
               // string, on a link Google follows and indexes.
               href="/kira-ansuran-kereta"
-              className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+              className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2"
             >
               Kira ansuran bulanan untuk {info.model} {year} →
             </Link>
             {modelHubSlug && (
               <Link
                 href={`/harga-kereta-terpakai/${modelHubSlug}`}
-                className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+                className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2"
               >
                 Harga {displayModel} semua tahun →
               </Link>
@@ -688,26 +688,26 @@ export default async function YearModelPage({ params }: Props) {
             {modelHubSlug && VARIANT_GUIDES[modelHubSlug] && (
               <Link
                 href={`/varian/${modelHubSlug}`}
-                className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+                className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2"
               >
                 {info.model} varian mana patut beli? →
               </Link>
             )}
             <Link
               href="/cara-beli-kereta-terpakai"
-              className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+              className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2"
             >
               Cara beli kereta terpakai Malaysia →
             </Link>
             <Link
               href="/checklist-beli-kereta-terpakai"
-              className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+              className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2"
             >
               Checklist sebelum bayar deposit →
             </Link>
             <Link
               href="/risiko-beli-kereta-terpakai"
-              className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2"
+              className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2"
             >
               Risiko beli kereta terpakai →
             </Link>

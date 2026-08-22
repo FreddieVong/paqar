@@ -31,7 +31,7 @@ function page(body: string): NextResponse {
     ${body}
   </div>
   <p style="margin:20px 0 0;font-size:12px;color:#9CA3AF;text-align:center;">
-    <a href="https://paqar.my" style="color:#064E4A;text-decoration:none;">paqar.my</a>
+    <a href="https://paqar.my" style="color:#3D472F;text-decoration:none;">paqar.my</a>
     &middot; Bukan platform rasmi kerajaan
   </p>
 </div></body></html>`,

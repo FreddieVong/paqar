@@ -100,7 +100,7 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
   if (!isComplete) {
     return (
       <div className="flex flex-col items-center gap-3 py-8">
-        <div className="w-7 h-7 rounded-full border-[3px] border-[#E5E7EB] border-t-[#064E4A] animate-spin" />
+        <div className="w-7 h-7 rounded-full border-[3px] border-[#E5E7EB] border-t-[#3D472F] animate-spin" />
         <p className="font-heading font-bold text-[14px] text-[#6B7280]">Menyediakan laporan untuk plat anda…</p>
       </div>
     )
@@ -154,8 +154,8 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
       </FreeResultGate>
 
       {authedUser != null && (
-        <div className="border-[1.5px] border-[#064E4A]/30 rounded-xl p-4 bg-[#064E4A]/5">
-          <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">
+        <div className="border-[1.5px] border-[#3D472F]/30 rounded-xl p-4 bg-[#3D472F]/5">
+          <p className="font-heading font-bold text-[13px] text-[#3D472F] mb-1">
             Pantau dokumen kenderaan anda
           </p>
           <p className="font-body text-[12px] text-[#6B7280] mb-3">
@@ -163,7 +163,7 @@ export function ResultsStream({ checkId, claimToken, plate, askingPrice }: Props
           </p>
           <Button
             onClick={() => router.push('/dashboard')}
-            className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[14px]"
+            className="w-full bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-bold text-[14px]"
           >
             Pantau Dokumen →
           </Button>

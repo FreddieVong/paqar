@@ -57,7 +57,7 @@ export function SampleVerdictCard({ showTierLabel = false }: { showTierLabel?: b
   return (
     <div className="px-5 py-4 bg-[#FEF2F2]">
       {showTierLabel ? (
-        <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#064E4A] mb-2">
+        <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#3D472F] mb-2">
           {SAMPLE_TIER_LABEL}
         </p>
       ) : (

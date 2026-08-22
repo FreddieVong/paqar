@@ -70,7 +70,7 @@ export default async function DashboardPage() {
 
           {/* Status banner */}
           <div className={`rounded-[14px] px-4 py-3.5 ${
-            status === 'all_clear' ? 'bg-[#064E4A]' :
+            status === 'all_clear' ? 'bg-[#3D472F]' :
             status === 'attention' ? 'bg-[#B45309]' : 'bg-[#DC2626]'
           }`}>
             <p className="font-heading font-bold text-[14px] text-white">
@@ -147,7 +147,7 @@ export default async function DashboardPage() {
                     </div>
                     <a
                       href={`/laporan-pembeli/${report.check_id}`}
-                      className="flex-shrink-0 font-heading font-bold text-[12px] text-[#064E4A] border border-[#064E4A]/30 rounded-lg px-3 py-1.5 hover:bg-[#064E4A]/5 transition-colors"
+                      className="flex-shrink-0 font-heading font-bold text-[12px] text-[#3D472F] border border-[#3D472F]/30 rounded-lg px-3 py-1.5 hover:bg-[#3D472F]/5 transition-colors"
                     >
                       Lihat →
                     </a>

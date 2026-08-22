@@ -23,7 +23,7 @@ export async function sendJomCheckPendingEmail(params: JomCheckPendingParams): P
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
-      <h2 style="color:#064E4A;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
+      <h2 style="color:#3D472F;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
       <p style="color:#9CA3AF;font-size:12px;margin:0 0 24px;text-transform:uppercase;letter-spacing:0.08em;">Sedang Diproses</p>
 
       <div style="border:1px solid #E5E7EB;border-radius:14px;padding:20px;margin-bottom:4px;">
@@ -38,7 +38,7 @@ export async function sendJomCheckPendingEmail(params: JomCheckPendingParams): P
       </div>
 
       <a href="${params.reportUrl}"
-         style="display:block;background:#064E4A;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin:20px 0;">
+         style="display:block;background:#3D472F;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin:20px 0;">
         Buka Laporan Saya →
       </a>
       <p style="color:#9CA3AF;font-size:11px;text-align:center;margin:-12px 0 20px;">
@@ -47,7 +47,7 @@ export async function sendJomCheckPendingEmail(params: JomCheckPendingParams): P
 
       <p style="color:#9CA3AF;font-size:11px;margin-top:24px;line-height:1.7;">
         Paqar &middot; Perkhidmatan pihak ketiga &middot; Bukan platform rasmi kerajaan<br/>
-        <a href="https://paqar.my" style="color:#064E4A;text-decoration:none;">paqar.my</a>
+        <a href="https://paqar.my" style="color:#3D472F;text-decoration:none;">paqar.my</a>
       </p>
     </div>
   `

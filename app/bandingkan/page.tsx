@@ -52,9 +52,9 @@ export default function BandingkanHub() {
           <div className="space-y-3">
             {COMPARISONS.map((c) => (
               <Link key={c.slug} href={`/bandingkan/${c.slug}`}
-                className="block bg-white border border-[#E5E7EB] rounded-[14px] p-5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group">
+                className="block bg-white border border-[#E5E7EB] rounded-[14px] p-5 hover:border-[#3D472F] hover:bg-[#F0FDF4] transition-colors group">
                 <div className="flex items-start justify-between gap-3 mb-1">
-                  <p className="font-heading font-bold text-[15px] text-[#111827] group-hover:text-[#064E4A] transition-colors">
+                  <p className="font-heading font-bold text-[15px] text-[#111827] group-hover:text-[#3D472F] transition-colors">
                     {c.titleA} <span className="text-[#9CA3AF]">vs</span> {c.titleB}
                   </p>
                   {c.tag && (
@@ -64,14 +64,14 @@ export default function BandingkanHub() {
                   )}
                 </div>
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">{c.desc}</p>
-                <p className="font-body text-[12px] text-[#064E4A] mt-2 group-hover:underline">Lihat perbandingan →</p>
+                <p className="font-body text-[12px] text-[#3D472F] mt-2 group-hover:underline">Lihat perbandingan →</p>
               </Link>
             ))}
           </div>
 
           <div className="space-y-2 pt-2">
-            <Link href="/harga-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga semua model →</Link>
-            <Link href="/panduan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Panduan beli kereta terpakai →</Link>
+            <Link href="/harga-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga semua model →</Link>
+            <Link href="/panduan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Panduan beli kereta terpakai →</Link>
           </div>
         </div>
       </Shell>

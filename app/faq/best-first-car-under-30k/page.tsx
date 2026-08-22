@@ -85,7 +85,7 @@ export default function FirstCarUnder30k() {
 
           {/* Quick Answer */}
           <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-            <p className="text-lg font-semibold text-[#064E4A] mb-2">Jawapan Ringkas</p>
+            <p className="text-lg font-semibold text-[#3D472F] mb-2">Jawapan Ringkas</p>
             <p className="text-[#374151]">
               <strong>Perodua Myvi (2015–2020)</strong> adalah kereta pertama terbaik bawah RM30k. Harganya berpatutan (RM24–28k), boleh harap, pegang nilai, dan alat gantinya murah. Kalau anda lebih suka sedan, ambil <strong>Honda City (2014–2018)</strong>.
             </p>
@@ -96,7 +96,7 @@ export default function FirstCarUnder30k() {
             <h2 className="text-2xl font-bold text-[#111827] mb-4">Kenapa Kereta Ini?</h2>
 
             <div className="space-y-6">
-              <div className="border-l-4 border-[#064E4A] pl-4">
+              <div className="border-l-4 border-[#3D472F] pl-4">
                 <h3 className="text-lg font-semibold text-[#111827] mb-2">1. Perodua Myvi (Terbaik Keseluruhan)</h3>
                 <p className="text-[#374151] mb-3">
                   <strong>Anggaran harga:</strong> RM24,000–RM28,000 (model 2018, 80k km)
@@ -113,7 +113,7 @@ export default function FirstCarUnder30k() {
                 </p>
               </div>
 
-              <div className="border-l-4 border-[#064E4A] pl-4">
+              <div className="border-l-4 border-[#3D472F] pl-4">
                 <h3 className="text-lg font-semibold text-[#111827] mb-2">2. Honda City (Paling Selesa)</h3>
                 <p className="text-[#374151] mb-3">
                   <strong>Anggaran harga:</strong> RM25,000–RM30,000 (model 2016, 100k km)
@@ -130,7 +130,7 @@ export default function FirstCarUnder30k() {
                 </p>
               </div>
 
-              <div className="border-l-4 border-[#064E4A] pl-4">
+              <div className="border-l-4 border-[#3D472F] pl-4">
                 <h3 className="text-lg font-semibold text-[#111827] mb-2">3. Toyota Vios (Pilihan Selamat)</h3>
                 <p className="text-[#374151] mb-3">
                   <strong>Anggaran harga:</strong> RM22,000–RM26,000 (model 2013, 120k km)
@@ -187,25 +187,25 @@ export default function FirstCarUnder30k() {
                     <td className="border border-[#E5E7EB] p-3">Perodua Myvi 1.5 H</td>
                     <td className="border border-[#E5E7EB] p-3">2018</td>
                     <td className="border border-[#E5E7EB] p-3">RM24–28k</td>
-                    <td className="border border-[#E5E7EB] p-3"><Link href="/" className="text-[#064E4A] underline">Semak</Link></td>
+                    <td className="border border-[#E5E7EB] p-3"><Link href="/" className="text-[#3D472F] underline">Semak</Link></td>
                   </tr>
                   <tr className="bg-[#F9FAFB]">
                     <td className="border border-[#E5E7EB] p-3">Honda City 1.5 S</td>
                     <td className="border border-[#E5E7EB] p-3">2016</td>
                     <td className="border border-[#E5E7EB] p-3">RM25–30k</td>
-                    <td className="border border-[#E5E7EB] p-3"><Link href="/" className="text-[#064E4A] underline">Semak</Link></td>
+                    <td className="border border-[#E5E7EB] p-3"><Link href="/" className="text-[#3D472F] underline">Semak</Link></td>
                   </tr>
                   <tr>
                     <td className="border border-[#E5E7EB] p-3">Toyota Vios 1.5</td>
                     <td className="border border-[#E5E7EB] p-3">2013</td>
                     <td className="border border-[#E5E7EB] p-3">RM22–26k</td>
-                    <td className="border border-[#E5E7EB] p-3"><Link href="/" className="text-[#064E4A] underline">Semak</Link></td>
+                    <td className="border border-[#E5E7EB] p-3"><Link href="/" className="text-[#3D472F] underline">Semak</Link></td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <p className="text-sm text-[#6B7280] mt-4">
-              💡 <strong>Tip:</strong> Semak harga pasaran untuk mana-mana nombor plat sebelum buat tawaran. Ada nombor plat penjual? <Link href="/" className="text-[#064E4A] underline">Semak serta-merta</Link>.
+              💡 <strong>Tip:</strong> Semak harga pasaran untuk mana-mana nombor plat sebelum buat tawaran. Ada nombor plat penjual? <Link href="/" className="text-[#3D472F] underline">Semak serta-merta</Link>.
             </p>
           </section>
 
@@ -214,35 +214,35 @@ export default function FirstCarUnder30k() {
             <h2 className="text-2xl font-bold text-[#111827] mb-4">Senarai Semak Sebelum Beli</h2>
             <div className="space-y-4">
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-6 h-6 bg-[#064E4A] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
+                <div className="flex-shrink-0 w-6 h-6 bg-[#3D472F] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
                 <div>
                   <p className="font-semibold text-[#111827]">Buat semakan rekod accident &amp; claim insurans</p>
                   <p className="text-sm text-[#6B7280]">Dedahkan sejarah kemalangan, kerosakan banjir dan rekod claim. Jangan langkau.</p>
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-6 h-6 bg-[#064E4A] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
+                <div className="flex-shrink-0 w-6 h-6 bg-[#3D472F] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
                 <div>
                   <p className="font-semibold text-[#111827]">Semak harga pasaran guna nombor plat</p>
                   <p className="text-sm text-[#6B7280]">Tahu harga pasaran sebelum berunding. Jangan bayar lebih.</p>
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-6 h-6 bg-[#064E4A] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
+                <div className="flex-shrink-0 w-6 h-6 bg-[#3D472F] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
                 <div>
                   <p className="font-semibold text-[#111827]">Sahkan varian sama dengan rekod sebenar</p>
                   <p className="text-sm text-[#6B7280]">Penjual kata "1.5 H" tapi rekod tunjuk "1.5 G"? Berundur.</p>
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-6 h-6 bg-[#064E4A] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
+                <div className="flex-shrink-0 w-6 h-6 bg-[#3D472F] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
                 <div>
                   <p className="font-semibold text-[#111827]">Test drive dalam pelbagai keadaan</p>
                   <p className="text-sm text-[#6B7280]">Trafik bandar, highway, lalu bonggol. Dengar bunyi pelik.</p>
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-6 h-6 bg-[#064E4A] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
+                <div className="flex-shrink-0 w-6 h-6 bg-[#3D472F] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
                 <div>
                   <p className="font-semibold text-[#111827]">Rundingkan RM2–5k bawah harga minta</p>
                   <p className="text-sm text-[#6B7280]">Guna harga pasaran sebagai asas. Pembeli berpengalaman sentiasa berunding.</p>
@@ -303,7 +303,7 @@ export default function FirstCarUnder30k() {
           {/* Related */}
           <div className="mt-12 pt-8 border-t">
             <h3 className="text-lg font-semibold text-[#111827] mb-4">Panduan Berkaitan</h3>
-            <ul className="space-y-2 text-[#064E4A]">
+            <ul className="space-y-2 text-[#3D472F]">
               <li><Link href="/faq/how-to-spot-flood-cars" className="underline">Cara Kesan Kereta Banjir</Link></li>
               <li><Link href="/faq/what-to-check-buying-used-car" className="underline">Senarai Semak Penuh: Apa Nak Periksa Bila Beli Kereta Terpakai</Link></li>
               <li><Link href="/faq/how-to-negotiate-used-car" className="underline">Cara Rundingkan Harga Kereta Terpakai</Link></li>

@@ -156,14 +156,14 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
           void send(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')))
         }}
         className={`rounded-[12px] border-[1.5px] border-dashed p-4 text-center transition-colors ${
-          over ? 'border-[#064E4A] bg-[#F0FDF4]' : 'border-[#D1D5DB] bg-[#F9FAFB]'
+          over ? 'border-[#3D472F] bg-[#F0FDF4]' : 'border-[#D1D5DB] bg-[#F9FAFB]'
         }`}
       >
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy || full || disabled}
-          className="w-full min-h-[44px] font-heading font-bold text-[14px] text-[#064E4A] disabled:opacity-50"
+          className="w-full min-h-[44px] font-heading font-bold text-[14px] text-[#3D472F] disabled:opacity-50"
         >
           {busy ? 'Memuat naik…' : full ? `${count} screenshot dimuat naik` : 'Pilih atau seret screenshot ke sini'}
         </button>

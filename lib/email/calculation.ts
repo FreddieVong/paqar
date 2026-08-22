@@ -29,10 +29,10 @@ export async function sendCalculationEmail(params: {
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
-      <h2 style="color:#064E4A;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
+      <h2 style="color:#3D472F;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
       <p style="color:#9CA3AF;font-size:12px;margin:0 0 24px;text-transform:uppercase;letter-spacing:0.08em;">Kiraan Ansuran Kereta</p>
 
-      <div style="background:#14453d;border-radius:14px;padding:20px;margin-bottom:16px;">
+      <div style="background:#3D472F;border-radius:14px;padding:20px;margin-bottom:16px;">
         <p style="color:rgba(255,255,255,0.5);font-size:11px;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.08em;">Ansuran Bulanan</p>
         <p style="color:#fff;font-size:32px;font-weight:900;margin:0;">RM${fmt(params.monthlyRm)}</p>
       </div>
@@ -50,14 +50,14 @@ export async function sendCalculationEmail(params: {
         kami beritahu apa patut anda buat. Disemak oleh manusia, RM29.
       </p>
       <a href="https://paqar.my/#semak"
-         style="display:block;background:#064E4A;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin-bottom:16px;">
+         style="display:block;background:#3D472F;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin-bottom:16px;">
         Semak Kereta Itu →
       </a>
 
       <p style="color:#6B7280;font-size:13px;line-height:1.8;margin:0 0 4px;">
-        <a href="https://paqar.my/harga-kereta-terpakai" style="color:#064E4A;">Harga pasaran mengikut model →</a><br/>
-        <a href="https://paqar.my/checklist-beli-kereta-terpakai" style="color:#064E4A;">Checklist sebelum bayar deposit →</a><br/>
-        <a href="https://paqar.my/kira-ansuran-kereta" style="color:#064E4A;">Kira semula dengan angka lain →</a>
+        <a href="https://paqar.my/harga-kereta-terpakai" style="color:#3D472F;">Harga pasaran mengikut model →</a><br/>
+        <a href="https://paqar.my/checklist-beli-kereta-terpakai" style="color:#3D472F;">Checklist sebelum bayar deposit →</a><br/>
+        <a href="https://paqar.my/kira-ansuran-kereta" style="color:#3D472F;">Kira semula dengan angka lain →</a>
       </p>
 
       <p style="color:#9CA3AF;font-size:11px;margin-top:24px;line-height:1.7;">

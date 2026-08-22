@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       (
         <div style={{
           width: '1200px', height: '630px',
-          background: '#064E4A',
+          background: '#3D472F',
           display: 'flex', flexDirection: 'column',
           padding: '72px 80px',
           fontFamily: 'sans-serif',
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
 
         {/* Right panel — brand & headline */}
         <div style={{
-          flex: 1, background: '#064E4A',
+          flex: 1, background: '#3D472F',
           display: 'flex', flexDirection: 'column',
           padding: '56px 64px', justifyContent: 'space-between',
         }}>

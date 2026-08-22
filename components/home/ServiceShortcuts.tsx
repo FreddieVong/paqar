@@ -36,7 +36,7 @@ export function ServiceShortcuts() {
         {/* 1. Paqar's own product. Scrolls to the form, never away from it. */}
         <a
           href="#semak"
-          className="bg-[#064E4A] rounded-[14px] px-4 py-4 min-h-[44px] flex flex-col justify-between hover:bg-[#053D3A] transition-colors focus:outline-none focus:ring-[3px] focus:ring-[#064E4A]/30"
+          className="bg-[#3D472F] rounded-[14px] px-4 py-4 min-h-[44px] flex flex-col justify-between hover:bg-[#2E3523] transition-colors focus:outline-none focus:ring-[3px] focus:ring-[#3D472F]/30"
         >
           <div>
             <p className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/50 mb-1.5">
@@ -56,7 +56,7 @@ export function ServiceShortcuts() {
         <a
           href="/pemeriksaan-fizikal"
           onClick={() => analytics.ctaClicked({ cta: 'workshop', surface: 'home' })}
-          className="bg-white border border-[#E5E7EB] rounded-[14px] px-4 py-4 min-h-[44px] flex flex-col justify-between hover:border-[#064E4A] transition-colors focus:outline-none focus:ring-[3px] focus:ring-[#064E4A]/20"
+          className="bg-white border border-[#E5E7EB] rounded-[14px] px-4 py-4 min-h-[44px] flex flex-col justify-between hover:border-[#3D472F] transition-colors focus:outline-none focus:ring-[3px] focus:ring-[#3D472F]/20"
         >
           <div>
             <p className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-[#9CA3AF] mb-1.5">
@@ -69,14 +69,14 @@ export function ServiceShortcuts() {
               Bengkel bebas periksa kereta sebelum anda bayar deposit.
             </p>
           </div>
-          <span className="font-body text-[12px] text-[#064E4A] mt-3">dari RM336 →</span>
+          <span className="font-body text-[12px] text-[#3D472F] mt-3">dari RM336 →</span>
         </a>
 
         {/* 3. Partner: Bjak comparison. */}
         <a
           href="/banding-insurans"
           onClick={() => analytics.ctaClicked({ cta: 'bjak', surface: 'home' })}
-          className="bg-white border border-[#E5E7EB] rounded-[14px] px-4 py-4 min-h-[44px] flex flex-col justify-between hover:border-[#064E4A] transition-colors focus:outline-none focus:ring-[3px] focus:ring-[#064E4A]/20"
+          className="bg-white border border-[#E5E7EB] rounded-[14px] px-4 py-4 min-h-[44px] flex flex-col justify-between hover:border-[#3D472F] transition-colors focus:outline-none focus:ring-[3px] focus:ring-[#3D472F]/20"
         >
           <div>
             <p className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-[#9CA3AF] mb-1.5">
@@ -89,7 +89,7 @@ export function ServiceShortcuts() {
               Bandingkan harga dari semua syarikat sebelum tukar nama.
             </p>
           </div>
-          <span className="font-body text-[12px] text-[#064E4A] mt-3">Percuma →</span>
+          <span className="font-body text-[12px] text-[#3D472F] mt-3">Percuma →</span>
         </a>
       </div>
 

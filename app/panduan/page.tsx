@@ -137,10 +137,10 @@ export default function PanduanPage() {
               <Link
                 key={guide.href}
                 href={guide.href}
-                className="block bg-white border border-[#E5E7EB] rounded-[14px] p-5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group"
+                className="block bg-white border border-[#E5E7EB] rounded-[14px] p-5 hover:border-[#3D472F] hover:bg-[#F0FDF4] transition-colors group"
               >
                 <div className="flex items-start justify-between gap-3 mb-1">
-                  <p className="font-heading font-bold text-[15px] text-[#111827] group-hover:text-[#064E4A] transition-colors">
+                  <p className="font-heading font-bold text-[15px] text-[#111827] group-hover:text-[#3D472F] transition-colors">
                     {guide.title}
                   </p>
                   {guide.tag && (
@@ -152,7 +152,7 @@ export default function PanduanPage() {
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
                   {guide.desc}
                 </p>
-                <p className="font-body text-[12px] text-[#064E4A] mt-2 group-hover:underline">
+                <p className="font-body text-[12px] text-[#3D472F] mt-2 group-hover:underline">
                   Baca panduan →
                 </p>
               </Link>
@@ -173,17 +173,17 @@ export default function PanduanPage() {
                 { href: '/harga-kereta-terpakai/honda-city',    label: 'Honda City' },
               ].map((m) => (
                 <Link key={m.href} href={m.href}
-                  className="bg-white border border-[#E5E7EB] rounded-[10px] px-3 py-2.5 font-body text-[13px] text-[#374151] hover:border-[#064E4A] hover:text-[#064E4A] transition-colors text-center">
+                  className="bg-white border border-[#E5E7EB] rounded-[10px] px-3 py-2.5 font-body text-[13px] text-[#374151] hover:border-[#3D472F] hover:text-[#3D472F] transition-colors text-center">
                   {m.label}
                 </Link>
               ))}
             </div>
-            <Link href="/harga-kereta-terpakai" className="block font-body text-[12px] text-[#064E4A] mt-2 underline underline-offset-2">
+            <Link href="/harga-kereta-terpakai" className="block font-body text-[12px] text-[#3D472F] mt-2 underline underline-offset-2">
               Lihat semua model →
             </Link>
           </div>
 
-          <div className="bg-[#064E4A] rounded-[16px] p-5 text-center">
+          <div className="bg-[#3D472F] rounded-[16px] p-5 text-center">
             <p className="font-heading font-extrabold text-[17px] text-white mb-2">
               Dah baca panduan, tapi ada kereta tertentu?
             </p>

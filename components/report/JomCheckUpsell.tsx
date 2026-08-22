@@ -31,12 +31,12 @@ export function JomCheckUpsell({ checkId, claimToken }: Props) {
   }
 
   return (
-    <div className="bg-white border-l-[3px] border-l-[#064E4A] border border-[#E5E7EB] rounded-[14px] p-5">
+    <div className="bg-white border-l-[3px] border-l-[#3D472F] border border-[#E5E7EB] rounded-[14px] p-5">
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A]">
+        <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#3D472F]">
           Semakan Accident/Claim Insurans
         </p>
-        <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0">+RM88</span>
+        <span className="font-heading font-bold text-[12px] text-[#3D472F] flex-shrink-0">+RM88</span>
       </div>
       {/* NOT "meter kereta ni pernah dipusing?". Paqar holds no independent
           dated odometer reading, so it cannot answer that question — leading
@@ -68,7 +68,7 @@ export function JomCheckUpsell({ checkId, claimToken }: Props) {
         type="button"
         onClick={handleUpgrade}
         disabled={isPending}
-        className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 disabled:opacity-60 transition-colors"
+        className="w-full bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 disabled:opacity-60 transition-colors"
       >
         {isPending ? 'Memproses…' : 'Tambah ke Laporan Ini — RM88 →'}
       </button>

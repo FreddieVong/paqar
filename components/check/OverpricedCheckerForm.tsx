@@ -75,7 +75,7 @@ const VERDICT_CONFIG: Record<Verdict, {
   },
   fair_price: {
     badge:      'WAJAR',
-    badgeCls:   'bg-[#064E4A] text-white',
+    badgeCls:   'bg-[#3D472F] text-white',
     cardBg:     'bg-[#F0FDF4]',
     cardBorder: 'border-[#BBF7D0]',
     copy:       () => 'Semak maklumat kenderaan dan soalan untuk penjual sebelum setuju.',
@@ -84,8 +84,8 @@ const VERDICT_CONFIG: Record<Verdict, {
   good_deal: {
     badge:      'BERBALOI',
     badgeCls:   'bg-[#0891B2] text-white',
-    cardBg:     'bg-[#F0FAFA]',
-    cardBorder: 'border-[#99D4D1]',
+    cardBg:     'bg-[#F4F6F0]',
+    cardBorder: 'border-[#CBD4BB]',
     copy:       () => 'Tapi kenapa murah? Semak sejarah kemalangan sebelum bayar deposit.',
     ctaSub:     PAID_REPORT_CTA_SUB,
   },
@@ -94,7 +94,7 @@ const VERDICT_CONFIG: Record<Verdict, {
 const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
   font-heading font-semibold text-[16px] text-[#111827]
   placeholder:text-[#D1D5DB] placeholder:font-normal
-  focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+  focus:outline-none focus:border-[#3D472F] focus:ring-[3px] focus:ring-[#3D472F]/10
   transition-all`
 
 const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.5'
@@ -411,7 +411,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
           {checkError && <p className="font-body text-[13px] text-[#DC2626]">{checkError}</p>}
           <button
             type="submit"
-            className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors"
+            className="w-full bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors"
           >
             Semak Harga Percuma →
           </button>
@@ -430,7 +430,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
         <CollapsedSummary brand={brand} model={model} year={year} askingPrice={askingPrice} onReset={resetForm} />
         <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-8 text-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-7 h-7 rounded-full border-[3px] border-[#E5E7EB] border-t-[#064E4A] animate-spin" />
+            <div className="w-7 h-7 rounded-full border-[3px] border-[#E5E7EB] border-t-[#3D472F] animate-spin" />
             <p className="font-heading font-bold text-[14px] text-[#6B7280]">Semak harga pasaran…</p>
           </div>
         </div>
@@ -517,7 +517,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
           <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827]">
             Taip Nombor Plat Kereta
           </p>
-          <div className="bg-[#1a1a1a] rounded-[7px] p-[5px] border border-transparent focus-within:border-[#064E4A] focus-within:shadow-[0_0_0_3px_rgba(6,78,74,0.15)] transition-all duration-150">
+          <div className="bg-[#1a1a1a] rounded-[7px] p-[5px] border border-transparent focus-within:border-[#3D472F] focus-within:shadow-[0_0_0_3px_rgba(6,78,74,0.15)] transition-all duration-150">
             <div className="relative bg-[#1a1a1a] rounded-[3px] flex items-center justify-center min-h-[60px] px-3">
               <input
                 type="text"
@@ -552,7 +552,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
           )}
           <button
             type="submit" disabled={plateBusy}
-            className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center transition-colors disabled:opacity-60"
+            className="w-full bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[14px] rounded-[12px] py-3.5 text-center transition-colors disabled:opacity-60"
           >
             {plateBusy ? 'Memproses…' : 'Lihat harga tengah iklan setanding dan jumlah yang patut anda tawarkan — RM12'}
           </button>
@@ -571,7 +571,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
               onChange={e => setLeadEmail(e.target.value)}
               placeholder="Simpan keputusan ini ke emel anda"
               required
-              className="flex-1 bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB] focus:outline-none focus:border-[#064E4A] transition-all min-w-0"
+              className="flex-1 bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB] focus:outline-none focus:border-[#3D472F] transition-all min-w-0"
             />
             <button
               type="submit" disabled={leadBusy}
@@ -590,7 +590,7 @@ export function OverpricedCheckerForm({ initialBrand = '', initialModel = '', in
         <p className="font-body text-[12px] text-center">
           <a
             href={`/kira-ansuran-kereta?harga=${parseInt(askingPrice, 10)}`}
-            className="text-[#064E4A] underline underline-offset-2"
+            className="text-[#3D472F] underline underline-offset-2"
           >
             Kira ansuran bulanan untuk RM{(parseInt(askingPrice, 10) || 0).toLocaleString()} →
           </a>
@@ -620,7 +620,7 @@ function CollapsedSummary({
       </div>
       <button
         type="button" onClick={onReset}
-        className="font-heading font-bold text-[12px] text-[#064E4A] ml-4 flex-shrink-0"
+        className="font-heading font-bold text-[12px] text-[#3D472F] ml-4 flex-shrink-0"
       >
         Ubah →
       </button>

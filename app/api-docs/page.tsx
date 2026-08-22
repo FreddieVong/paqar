@@ -111,7 +111,7 @@ export default function ApiDocsPage() {
           </div>
 
           <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-5">
-            <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1.5">Attribution</p>
+            <p className="font-heading font-bold text-[13px] text-[#3D472F] mb-1.5">Attribution</p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed">
               This data is free to use. Please cite <strong>Paqar.my</strong> and link back to{' '}
               <span className="font-mono text-[12px]">https://paqar.my</span> when you quote these figures.
@@ -121,7 +121,7 @@ export default function ApiDocsPage() {
           {ENDPOINTS.map(endpoint => (
             <section key={endpoint.id} className="space-y-3">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono font-bold text-[11px] bg-[#064E4A] text-white px-2 py-1 rounded">
+                <span className="font-mono font-bold text-[11px] bg-[#3D472F] text-white px-2 py-1 rounded">
                   {endpoint.method}
                 </span>
                 <code className="font-mono text-[13px] text-[#111827] font-semibold break-all">
@@ -138,7 +138,7 @@ export default function ApiDocsPage() {
                 <div className="space-y-1">
                   {endpoint.params.map(([name, desc]) => (
                     <div key={name} className="flex gap-2 items-baseline">
-                      <code className="font-mono text-[12px] text-[#064E4A] font-semibold flex-shrink-0">{name}</code>
+                      <code className="font-mono text-[12px] text-[#3D472F] font-semibold flex-shrink-0">{name}</code>
                       <span className="font-body text-[12px] text-[#6B7280] leading-relaxed">{desc}</span>
                     </div>
                   ))}
@@ -159,7 +159,7 @@ export default function ApiDocsPage() {
                 <div className="space-y-1">
                   {endpoint.fields.map(([name, type, desc]) => (
                     <div key={name} className="flex gap-2 items-baseline flex-wrap">
-                      <code className="font-mono text-[12px] text-[#064E4A] font-semibold flex-shrink-0">{name}</code>
+                      <code className="font-mono text-[12px] text-[#3D472F] font-semibold flex-shrink-0">{name}</code>
                       <span className="font-mono text-[10px] text-[#9CA3AF] flex-shrink-0">{type}</span>
                       <span className="font-body text-[12px] text-[#6B7280] leading-relaxed">{desc}</span>
                     </div>
@@ -217,14 +217,14 @@ export default function ApiDocsPage() {
             {contactHref && (
               <p className="font-body text-[13px] text-[#6B7280]">
                 Questions or need a higher rate limit?{' '}
-                <a href={contactHref} target="_blank" rel="noopener noreferrer" className="text-[#064E4A] font-semibold underline">Message us on WhatsApp</a>.
+                <a href={contactHref} target="_blank" rel="noopener noreferrer" className="text-[#3D472F] font-semibold underline">Message us on WhatsApp</a>.
               </p>
             )}
             <p className="font-body text-[13px] text-[#6B7280]">
               Machine-readable summary:{' '}
-              <a href="/llms.txt" className="text-[#064E4A] font-semibold underline">/llms.txt</a>
+              <a href="/llms.txt" className="text-[#3D472F] font-semibold underline">/llms.txt</a>
               {' · '}
-              <Link href="/tentang" className="text-[#064E4A] font-semibold underline">About Paqar</Link>
+              <Link href="/tentang" className="text-[#3D472F] font-semibold underline">About Paqar</Link>
             </p>
           </div>
 

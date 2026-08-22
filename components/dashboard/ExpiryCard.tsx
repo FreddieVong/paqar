@@ -113,7 +113,7 @@ export function ExpiryCard({ docType, expiry }: Props) {
           <button
             onClick={() => { setExpanded(true); setDateValue(expiry?.expires_on ?? '') }}
             className={`font-heading font-semibold text-[12px] border border-[#E5E7EB] rounded-lg px-3 py-1.5 bg-white flex-shrink-0 ${
-              expiry ? 'text-[#064E4A]' : 'text-[#6B7280] border-dashed'
+              expiry ? 'text-[#3D472F]' : 'text-[#6B7280] border-dashed'
             }`}
           >
             {expiry ? 'Edit' : '+ Tambah'}
@@ -131,9 +131,9 @@ export function ExpiryCard({ docType, expiry }: Props) {
             value={dateValue}
             onChange={(e) => setDateValue(e.target.value)}
             min={new Date().toISOString().split('T')[0]}
-            className="w-full bg-[#F9FAFB] border-[1.5px] border-[#064E4A] rounded-xl px-4 py-3
+            className="w-full bg-[#F9FAFB] border-[1.5px] border-[#3D472F] rounded-xl px-4 py-3
                        font-heading font-semibold text-[15px] text-[#111827]
-                       focus:outline-none focus:ring-[3px] focus:ring-[#064E4A]/10 mb-3"
+                       focus:outline-none focus:ring-[3px] focus:ring-[#3D472F]/10 mb-3"
           />
           {fieldError && (
             <p className="font-body text-[12px] text-[#DC2626] mb-3">{fieldError}</p>
@@ -142,7 +142,7 @@ export function ExpiryCard({ docType, expiry }: Props) {
             <button
               onClick={handleSave}
               disabled={isPending}
-              className="flex-1 bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[14px] rounded-xl py-3 disabled:opacity-60 transition-colors"
+              className="flex-1 bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-bold text-[14px] rounded-xl py-3 disabled:opacity-60 transition-colors"
             >
               {isPending ? 'Menyimpan…' : 'Simpan →'}
             </button>

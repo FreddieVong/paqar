@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import { BRAND } from '@/lib/brand'
 import { render, cleanup, screen } from '@testing-library/react'
 
 vi.mock('server-only', () => ({}))
@@ -58,7 +59,7 @@ const NOT_LINKABLE = [
   ['empty string',                ''],
 ] as const
 
-const chipCls = 'inline-block bg-[#F0FAFA]'
+const chipCls = `inline-block bg-[${BRAND.surface}]`
 
 function renderReport(
   listings: { price: number; url?: string | null }[],

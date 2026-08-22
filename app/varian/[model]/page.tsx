@@ -152,7 +152,7 @@ export default async function VariantGuidePage({ params }: Props) {
                     <div className="space-y-1.5 mb-3">
                       {v.differentiators.map(d => (
                         <div key={d} className="flex gap-2 items-start">
-                          <span className="text-[#064E4A] font-bold flex-shrink-0">·</span>
+                          <span className="text-[#3D472F] font-bold flex-shrink-0">·</span>
                           <p className="font-body text-[13px] text-[#374151]">{d}</p>
                         </div>
                       ))}
@@ -273,13 +273,13 @@ export default async function VariantGuidePage({ params }: Props) {
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">
               Panduan berkaitan
             </p>
-            <Link href={guide.hubHref ?? `/harga-kereta-terpakai/${guide.modelSlug}`} className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+            <Link href={guide.hubHref ?? `/harga-kereta-terpakai/${guide.modelSlug}`} className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">
               Harga {guide.brand} {guide.model} terpakai mengikut tahun →
             </Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">
               Checklist sebelum bayar deposit →
             </Link>
-            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">
               Risiko beli kereta terpakai →
             </Link>
           </div>

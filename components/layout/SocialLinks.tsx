@@ -54,7 +54,7 @@ export function SocialLinks({ className = '' }: { className?: string }) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={label}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] text-[#9CA3AF] hover:text-[#064E4A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064E4A] focus-visible:ring-offset-2 transition-colors"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] text-[#9CA3AF] hover:text-[#3D472F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3D472F] focus-visible:ring-offset-2 transition-colors"
         >
           {/* fill="currentColor" is what lets the text colour classes above
               drive both the resting and hover state of the glyph. */}

@@ -36,7 +36,7 @@ export function CollapsibleSampleReport({
           if (!open) analytics.sampleReportClicked({ source })
           setOpen(v => !v)
         }}
-        className="font-body text-[13px] text-[#6B7280] underline underline-offset-2 min-h-[44px] inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064E4A]/40 rounded"
+        className="font-body text-[13px] text-[#6B7280] underline underline-offset-2 min-h-[44px] inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3D472F]/40 rounded"
       >
         {open ? 'Sembunyikan contoh laporan ▲' : 'Lihat contoh laporan ▼'}
       </button>

@@ -216,7 +216,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
           )}
 
           {displayState.state === 'verified_paid' && (
-            <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[16px] p-6">
+            <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-[16px] p-6">
               <Image
                 src="/paqar-logo.png"
                 alt="Paqar"
@@ -231,7 +231,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
                 Pembayaran Berjaya
               </p>
               {plate && (
-                <p className="font-heading font-extrabold text-[28px] tracking-[.1em] text-[#064E4A] mb-2">
+                <p className="font-heading font-extrabold text-[28px] tracking-[.1em] text-[#3D472F] mb-2">
                   {plate}
                 </p>
               )}
@@ -239,7 +239,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
                 Laporan anda sedia untuk dilihat. Simpan link ini — anda boleh akses semula pada bila-bila masa.
               </p>
               {showManualProcessingNote && (
-                <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-3 bg-white/70 border border-[#99D4D1] rounded-[10px] px-3 py-2">
+                <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-3 bg-white/70 border border-[#CBD4BB] rounded-[10px] px-3 py-2">
                   Semakan Accident/Claim Insurans akan dikemaskini dalam laporan
                   anda dalam masa 24 jam. Kami akan e-mel anda bila ia siap.
                 </p>
@@ -274,7 +274,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
                   href={pendingSupportUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mt-3 bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
+                  className="inline-block mt-3 bg-[#3D472F] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
                 >
                   Hubungi Paqar di WhatsApp
                 </a>
@@ -309,7 +309,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
                   href={invalidSupportUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mt-3 bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
+                  className="inline-block mt-3 bg-[#3D472F] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
                 >
                   Hubungi Paqar di WhatsApp
                 </a>
@@ -322,7 +322,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
           {reportUrl && credentialWorks && (
             <a
               href={reportUrl}
-              className="block w-full bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 hover:bg-[#053D3A] transition-colors"
+              className="block w-full bg-[#3D472F] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 hover:bg-[#2E3523] transition-colors"
             >
               Lihat Laporan Saya →
             </a>
@@ -349,7 +349,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
                   href={pendingSupportUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mt-3 bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
+                  className="inline-block mt-3 bg-[#3D472F] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
                 >
                   Hubungi Paqar di WhatsApp
                 </a>
@@ -360,7 +360,7 @@ export default async function LaporanSelesaiPage({ params, searchParams }: Props
           {showJomCheckNudge && (
             <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
               Kereta ini pernah accident atau banjir? Tambah{' '}
-              <span className="font-semibold text-[#064E4A]">Semakan Accident/Claim Insurans (+RM88)</span>{' '}
+              <span className="font-semibold text-[#3D472F]">Semakan Accident/Claim Insurans (+RM88)</span>{' '}
               terus dalam laporan anda.
             </p>
           )}

@@ -149,7 +149,7 @@ export default async function HomePage() {
                 "Tersalah beli" carries both halves of that fear in two words,
                 the money and the lemon, which a price-only line would not. */}
             <span className="block text-balance">Semak dulu,</span>
-            <span className="block text-[#064E4A]">jangan tersalah beli kereta.</span>
+            <span className="block text-[#3D472F]">jangan tersalah beli kereta.</span>
           </h1>
 
           {/* ONE PLAN, ONE OUTCOME.
@@ -211,7 +211,7 @@ export default async function HomePage() {
           rather than competing with it. */}
       <section className="bg-white px-5 py-12 md:py-16 border-t border-[#F3F4F6]">
         <div className="max-w-5xl mx-auto">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
             Satu tempat sebelum beli kereta
           </p>
           <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827] mb-3">
@@ -234,14 +234,14 @@ export default async function HomePage() {
           the RM12 product's mistake was headlining the commodity half. */}
       <section className="bg-[#F8FAF7] px-5 py-12 md:py-16">
         <div className="max-w-xl mx-auto">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
             Apa yang anda dapat
           </p>
           <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827] mb-6">
             Satu kereta. Satu keputusan.
           </h2>
 
-          <div className="bg-[#14453d] rounded-[14px] px-5 py-5 mb-3">
+          <div className="bg-[#3D472F] rounded-[14px] px-5 py-5 mb-3">
             <div className="flex items-center gap-1.5 mb-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#FACC15] flex-shrink-0" />
               <span className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/45">
@@ -267,7 +267,7 @@ export default async function HomePage() {
               { title: 'Checklist sebelum deposit',   desc: 'Apa yang perlu disahkan sebelum anda bayar.' },
             ].map((item, i, arr) => (
               <div key={item.title} className={`flex gap-2.5 items-start py-3 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
-                <span className="w-[17px] h-[17px] rounded-full bg-[#14453d] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="w-[17px] h-[17px] rounded-full bg-[#3D472F] flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg width="8" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </span>
                 <div>
@@ -281,7 +281,7 @@ export default async function HomePage() {
           <div className="mt-3 text-right">
             <Link
               href="/contoh-laporan"
-              className="font-body text-[12px] text-[#14453d] font-semibold hover:underline underline-offset-2"
+              className="font-body text-[12px] text-[#3D472F] font-semibold hover:underline underline-offset-2"
             >
               Lihat contoh laporan →
             </Link>
@@ -294,7 +294,7 @@ export default async function HomePage() {
           anyone. Paqar operates AFTER discovery and ABOVE raw records. */}
       <section className="bg-white px-5 py-12 md:py-16">
         <div className="max-w-xl mx-auto">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
             Soalan yang berbaloi ditanya
           </p>
           <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827] mb-3">
@@ -333,7 +333,7 @@ export default async function HomePage() {
       {/* ── HAD & JAMINAN ──
           Replaces the fear-led black section. Limits stated plainly build more
           trust than warnings do, and this product is sold on trust. */}
-      <section className="bg-[#14453d] px-5 py-12 md:py-14">
+      <section className="bg-[#3D472F] px-5 py-12 md:py-14">
         <div className="max-w-xl mx-auto">
           <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-white/40 mb-3">
             Had &amp; jaminan
@@ -376,7 +376,7 @@ export default async function HomePage() {
       {/* ── SOALAN LAZIM ── */}
       <section className="bg-white px-5 py-12 md:py-16">
         <div className="max-w-xl mx-auto">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
             Soalan Lazim
           </p>
           <h2 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827] mb-6">
@@ -440,7 +440,7 @@ export default async function HomePage() {
           data, so this answers something buyers are already asking. */}
       <section className="bg-white px-5 py-12 md:py-16 border-t border-[#F3F4F6]">
         <div className="max-w-xl mx-auto">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
             Panduan Pilihan
           </p>
           <h2 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827] mb-2">
@@ -465,7 +465,7 @@ export default async function HomePage() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="font-body text-[13px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[8px] px-3 py-1.5 hover:bg-[#DCFCE7] transition-colors"
+                    className="font-body text-[13px] text-[#3D472F] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[8px] px-3 py-1.5 hover:bg-[#DCFCE7] transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -487,7 +487,7 @@ export default async function HomePage() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="font-body text-[13px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[8px] px-3 py-1.5 hover:bg-[#DCFCE7] transition-colors"
+                    className="font-body text-[13px] text-[#3D472F] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[8px] px-3 py-1.5 hover:bg-[#DCFCE7] transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -510,7 +510,7 @@ export default async function HomePage() {
           </p>
           <Link
             href="/#semak"
-            className="inline-block bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 hover:bg-[#053D3A] transition-colors"
+            className="inline-block bg-[#3D472F] text-white font-heading font-extrabold text-[15px] rounded-xl px-7 py-4 hover:bg-[#2E3523] transition-colors"
           >
             Semak kereta ini — {BASE_REPORT_LABEL} →
           </Link>
@@ -520,38 +520,38 @@ export default async function HomePage() {
       {/* ── FOOTER ── */}
       <footer className="bg-white border-t border-[#E5E7EB] px-5 py-6 text-center">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-4">
-          <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Checklist</Link>
+          <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Checklist</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Cara Beli</Link>
+          <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Cara Beli</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Risiko</Link>
+          <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Risiko</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Harga Model</Link>
+          <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Harga Model</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Kira Ansuran</Link>
+          <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Kira Ansuran</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/pemeriksaan-fizikal" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Pemeriksaan Fizikal</Link>
+          <Link href="/pemeriksaan-fizikal" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Pemeriksaan Fizikal</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/banding-insurans" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Banding Insurans</Link>
+          <Link href="/banding-insurans" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Banding Insurans</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/bandingkan" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Bandingkan</Link>
+          <Link href="/bandingkan" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Bandingkan</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/panduan" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Semua Panduan</Link>
+          <Link href="/panduan" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Semua Panduan</Link>
         </div>
         <p className="font-body text-[12px] text-[#D1D5DB] leading-relaxed mb-2">
           © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
         </p>
         <SocialLinks className="mb-2" />
         <div className="flex items-center justify-center gap-4">
-          <Link href="/tentang" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Tentang</Link>
+          <Link href="/tentang" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Tentang</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/privasi" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Privasi</Link>
+          <Link href="/privasi" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Privasi</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/terma" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Terma</Link>
+          <Link href="/terma" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Terma</Link>
           {contactHref && (
             <>
               <span className="text-[#E5E7EB]">·</span>
-              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Hubungi Kami</a>
+              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Hubungi Kami</a>
             </>
           )}
         </div>

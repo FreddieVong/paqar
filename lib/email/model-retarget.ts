@@ -32,7 +32,7 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
-      <h2 style="color:#064E4A;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
+      <h2 style="color:#3D472F;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
       <p style="color:#9CA3AF;font-size:12px;margin:0 0 24px;text-transform:uppercase;letter-spacing:0.08em;">Semak Sebelum Beli</p>
 
       <p style="color:#111827;font-size:15px;font-weight:700;margin:0 0 8px;">
@@ -44,7 +44,7 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
       </p>
 
       <a href="https://paqar.my"
-         style="display:block;background:#064E4A;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin-bottom:16px;">
+         style="display:block;background:#3D472F;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin-bottom:16px;">
         Semak Nombor Plat — dari RM29 →
       </a>
 
@@ -62,7 +62,7 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
 
       <p style="color:#9CA3AF;font-size:11px;margin-top:24px;line-height:1.7;">
         Anda menerima emel ini kerana menyemak harga ${carLabel} di Paqar.<br/>
-        <a href="https://paqar.my" style="color:#064E4A;text-decoration:none;">paqar.my</a>
+        <a href="https://paqar.my" style="color:#3D472F;text-decoration:none;">paqar.my</a>
         &nbsp;&middot;&nbsp;Bukan platform rasmi kerajaan
       </p>
     </div>

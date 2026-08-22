@@ -69,7 +69,7 @@ export async function sendReportReadyEmail(params: ReportReadyParams): Promise<v
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
-      <h2 style="color:#064E4A;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
+      <h2 style="color:#3D472F;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
       <p style="color:#9CA3AF;font-size:12px;margin:0 0 24px;text-transform:uppercase;letter-spacing:0.08em;">Laporan Siap Disemak</p>
 
       <div style="border:1px solid #BBF7D0;background:#F0FDF4;border-radius:14px;padding:20px;margin-bottom:20px;">
@@ -82,7 +82,7 @@ export async function sendReportReadyEmail(params: ReportReadyParams): Promise<v
       </div>
 
       <a href="${params.reportUrl}"
-         style="display:block;background:#064E4A;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin:0 0 8px;">
+         style="display:block;background:#3D472F;color:white;text-decoration:none;font-size:15px;font-weight:800;text-align:center;padding:14px 20px;border-radius:12px;margin:0 0 8px;">
         Buka Laporan Penuh →
       </a>
       <p style="color:#9CA3AF;font-size:11px;text-align:center;margin:0 0 20px;">
@@ -100,7 +100,7 @@ export async function sendReportReadyEmail(params: ReportReadyParams): Promise<v
       </p>
 
       <p style="color:#9CA3AF;font-size:12px;margin:0;">
-        Ada soalan? <a href="${supportUrl}" style="color:#064E4A;">WhatsApp kami</a>.
+        Ada soalan? <a href="${supportUrl}" style="color:#3D472F;">WhatsApp kami</a>.
       </p>
     </div>
   `

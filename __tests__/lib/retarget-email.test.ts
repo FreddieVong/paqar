@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { BRAND } from '@/lib/brand'
 
 // lib/email/retarget.ts pulls in server-only + the env schema — mock both so the
 // URL builder can be tested without a full environment.
@@ -62,13 +63,16 @@ describe('retarget email rendering', () => {
   // coral, which read as someone else's product.
   describe('brand fidelity', () => {
     it('uses the brand primary for the CTA, not a red alert colour', () => {
-      expect(html).toContain('bgcolor="#064E4A"')
+      expect(html).toContain(`bgcolor="${BRAND.primary}"`)
       expect(html).not.toContain('#DC2626')  // reserved for result states
       expect(html).not.toContain('#F05A50')  // the off-brand coral
     })
 
-    it('uses the deep teal block and the yellow accent, as the site does', () => {
-      expect(html).toContain('bgcolor="#14453d"')
+    it('uses the brand block and the yellow accent, as the site does', () => {
+      // Was a hardcoded deep teal. The brand moved to olive; the yellow is the
+      // logo's own accent and stays, because it belongs to the mark rather
+      // than to the palette around it.
+      expect(html).toContain(`bgcolor="${BRAND.primary}"`)
       expect(html).toContain('#FACC15')
     })
 
@@ -91,7 +95,7 @@ describe('retarget email rendering', () => {
     // fall back to the brand name in the brand colour.
     it('styles the alt text as a fallback wordmark', () => {
       expect(html).toMatch(/alt="Paqar"/)
-      expect(html).toMatch(/alt="Paqar"[\s\S]{0,220}color:#064E4A/)
+      expect(html).toMatch(new RegExp(`alt="Paqar"[\\s\\S]{0,220}color:${BRAND.primary}`))
     })
   })
 

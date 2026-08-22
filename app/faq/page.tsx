@@ -106,9 +106,9 @@ export default function FaqHubPage() {
                   <Link
                     key={item.slug}
                     href={`/faq/${item.slug}`}
-                    className="block bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group"
+                    className="block bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#3D472F] hover:bg-[#F0FDF4] transition-colors group"
                   >
-                    <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors mb-0.5">
+                    <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#3D472F] transition-colors mb-0.5">
                       {item.title}
                     </p>
                     <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
@@ -121,7 +121,7 @@ export default function FaqHubPage() {
           ))}
 
           <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[14px] p-5 space-y-2">
-            <p className="font-heading font-bold text-[14px] text-[#064E4A]">
+            <p className="font-heading font-bold text-[14px] text-[#3D472F]">
               Dah jumpa kereta yang berkenan?
             </p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed">
@@ -129,7 +129,7 @@ export default function FaqHubPage() {
             </p>
             <Link
               href="/"
-              className="inline-block bg-[#064E4A] text-white font-heading font-extrabold text-[13px] rounded-[10px] px-4 py-2.5 hover:bg-[#053D3A] transition-colors mt-1"
+              className="inline-block bg-[#3D472F] text-white font-heading font-extrabold text-[13px] rounded-[10px] px-4 py-2.5 hover:bg-[#2E3523] transition-colors mt-1"
             >
               Semak harga kereta →
             </Link>
@@ -137,9 +137,9 @@ export default function FaqHubPage() {
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Lagi</p>
-            <Link href="/panduan"              className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semua panduan pembeli →</Link>
-            <Link href="/harga-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga pasaran ikut model →</Link>
-            <Link href="/bandingkan"           className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Bandingkan model →</Link>
+            <Link href="/panduan"              className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Semua panduan pembeli →</Link>
+            <Link href="/harga-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga pasaran ikut model →</Link>
+            <Link href="/bandingkan"           className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Bandingkan model →</Link>
           </div>
 
         </div>

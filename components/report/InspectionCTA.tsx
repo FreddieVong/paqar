@@ -32,7 +32,7 @@ export function InspectionCTA({ plate, surface = 'report' }: Props) {
         <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#6B7280]">
           Pemeriksaan Fizikal
         </p>
-        <p className="font-heading font-bold text-[11px] text-[#064E4A]">dari RM336</p>
+        <p className="font-heading font-bold text-[11px] text-[#3D472F]">dari RM336</p>
       </div>
       <p className="font-heading font-bold text-[16px] text-[#111827] mb-3">
         Nak kepastian sebelum bayar deposit?

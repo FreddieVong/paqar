@@ -332,7 +332,7 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
           {/* Header */}
           <div>
             <p className="font-body text-[12px] text-[#9CA3AF] mb-2">
-              <Link href="/bandingkan" className="hover:text-[#064E4A] transition-colors">Perbandingan</Link>
+              <Link href="/bandingkan" className="hover:text-[#3D472F] transition-colors">Perbandingan</Link>
               {' '}→ {cfg.titleA} vs {cfg.titleB}
             </p>
             <h1 className="font-heading font-extrabold text-[22px] text-[#111827] leading-tight mb-3">
@@ -367,7 +367,7 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
                     <thead>
                       <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
                         <th className="font-heading font-bold text-[11px] text-left px-3 py-2.5 text-[#6B7280]">Tahun</th>
-                        <th className="font-heading font-bold text-[11px] text-center px-3 py-2.5 text-[#064E4A]">{cfg.titleA}</th>
+                        <th className="font-heading font-bold text-[11px] text-center px-3 py-2.5 text-[#3D472F]">{cfg.titleA}</th>
                         <th className="font-heading font-bold text-[11px] text-center px-3 py-2.5 text-[#1D4ED8]">{cfg.titleB}</th>
                       </tr>
                     </thead>
@@ -379,7 +379,7 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
                             {yearKeyA ? (
                               <Link href={`/harga-${yearKeyA}-${row.year}`}
                                 aria-label={`Semak harga ${cfg.titleA} ${row.year} terpakai`}
-                                className="text-[#064E4A] underline underline-offset-2">Semak →</Link>
+                                className="text-[#3D472F] underline underline-offset-2">Semak →</Link>
                             ) : '—'}
                           </td>
                           <td className="font-body text-center px-3 py-2.5">
@@ -414,7 +414,7 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
           {/* Pros / cons */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[12px] p-4">
-              <p className="font-heading font-bold text-[12px] text-[#064E4A] mb-2">{cfg.titleA}</p>
+              <p className="font-heading font-bold text-[12px] text-[#3D472F] mb-2">{cfg.titleA}</p>
               <ul className="space-y-1.5">
                 {cfg.prosA.map((p, i) => (
                   <li key={i} className="font-body text-[12px] text-[#374151] leading-snug flex gap-1.5">
@@ -470,7 +470,7 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
                 .filter(([s]) => s !== params.slug)
                 .map(([s, c]) => (
                   <Link key={s} href={`/bandingkan/${s}`}
-                    className="font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+                    className="font-body text-[13px] text-[#3D472F] underline underline-offset-2">
                     {c.titleA} vs {c.titleB} →
                   </Link>
                 ))}
@@ -489,7 +489,7 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
               <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">Panduan penuh</p>
               {guidesForComparison(params.slug).map(g => (
                 <Link key={g.href} href={g.href}
-                  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+                  className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">
                   {g.label} →
                 </Link>
               ))}
@@ -501,12 +501,12 @@ export default async function ComparisonPage({ params }: { params: { slug: strin
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF] mb-2">Harga mengikut model</p>
             <div className="flex gap-2">
               <Link href={`/harga-kereta-terpakai/${cfg.slugA}`}
-                className="font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+                className="font-body text-[13px] text-[#3D472F] underline underline-offset-2">
                 Harga {cfg.titleA} →
               </Link>
               <span className="text-[#E5E7EB]">·</span>
               <Link href={`/harga-kereta-terpakai/${cfg.slugB}`}
-                className="font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+                className="font-body text-[13px] text-[#3D472F] underline underline-offset-2">
                 Harga {cfg.titleB} →
               </Link>
             </div>

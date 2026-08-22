@@ -40,7 +40,7 @@ import type { MergedListing } from '@/lib/listing-merge'
 const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3.5
   font-heading font-semibold text-[16px] text-[#111827]
   placeholder:text-[#D1D5DB] placeholder:font-normal
-  focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+  focus:outline-none focus:border-[#3D472F] focus:ring-[3px] focus:ring-[#3D472F]/10
   transition-all`
 const LABEL_CLS = 'block font-heading font-bold text-[12px] text-[#111827] mb-1.5'
 
@@ -504,7 +504,7 @@ export function ListingIntakeForm({
               type="button"
               onClick={readListingUrl}
               disabled={phase === 'working' || busy}
-              className="w-full min-h-[44px] mt-2 bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[10px] disabled:opacity-60"
+              className="w-full min-h-[44px] mt-2 bg-[#3D472F] text-white font-heading font-bold text-[14px] rounded-[10px] disabled:opacity-60"
             >
               {phase === 'working' || busy ? 'Sedang baca iklan…' : 'Baca iklan ini →'}
             </button>
@@ -519,7 +519,7 @@ export function ListingIntakeForm({
           <button
             type="button"
             onClick={() => setShowUpload(true)}
-            className="w-full min-h-[44px] font-body text-[13px] text-[#064E4A] underline underline-offset-2 hover:text-[#053D3A]"
+            className="w-full min-h-[44px] font-body text-[13px] text-[#3D472F] underline underline-offset-2 hover:text-[#2E3523]"
           >
             Tiada link? Muat naik screenshot iklan
           </button>
@@ -564,7 +564,7 @@ export function ListingIntakeForm({
             ref={statusRef}
             role="status"
             aria-live="polite"
-            className="bg-white border-2 border-[#064E4A] rounded-[14px] p-4 shadow-[0_2px_12px_rgba(6,78,74,0.12)]"
+            className="bg-white border-2 border-[#3D472F] rounded-[14px] p-4 shadow-[0_2px_12px_rgba(6,78,74,0.12)]"
           >
             {/* The bar first, and full width. It is the part visible from the
                 corner of the eye — a buyer still looking at the drop zone sees
@@ -576,10 +576,10 @@ export function ListingIntakeForm({
             <div className="flex items-start gap-3">
               <span
                 aria-hidden="true"
-                className="w-6 h-6 mt-0.5 rounded-full border-[3px] border-[#BBF7D0] border-t-[#064E4A] animate-spin flex-shrink-0 motion-reduce:animate-none"
+                className="w-6 h-6 mt-0.5 rounded-full border-[3px] border-[#BBF7D0] border-t-[#3D472F] animate-spin flex-shrink-0 motion-reduce:animate-none"
               />
               <div className="min-w-0 flex-1">
-                <p className="font-heading font-extrabold text-[16px] text-[#064E4A] leading-snug">
+                <p className="font-heading font-extrabold text-[16px] text-[#3D472F] leading-snug">
                   {status}
                 </p>
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-0.5">
@@ -588,7 +588,7 @@ export function ListingIntakeForm({
               </div>
               {/* Proof of life. A number that keeps moving is the one thing a
                   spinner cannot be: unambiguously not frozen. */}
-              <span className="font-heading font-bold text-[13px] text-[#064E4A] tabular-nums flex-shrink-0 mt-1">
+              <span className="font-heading font-bold text-[13px] text-[#3D472F] tabular-nums flex-shrink-0 mt-1">
                 {elapsed}s
               </span>
             </div>
@@ -605,7 +605,7 @@ export function ListingIntakeForm({
               {[summary.brand.value, summary.model.value, summary.year.value].filter(Boolean).join(' · ') || 'Isi butiran kereta di bawah'}
             </p>
             {askPrice?.value != null && (
-              <p className="font-heading font-extrabold text-[18px] text-[#064E4A] mt-1">
+              <p className="font-heading font-extrabold text-[18px] text-[#3D472F] mt-1">
                 Seller minta RM{Number(askPrice.value).toLocaleString()}
               </p>
             )}
@@ -622,7 +622,7 @@ export function ListingIntakeForm({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="font-body text-[13px] text-[#064E4A] underline underline-offset-2 mt-2 min-h-[44px]"
+              className="font-body text-[13px] text-[#3D472F] underline underline-offset-2 mt-2 min-h-[44px]"
             >
               Maklumat salah? Ubah
             </button>
@@ -729,7 +729,7 @@ export function ListingIntakeForm({
             nothing in skips the save entirely. */}
         {phase === 'summary' && summary && (
           <button type="button" onClick={() => void saveThenCheck()} disabled={busy}
-                  className="w-full min-h-[44px] bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60">
+                  className="w-full min-h-[44px] bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60">
             {busy ? 'Menyemak…' : 'Semak kereta ini →'}
           </button>
         )}
@@ -787,7 +787,7 @@ export function ListingIntakeForm({
                 </p>
               )}
               <button type="button" onClick={() => void startReport()} disabled={busy}
-                      className="w-full min-h-[44px] bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60">
+                      className="w-full min-h-[44px] bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60">
                 {busy ? 'Memproses…' : `Dapatkan keputusan — ${BASE_REPORT_LABEL} →`}
               </button>
               <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
@@ -832,7 +832,7 @@ export function ListingIntakeForm({
                            className={`${INPUT_CLS} flex-1`} />
                     <button type="button" onClick={() => void requestNotify()}
                             disabled={busy || notifyEmail.trim() === ''}
-                            className="min-h-[44px] px-4 bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[13px] rounded-xl transition-colors disabled:opacity-50">
+                            className="min-h-[44px] px-4 bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-bold text-[13px] rounded-xl transition-colors disabled:opacity-50">
                       Hantar
                     </button>
                   </div>

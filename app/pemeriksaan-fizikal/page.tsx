@@ -37,7 +37,7 @@ export default function InspectionPage() {
       <Shell>
         <div className="py-6 space-y-5">
           <div>
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
               Rakan bengkel
             </p>
             <h1 className="font-heading font-extrabold text-[26px] leading-tight tracking-tight text-[#111827] mb-3">
@@ -64,7 +64,7 @@ export default function InspectionPage() {
             </p>
             <Link
               href="/#semak"
-              className="inline-block font-heading font-bold text-[13px] text-[#064E4A] underline underline-offset-2 min-h-[44px] leading-[44px]"
+              className="inline-block font-heading font-bold text-[13px] text-[#3D472F] underline underline-offset-2 min-h-[44px] leading-[44px]"
             >
               Semak kereta ini dulu &rarr;
             </Link>

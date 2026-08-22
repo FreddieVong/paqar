@@ -211,7 +211,7 @@ export default function SemakAccidentClaimInsuransPage() {
           {/* What's included — only when the add-on can actually be bought. */}
           {JOMCHECK_ON ? (
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
-            <div className="bg-[#14453d] px-5 py-4">
+            <div className="bg-[#3D472F] px-5 py-4">
               <p className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/45 mb-1">
                 Laporan + Semakan Accident/Claim Insurans — RM100
               </p>
@@ -232,7 +232,7 @@ export default function SemakAccidentClaimInsuransPage() {
                 { title: 'Tahap keseriousan setiap claim', desc: 'Rendah hingga teruk — tahu mana claim kecil, mana yang serius.' },
               ].map((item, i, arr) => (
                 <div key={item.title} className={`flex gap-2.5 items-start py-2.5 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
-                  <span className="w-[17px] h-[17px] rounded-full bg-[#14453d] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="w-[17px] h-[17px] rounded-full bg-[#3D472F] flex items-center justify-center flex-shrink-0 mt-0.5">
                     <svg width="8" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </span>
                   <div>
@@ -245,7 +245,7 @@ export default function SemakAccidentClaimInsuransPage() {
             <div className="px-5 py-3 bg-[#F8FAF7] border-t border-[#F3F4F6]">
               <p className="font-body text-[11px] text-[#6B7280]">
                 Satu bayaran sahaja · Tanpa daftar akaun ·{' '}
-                <Link href="/contoh-laporan" className="text-[#064E4A] font-semibold hover:underline">
+                <Link href="/contoh-laporan" className="text-[#3D472F] font-semibold hover:underline">
                   Lihat contoh laporan →
                 </Link>
               </p>
@@ -266,7 +266,7 @@ export default function SemakAccidentClaimInsuransPage() {
               </p>
               <Link
                 href="/laporan-pembeli-kereta-terpakai"
-                className="inline-block bg-[#064E4A] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
+                className="inline-block bg-[#3D472F] text-white font-heading font-bold text-[13px] rounded-[10px] px-4 py-2.5"
               >
                 Lihat Laporan Pembeli RM29 →
               </Link>
@@ -312,10 +312,10 @@ export default function SemakAccidentClaimInsuransPage() {
           {/* Related links */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
-            <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Laporan Pembeli RM29 — apa yang ada dalam laporan →</Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist lengkap sebelum bayar deposit →</Link>
-            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Risiko beli kereta terpakai Malaysia →</Link>
-            <Link href="/cara-semak-insurans-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak status insurans kereta →</Link>
+            <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Laporan Pembeli RM29 — apa yang ada dalam laporan →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist lengkap sebelum bayar deposit →</Link>
+            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Risiko beli kereta terpakai Malaysia →</Link>
+            <Link href="/cara-semak-insurans-kereta" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara semak status insurans kereta →</Link>
           </div>
 
         </div>

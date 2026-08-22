@@ -104,7 +104,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
           {/* Step 1 */}
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-[#064E4A] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">1</div>
+              <div className="w-8 h-8 bg-[#3D472F] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">1</div>
               <h2 className="font-heading font-bold text-[16px] text-[#111827]">Semak saman kenderaan</h2>
             </div>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
@@ -121,7 +121,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
           {/* Step 2 */}
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-[#064E4A] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">2</div>
+              <div className="w-8 h-8 bg-[#3D472F] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">2</div>
               <h2 className="font-heading font-bold text-[16px] text-[#111827]">Semak geran dan hak milik</h2>
             </div>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
@@ -135,7 +135,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
                 'Pastikan tiada catatan "cagaran bank" dalam geran',
               ].map((item, i) => (
                 <li key={i} className="flex gap-2 font-body text-[13px] text-[#374151]">
-                  <span className="text-[#064E4A] flex-shrink-0">✓</span>
+                  <span className="text-[#3D472F] flex-shrink-0">✓</span>
                   {item}
                 </li>
               ))}
@@ -145,7 +145,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
           {/* Step 3 */}
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-[#064E4A] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">3</div>
+              <div className="w-8 h-8 bg-[#3D472F] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">3</div>
               <h2 className="font-heading font-bold text-[16px] text-[#111827]">Semak pinjaman bank aktif</h2>
             </div>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
@@ -160,7 +160,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
           {/* Step 4 */}
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-[#064E4A] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">4</div>
+              <div className="w-8 h-8 bg-[#3D472F] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">4</div>
               <h2 className="font-heading font-bold text-[16px] text-[#111827]">Semak kondisi fizikal dan sejarah kemalangan</h2>
             </div>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
@@ -175,7 +175,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
                 'Tanya rekod servis atau buku servis',
               ].map((item, i) => (
                 <li key={i} className="flex gap-2 font-body text-[13px] text-[#374151]">
-                  <span className="text-[#064E4A] flex-shrink-0">✓</span>
+                  <span className="text-[#3D472F] flex-shrink-0">✓</span>
                   {item}
                 </li>
               ))}
@@ -185,7 +185,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
           {/* Step 5 */}
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-[#064E4A] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">5</div>
+              <div className="w-8 h-8 bg-[#3D472F] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">5</div>
               <h2 className="font-heading font-bold text-[16px] text-[#111827]">Semak harga pasaran</h2>
             </div>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
@@ -201,7 +201,7 @@ export default function CaraBelihKeretaTerpakaiPage() {
           {/* Step 6 */}
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-[#064E4A] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">6</div>
+              <div className="w-8 h-8 bg-[#3D472F] rounded-lg flex items-center justify-center font-heading font-extrabold text-[14px] text-white flex-shrink-0">6</div>
               <h2 className="font-heading font-bold text-[16px] text-[#111827]">Bayar deposit dengan betul</h2>
             </div>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
@@ -233,18 +233,18 @@ export default function CaraBelihKeretaTerpakaiPage() {
           {/* Related guides */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
-            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Risiko beli kereta terpakai →</Link>
-            <Link href="/panduan-semak-saman" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak saman kereta →</Link>
-            <Link href="/cara-semak-geran-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak geran kereta →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
+            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Risiko beli kereta terpakai →</Link>
+            <Link href="/panduan-semak-saman" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara semak saman kereta →</Link>
+            <Link href="/cara-semak-geran-kereta" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara semak geran kereta →</Link>
           </div>
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Harga model popular</p>
-            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
-            <Link href="/bandingkan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Bandingkan model →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
+            <Link href="/bandingkan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Bandingkan model →</Link>
           </div>
 
           <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">

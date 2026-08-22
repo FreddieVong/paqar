@@ -112,7 +112,7 @@ export default function CaraSemakRoadtaxPage() {
                 'Status dan tarikh tamat tempoh roadtax akan dipaparkan',
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5 w-5">{i + 1}.</span>
+                  <span className="font-heading font-bold text-[12px] text-[#3D472F] flex-shrink-0 mt-0.5 w-5">{i + 1}.</span>
                   <p className="font-body text-[13px] text-[#374151] leading-relaxed">{step}</p>
                 </li>
               ))}
@@ -140,7 +140,7 @@ export default function CaraSemakRoadtaxPage() {
                 'Masukkan nombor plat untuk semak status roadtax',
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5 w-5">{i + 1}.</span>
+                  <span className="font-heading font-bold text-[12px] text-[#3D472F] flex-shrink-0 mt-0.5 w-5">{i + 1}.</span>
                   <p className="font-body text-[13px] text-[#374151] leading-relaxed">{step}</p>
                 </li>
               ))}
@@ -186,17 +186,17 @@ export default function CaraSemakRoadtaxPage() {
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
-            <Link href="/cara-semak-insurans-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara semak insurans kereta →</Link>
-            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
+            <Link href="/cara-semak-insurans-kereta" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara semak insurans kereta →</Link>
+            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
           </div>
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Harga model popular</p>
-            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
-            <Link href="/bandingkan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Bandingkan model →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
+            <Link href="/bandingkan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Bandingkan model →</Link>
           </div>
 
         </div>

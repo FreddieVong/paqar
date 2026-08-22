@@ -39,7 +39,7 @@ import { BASE_REPORT_LABEL, REFUND_WORKING_DAYS }  from '@/lib/pricing'
 
 const SHELL = (title: string, body: string) => `
   <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
-    <h2 style="color:#064E4A;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
+    <h2 style="color:#3D472F;font-size:18px;font-weight:900;margin:0 0 4px;">Paqar</h2>
     <p style="color:#9CA3AF;font-size:12px;margin:0 0 24px;text-transform:uppercase;letter-spacing:0.08em;">${title}</p>
     ${body}
   </div>
@@ -108,7 +108,7 @@ export async function sendUndeliverableEmail(params: {
 
       <p style="color:#9CA3AF;font-size:12px;margin:0 0 4px;">Rujukan: ${params.checkId}</p>
       <p style="color:#9CA3AF;font-size:12px;margin:0;">
-        Ada soalan? <a href="${supportLink(params.checkId)}" style="color:#064E4A;">WhatsApp kami</a>.
+        Ada soalan? <a href="${supportLink(params.checkId)}" style="color:#3D472F;">WhatsApp kami</a>.
       </p>
     `),
     'refund-notice',
@@ -147,7 +147,7 @@ export async function sendRefundCompletedEmail(params: {
 
       <p style="color:#9CA3AF;font-size:12px;margin:0 0 4px;">Rujukan: ${params.checkId}</p>
       <p style="color:#9CA3AF;font-size:12px;margin:0;">
-        Ada soalan? <a href="${supportLink(params.checkId)}" style="color:#064E4A;">WhatsApp kami</a>.
+        Ada soalan? <a href="${supportLink(params.checkId)}" style="color:#3D472F;">WhatsApp kami</a>.
       </p>
     `),
     'refund-completed',

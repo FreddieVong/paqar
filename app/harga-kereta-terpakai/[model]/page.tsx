@@ -384,7 +384,7 @@ export default async function ModelPage({ params }: Props) {
                   navigation: it names its destination and says what the reader
                   gets there.
                 */}
-                <span className="font-heading font-bold text-[14px] text-[#064E4A]">
+                <span className="font-heading font-bold text-[14px] text-[#3D472F]">
                   {cfg.model} {row.year}
                 </span>
                 <span className="font-body text-[13px] text-[#6B7280]">
@@ -419,7 +419,7 @@ export default async function ModelPage({ params }: Props) {
             <ul className="space-y-3">
               {cfg.buyerTips.map((tip, i) => (
                 <li key={i} className="flex gap-2.5 font-body text-[13px] text-[#374151] leading-relaxed">
-                  <span className="text-[#064E4A] font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
+                  <span className="text-[#3D472F] font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
                   {tip}
                 </li>
               ))}
@@ -453,19 +453,19 @@ export default async function ModelPage({ params }: Props) {
               actually covers them appear here; see lib/related-guides.ts.
             */}
             {guidesForModelHub(params.model).map(g => (
-              <Link key={g.href} href={g.href} className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+              <Link key={g.href} href={g.href} className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">
                 {g.label} →
               </Link>
             ))}
             {VARIANT_GUIDES[params.model] && (
-              <Link href={`/varian/${params.model}`} className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+              <Link href={`/varian/${params.model}`} className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">
                 {cfg.model} varian mana patut beli? →
               </Link>
             )}
-            <Link href="/cara-beli-kereta-terpakai"      className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
-            <Link href="/risiko-beli-kereta-terpakai"    className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Risiko beli kereta terpakai →</Link>
-            <Link href="/harga-kereta-terpakai"          className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semua model kereta terpakai →</Link>
+            <Link href="/cara-beli-kereta-terpakai"      className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
+            <Link href="/risiko-beli-kereta-terpakai"    className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Risiko beli kereta terpakai →</Link>
+            <Link href="/harga-kereta-terpakai"          className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Semua model kereta terpakai →</Link>
           </div>
 
         </div>

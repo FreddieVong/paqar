@@ -7,13 +7,13 @@
  *
  * Why light and not dark: the brand is light (DESIGN.md §3.1), the logo is a
  * JPEG with a hard white background so it can only sit on white, and the
- * primary #064E4A is a dark teal meant to sit ON light. A dark treatment forced
+ * primary #3D472F is a dark teal meant to sit ON light. A dark treatment forced
  * an off-brand mint/coral palette. Clients that impose their own dark mode will
  * darken this, which is the ordinary thing readers already expect from mail.
  *
  * Design tokens mirror tailwind.config.ts `brand.*` — e-mail cannot read the
  * Tailwind theme, so they are restated here and must be kept in step:
- *   primary #064E4A · deep #14453d · accent #FACC15 · page #F8FAF7
+ *   primary #3D472F · deep #3D472F · accent #FACC15 · page #F8FAF7
  *   surface #FFFFFF · text #111827 · muted #6B7280 · border #E5E7EB
  * Radius scale: 10 / 14 / 16.  Spacing: multiples of 4.
  */
@@ -21,8 +21,8 @@
 const C = {
   page:     '#F8FAF7',
   surface:  '#FFFFFF',
-  deep:     '#14453d',
-  primary:  '#064E4A',
+  deep:     '#3D472F',
+  primary:  '#3D472F',
   accent:   '#FACC15',
   text:     '#111827',
   body:     '#374151',

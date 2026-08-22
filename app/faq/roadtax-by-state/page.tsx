@@ -52,7 +52,7 @@ export default function RoadtaxByState() {
         <p className="text-lg text-[#6B7280] mb-6">Berapa roadtax yang anda perlu bayar? Pecahan mengikut negeri dan cara kira untuk kereta anda.</p>
 
         <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-          <p className="font-semibold text-[#064E4A] mb-2">Jawapan Ringkas</p>
+          <p className="font-semibold text-[#3D472F] mb-2">Jawapan Ringkas</p>
           <p className="text-[#374151]">
             Kereta tahun 2020 dengan enjin 1500cc biasanya sekitar <strong>RM100–120 setahun</strong> di kebanyakan negeri Semenanjung.
             Selangor &amp; KL: lebih tinggi. Johor &amp; Kedah: lebih rendah. Sabah &amp; Sarawak: kadar berasingan.

@@ -32,7 +32,7 @@ export function SampleReportLink({ source }: { source: 'paywall' }) {
       target="_blank"
       rel="noopener noreferrer"
       onClick={() => analytics.sampleReportClicked({ source })}
-      className="font-body text-[11px] text-[#14453d] font-semibold hover:underline underline-offset-2"
+      className="font-body text-[11px] text-[#3D472F] font-semibold hover:underline underline-offset-2"
     >
       Lihat contoh laporan penuh &rarr;
     </a>

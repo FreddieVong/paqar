@@ -75,7 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Visible only on focus: it must be reachable, not decorative. */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-3 focus:left-3 focus:bg-[#064E4A] focus:text-white focus:px-4 focus:py-2 focus:rounded-[10px] focus:font-heading focus:font-bold focus:text-[14px]"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-3 focus:left-3 focus:bg-[#3D472F] focus:text-white focus:px-4 focus:py-2 focus:rounded-[10px] focus:font-heading focus:font-bold focus:text-[14px]"
         >
           Terus ke kandungan
         </a>

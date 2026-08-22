@@ -30,36 +30,36 @@ export function Shell({
       <footer className="border-t border-[#F3F4F6] mt-4">
         <div className="max-w-lg mx-auto px-4 py-6 space-y-4 text-center">
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">
-            <Link href="/panduan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/panduan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Panduan Pembeli
             </Link>
-            <Link href="/faq" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/faq" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Soalan Lazim
             </Link>
-            <Link href="/panduan-semak-saman" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/panduan-semak-saman" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Semak Saman
             </Link>
-            <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Cara Beli Kereta
             </Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Checklist
             </Link>
-            <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Risiko
             </Link>
           </div>
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">
-            <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Harga Model
             </Link>
-            <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Kira Ansuran
             </Link>
-            <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Bandingkan
             </Link>
-            <Link href="/tentang" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/tentang" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Tentang
             </Link>
             {/*
@@ -73,17 +73,17 @@ export function Shell({
               it is: a public reference surface, not a buyer journey step. One
               link in the footer, not a promotion into the homepage body.
             */}
-            <Link href="/api-docs" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/api-docs" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               API
             </Link>
-            <Link href="/privasi" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/privasi" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Privasi
             </Link>
-            <Link href="/terma" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+            <Link href="/terma" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
               Terma
             </Link>
             {contactHref && (
-              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">
+              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#3D472F] transition-colors">
                 Hubungi Kami
               </a>
             )}

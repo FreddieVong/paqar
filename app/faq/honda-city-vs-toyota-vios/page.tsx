@@ -71,7 +71,7 @@ export default function CityVsVios() {
       <p className="text-lg text-[#6B7280] mb-6">Perbandingan terus: dua-dua popular, dua-dua boleh harap. Tapi mana lebih berbaloi?</p>
 
       <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-        <p className="font-semibold text-[#064E4A] mb-2">Keputusan Ringkas</p>
+        <p className="font-semibold text-[#3D472F] mb-2">Keputusan Ringkas</p>
         <p className="text-[#374151]">
           <strong>Honda City:</strong> Ciri lebih banyak, nilai jual semula lebih kukuh. Pilih kalau anda mahu rasa moden.
           <br/>

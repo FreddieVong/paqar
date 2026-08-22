@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest'
+import { BRAND } from '@/lib/brand'
 import { render, screen, cleanup } from '@testing-library/react'
 import { SocialLinks } from '@/components/layout/SocialLinks'
 import { SOCIAL, GOOGLE_BUSINESS } from '@/lib/site'
@@ -56,7 +57,7 @@ describe('SocialLinks', () => {
       const cls = a.getAttribute('class') ?? ''
       expect(cls).toContain('focus-visible:ring-2')
       expect(cls).toContain('text-[#9CA3AF]')      // resting, matches sibling footer links
-      expect(cls).toContain('hover:text-[#064E4A]') // hover, matches sibling footer links
+      expect(cls).toContain(`hover:text-[${BRAND.primary}]`) // hover, matches sibling footer links
     }
   })
 

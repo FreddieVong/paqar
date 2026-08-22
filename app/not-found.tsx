@@ -8,7 +8,7 @@ export default function NotFound() {
       <Nav />
       <Shell>
         <div className="pt-20 pb-20 max-w-sm mx-auto text-center space-y-4">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.12em] text-[#064E4A]">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.12em] text-[#3D472F]">
             404
           </p>
           <h1 className="font-heading font-extrabold text-[28px] tracking-tight text-[#111827]">
@@ -19,7 +19,7 @@ export default function NotFound() {
           </p>
           <Link
             href="/"
-            className="block w-full bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 hover:bg-[#053D3A] transition-colors mt-2"
+            className="block w-full bg-[#3D472F] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 hover:bg-[#2E3523] transition-colors mt-2"
           >
             Balik ke Laman Utama →
           </Link>

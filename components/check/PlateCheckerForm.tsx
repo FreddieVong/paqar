@@ -146,7 +146,7 @@ export function PlateCheckerForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className={LABEL_CLS}>Nombor plat kereta</label>
-          <div className="bg-[#1a1a1a] rounded-[7px] p-[5px] border border-transparent focus-within:border-[#064E4A] focus-within:shadow-[0_0_0_3px_rgba(6,78,74,0.15)] transition-all duration-150">
+          <div className="bg-[#1a1a1a] rounded-[7px] p-[5px] border border-transparent focus-within:border-[#3D472F] focus-within:shadow-[0_0_0_3px_rgba(6,78,74,0.15)] transition-all duration-150">
             <div className="relative bg-[#1a1a1a] rounded-[3px] flex items-center justify-center min-h-[60px] px-3">
               <input
                 type="text"
@@ -198,7 +198,7 @@ export function PlateCheckerForm() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60"
+          className="w-full bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60"
         >
           {busy ? 'Memproses…' : 'Semak Harga Percuma →'}
         </button>

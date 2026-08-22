@@ -70,7 +70,7 @@ export default function ChecklistBuyingUsedCar() {
       <p className="text-lg text-[#6B7280] mb-6">Senarai semak pembeli berpengalaman. Print dan bawa setiap kali pergi tengok kereta.</p>
 
       <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-        <p className="font-semibold text-[#064E4A] mb-2">Peraturan Utama</p>
+        <p className="font-semibold text-[#3D472F] mb-2">Peraturan Utama</p>
         <p className="text-[#374151]">Kalau ada apa-apa yang rasa tak kena, berundur. Kereta lain sentiasa ada.</p>
       </div>
 

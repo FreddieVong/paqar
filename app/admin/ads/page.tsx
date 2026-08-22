@@ -65,7 +65,7 @@ export default async function AdminAdsPage() {
             autoFocus
             className="w-full border border-[#D1D5DB] rounded-[10px] px-4 py-3 text-[16px]"
           />
-          <button type="submit" className={`w-full bg-[#064E4A] text-white ${BTN}`}>
+          <button type="submit" className={`w-full bg-[#3D472F] text-white ${BTN}`}>
             Log Masuk
           </button>
         </form>
@@ -492,7 +492,7 @@ export default async function AdminAdsPage() {
                 <button
                   type="submit"
                   disabled={!configured || experiment?.kill_switch}
-                  className={`w-full bg-[#064E4A] text-white disabled:bg-[#D1D5DB] ${BTN}`}
+                  className={`w-full bg-[#3D472F] text-white disabled:bg-[#D1D5DB] ${BTN}`}
                 >
                   Enable operator after preflight
                 </button>

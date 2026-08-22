@@ -207,7 +207,7 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
             {[check?.brand, check?.model, check?.year].filter(Boolean).join(' ') || 'Tiada maklumat kereta'}
             {' · '}Dibayar {formatDateTime(report.paid_at)} · RM{ringgit(report.amount_cents)}
           </p>
-          <p className="font-heading font-bold text-[11px] text-[#064E4A] mt-1 uppercase tracking-[.08em]">
+          <p className="font-heading font-bold text-[11px] text-[#3D472F] mt-1 uppercase tracking-[.08em]">
             {status}{refund !== 'not_required' && ` · refund: ${refund}`}
           </p>
         </div>
@@ -219,12 +219,12 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
           listing link is first and largest because opening it is genuinely
           step one — no scraper here can read Carlist or Facebook. */}
       <div className="bg-[#F8FAF7] border border-[#E5E7EB] rounded-[12px] p-3.5 mb-3">
-        <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-1.5">
+        <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-1.5">
           Iklan pembeli
         </p>
         {check?.listing_url ? (
           <a href={check.listing_url} target="_blank" rel="noopener noreferrer"
-             className="font-body text-[13px] text-[#064E4A] underline underline-offset-2 break-all">
+             className="font-body text-[13px] text-[#3D472F] underline underline-offset-2 break-all">
             {check.listing_url}
           </a>
         ) : (
@@ -250,7 +250,7 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
           note, and it claims no more strength than 15 listings carry. */}
       {prices && (
         <div className="bg-white border border-[#E5E7EB] rounded-[12px] p-3.5 mb-3">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
             Harga pasaran — {prices.label}
           </p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
@@ -297,7 +297,7 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
       <div className="flex flex-wrap gap-3 mb-4">
         <a href={`/laporan-pembeli/${report.check_id}?claim_token=${check?.claim_token ?? ''}&admin_preview=1`}
            target="_blank" rel="noopener noreferrer"
-           className="font-heading font-bold text-[12px] text-[#064E4A] underline underline-offset-2">
+           className="font-heading font-bold text-[12px] text-[#3D472F] underline underline-offset-2">
           Buka draf laporan →
         </a>
         <span className="font-body text-[12px] text-[#9CA3AF]">
@@ -310,7 +310,7 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
         <form action={startReviewAction} className="border-t border-[#F3F4F6] pt-4">
           <input type="hidden" name="reportId" value={report.id} />
           <button type="submit"
-                  className="w-full bg-[#064E4A] text-white font-heading font-extrabold text-[14px] rounded-[10px] py-3">
+                  className="w-full bg-[#3D472F] text-white font-heading font-extrabold text-[14px] rounded-[10px] py-3">
             Mula semak →
           </button>
         </form>
@@ -324,7 +324,7 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
           buyer has already read. */}
       {historyReview && (
         <div className="border-t border-[#F3F4F6] pt-4 space-y-3">
-          <p className="font-heading font-bold text-[12px] uppercase tracking-[.08em] text-[#0F766E]">
+          <p className="font-heading font-bold text-[12px] uppercase tracking-[.08em] text-[#55663F]">
             Semakan kedua — rekod claim
           </p>
           <p className="font-body text-[12px] text-[#374151] leading-relaxed">
@@ -368,7 +368,7 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
               yang mereka bayar untuk.
             </p>
             <button type="submit"
-                    className="w-full bg-[#0F766E] text-white font-heading font-extrabold text-[14px] rounded-[10px] py-3">
+                    className="w-full bg-[#55663F] text-white font-heading font-extrabold text-[14px] rounded-[10px] py-3">
               Lepaskan rekod claim &amp; hantar →
             </button>
           </form>
@@ -458,7 +458,7 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
             </div>
 
             <button type="submit"
-                    className="w-full bg-[#064E4A] text-white font-heading font-extrabold text-[14px] rounded-[10px] py-3">
+                    className="w-full bg-[#3D472F] text-white font-heading font-extrabold text-[14px] rounded-[10px] py-3">
               Lepaskan laporan &amp; hantar →
             </button>
           </form>
@@ -541,7 +541,7 @@ export default async function AdminReviewPage() {
           />
           <button
             type="submit"
-            className="w-full bg-[#064E4A] text-white font-heading font-bold text-[15px] rounded-[10px] py-3"
+            className="w-full bg-[#3D472F] text-white font-heading font-bold text-[15px] rounded-[10px] py-3"
           >
             Log Masuk
           </button>
@@ -607,7 +607,7 @@ export default async function AdminReviewPage() {
               <span className="text-[#B91C1C] font-bold"> · {owedRefunds.length} refund belum selesai</span>
             )}
             {historyPending.length > 0 && (
-              <span className="text-[#0F766E] font-bold"> · {historyPending.length} rekod claim menunggu semakan</span>
+              <span className="text-[#55663F] font-bold"> · {historyPending.length} rekod claim menunggu semakan</span>
             )}
           </p>
         </div>
@@ -619,8 +619,8 @@ export default async function AdminReviewPage() {
             directly under the refunds and above ordinary pending work. */}
         {historyPending.length > 0 && (
           <div className="space-y-4">
-            <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[12px] px-4 py-3">
-              <p className="font-heading font-bold text-[13px] text-[#0F766E]">
+            <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-[12px] px-4 py-3">
+              <p className="font-heading font-bold text-[13px] text-[#55663F]">
                 Rekod claim dah sampai — perlu semakan kedua
               </p>
               <p className="font-body text-[12px] text-[#134E4A] mt-0.5">

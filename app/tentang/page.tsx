@@ -55,21 +55,21 @@ export default function TentangPage() {
             <h2 className="font-heading font-bold text-[16px] text-[#111827]">Apa yang Paqar buat</h2>
 
             <div>
-              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semakan awal — sebelum bayar</p>
+              <p className="font-heading font-bold text-[13px] text-[#3D472F] mb-1">Semakan awal — sebelum bayar</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                 Masukkan jenama, model, tahun dan harga penjual. Paqar beritahu sama ada kami ada cukup iklan setanding untuk membuat keputusan tentang kereta itu. Kalau tidak ada, kami tidak jual laporan.
               </p>
             </div>
 
             <div>
-              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Laporan Pembeli — RM29</p>
+              <p className="font-heading font-bold text-[13px] text-[#3D472F] mb-1">Laporan Pembeli — RM29</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                 Satu bayaran, satu kereta. Kami beritahu sama ada patut diteruskan, berapa patut anda tawar, apa yang perlu ditanya penjual, dan apa yang perlu disemak sebelum bayar deposit. Setiap laporan dibaca oleh orang kami sebelum dihantar — biasanya dalam 30 minit.
               </p>
             </div>
 
             <div>
-              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semakan Accident/Claim Insurans — belum dibuka</p>
+              <p className="font-heading font-bold text-[13px] text-[#3D472F] mb-1">Semakan Accident/Claim Insurans — belum dibuka</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                 Semakan rekod claim insurans untuk kereta yang anda minat — own damage, banjir, windscreen atau total loss jika direkodkan. Sesuai digunakan sebelum bayar deposit.
               </p>
@@ -127,7 +127,7 @@ export default function TentangPage() {
                 href={contactHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block font-heading font-bold text-[14px] text-[#064E4A] underline underline-offset-2"
+                className="inline-block font-heading font-bold text-[14px] text-[#3D472F] underline underline-offset-2"
               >
                 WhatsApp Paqar →
               </a>
@@ -144,11 +144,11 @@ export default function TentangPage() {
           {/* Links */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Laman utama</p>
-            <Link href="/" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semak harga kereta terpakai — percuma →</Link>
-            <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Laporan Pembeli RM29 →</Link>
-                        <Link href="/contoh-laporan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Contoh laporan →</Link>
-            <Link href="/privasi" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Dasar privasi →</Link>
-            <Link href="/terma" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Terma penggunaan →</Link>
+            <Link href="/" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Semak harga kereta terpakai — percuma →</Link>
+            <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Laporan Pembeli RM29 →</Link>
+                        <Link href="/contoh-laporan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Contoh laporan →</Link>
+            <Link href="/privasi" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Dasar privasi →</Link>
+            <Link href="/terma" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Terma penggunaan →</Link>
           </div>
 
         </div>

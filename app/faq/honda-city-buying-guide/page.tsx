@@ -52,7 +52,7 @@ export default function HondaCityGuide() {
         <p className="text-lg text-[#6B7280] mb-6">Panduan penuh beli Honda City terpakai: generasi mana, varian mana, harga iklan setanding, dan apa perlu disemak.</p>
 
         <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-          <p className="font-semibold text-[#064E4A] mb-2">Jawapan Ringkas</p>
+          <p className="font-semibold text-[#3D472F] mb-2">Jawapan Ringkas</p>
           <p className="text-[#374151]">
             Beli <strong>Honda City 1.5 S atau H tahun 2016–2020</strong> dengan jarak tempuh <strong>80–100k km</strong> pada harga <strong>RM25–30k</strong>.
             Ia boleh harap, nilainya kukuh, dan cirinya cukup moden. Elak model sebelum 2014 (lama) dan 2021 ke atas (masih mahal).

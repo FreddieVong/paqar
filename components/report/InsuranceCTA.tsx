@@ -19,7 +19,7 @@ export function InsuranceCTA({ surface = 'report' }: { surface?: 'home' | 'repor
         target="_blank"
         rel="noopener noreferrer"
         onClick={() => analytics.ctaClicked({ cta: 'bjak', surface })}
-        className="block w-full bg-[#064E4A] text-white font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-[#053D3A] transition-colors"
+        className="block w-full bg-[#3D472F] text-white font-heading font-extrabold text-[15px] rounded-[12px] py-4 text-center hover:bg-[#2E3523] transition-colors"
       >
         Bandingkan Insurans di Bjak →
       </a>

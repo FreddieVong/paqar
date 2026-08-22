@@ -25,7 +25,7 @@ export default function InsurancePage() {
       <Shell>
         <div className="py-6 space-y-5">
           <div>
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
               Rakan Bjak
             </p>
             <h1 className="font-heading font-extrabold text-[26px] leading-tight tracking-tight text-[#111827] mb-3">

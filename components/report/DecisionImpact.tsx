@@ -72,10 +72,10 @@ export function DecisionImpact({ checkId, revision = 1 }: { checkId: string; rev
               aria-pressed={active}
               onClick={() => void save(o.value)}
               className={`min-h-[44px] px-3.5 py-2 rounded-[10px] border font-body text-[13px] transition-colors
-                focus:outline-none focus:ring-[3px] focus:ring-[#064E4A]/20 ${
+                focus:outline-none focus:ring-[3px] focus:ring-[#3D472F]/20 ${
                 active
-                  ? 'bg-[#064E4A] border-[#064E4A] text-white font-semibold'
-                  : 'bg-white border-[#D1D5DB] text-[#374151] hover:border-[#064E4A]'
+                  ? 'bg-[#3D472F] border-[#3D472F] text-white font-semibold'
+                  : 'bg-white border-[#D1D5DB] text-[#374151] hover:border-[#3D472F]'
               }`}
             >
               {o.label}

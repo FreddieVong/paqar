@@ -77,10 +77,10 @@ export default async function HargaKeretaTerpakaiPage() {
               <Link
                 key={m.slug}
                 href={`/harga-kereta-terpakai/${m.slug}`}
-                className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group"
+                className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#3D472F] hover:bg-[#F0FDF4] transition-colors group"
               >
                 <div>
-                  <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">
+                  <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#3D472F] transition-colors">
                     {m.brand} {m.model}
                   </p>
                   {/* Was "RM29k - RM42k - {tag}". The rounded min and max of a
@@ -90,24 +90,24 @@ export default async function HargaKeretaTerpakaiPage() {
                     {m.tag}
                   </p>
                 </div>
-                <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
+                <span className="font-body text-[#9CA3AF] group-hover:text-[#3D472F] transition-colors flex-shrink-0 ml-3">→</span>
               </Link>
             ))}
           </div>
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Semak mengikut jenama</p>
-            <Link href="/harga-perodua-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua terpakai →</Link>
-            <Link href="/harga-proton-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton terpakai →</Link>
-            <Link href="/harga-toyota-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Toyota terpakai →</Link>
-            <Link href="/harga-honda-terpakai"   className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Honda terpakai →</Link>
-            <Link href="/harga-nissan-terpakai"  className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Nissan terpakai →</Link>
+            <Link href="/harga-perodua-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua terpakai →</Link>
+            <Link href="/harga-proton-terpakai"  className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Proton terpakai →</Link>
+            <Link href="/harga-toyota-terpakai"  className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Toyota terpakai →</Link>
+            <Link href="/harga-honda-terpakai"   className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Honda terpakai →</Link>
+            <Link href="/harga-nissan-terpakai"  className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Nissan terpakai →</Link>
           </div>
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
-            <Link href="/cara-beli-kereta-terpakai"      className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
+            <Link href="/cara-beli-kereta-terpakai"      className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
           </div>
         </div>
       </Shell>

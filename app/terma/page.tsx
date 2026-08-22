@@ -30,7 +30,7 @@ export default function TermaPage() {
         <div className="pt-8 pb-16 max-w-xl mx-auto space-y-8">
 
           <div>
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#064E4A] mb-2">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
               Terma Penggunaan
             </p>
             <h1 className="font-heading font-extrabold text-[26px] tracking-tight text-[#111827] mb-2">
@@ -86,7 +86,7 @@ export default function TermaPage() {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mt-2 font-body text-[13px] text-[#064E4A] font-semibold underline underline-offset-2"
+                  className="inline-block mt-2 font-body text-[13px] text-[#3D472F] font-semibold underline underline-offset-2"
                 >
                   WhatsApp Paqar →
                 </a>

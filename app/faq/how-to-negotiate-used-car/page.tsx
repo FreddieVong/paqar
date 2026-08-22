@@ -70,7 +70,7 @@ export default function HowToNegotiate() {
       <p className="text-lg text-[#6B7280] mb-6">Pembeli berpengalaman jimat RM2–5k setiap pembelian. Ini caranya.</p>
 
       <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-        <p className="font-semibold text-[#064E4A] mb-2">Peraturan Utama</p>
+        <p className="font-semibold text-[#3D472F] mb-2">Peraturan Utama</p>
         <p className="text-[#374151]"><strong>Semak harga pasaran pada nombor plat sebelum mula berunding.</strong> Tahu harga sebenar. Penjual boleh baca kalau anda teragak-agak. Keyakinan itulah kelebihan anda.</p>
       </div>
 
@@ -78,7 +78,7 @@ export default function HowToNegotiate() {
         <h2 className="text-2xl font-bold mb-4">Rangka Rundingan 5 Langkah</h2>
 
         <div className="space-y-6">
-          <div className="border-l-4 border-[#064E4A] pl-4">
+          <div className="border-l-4 border-[#3D472F] pl-4">
             <h3 className="text-lg font-semibold mb-2">Langkah 1: Dapatkan Asas Harga</h3>
             <p className="text-[#374151] mb-2">Sebelum pergi tengok kereta, semak nombor platnya. Contoh:</p>
             <ul className="bg-[#F9FAFB] p-4 rounded text-[#374151] space-y-1 text-sm">
@@ -89,7 +89,7 @@ export default function HowToNegotiate() {
             <p className="text-[#374151] mt-2"><strong>Kenapa?</strong> Harga pasaran berdasarkan listing sebenar. Penjual pun sedar harga minta mereka selalunya tinggi sikit. Anda ada asas untuk berunding.</p>
           </div>
 
-          <div className="border-l-4 border-[#064E4A] pl-4">
+          <div className="border-l-4 border-[#3D472F] pl-4">
             <h3 className="text-lg font-semibold mb-2">Langkah 2: Periksa Teliti (Cari Bukti)</h3>
             <ul className="text-[#374151] space-y-2">
               <li>✓ Buat semakan rekod accident &amp; claim insurans</li>
@@ -100,7 +100,7 @@ export default function HowToNegotiate() {
             <p className="text-[#374151] mt-2"><strong>Contoh sebenar:</strong> "Brake pad tinggal 3mm, kena tukar tak lama lagi — dalam RM400. Itu RM400 yang saya kena keluar lepas beli. Harga tuan patut ambil kira benda tu."</p>
           </div>
 
-          <div className="border-l-4 border-[#064E4A] pl-4">
+          <div className="border-l-4 border-[#3D472F] pl-4">
             <h3 className="text-lg font-semibold mb-2">Langkah 3: Buat Tawaran Pembukaan</h3>
             <p className="text-[#374151] mb-2">Buka 10–15% bawah harga minta. Contoh:</p>
             <ul className="bg-[#F9FAFB] p-4 rounded text-[#374151] space-y-1 text-sm">
@@ -113,7 +113,7 @@ export default function HowToNegotiate() {
             <p className="text-[#374151] mt-2"><strong>Skrip:</strong> "Harga tuan RM32k, tapi kereta serupa di pasaran RM28–30k. Ada juga beberapa benda kena baiki. Saya tawar RM27k berdasarkan harga pasaran."</p>
           </div>
 
-          <div className="border-l-4 border-[#064E4A] pl-4">
+          <div className="border-l-4 border-[#3D472F] pl-4">
             <h3 className="text-lg font-semibold mb-2">Langkah 4: Guna Kelebihan Anda</h3>
             <ul className="text-[#374151] space-y-2">
               <li>💰 <strong>Data pasaran:</strong> "Pasaran tunjuk RM28–30k. Tuan minta RM32k — itu 10% atas pasaran."</li>
@@ -123,7 +123,7 @@ export default function HowToNegotiate() {
             </ul>
           </div>
 
-          <div className="border-l-4 border-[#064E4A] pl-4">
+          <div className="border-l-4 border-[#3D472F] pl-4">
             <h3 className="text-lg font-semibold mb-2">Langkah 5: Tahu Bila Nak Berundur</h3>
             <p className="text-[#374151]"><strong>Berundur kalau:</strong></p>
             <ul className="text-[#374151] space-y-1 mt-2">

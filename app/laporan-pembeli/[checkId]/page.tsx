@@ -291,7 +291,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
             )}
             {marketRefreshStarted && !marketPrices && (
               <div className="flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-[12px] px-4 py-3">
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-[#BBF7D0] border-t-[#064E4A] animate-spin flex-shrink-0" />
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-[#BBF7D0] border-t-[#3D472F] animate-spin flex-shrink-0" />
                 <p className="font-body text-[13px] text-[#374151]">Sedang mencari harga pasaran…</p>
               </div>
             )}
@@ -353,7 +353,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
         <div className="pt-5 pb-6 space-y-5">
           <AnalyticsEvent event="report_page_viewed" properties={{ is_paid: false }} />
           <div>
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A] mb-1">
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#3D472F] mb-1">
               Laporan untuk
             </p>
             <h1 className="font-heading font-extrabold text-[38px] tracking-tight text-[#111827] leading-none">

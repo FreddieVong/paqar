@@ -36,7 +36,7 @@ export default function ContohLaporanPage() {
       <Nav />
       <Shell>
         <div className="pt-5 pb-10">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A] mb-1">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#3D472F] mb-1">
             Contoh Laporan
           </p>
           <h1 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827] mb-1">
@@ -49,7 +49,7 @@ export default function ContohLaporanPage() {
           <div className="mt-5">
             <Link
               href="/#semak"
-              className="block w-full bg-[#14453d] text-white font-heading font-extrabold text-[14px] rounded-xl px-6 py-3.5 text-center hover:bg-[#0f3530] transition-colors"
+              className="block w-full bg-[#3D472F] text-white font-heading font-extrabold text-[14px] rounded-xl px-6 py-3.5 text-center hover:bg-[#2E3523] transition-colors"
             >
               Semak Kereta Anda →
             </Link>

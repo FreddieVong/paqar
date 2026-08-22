@@ -200,7 +200,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
                        font-heading font-semibold text-[16px] text-[#111827]
                        placeholder:text-[#D1D5DB] placeholder:font-normal
-                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       focus:outline-none focus:border-[#3D472F] focus:ring-[3px] focus:ring-[#3D472F]/10
                        transition-all"
           />
           <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
@@ -227,7 +227,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
                        font-heading font-semibold text-[16px] text-[#111827]
                        placeholder:text-[#D1D5DB] placeholder:font-normal
-                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       focus:outline-none focus:border-[#3D472F] focus:ring-[3px] focus:ring-[#3D472F]/10
                        transition-all"
           />
           <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
@@ -261,7 +261,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
                        font-heading font-semibold text-[16px] text-[#111827]
                        placeholder:text-[#D1D5DB] placeholder:font-normal
-                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       focus:outline-none focus:border-[#3D472F] focus:ring-[3px] focus:ring-[#3D472F]/10
                        transition-all"
           />
         </div>
@@ -286,7 +286,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             className="w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
                        font-heading font-semibold text-[16px] text-[#111827]
                        placeholder:text-[#D1D5DB] placeholder:font-normal
-                       focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+                       focus:outline-none focus:border-[#3D472F] focus:ring-[3px] focus:ring-[#3D472F]/10
                        transition-all"
           />
           <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
@@ -325,7 +325,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
           </p>
           <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
             Dalam tempoh{' '}
-            <span className="font-bold text-[#064E4A]">{REVIEW_SLA_HOURS} jam</span>,
+            <span className="font-bold text-[#3D472F]">{REVIEW_SLA_HOURS} jam</span>,
             melalui e-mel. Anda tak perlu tunggu di halaman ini &mdash; link
             yang anda ada sekarang akan bertukar kepada laporan penuh dengan
             sendirinya.
@@ -335,7 +335,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
         <button
           type="submit"
           disabled={isPending}
-          className="w-full bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-extrabold text-[16px]
+          className="w-full bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[16px]
                      rounded-[14px] py-4 flex items-center justify-center gap-2
                      disabled:opacity-60 transition-colors"
         >
@@ -380,7 +380,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
           <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
             Ada masalah bayar?{' '}
             <a href={supportUrl} target="_blank" rel="noopener noreferrer"
-               className="text-[#064E4A] font-semibold underline underline-offset-2">
+               className="text-[#3D472F] font-semibold underline underline-offset-2">
               WhatsApp kami
             </a>
           </p>
@@ -401,14 +401,14 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             onClick={() => setAddJomCheck(v => !v)}
             className={`w-full text-left rounded-[14px] border-[1.5px] p-4 transition-all ${
               addJomCheck
-                ? 'border-[#064E4A] bg-[#F0FDFA]'
-                : 'border-[#E5E7EB] bg-white hover:border-[#064E4A]/40'
+                ? 'border-[#3D472F] bg-[#F0FDFA]'
+                : 'border-[#E5E7EB] bg-white hover:border-[#3D472F]/40'
             }`}
           >
             <div className="flex items-start gap-3">
               {/* Checkbox indicator */}
               <div className={`mt-0.5 w-[18px] h-[18px] rounded-[5px] border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                addJomCheck ? 'bg-[#064E4A] border-[#064E4A]' : 'border-[#D1D5DB] bg-white'
+                addJomCheck ? 'bg-[#3D472F] border-[#3D472F]' : 'border-[#D1D5DB] bg-white'
               }`}>
                 {addJomCheck && (
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -422,7 +422,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
                   <p className="font-heading font-bold text-[13px] text-[#111827]">
                     Semakan Accident/Claim Insurans
                   </p>
-                  <p className={`font-heading font-bold text-[13px] flex-shrink-0 ${addJomCheck ? 'text-[#064E4A]' : 'text-[#6B7280]'}`}>
+                  <p className={`font-heading font-bold text-[13px] flex-shrink-0 ${addJomCheck ? 'text-[#3D472F]' : 'text-[#6B7280]'}`}>
                     +RM88
                   </p>
                 </div>

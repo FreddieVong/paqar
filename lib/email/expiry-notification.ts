@@ -37,7 +37,7 @@ export async function sendExpiryNotification(params: {
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
-      <h2 style="color:#064E4A;font-size:20px;margin-bottom:8px;">Peringatan Paqar</h2>
+      <h2 style="color:#3D472F;font-size:20px;margin-bottom:8px;">Peringatan Paqar</h2>
       <p style="color:#374151;font-size:15px;line-height:1.6;">
         <strong>${label}</strong> untuk <strong>${plate}</strong> akan tamat tempoh dalam
         <strong>${params.daysUntil} hari</strong>.
@@ -51,17 +51,17 @@ export async function sendExpiryNotification(params: {
       </p>
       ${params.docType === 'insurance' ? `
       <a href="https://bjak.my/?p=FREDDIE-0FC9AL"
-         style="display:inline-block;background:#064E4A;color:#fff;text-decoration:none;
+         style="display:inline-block;background:#3D472F;color:#fff;text-decoration:none;
                 padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;margin-top:16px;">
         Bandingkan &amp; Renew Insurans — Percuma →
       </a>
       <p style="color:#9CA3AF;font-size:12px;margin-top:8px;">
         Bandingkan harga dari semua syarikat insurans dalam satu tempat.
       </p>
-      <a href="https://paqar.my/dashboard" style="color:#064E4A;font-size:13px;">Atau semak dashboard anda →</a>
+      <a href="https://paqar.my/dashboard" style="color:#3D472F;font-size:13px;">Atau semak dashboard anda →</a>
       ` : `
       <a href="https://paqar.my/dashboard"
-         style="display:inline-block;background:#064E4A;color:#fff;text-decoration:none;
+         style="display:inline-block;background:#3D472F;color:#fff;text-decoration:none;
                 padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;margin-top:16px;">
         Semak Dashboard →
       </a>

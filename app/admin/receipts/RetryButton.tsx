@@ -22,7 +22,7 @@ export function RetryButton({ buyerReportId }: { buyerReportId: string }) {
         type="button"
         disabled={pending}
         onClick={() => run(false)}
-        className="bg-[#064E4A] text-white font-heading font-bold text-[12px] rounded-[8px] px-3 py-2 disabled:opacity-50"
+        className="bg-[#3D472F] text-white font-heading font-bold text-[12px] rounded-[8px] px-3 py-2 disabled:opacity-50"
       >
         {pending ? 'Sending…' : 'Retry'}
       </button>

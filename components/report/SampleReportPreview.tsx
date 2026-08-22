@@ -173,13 +173,13 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
             <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
           </div>
           <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti daripada Iklan Setanding</p>
-          <div className="flex items-center justify-between bg-[#F0FAFA] rounded-lg px-3 py-2 mb-2">
+          <div className="flex items-center justify-between bg-[#F4F6F0] rounded-lg px-3 py-2 mb-2">
             <p className="font-body text-[12px] text-[#6B7280]">Harga tengah iklan setanding</p>
-            <p className="font-heading font-bold text-[13px] text-[#064E4A]">RM42,750</p>
+            <p className="font-heading font-bold text-[13px] text-[#3D472F]">RM42,750</p>
           </div>
           <div className="flex flex-wrap gap-1.5 mb-2">
             {MARKET_PRICES.map(price => (
-              <span key={price} className="inline-block bg-[#F0FAFA] border border-[#99D4D1] rounded-lg px-2.5 py-1 font-heading font-bold text-[11px] text-[#064E4A]">
+              <span key={price} className="inline-block bg-[#F4F6F0] border border-[#CBD4BB] rounded-lg px-2.5 py-1 font-heading font-bold text-[11px] text-[#3D472F]">
                 {price}
               </span>
             ))}
@@ -223,8 +223,8 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
         {/* Premium teaser — Asas only, after Perbandingan Harga */}
         {tab === 'asas' && (
           <div className="px-5 py-4 border-b border-[#F3F4F6]">
-            <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[12px] p-4">
-              <p className="font-heading font-bold text-[14px] text-[#064E4A] mb-1">
+            <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-[12px] p-4">
+              <p className="font-heading font-bold text-[14px] text-[#3D472F] mb-1">
                 Risau kereta pernah accident?
               </p>
             </div>
@@ -252,7 +252,7 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
           <div className="space-y-3">
             {SELLER_QUESTIONS.map((q, i) => (
               <div key={i} className="flex gap-3">
-                <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5">{i + 1}.</span>
+                <span className="font-heading font-bold text-[12px] text-[#3D472F] flex-shrink-0 mt-0.5">{i + 1}.</span>
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">{q}</p>
               </div>
             ))}
@@ -325,7 +325,7 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
                   v.isThis ? 'bg-[#F0FDF4] border border-[#BBF7D0]' : 'bg-[#F9FAFB]'
                 }`}
               >
-                <p className={`font-body text-[13px] ${v.isThis ? 'font-bold text-[#064E4A]' : 'text-[#374151]'}`}>
+                <p className={`font-body text-[13px] ${v.isThis ? 'font-bold text-[#3D472F]' : 'text-[#374151]'}`}>
                   {v.name}
                   <span className="text-[#6B7280] font-normal"> — {v.verdict}</span>
                 </p>

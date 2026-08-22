@@ -126,13 +126,13 @@ export default function KiraAnsuranPage() {
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">
               Panduan berkaitan
             </p>
-            <Link href="/harga-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+            <Link href="/harga-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">
               Harga pasaran kereta terpakai mengikut model →
             </Link>
-            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">
               Cara beli kereta terpakai Malaysia →
             </Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">
               Checklist sebelum bayar deposit →
             </Link>
           </div>

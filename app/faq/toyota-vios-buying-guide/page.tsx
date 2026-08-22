@@ -71,7 +71,7 @@ export default function ViosBuyingGuide() {
       <p className="text-lg text-[#6B7280] mb-6">Panduan penuh: Vios tahun mana patut beli, harga pasaran, kebolehpercayaan dan susut nilai.</p>
 
       <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-        <p className="font-semibold text-[#064E4A] mb-2">Jawapan Ringkas</p>
+        <p className="font-semibold text-[#3D472F] mb-2">Jawapan Ringkas</p>
         <p className="text-[#374151]">
           Beli <strong>Toyota Vios 1.5 tahun 2014–2018</strong> dengan jarak tempuh <strong>100–120k km</strong> pada harga <strong>RM22–28k</strong>.
           Kebolehpercayaan Toyota memang susah dilawan. Boleh bertahan 500k+ km kalau diselenggara. Susut nilainya sederhana.

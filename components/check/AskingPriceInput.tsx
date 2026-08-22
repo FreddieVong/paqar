@@ -85,5 +85,5 @@ export function AskingPriceInput({
 export const PRICE_INPUT_CLS = `w-full bg-white border-[1.5px] border-[#D1D5DB] rounded-xl pl-12 pr-4 py-3.5
   font-heading font-semibold text-[16px] text-[#111827]
   placeholder:text-[#6B7280] placeholder:font-normal
-  focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+  focus:outline-none focus:border-[#3D472F] focus:ring-[3px] focus:ring-[#3D472F]/10
   transition-all`

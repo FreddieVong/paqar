@@ -8,7 +8,7 @@ import { analytics } from '@/lib/analytics'
 const INPUT_CLS = `w-full bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
   font-heading font-semibold text-[16px] text-[#111827]
   placeholder:text-[#D1D5DB] placeholder:font-normal
-  focus:outline-none focus:border-[#064E4A] focus:ring-[3px] focus:ring-[#064E4A]/10
+  focus:outline-none focus:border-[#3D472F] focus:ring-[3px] focus:ring-[#3D472F]/10
   transition-all`
 
 const LABEL_CLS = 'block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5'
@@ -112,8 +112,8 @@ export function LoanCalculator() {
                 key={pct} type="button" onClick={() => setDepositPct(pct)}
                 className={`rounded-[10px] py-2.5 font-heading font-bold text-[13px] transition-colors ${
                   depositPct === pct
-                    ? 'bg-[#064E4A] text-white'
-                    : 'bg-white border border-[#E5E7EB] text-[#374151] hover:border-[#064E4A]/40'
+                    ? 'bg-[#3D472F] text-white'
+                    : 'bg-white border border-[#E5E7EB] text-[#374151] hover:border-[#3D472F]/40'
                 }`}
               >
                 {pct}%
@@ -155,7 +155,7 @@ export function LoanCalculator() {
 
       {/* ── Result ── */}
       {hasResult && (
-        <div className="bg-[#14453d] rounded-[16px] p-5">
+        <div className="bg-[#3D472F] rounded-[16px] p-5">
           <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-white/45 mb-1">
             Ansuran Bulanan
           </p>
@@ -213,7 +213,7 @@ export function LoanCalculator() {
             <a
               href="https://bjak.my/?p=FREDDIE-0FC9AL" target="_blank" rel="noopener noreferrer"
               onClick={() => analytics.ctaClicked({ cta: 'bjak' })}
-              className="font-heading font-bold text-[12px] text-[#064E4A] mt-1.5 inline-block"
+              className="font-heading font-bold text-[12px] text-[#3D472F] mt-1.5 inline-block"
             >
               Dapatkan quote sebenar — percuma →
             </a>
@@ -225,7 +225,7 @@ export function LoanCalculator() {
                 <p className="font-heading font-bold text-[13px] text-[#111827]">Kos sebenar sebulan</p>
                 <p className="font-body text-[10px] text-[#6B7280]">Ansuran + insurans + roadtax</p>
               </div>
-              <p className="font-heading font-extrabold text-[18px] text-[#064E4A]">≈ RM{fmt(trueMonthly)}</p>
+              <p className="font-heading font-extrabold text-[18px] text-[#3D472F]">≈ RM{fmt(trueMonthly)}</p>
             </div>
           )}
         </div>
@@ -235,7 +235,7 @@ export function LoanCalculator() {
       {hasResult && (
         <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-4">
           {leadState === 'done' ? (
-            <p className="font-body text-[13px] text-[#064E4A] font-semibold">
+            <p className="font-body text-[13px] text-[#3D472F] font-semibold">
               ✓ Kiraan dihantar ke e-mel anda. Semak inbox (atau spam).
             </p>
           ) : (
@@ -255,12 +255,12 @@ export function LoanCalculator() {
                   required
                   className="flex-1 bg-white border border-[#D1D5DB] rounded-lg px-3 py-2
                              font-body text-[16px] text-[#111827] placeholder:text-[#D1D5DB]
-                             focus:outline-none focus:border-[#064E4A] min-w-0"
+                             focus:outline-none focus:border-[#3D472F] min-w-0"
                 />
                 <button
                   type="submit"
                   disabled={leadState === 'sending'}
-                  className="bg-[#064E4A] text-white font-heading font-bold text-[13px]
+                  className="bg-[#3D472F] text-white font-heading font-bold text-[13px]
                              px-4 py-2 rounded-lg disabled:opacity-60 whitespace-nowrap"
                 >
                   {leadState === 'sending' ? '…' : 'Hantar'}
@@ -275,7 +275,7 @@ export function LoanCalculator() {
       {hasResult && (
         <Link
           href="/#semak"
-          className="flex items-center justify-between bg-white border-l-[3px] border-l-[#064E4A] border border-[#E5E7EB] rounded-[14px] px-4 py-4 hover:bg-[#F0FDF4] transition-colors group"
+          className="flex items-center justify-between bg-white border-l-[3px] border-l-[#3D472F] border border-[#E5E7EB] rounded-[14px] px-4 py-4 hover:bg-[#F0FDF4] transition-colors group"
         >
           <div>
             <p className="font-heading font-bold text-[13px] text-[#111827]">
@@ -285,7 +285,7 @@ export function LoanCalculator() {
               Semak harga kereta ini — percuma, 10 saat.
             </p>
           </div>
-          <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3 text-[18px]">→</span>
+          <span className="font-body text-[#9CA3AF] group-hover:text-[#3D472F] transition-colors flex-shrink-0 ml-3 text-[18px]">→</span>
         </Link>
       )}
 

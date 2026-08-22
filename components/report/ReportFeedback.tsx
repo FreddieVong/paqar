@@ -38,7 +38,7 @@ export function ReportFeedback({ checkId, plate }: { checkId: string; plate: str
           href={GOOGLE_BUSINESS.review}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[10px] py-3 text-center hover:bg-[#053D3A] transition-colors"
+          className="block w-full bg-[#3D472F] text-white font-heading font-bold text-[14px] rounded-[10px] py-3 text-center hover:bg-[#2E3523] transition-colors"
         >
           ⭐ Tulis Review di Google →
         </a>
@@ -56,7 +56,7 @@ export function ReportFeedback({ checkId, plate }: { checkId: string; plate: str
           {supportHref && (
             <>
               {' '}
-              <a href={supportHref} target="_blank" rel="noopener noreferrer" className="text-[#064E4A] underline underline-offset-2">
+              <a href={supportHref} target="_blank" rel="noopener noreferrer" className="text-[#3D472F] underline underline-offset-2">
                 Hubungi kami
               </a>{' '}
               jika ada masalah.

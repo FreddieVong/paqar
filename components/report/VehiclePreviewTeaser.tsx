@@ -133,7 +133,7 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
     return (
       <div className={`${CARD} bg-[#F9FAFB] border-[#E5E7EB]`} aria-live="polite">
         <div className="flex items-center gap-2">
-          <span className="w-[14px] h-[14px] rounded-full border-2 border-[#D1D5DB] border-t-[#064E4A] animate-spin flex-shrink-0" />
+          <span className="w-[14px] h-[14px] rounded-full border-2 border-[#D1D5DB] border-t-[#3D472F] animate-spin flex-shrink-0" />
           <p className="font-body text-[13px] text-[#6B7280]">
             Mencari maklumat kenderaan…
           </p>
@@ -156,7 +156,7 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
           {/* Both are plain navigations — no new check, no second paid lookup. */}
           <Link
             href="/?tab=plat"
-            className="text-center font-heading font-bold text-[13px] rounded-[10px] py-2.5 bg-[#064E4A] text-white"
+            className="text-center font-heading font-bold text-[13px] rounded-[10px] py-2.5 bg-[#3D472F] text-white"
           >
             Semak nombor plat
           </Link>

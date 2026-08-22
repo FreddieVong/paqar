@@ -148,9 +148,9 @@ export function CoverageSignal({
             placeholder="contoh: 45000"
             className="flex-1 min-w-0 bg-[#F9FAFB] border-[1.5px] border-[#E5E7EB] rounded-xl px-4 py-3
                        font-heading font-semibold text-[16px] text-[#111827] placeholder:text-[#D1D5DB]
-                       focus:outline-none focus:border-[#064E4A]"
+                       focus:outline-none focus:border-[#3D472F]"
           />
-          <button type="submit" className="bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-xl px-4 flex-shrink-0">
+          <button type="submit" className="bg-[#3D472F] text-white font-heading font-bold text-[14px] rounded-xl px-4 flex-shrink-0">
             Semak
           </button>
         </form>
@@ -161,7 +161,7 @@ export function CoverageSignal({
   if (!exhausted && (!data || data.state === 'needs_asking_price' || data.state === 'pending')) {
     return (
       <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[14px] p-5 flex items-center gap-2">
-        <div className="w-4 h-4 rounded-full border-2 border-[#D1D5DB] border-t-[#064E4A] animate-spin flex-shrink-0" />
+        <div className="w-4 h-4 rounded-full border-2 border-[#D1D5DB] border-t-[#3D472F] animate-spin flex-shrink-0" />
         <p className="font-body text-[13px] text-[#374151]">Sedang semak iklan setanding…</p>
       </div>
     )
@@ -205,7 +205,7 @@ export function CoverageSignal({
             href={correction}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-heading font-bold text-[#064E4A] underline underline-offset-2"
+            className="font-heading font-bold text-[#3D472F] underline underline-offset-2"
           >
             Beritahu kami sebelum bayar
           </a>

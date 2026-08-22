@@ -173,7 +173,7 @@ export default async function AdminConfigPage() {
           />
           <button
             type="submit"
-            className="w-full bg-[#064E4A] text-white font-heading font-bold text-[15px] rounded-[10px] py-3"
+            className="w-full bg-[#3D472F] text-white font-heading font-bold text-[15px] rounded-[10px] py-3"
           >
             Log Masuk
           </button>
@@ -271,7 +271,7 @@ export default async function AdminConfigPage() {
         </p>
 
         <a href="/admin/review"
-           className="inline-block font-heading font-bold text-[13px] text-[#064E4A] underline underline-offset-2">
+           className="inline-block font-heading font-bold text-[13px] text-[#3D472F] underline underline-offset-2">
           ← Semakan Laporan
         </a>
       </div>

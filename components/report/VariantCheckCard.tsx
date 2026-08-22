@@ -85,7 +85,7 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
                     isThis ? 'bg-[#F0FDF4] border border-[#BBF7D0]' : 'bg-[#F9FAFB]'
                   }`}
                 >
-                  <p className={`font-body text-[13px] ${isThis ? 'font-bold text-[#064E4A]' : 'text-[#374151]'}`}>
+                  <p className={`font-body text-[13px] ${isThis ? 'font-bold text-[#3D472F]' : 'text-[#374151]'}`}>
                     {v.name}
                     <span className="text-[#9CA3AF] font-normal"> — {VERDICT_LABELS[v.verdict]}</span>
                   </p>
@@ -123,7 +123,7 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
 
           <Link
             href={`/varian/${guide.modelSlug}`}
-            className="font-body text-[12px] text-[#064E4A] underline underline-offset-2 mt-2 inline-block"
+            className="font-body text-[12px] text-[#3D472F] underline underline-offset-2 mt-2 inline-block"
           >
             Panduan penuh varian {guide.model} →
           </Link>

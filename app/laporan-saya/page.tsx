@@ -82,7 +82,7 @@ export default function MyReportPage() {
                 href={support}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block min-h-[44px] leading-[44px] font-heading font-bold text-[13px] text-[#064E4A] underline underline-offset-2"
+                className="inline-block min-h-[44px] leading-[44px] font-heading font-bold text-[13px] text-[#3D472F] underline underline-offset-2"
               >
                 WhatsApp Paqar &rarr;
               </a>
@@ -91,7 +91,7 @@ export default function MyReportPage() {
 
           <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed">
             Ada akaun Paqar?{' '}
-            <Link href="/dashboard" className="text-[#064E4A] underline underline-offset-2">
+            <Link href="/dashboard" className="text-[#3D472F] underline underline-offset-2">
               Buka dashboard
             </Link>{' '}
             &mdash; hanya untuk pengguna yang mendaftar untuk peringatan roadtax

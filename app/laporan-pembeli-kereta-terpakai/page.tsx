@@ -90,7 +90,7 @@ export default function LaporanPembelihPage() {
 
           {/* What's included */}
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
-            <div className="bg-[#14453d] px-5 py-4">
+            <div className="bg-[#3D472F] px-5 py-4">
               <p className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/45 mb-1">
                 Laporan Pembeli — RM29
               </p>
@@ -130,7 +130,7 @@ export default function LaporanPembelihPage() {
                 },
               ].map((item, i, arr) => (
                 <div key={item.title} className={`flex gap-2.5 items-start py-2.5 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>
-                  <span className="w-[17px] h-[17px] rounded-full bg-[#14453d] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="w-[17px] h-[17px] rounded-full bg-[#3D472F] flex items-center justify-center flex-shrink-0 mt-0.5">
                     <svg width="8" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </span>
                   <div>
@@ -143,7 +143,7 @@ export default function LaporanPembelihPage() {
             <div className="px-5 py-3 bg-[#F8FAF7] border-t border-[#F3F4F6]">
               <p className="font-body text-[11px] text-[#6B7280]">
                 Satu bayaran sahaja · Tanpa daftar akaun ·{' '}
-                <Link href="/contoh-laporan" className="text-[#064E4A] font-semibold hover:underline">
+                <Link href="/contoh-laporan" className="text-[#3D472F] font-semibold hover:underline">
                   Lihat contoh laporan →
                 </Link>
               </p>
@@ -193,9 +193,9 @@ export default function LaporanPembelihPage() {
           {/* Related links */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
-            <Link href="/contoh-laporan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Lihat contoh laporan →</Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist lengkap sebelum bayar deposit →</Link>
-            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Panduan cara beli kereta terpakai →</Link>
+            <Link href="/contoh-laporan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Lihat contoh laporan →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist lengkap sebelum bayar deposit →</Link>
+            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Panduan cara beli kereta terpakai →</Link>
           </div>
 
         </div>

@@ -145,7 +145,7 @@ function PaidReportUnavailableNotice({ checkId }: { checkId: string }) {
           href={support}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block font-heading font-bold text-[13px] text-[#064E4A] underline underline-offset-2"
+          className="inline-block font-heading font-bold text-[13px] text-[#3D472F] underline underline-offset-2"
         >
           Hubungi kami di WhatsApp →
         </a>

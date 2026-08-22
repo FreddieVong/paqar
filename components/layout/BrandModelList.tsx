@@ -28,13 +28,13 @@ export function BrandModelList({ brand, models }: {
         const heading = (
           <>
             <div>
-              <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#064E4A] transition-colors">{brand} {m.model}</p>
+              <p className="font-heading font-bold text-[14px] text-[#111827] group-hover:text-[#3D472F] transition-colors">{brand} {m.model}</p>
               <p className="font-body text-[12px] text-[#9CA3AF] mt-0.5">
                 {m.tag}
               </p>
             </div>
             {m.hubSlug && (
-              <span className="font-body text-[#9CA3AF] group-hover:text-[#064E4A] transition-colors flex-shrink-0 ml-3">→</span>
+              <span className="font-body text-[#9CA3AF] group-hover:text-[#3D472F] transition-colors flex-shrink-0 ml-3">→</span>
             )}
           </>
         )
@@ -44,7 +44,7 @@ export function BrandModelList({ brand, models }: {
             {m.hubSlug ? (
               <Link
                 href={`/harga-kereta-terpakai/${m.hubSlug}`}
-                className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#064E4A] hover:bg-[#F0FDF4] transition-colors group"
+                className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3.5 hover:border-[#3D472F] hover:bg-[#F0FDF4] transition-colors group"
               >
                 {heading}
               </Link>
@@ -68,7 +68,7 @@ export function BrandModelList({ brand, models }: {
                   key={y}
                   href={`/harga-${m.yearKey}-${y}`}
                   aria-label={`Harga ${m.model} ${y} terpakai`}
-                  className="font-body text-[11px] text-[#064E4A] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[6px] px-2 py-0.5 hover:bg-[#DCFCE7] transition-colors"
+                  className="font-body text-[11px] text-[#3D472F] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[6px] px-2 py-0.5 hover:bg-[#DCFCE7] transition-colors"
                 >
                   {y}
                 </Link>

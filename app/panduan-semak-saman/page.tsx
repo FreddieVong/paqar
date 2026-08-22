@@ -106,7 +106,7 @@ export default function PanduanSemakSamanPage() {
                 'Senarai saman (jika ada) akan dipaparkan beserta jumlah',
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5 w-5">
+                  <span className="font-heading font-bold text-[12px] text-[#3D472F] flex-shrink-0 mt-0.5 w-5">
                     {i + 1}.
                   </span>
                   <p className="font-body text-[13px] text-[#374151] leading-relaxed">{step}</p>
@@ -117,7 +117,7 @@ export default function PanduanSemakSamanPage() {
               href="https://mybayar.rmp.gov.my"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-block w-full bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#053D3A] transition-colors"
+              className="mt-4 inline-block w-full bg-[#3D472F] text-white font-heading font-bold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#2E3523] transition-colors"
             >
               Buka MyBayar PDRM →
             </a>
@@ -140,7 +140,7 @@ export default function PanduanSemakSamanPage() {
                 'Keputusan akan dipaparkan serta-merta',
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0 mt-0.5 w-5">
+                  <span className="font-heading font-bold text-[12px] text-[#3D472F] flex-shrink-0 mt-0.5 w-5">
                     {i + 1}.
                   </span>
                   <p className="font-body text-[13px] text-[#374151] leading-relaxed">{step}</p>
@@ -151,7 +151,7 @@ export default function PanduanSemakSamanPage() {
               href="https://public.jpj.gov.my"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-block w-full bg-[#064E4A] text-white font-heading font-bold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#053D3A] transition-colors"
+              className="mt-4 inline-block w-full bg-[#3D472F] text-white font-heading font-bold text-[14px] rounded-[12px] py-3.5 text-center hover:bg-[#2E3523] transition-colors"
             >
               Buka Portal JPJ →
             </a>
@@ -192,17 +192,17 @@ export default function PanduanSemakSamanPage() {
           {/* Related guides */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
-            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
-            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
-            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Risiko beli kereta terpakai →</Link>
+            <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
+            <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
+            <Link href="/risiko-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Risiko beli kereta terpakai →</Link>
           </div>
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Harga model popular</p>
-            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
-            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
-            <Link href="/bandingkan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Bandingkan model →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-myvi" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Myvi terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/perodua-axia" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Perodua Axia terpakai →</Link>
+            <Link href="/harga-kereta-terpakai/proton-saga" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga Proton Saga terpakai →</Link>
+            <Link href="/bandingkan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Bandingkan model →</Link>
           </div>
 
           <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
