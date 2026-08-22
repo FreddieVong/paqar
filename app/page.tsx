@@ -165,14 +165,14 @@ export default async function HomePage() {
           {/* "Disemak oleh manusia" moves up here from the body copy. It is the
               part no assistant and no portal can match, so it belongs beside
               the price rather than buried in a paragraph. */}
-          <p className="font-body text-[13px] text-[#6B7280] mb-7 leading-relaxed text-balance">
+          <p className="font-body text-[13px] text-[#6B7280] mb-1.5 leading-relaxed text-balance">
             {BASE_REPORT_LABEL} · Disemak oleh manusia · Tanpa daftar akaun
           </p>
 
           {/* The hours, stated plainly. Thirty minutes is the truth during the
               day and a lie at 3am, and a buyer who sends one at 3am and hears
               nothing for seven hours has been misled by an average. */}
-          <p className="font-body text-[12px] text-[#9CA3AF] mb-7 leading-relaxed text-balance">
+          <p className="font-body text-[12px] text-[#6B7280] mb-7 leading-relaxed text-balance">
             Semakan manusia {REVIEW_OPENS_HOUR} pagi &ndash; 12 malam · dijamin dalam {REVIEW_SLA_HOURS} jam
           </p>
 
@@ -272,7 +272,7 @@ export default async function HomePage() {
                 </span>
                 <div>
                   <p className="font-heading font-bold text-[13px] text-[#111827] leading-snug">{item.title}</p>
-                  <p className="font-body text-[12px] text-[#9CA3AF] leading-snug mt-0.5">{item.desc}</p>
+                  <p className="font-body text-[12px] text-[#6B7280] leading-snug mt-0.5">{item.desc}</p>
                 </div>
               </div>
             ))}

@@ -628,7 +628,7 @@ export function ListingIntakeForm({
             )}
             {(editing || missing('askingPriceRm')) && (
               <div>
-                <label htmlFor="li-price" className={LABEL_CLS}>Harga Yang Penjual Minta (RM)</label>
+                <label htmlFor="li-price" className={LABEL_CLS}>Harga yang penjual minta (RM)</label>
                 <input id="li-price" type="number" value={price} onChange={e => { setPrice(e.target.value); setDirty(true) }}
                        placeholder="cth: 59000" min={1000} max={2000000} inputMode="numeric" className={INPUT_CLS} />
               </div>
