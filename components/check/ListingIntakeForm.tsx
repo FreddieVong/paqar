@@ -95,6 +95,9 @@ export function ListingIntakeForm({
   const [searchPage, setSearchPage] = useState(false)
   const [notifyEmail, setNotifyEmail] = useState('')
   const [notifySent,  setNotifySent]  = useState(false)
+  // Screenshots are the secondary path — revealed on request, so a first-time
+  // reader sees one action rather than a choice between two.
+  const [showUpload,  setShowUpload]  = useState(false)
   const [busy,       setBusy]       = useState(false)
   const [error,      setError]      = useState<string | null>(null)
   const [status,     setStatus]     = useState<string | null>(null)
@@ -447,45 +450,33 @@ export function ListingIntakeForm({
             actually want. */}
         {(phase === 'start' || phase === 'working') && (
         <>
-        <div>
-          <label htmlFor="li-shots" className={LABEL_CLS}>
-            Muat naik screenshot iklan
-          </label>
-          <p className="font-body text-[12px] text-[#6B7280] mb-2 leading-relaxed">
-            Cara paling senang. Boleh hantar beberapa kalau harga, model dan
-            mileage berada di skrin berlainan.
-          </p>
-          {/* Created lazily, on first file selection: minting a row on mount
-              would create one for every visitor who scrolls past the form. */}
-          <ScreenshotUpload
-            intakeId={intakeId}
-            token={tokenRef.current}
-            ensureIntake={ensureIntake}
-            onUploaded={() => void onScreenshotUploaded()}
-          />
-        </div>
+        {/* ── ONE ACTION, NOT TWO ────────────────────────────────────────
+            A tester opening the page said: "it's full of text… all the
+            options need to be separated… I have to read each of them to
+            figure out what they do."
 
-        <div className="flex items-center gap-3" aria-hidden="true">
-          <span className="h-px flex-1 bg-[#F3F4F6]" />
-          <span className="font-body text-[12px] text-[#9CA3AF]">atau</span>
-          <span className="h-px flex-1 bg-[#F3F4F6]" />
-        </div>
+            He was describing this form. It offered screenshot and link side
+            by side, each with its own heading and its own explanatory
+            paragraph, so before doing anything a buyer read four blocks of
+            text and then had to CHOOSE. That is a decision nobody arrives
+            wanting to make, and StoryBrand's first rule is one obvious next
+            step — a second equal option costs conversions rather than adding
+            flexibility.
 
-        {/* The link, secondary. Read where a service can read it, and always
-            stored so a reviewer can open it during review. */}
+            The link leads because it is one paste and because it is what
+            actually gets used: every real listing put through the live site
+            so far arrived as a link. The placeholder carries what the deleted
+            paragraph said — Mudah, Carlist, Facebook Marketplace — without
+            asking anyone to read a sentence to learn it.
+
+            Screenshots stay one tap away for the buyer who has no usable
+            link, and every word about formats, pasting and retention now
+            lives inside that panel, where it is read by someone who has
+            already decided to upload. */}
         <div>
           <label htmlFor="li-url" className={LABEL_CLS}>
-            Tampal link iklan
+            Link iklan kereta itu
           </label>
-          {/* ANY platform, and that is not a fallback — it is the thing an
-              automated competitor cannot match. Only Mudah can be read without
-              a person; every other link is opened by the reviewer, which is
-              what RM29 buys. Saying so up front also means a failed automatic
-              read is not experienced as the product breaking. */}
-          <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-2">
-            Mana-mana platform. Kami buka link ini sendiri semasa semak &mdash;
-            kalau kami tak dapat baca automatik, anda cuma isi beberapa butiran.
-          </p>
           <input
             id="li-url"
             type="url"
@@ -519,6 +510,38 @@ export function ListingIntakeForm({
             </button>
           )}
         </div>
+
+        {/* The screenshot path, one tap away. A real link is not always
+            obtainable — Facebook Marketplace in particular — so this must stay
+            reachable, but it must not compete with the primary action for a
+            first-time reader's attention. */}
+        {!showUpload ? (
+          <button
+            type="button"
+            onClick={() => setShowUpload(true)}
+            className="w-full min-h-[44px] font-body text-[13px] text-[#064E4A] underline underline-offset-2 hover:text-[#053D3A]"
+          >
+            Tiada link? Muat naik screenshot iklan
+          </button>
+        ) : (
+          <div>
+            <label htmlFor="li-shots" className={LABEL_CLS}>
+              Screenshot iklan
+            </label>
+            <p className="font-body text-[12px] text-[#6B7280] mb-2 leading-relaxed">
+              Boleh hantar beberapa kalau harga, model dan mileage berada di
+              skrin berlainan.
+            </p>
+            {/* Created lazily, on first file selection: minting a row on mount
+                would create one for every visitor who scrolls past the form. */}
+            <ScreenshotUpload
+              intakeId={intakeId}
+              token={tokenRef.current}
+              ensureIntake={ensureIntake}
+              onUploaded={() => void onScreenshotUploaded()}
+            />
+          </div>
+        )}
         </>
         )}
 

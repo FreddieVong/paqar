@@ -78,7 +78,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 const pasteUrl = (url: string) => {
-  const input = screen.getByLabelText(/Tampal link iklan/i)
+  const input = screen.getByLabelText(/Link iklan kereta itu/i)
   fireEvent.change(input, { target: { value: url } })
   fireEvent.blur(input)
 }
@@ -94,8 +94,19 @@ const pngFile = () =>
  * stored for the human reviewer; the buyer's own screenshots are what can be
  * read.
  */
+/**
+ * Screenshots are the SECONDARY path now — revealed on request, so a
+ * first-time reader is shown one action instead of a choice between two.
+ * Every test that needs the file input opens the panel first.
+ */
+const openUpload = () => {
+  const toggle = screen.queryByText(/Tiada link\? Muat naik screenshot/i)
+  if (toggle) fireEvent.click(toggle)
+}
+
 const uploadScreenshot = () => {
   routes['/api/listing-screenshots'] = { ok: true, duplicate: false, count: 1 }
+  openUpload()
   fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement,
     { target: { files: [pngFile()] } })
 }
@@ -247,6 +258,7 @@ describe('uploading a screenshot', () => {
     routes['/api/listing-screenshots'] = { ok: true, duplicate: false, count: 1 }
     render(<ListingIntakeForm />)
 
+    openUpload()
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
     expect(input, 'no file input rendered').toBeTruthy()
     fireEvent.change(input, { target: { files: [file()] } })
@@ -268,6 +280,7 @@ describe('uploading a screenshot', () => {
   it('sends the token on the very first upload', async () => {
     routes['/api/listing-screenshots'] = { ok: true, duplicate: false, count: 1 }
     render(<ListingIntakeForm />)
+    openUpload()
     fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement,
       { target: { files: [file()] } })
 
@@ -283,6 +296,7 @@ describe('uploading a screenshot', () => {
   it('re-extracts after upload so one summary appears', async () => {
     routes['/api/listing-screenshots'] = { ok: true, duplicate: false, count: 1 }
     render(<ListingIntakeForm />)
+    openUpload()
     fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement,
       { target: { files: [file()] } })
 
@@ -293,6 +307,7 @@ describe('uploading a screenshot', () => {
   it('never shows storage or HTTP language when an upload fails', async () => {
     delete routes['/api/listing-screenshots']   // -> 404
     render(<ListingIntakeForm />)
+    openUpload()
     fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement,
       { target: { files: [file()] } })
 
@@ -333,9 +348,11 @@ describe('the loading state is visible', () => {
   }
 
   /** Uploads without touching `routes` — this suite owns its own stub. */
-  const upload = () =>
+  const upload = () => {
+    openUpload()
     fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement,
       { target: { files: [pngFile()] } })
+  }
 
   it('announces itself to assistive tech', async () => {
     slowExtract()
@@ -376,7 +393,7 @@ describe('the loading state is visible', () => {
     upload()
 
     await screen.findByRole('status', undefined, { timeout: 5000 })
-    expect((screen.getByLabelText(/Tampal link iklan/i) as HTMLInputElement).disabled).toBe(true)
+    expect((screen.getByLabelText(/Link iklan kereta itu/i) as HTMLInputElement).disabled).toBe(true)
   })
 
   it('clears once the summary lands', async () => {
@@ -389,7 +406,7 @@ describe('the loading state is visible', () => {
     // The link field being re-enabled used to stand in for "the working phase
     // ended". The inputs now RETIRE when the car is known, so their absence is
     // the same signal and a stronger one: a finished step leaves the screen.
-    expect(screen.queryByLabelText(/Tampal link iklan/i)).toBeNull()
+    expect(screen.queryByLabelText(/Link iklan kereta itu/i)).toBeNull()
     expect(screen.queryByLabelText(/Muat naik screenshot/i)).toBeNull()
   })
 })
@@ -402,18 +419,34 @@ describe('the loading state is visible', () => {
  * copying a link is three. Screenshots are also the only path that works for
  * Carlist and Facebook, which no service can read.
  */
-describe('screenshots lead', () => {
-  it('renders the upload above the link field', () => {
+/**
+ * A tester opening the live site wrote: "it's full of text… all the options
+ * need to be separated… I have to read each of them to figure out what they
+ * do." He was describing this form, which offered screenshot and link side by
+ * side, each with a heading and an explanatory paragraph — four blocks to read
+ * and then a choice to make before doing anything.
+ */
+describe('one obvious action', () => {
+  it('shows the link field and nothing competing with it', () => {
     render(<ListingIntakeForm />)
-    const body = document.body.innerHTML
-    expect(body.indexOf('li-shots')).toBeLessThan(body.indexOf('li-url'))
+    expect(screen.getByLabelText(/^Link iklan kereta itu$/i)).toBeTruthy()
+    // No second input, no "atau" fork, no explanatory paragraph to read first.
+    expect(document.querySelector('input[type="file"]')).toBeNull()
+    expect(screen.queryByText(/^atau$/)).toBeNull()
+    expect(screen.queryByText(/Cara paling senang/i)).toBeNull()
   })
 
-  it('labels the upload as the easy path and the link as an alternative', () => {
+  it('keeps screenshots reachable in one tap, for a link nobody can get', () => {
     render(<ListingIntakeForm />)
-    expect(screen.getByText(/Muat naik screenshot iklan/i)).toBeTruthy()
-    expect(screen.getByText(/Cara paling senang/i)).toBeTruthy()
-    expect(screen.getByText(/^atau$/)).toBeTruthy()
-    expect(screen.getByLabelText(/^Tampal link iklan$/i)).toBeTruthy()
+    // Facebook Marketplace in particular often yields no usable link.
+    fireEvent.click(screen.getByText(/Tiada link\? Muat naik screenshot/i))
+    expect(document.querySelector('input[type="file"]')).toBeTruthy()
+  })
+
+  it('moves the upload detail INTO the panel, not in front of it', () => {
+    render(<ListingIntakeForm />)
+    expect(screen.queryByText(/skrin berlainan/i)).toBeNull()
+    fireEvent.click(screen.getByText(/Tiada link\? Muat naik screenshot/i))
+    expect(screen.getByText(/skrin berlainan/i)).toBeTruthy()
   })
 })

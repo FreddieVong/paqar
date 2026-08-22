@@ -50,8 +50,21 @@ describe('pasting a link starts something the buyer can see', () => {
   it('promises only what the link path actually delivers', () => {
     // Any platform is accepted and stored; only Mudah is read without a human.
     // Verified live: a Carlist URL persists on listing_intake.listing_url.
-    expect(FORM).toContain('Mana-mana platform')
-    expect(FORM).toMatch(/Kami buka link ini sendiri semasa semak/)
+    //
+    // This used to assert a sentence — "Mana-mana platform. Kami buka link ini
+    // sendiri…" — sitting above the field. It was removed: a tester said the
+    // form was a wall of text he had to read before he could act, and he was
+    // right. The same promise is now made by the PLACEHOLDER, which names the
+    // platforms instead of describing them, and is read without effort.
+    expect(FORM).toContain('Mudah, Carlist, Facebook Marketplace')
+
+    // "A human opens it" is the half that makes ANY platform work, and it is
+    // the thing an automated competitor cannot match — so it is still stated.
+    // It now appears in the could-not-read notice instead of above the field:
+    // that is the moment the buyer wonders whether the product just broke, and
+    // an answer delivered then is worth more than a sentence read past on the
+    // way in.
+    expect(FORM).toMatch(/Link anda tetap disimpan dan akan dibuka oleh manusia semasa menyemak/)
   })
 })
 

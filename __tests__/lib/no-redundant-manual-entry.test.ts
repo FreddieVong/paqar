@@ -58,11 +58,15 @@ describe('a step that is finished leaves the screen', () => {
     // a summary that was already correct.
     expect(CODE).toContain("{(phase === 'start' || phase === 'working') && (")
 
-    // The gate must OPEN the block that holds both inputs, not just one.
+    // The gate must OPEN the block that holds BOTH inputs, whichever order
+    // they appear in. The link now leads and the screenshot panel is revealed
+    // on request, so the old assertion that shots precede the URL no longer
+    // describes the design — but both must still be inside the gate, or one of
+    // them survives the answer it produced.
     const gate = CODE.indexOf("{(phase === 'start' || phase === 'working') && (")
     const after = CODE.slice(gate)
+    expect(after.indexOf('li-url')).toBeGreaterThan(-1)
     expect(after.indexOf('li-shots')).toBeGreaterThan(-1)
-    expect(after.indexOf('li-url')).toBeGreaterThan(after.indexOf('li-shots'))
   })
 
   it('still offers a correction path from the summary itself', () => {
