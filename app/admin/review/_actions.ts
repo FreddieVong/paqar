@@ -255,6 +255,9 @@ function parseOverrides(formData: FormData): Record<string, unknown> | null {
     'brand', 'model', 'year', 'variant',
     'askingPriceRm', 'currentMileageKm',
     'finalDecision', 'sellerQuestions', 'nextAction',
+    // Select, not free text — an enum lib/reviewed-overrides validates and
+    // discards if unrecognised, so a blank means "keep the auto decision".
+    'market',
   ]) {
     const raw = String(formData.get(`override_${key}`) ?? '').trim()
     if (raw !== '') out[key] = raw

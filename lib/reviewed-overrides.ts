@@ -33,6 +33,12 @@ export interface ReviewedOverrides {
   nextAction?:       string
   /** Reviewer withheld a mileage finding the evidence does not support. */
   suppressMileageWarning?: boolean
+  /**
+   * Which market to price the car in. The reviewer opened the listing, so they
+   * settle it when the URL was ambiguous — and they are the only party who can
+   * see that a "recond" in the title referred to the gearbox.
+   */
+  market?: 'used' | 'recon'
 }
 
 const TEXT_FIELDS = [
@@ -77,6 +83,11 @@ export function parseOverrides(raw: unknown): ReviewedOverrides {
   if (src.suppressMileageWarning === true || src.suppressMileageWarning === 'true') {
     out.suppressMileageWarning = true
   }
+
+  // Enum, not free text: an unrecognised value must not silently select a
+  // cohort. Anything else falls through and identity resolution decides.
+  if (src.market === 'used' || src.market === 'recon') out.market = src.market
+
   return out
 }
 

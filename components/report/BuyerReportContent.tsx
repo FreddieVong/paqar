@@ -1,6 +1,7 @@
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
 import { buildComparableCohort, evaluateVerdictEligibility, comparableConfidence } from '@/lib/comparables'
+import type { ListingMarket } from '@/lib/comparables'
 import { odometerEvidence, MILEAGE_PROVENANCE_LABEL, type MileageSource } from '@/lib/mileage-provenance'
 import { registrationState, REGISTRATION_COPY } from '@/lib/registration-claim'
 import { isIndividualListingUrl } from '@/lib/listing-url'
@@ -117,12 +118,20 @@ interface Props {
    * cohort while the buyer reads another is a failure neither of them can see.
    */
   cohortYear?:    string | null
+  /**
+   * Local used market or reconditioned import. Resolved once in
+   * lib/report-identity and passed in, never inferred here: the coverage
+   * answer the buyer read before paying was built with this same value, and a
+   * report that picked its own would sell a different set of comparables from
+   * the one it promised — or, for a recon, none at all.
+   */
+  cohortMarket?:  ListingMarket
   cohortModel?:   string | null
   cohortVariant?: string | null
   cohortBrand?:   string | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null, cohortBrand = null }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null, cohortBrand = null, cohortMarket = 'used' }: Props) {
   // The reading that may support a TAMPERING claim — null unless a human
   // confirmed it. Distinct from claimedMileageKm, which is still displayed as
   // context. Conflating the two is what published a false rollback warning
@@ -193,6 +202,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
     officialVariant:  officialVariant ?? cohortVariant ?? null,
     model:            cohortModel  ?? vehicleData?.model ?? null,
     isSpecialVariant,
+    market:           cohortMarket,
   })
   const relevantListings = cohort.listings
   const mPrices          = cohort.prices
@@ -747,6 +757,18 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
                   <p className="font-body text-[11px] text-[#6B7280]">
                     Berdasarkan harga yang diiklankan, bukan harga jualan akhir.
                   </p>
+                  {/* WHICH MARKET, said out loud.
+                      A recon and a registered used car of the same model and
+                      year are two different markets at two different prices.
+                      The cohort never mixes them — but a buyer reading "harga
+                      pasaran" has no way to know which of the two they are
+                      looking at, and for an import the gap runs to six
+                      figures. Naming it costs one line. */}
+                  {cohortMarket === 'recon' && (
+                    <p className="font-body text-[11px] text-[#6B7280]">
+                      Dibandingkan dengan unit recon sahaja — bukan kereta terpakai berdaftar.
+                    </p>
+                  )}
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${conf.dot}`} />

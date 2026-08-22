@@ -489,6 +489,46 @@ export function excludeReconImports<T extends PricedListing>(listings: T[]): T[]
   return listings.filter(l => listingCondition(l.title) !== 'Recon')
 }
 
+/**
+ * Which market a car is being sold in. Not a filter preference — two different
+ * markets that happen to share a model name.
+ *
+ * 'used'  a registered Malaysian car, priced on local resale.
+ * 'recon' an unregistered reconditioned import, priced on import duty.
+ */
+export type ListingMarket = 'used' | 'recon'
+
+/**
+ * Keeps ONLY reconditioned imports — the mirror of excludeReconImports, for a
+ * buyer whose own car is a recon.
+ *
+ * ── WHY THIS HAD TO EXIST ──────────────────────────────────────────────────
+ *
+ * excludeReconImports was written to answer "is this used Civic fairly
+ * priced", and for that it is right: recon imports are a different market and
+ * they dragged the Civic 2022 ceiling to RM172,584 against an RM86k median.
+ *
+ * But it was applied to EVERY cohort, including cohorts built for buyers who
+ * are themselves shopping for a recon. Measured on production data, that
+ * turned away five cached model-years outright — among them Lexus RX 2023,
+ * where all eleven year-matched comparables were recon 350s in a RM293k–331k
+ * band, and Toyota Alphard 2021 and 2022. Paqar held a near-perfect cohort for
+ * a RM300k decision and answered "we have not found enough comparable ads."
+ *
+ * Those are not marginal cars. Recon is how Malaysia buys imported Lexus,
+ * Alphard and Vellfire, and Carlist files them under a /recon-cars/ path of
+ * their own, so a buyer researching one is disproportionately likely to be
+ * the buyer pasting a link.
+ *
+ * The rule was never "recon does not count". It is COMPARE LIKE WITH LIKE:
+ * never mix the two markets in one cohort. Excluding recons from a used cohort
+ * and excluding used cars from a recon cohort are the same rule applied from
+ * the two sides.
+ */
+export function onlyReconImports<T extends PricedListing>(listings: T[]): T[] {
+  return listings.filter(l => listingCondition(l.title) === 'Recon')
+}
+
 /** Median of a raw price list — the reference the ratio is measured against. */
 function medianOfRaw(prices: number[]): number {
   const sorted = [...prices].sort((a, b) => a - b)
@@ -553,6 +593,12 @@ interface CohortOptions {
   model?:            string | null
   isSpecialVariant?: boolean
   minSample?:        number
+  /**
+   * Which market the BUYER'S car is in — 'used' by default, so every existing
+   * caller keeps the local-used cohort it already had. Only a caller that
+   * positively knows the car is an unregistered import passes 'recon'.
+   */
+  market?:           ListingMarket
 }
 
 // ── Product policy ─────────────────────────────────────────────────────────
@@ -713,16 +759,29 @@ export function buildComparableCohort<T extends PricedListing>(
   listings: T[],
   opts: CohortOptions = {},
 ): ComparableCohort<T> {
-  const { year, officialVariant, model, isSpecialVariant = false, minSample = 3 } = opts
+  const {
+    year, officialVariant, model, isSpecialVariant = false, minSample = 3,
+    market = 'used',
+  } = opts
 
-  // DO NOT REMOVE. An unregistered reconditioned import has never held a
-  // Malaysian plate and is priced on import duty, not local resale — it is not
-  // in the market Paqar values, whichever variant it is. Leaving them in put
-  // RM159,800 recon Civics in the base 2022 cohort and pushed the published
+  // DO NOT REMOVE. The two markets never mix in one cohort.
+  //
+  // A recon is an unregistered reconditioned import, priced on import duty
+  // rather than local resale. Leaving recons in a USED cohort put RM159,800
+  // recon Civics in the base 2022 cohort and pushed the published
   // "questionable above" threshold to RM172,584 against a RM86k median.
   // Approved as a deliberate market-definition decision, 2026-08-09.
   // Guarded by __tests__/lib/performance-variant-contamination.test.ts.
-  const inMarket    = excludeReconImports(excludeDuplicateListings(listings))
+  //
+  // The symmetric case was missed for as long: a buyer shopping for a recon
+  // got the used cohort with every recon stripped out, which for Lexus RX 2023
+  // and Toyota Alphard 2021/2022 emptied the cohort completely and refused the
+  // sale. 'recon' keeps exactly the listings 'used' drops.
+  // Guarded by __tests__/lib/recon-market-cohort.test.ts.
+  const deduped     = excludeDuplicateListings(listings)
+  const inMarket    = market === 'recon'
+    ? onlyReconImports(deduped)
+    : excludeReconImports(deduped)
   const yearMatched = year != null && year !== ''
     ? filterListingsByYear(inMarket, year)
     : inMarket

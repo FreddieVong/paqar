@@ -4,6 +4,7 @@ import {
   buildComparableCohort,
   evaluateVerdictEligibility,
   isPerformanceModelText,
+  type ListingMarket,
 } from '@/lib/comparables'
 import { canonicalModelKeyword } from '@/lib/model-catalog'
 
@@ -55,6 +56,13 @@ export async function assessCoverage(params: {
   year:         string
   askingPrice:  number
   variantSource?: string
+  /**
+   * Which market the buyer's own car is in. Resolved by the caller from the
+   * shared identity so the coverage answer and the paid report select the same
+   * listings — see lib/report-identity. Defaults to the local used market,
+   * which is what every cohort was before recon support existed.
+   */
+  market?:      ListingMarket
   refetch?:     (p: Promise<unknown>) => void
 }): Promise<Coverage> {
   const { brand, model, year, askingPrice } = params
@@ -78,6 +86,7 @@ export async function assessCoverage(params: {
     officialVariant: model,
     model:           null,
     isSpecialVariant: isPerformanceModelText(params.variantSource ?? model),
+    market:           params.market ?? 'used',
   })
 
   const eligibility = evaluateVerdictEligibility(cohort, askingPrice)

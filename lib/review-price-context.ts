@@ -3,6 +3,7 @@ import { getCachedMarketPrices } from '@/lib/db/market-prices'
 import { getCachedVehicleData }  from '@/lib/db/plate-lookups'
 import { decrypt }               from '@/lib/crypto'
 import { buildComparableCohort, isPerformanceModelText } from '@/lib/comparables'
+import type { ListingMarket } from '@/lib/comparables'
 import { resolveCarIdentity }    from '@/lib/report-identity'
 
 /**
@@ -42,10 +43,21 @@ export interface ReviewPrices {
   /** How many comparables are at or above the asking price. */
   cheaperThanAsking: number | null
   mixedVariants: boolean
+  /**
+   * Which market the numbers above describe. Surfaced so the reviewer can see
+   * that a RM300k median is a recon band, not a used one, and correct it if
+   * the URL misled the resolver.
+   */
+  market: ListingMarket
 }
 
 export async function reviewPriceContext(params: {
-  check: { brand?: string | null; model?: string | null; year?: string | null; plate_encrypted?: string | null }
+  check: {
+    brand?: string | null; model?: string | null; year?: string | null
+    plate_encrypted?: string | null
+    /** Feeds the recon/used market decision — see lib/report-identity. */
+    listing_url?: string | null
+  }
   askingPriceRm: number | null
 }): Promise<ReviewPrices | null> {
   let vehicleData = null
@@ -67,10 +79,12 @@ export async function reviewPriceContext(params: {
     officialVariant:  identity.model,
     model:            null,
     isSpecialVariant: isPerformanceModelText(identity.variantSource),
+    market:           identity.market,
   })
 
   const asking = params.askingPriceRm
   return {
+    market: identity.market,
     label:  `${identity.brand} ${identity.model} ${identity.year}`,
     median: cohort.median,
     // The band the verdict and the buyer's report both use, not the extremes

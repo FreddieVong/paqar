@@ -2,6 +2,7 @@ import { NextRequest, NextResponse }                          from 'next/server'
 import { waitUntil }                                          from '@vercel/functions'
 import { z }                                                  from 'zod'
 import { assessCoverage }                                     from '@/lib/coverage'
+import { detectListingMarket }                                from '@/lib/listing-extract'
 
 const schema = z.object({
   brand:       z.string().min(1).max(50),
@@ -11,6 +12,16 @@ const schema = z.object({
     { message: 'Year out of range' }
   ),
   askingPrice: z.number().int().min(1000).max(2_000_000),
+  /**
+   * The link the buyer pasted, forwarded ONLY so the market can be derived
+   * from it — recon or local used. It is never fetched here and never logged;
+   * detectListingMarket parses the string and nothing else touches it.
+   *
+   * The client forwards it rather than deriving the market itself, so the
+   * used/recon rule stays in one server-side function. A client that computed
+   * it would be a second copy free to drift from the report's.
+   */
+  listingUrl:  z.string().max(2048).optional(),
 })
 
 /**
@@ -90,6 +101,11 @@ export async function POST(request: NextRequest) {
     // "Golf GTI" carries its discriminator in plain sight, and on this surface
     // it arrives as free text the buyer typed rather than a structured field.
     variantSource: model,
+    // Same rule the paid report applies. Without it a buyer shopping for a
+    // recon is measured against local used cars that are not on sale to them,
+    // and for Lexus RX 2023 or Toyota Alphard 2021 that means being told there
+    // are no comparables at all while eleven sit in the cache.
+    market: detectListingMarket(parsed.data.listingUrl) ?? 'used',
     refetch: waitUntil,
   })
 

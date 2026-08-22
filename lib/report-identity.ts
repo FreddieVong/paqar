@@ -1,5 +1,7 @@
 import 'server-only'
 import { buildMarketModelKeyword } from '@/lib/market-keyword'
+import { resolveListingMarket }    from '@/lib/listing-extract'
+import type { ListingMarket }      from '@/lib/comparables'
 import { canonicalModelKeyword }   from '@/lib/model-catalog'
 import type { ReviewedOverrides }  from '@/lib/reviewed-overrides'
 
@@ -39,9 +41,23 @@ export interface CarIdentity {
   variantSource: string
   /** True when a registered record contributed, not merely the advert. */
   fromRegistry: boolean
+  /**
+   * Which market to price this car in. Resolved HERE, beside the year and the
+   * model, because it selects the cohort exactly as they do — and because the
+   * four surfaces that must agree about the car must agree about this too. A
+   * coverage answer built from recon comparables followed by a report built
+   * from used ones is an empty report sold for RM29.
+   */
+  market: ListingMarket
 }
 
-type Row = { brand?: string | null; model?: string | null; year?: string | null }
+type Row = {
+  brand?: string | null
+  model?: string | null
+  year?:  string | null
+  /** The link the buyer pasted — the only evidence that a car is an import. */
+  listing_url?: string | null
+}
 type Lookup = { make?: unknown; model?: unknown; registrationYear?: unknown; description?: unknown } | null
 
 export function resolveCarIdentity(params: {
@@ -72,5 +88,7 @@ export function resolveCarIdentity(params: {
       ? String(v!.description || v!.model)
       : model,
     fromRegistry: hasLookup,
+    market: resolveListingMarket(params.check.listing_url, hasLookup, o.market),
   }
 }
+

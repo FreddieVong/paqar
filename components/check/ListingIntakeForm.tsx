@@ -324,6 +324,11 @@ export function ListingIntakeForm({
         body: JSON.stringify({
           brand: String(q.brand), model: String(q.model),
           year: String(q.year), askingPrice: Number(q.askingPrice),
+          // Forwarded so the server can tell a recon import from a registered
+          // used car — two markets at two prices, never mixed in one cohort.
+          // Parsed as a string there, never fetched. Sending it keeps the rule
+          // in one place instead of a copy here that could drift.
+          ...(listingUrl.trim() !== '' ? { listingUrl: listingUrl.trim() } : {}),
         }),
       })
       if (!res.ok) { setError('Ralat — sila cuba semula'); return }

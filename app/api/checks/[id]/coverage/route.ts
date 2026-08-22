@@ -5,6 +5,7 @@ import { getCachedVehicleData } from '@/lib/db/plate-lookups'
 import { createClient }     from '@/lib/supabase/server'
 import { decrypt }          from '@/lib/crypto'
 import { assessCoverage }   from '@/lib/coverage'
+import { resolveListingMarket } from '@/lib/listing-extract'
 
 /**
  * Replaces /api/checks/[id]/price-evidence, which served the free verdict.
@@ -74,6 +75,7 @@ export async function GET(
   // description is better evidence than a typed model name, so it wins when a
   // plate lookup has landed.
   let variantSource = model
+  let hasLookup = false
 
   // Cache read only — never a paid provider call. On the paid path the lookup
   // is triggered after payment; this must not create one.
@@ -85,6 +87,7 @@ export async function GET(
         model = data.model
         year  = data.registrationYear
         variantSource = data.description || data.model
+        hasLookup = true
       }
     } catch { /* the check row already identifies the car */ }
   }
@@ -104,8 +107,17 @@ export async function GET(
     return NextResponse.json({ state: 'needs_asking_price', modelLabel })
   }
 
+  // USED OR RECON, through the SAME resolver the paid report reads.
+  //
+  // A recon and a registered car of the same model-year are two markets at two
+  // prices, and a cohort never mixes them. If this route decided that question
+  // for itself, a buyer could be told Paqar has plenty of comparables and then
+  // be sold a report built from a different set — or an empty one. Lexus RX
+  // 2023 is the case that found it: eleven recon comparables in a tight
+  // RM293k-331k band, all of them discarded, and the buyer turned away.
   const coverage = await assessCoverage({
     brand, model, year, askingPrice, variantSource,
+    market:  resolveListingMarket(row.check.listing_url, hasLookup, undefined),
     refetch: waitUntil,
   })
 

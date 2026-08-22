@@ -6,6 +6,7 @@ import { serviceMinutesBetween, TYPICAL_MINUTES } from '@/lib/review-capacity'
 import { reviewPriceContext } from '@/lib/review-price-context'
 import { listReportsAwaitingReview, listReportsAwaitingRefund, listRecentlyReleased, type ReviewQueueRow } from '@/lib/db/report-review'
 import { hoursAwaitingReview, REVIEW_SLA_HOURS } from '@/lib/report-release'
+import { resolveListingMarket } from '@/lib/listing-extract'
 import { ringgit } from '@/lib/pricing'
 import { decrypt } from '@/lib/crypto'
 import { ReviewerScreenshots } from '@/components/admin/ReviewerScreenshots'
@@ -100,6 +101,34 @@ function Override({ name, label, draft }: { name: string; label: string; draft?:
         placeholder={draft != null && draft !== '' ? String(draft) : '—'}
         className="w-full border border-[#D1D5DB] rounded-[8px] px-2.5 py-2 text-[14px] font-body mt-1"
       />
+    </label>
+  )
+}
+
+/**
+ * Which market the car is priced in — recon import or registered local used.
+ *
+ * A select rather than an Override text box, because the value is an enum: a
+ * reviewer who types "Recon" into a free-text field would write a value
+ * parseOverrides discards, and silently get the cohort they were trying to
+ * change. The blank option means "leave it to the URL", which is what the
+ * resolver already decided.
+ */
+function MarketOverride({ resolved }: { resolved: 'used' | 'recon' }) {
+  return (
+    <label className="block">
+      <span className="font-heading font-bold text-[11px] text-[#6B7280]">
+        Pasaran (auto: {resolved === 'recon' ? 'recon' : 'terpakai'})
+      </span>
+      <select
+        name="override_market"
+        defaultValue=""
+        className="w-full border border-[#D1D5DB] rounded-[8px] px-2.5 py-2 text-[14px] font-body mt-1 bg-white"
+      >
+        <option value="">— ikut auto —</option>
+        <option value="used">Terpakai berdaftar</option>
+        <option value="recon">Recon (import belum daftar)</option>
+      </select>
     </label>
   )
 }
@@ -261,6 +290,7 @@ async function QueueCard({ row }: { row: ReviewQueueRow }) {
               <Override name="variant" label="Varian" draft="" />
               <Override name="askingPriceRm"    label="Seller minta (RM)" draft={report.asking_price_rm} />
               <Override name="currentMileageKm" label="Mileage iklan (km)" draft={report.claimed_mileage_km} />
+              <MarketOverride resolved={prices?.market ?? resolveListingMarket(check?.listing_url, false, undefined)} />
             </div>
 
             {/* These three ARE the product. The draft's own verdict is machine

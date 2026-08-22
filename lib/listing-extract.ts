@@ -1,3 +1,4 @@
+import type { ListingMarket } from './comparables'
 import { BRANDS, MODELS_BY_BRAND } from '@/lib/model-catalog'
 
 /**
@@ -156,6 +157,76 @@ const field = <T>(value: T | null, status: FieldStatus, evidence?: string | null
  * "2-5-sc" would be a fabricated asking price on the one field a buyer must
  * not have invented for them. The price stays theirs to enter.
  */
+/**
+ * Is the buyer looking at an unregistered reconditioned import?
+ *
+ * ── WHY THIS MATTERS MORE THAN IT LOOKS ────────────────────────────────────
+ *
+ * A recon and a registered used car of the same model and year are two
+ * different markets at two different prices, and buildComparableCohort refuses
+ * to mix them. Get this wrong in the 'used' direction and Paqar refuses a sale
+ * it could serve; get it wrong in the 'recon' direction and it prices a local
+ * used car against imports. So the answer is only ever 'recon' on POSITIVE
+ * evidence, and unknown falls back to the local used market that has always
+ * been the default.
+ *
+ * The evidence is in the URL the buyer pasted. Carlist files recons under a
+ * /recon-cars/ path of its own, and sellers on every platform write "recond"
+ * or "recon" into the title that becomes the slug.
+ *
+ * Returns null rather than 'used' when there is no signal: the caller has
+ * other evidence — a plate means the car is registered, so it cannot be an
+ * unregistered import — and null lets that evidence speak instead of being
+ * overridden by a guess made here.
+ */
+export function detectListingMarket(rawUrl: string | null | undefined): ListingMarket | null {
+  if (!rawUrl) return null
+  let path: string
+  try { path = new URL(rawUrl).pathname } catch { return null }
+
+  let words: string
+  try { words = decodeURIComponent(path) } catch { words = path }
+  words = words.replace(/[/\-_]+/g, ' ')
+
+  // Carlist's own section for registered local cars, checked FIRST so it wins
+  // over any "recond" the seller wrote further along the title.
+  if (/\bused cars\b/i.test(words)) return 'used'
+
+  // "recon"/"recond" as whole words — but NOT the Malaysian seller's phrase
+  // "recond gearbox" / "engine recond", which describes a rebuilt component on
+  // a locally registered car and means the opposite of an imported one. That
+  // false positive would empty the cohort and refuse a sale, so it is worth
+  // the two words it costs to exclude.
+  const PART = '(?:gearbox|engine|enjin|transmission|aircond|air cond|absorber|radiator)'
+  if (
+    /\b(?:recon|recond|reconditioned)\b/i.test(words) &&
+    !new RegExp(`\\b(?:recon|recond|reconditioned)\\s+${PART}\\b`, 'i').test(words) &&
+    !new RegExp(`\\b${PART}\\s+(?:recon|recond|reconditioned)\\b`, 'i').test(words)
+  ) return 'recon'
+
+  return null
+}
+
+/**
+ * ── THE ORDER OF AUTHORITY, AGAIN ──────────────────────────────────────────
+ *
+ *   1. The reviewer. They opened the listing; nothing beats having looked.
+ *   2. A registered record. A recon is BY DEFINITION unregistered — it has
+ *      never held a Malaysian plate — so a successful plate lookup is proof
+ *      the car is in the local used market, whatever its history.
+ *   3. The URL the buyer pasted.
+ *   4. Local used, which is what every cohort was before this existed.
+ */
+export function resolveListingMarket(
+  listingUrl: string | null | undefined,
+  hasLookup:  boolean,
+  override:   ListingMarket | undefined,
+): ListingMarket {
+  if (override) return override
+  if (hasLookup) return 'used'
+  return detectListingMarket(listingUrl) ?? 'used'
+}
+
 export function parseListingUrlSlug(rawUrl: string): { brand: string | null; model: string | null; year: string | null } {
   let path: string
   try {
