@@ -21,9 +21,18 @@ describe('retention', () => {
     if (!/30 hari/.test(privacy)) return // promise withdrawn; nothing to enforce
 
     const vercel = JSON.parse(read('vercel.json')) as { crons?: { path: string }[] }
-    const paths  = (vercel.crons ?? []).map(c => c.path)
-    expect(paths, 'privasi promises deletion that nothing performs')
-      .toContain('/api/cron/screenshot-cleanup')
+    const crons  = vercel.crons ?? []
+
+    // ONE schedule, because the plan caps them. Six were listed, two were
+    // allowed, and the rest silently never ran — including the sweep behind
+    // this promise. A single entry cannot exceed any limit.
+    expect(crons.length, 'more schedules than a plan may allow').toBe(1)
+    expect(crons[0]!.path).toBe('/api/cron/daily')
+
+    // And the sweep must actually be inside it.
+    const daily = read('app/api/cron/daily/route.ts')
+    expect(daily, 'the daily cron does not run the sweep')
+      .toContain("'screenshot-cleanup'")
   })
 
   it('the sweeper deletes the object before the row, so nothing is orphaned', () => {
@@ -32,6 +41,52 @@ describe('retention', () => {
     const body = src.slice(src.indexOf('export async function'))
     expect(body.indexOf('await deleteScreenshots('))
       .toBeLessThan(body.indexOf('await markScreenshotsDeleted('))
+  })
+})
+
+describe('the one daily cron carries every job', () => {
+  const daily = read('app/api/cron/daily/route.ts')
+
+  it('runs all six, so none is silently unscheduled', () => {
+    for (const job of [
+      'screenshot-cleanup', 'check-expiries', 'retarget-model',
+      'retarget', 'meta-ads', 'warm-cache',
+    ]) expect(daily, `${job} is not in the daily run`).toContain(`'${job}'`)
+  })
+
+  it('isolates each job, so one failure does not cost the others', () => {
+    expect(daily).toMatch(/try \{[\s\S]*?\} catch/)
+  })
+
+  it('still requires the cron secret', () => {
+    expect(daily).toContain('CRON_SECRET')
+  })
+
+  it('puts the buyer-facing promise first in the sequence', () => {
+    const order = ['screenshot-cleanup', 'check-expiries', 'warm-cache']
+      .map(j => daily.indexOf(`'${j}',`))
+    expect(order[0]).toBeLessThan(order[1]!)
+    expect(order[1]).toBeLessThan(order[2]!)
+  })
+})
+
+describe('a release notification actually leaves the building', () => {
+  /**
+   * These were bare floating promises in a Server Action. The invocation can be
+   * frozen the moment its response is sent, so the fetch to Resend never
+   * completed and no email was ever sent — found by releasing a real report and
+   * finding nothing in the inbox, while the release itself had worked.
+   */
+  it('keeps the invocation alive until the mail settles', () => {
+    const actions = read('app/admin/review/_actions.ts')
+    expect(actions).toContain('waitUntil')
+    expect(actions).toContain('notifyInBackground')
+  })
+
+  it('leaves no notification floating unawaited', () => {
+    const actions = read('app/admin/review/_actions.ts')
+    expect(actions).not.toMatch(/notifyBuyer\([^)]*\)\s*\n\s*\.catch/)
+    expect(actions).not.toMatch(/sendRefundCompletedEmail\([^)]*\)\s*\n\s*\.catch/)
   })
 })
 

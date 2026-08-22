@@ -1,5 +1,6 @@
 'use server'
 
+import { waitUntil } from '@vercel/functions'
 import { revalidatePath } from 'next/cache'
 import { redirect }       from 'next/navigation'
 import { isAdminSecretValid, isAdminAuthenticated, setAdminCookie } from '@/lib/admin-auth'
@@ -153,8 +154,10 @@ export async function releaseReportAction(formData: FormData): Promise<void> {
   // make the action look failed and invite a second release attempt. The buyer
   // can reach it from the link they already hold either way — the gate is
   // released_at, not the email.
-  notifyBuyer(report.check_id, report.buyer_email, note)
-    .catch(err => console.error('[admin/review] release notification failed', err))
+  notifyInBackground(
+    notifyBuyer(report.check_id, report.buyer_email, note),
+    'release notification',
+  )
 
   revalidatePath(PATH)
 }
@@ -198,8 +201,10 @@ export async function releaseHistoryAction(formData: FormData): Promise<void> {
   // Non-blocking, for the same reason as the first release: the section is
   // already visible at the link the buyer holds, so a mail outage must not
   // make this look failed and invite a second attempt.
-  notifyBuyer(report.check_id, report.buyer_email, note, 'history')
-    .catch(err => console.error('[admin/review] history notification failed', err))
+  notifyInBackground(
+    notifyBuyer(report.check_id, report.buyer_email, note, 'history'),
+    'history notification',
+  )
 
   revalidatePath(PATH)
 }
@@ -232,8 +237,10 @@ export async function markUnableAction(formData: FormData): Promise<void> {
   // the state is already recorded, and a mail outage must not make the action
   // look failed and invite a second attempt.
   if (won) {
-    notifyUndeliverable(report.check_id, report.buyer_email, note)
-      .catch(err => console.error('[admin/review] undeliverable notice failed', err))
+    notifyInBackground(
+      notifyUndeliverable(report.check_id, report.buyer_email, note),
+      'undeliverable notice',
+    )
   }
 
   revalidatePath(PATH)
@@ -269,8 +276,10 @@ export async function completeRefundAction(formData: FormData): Promise<void> {
   // An unexplained credit days after an unexplained silence is not a guarantee
   // the buyer can feel. The reference is what lets them find it on a statement.
   if (won && report) {
-    sendRefundCompletedEmail({ toEmail: report.buyer_email, checkId: report.check_id, reference })
-      .catch(err => console.error('[admin/review] refund notice failed', err))
+    notifyInBackground(
+      sendRefundCompletedEmail({ toEmail: report.buyer_email, checkId: report.check_id, reference }),
+      'refund notice',
+    )
   }
 
   revalidatePath(PATH)
@@ -332,6 +341,31 @@ async function notifyUndeliverable(checkId: string, toEmail: string, reason: str
   // No report link, deliberately: the draft was rejected, and handing it over
   // would give away the work being refunded and contradict the reason above it.
   await sendUndeliverableEmail({ toEmail, plate, reason, checkId })
+}
+
+/**
+ * Send a notification without blocking the reviewer — and without losing it.
+ *
+ * ── THE BUG THIS FIXES ─────────────────────────────────────────────────────
+ *
+ * These were bare floating promises: `notifyBuyer(...).catch(log)`, deliberately
+ * not awaited so a mail outage could not make the release look failed and
+ * invite a second attempt. The intent was right; the primitive was wrong.
+ *
+ * A Server Action's invocation can be frozen the moment its response is sent.
+ * Anything still in flight is simply dropped, so the fetch to Resend never
+ * completed and no email was ever sent. Caught by releasing a real report and
+ * finding nothing in the inbox — the release itself had worked perfectly, which
+ * is what made it invisible.
+ *
+ * waitUntil keeps the invocation alive until the promise settles while still
+ * returning immediately, which is what "non-blocking" was always supposed to
+ * mean. Wrapped in a try/catch because it throws outside a request context,
+ * and a notification helper must never be the thing that breaks a release.
+ */
+function notifyInBackground(work: Promise<unknown>, label: string): void {
+  const guarded = work.catch(err => console.error(`[admin/review] ${label} failed`, err))
+  try { waitUntil(guarded) } catch { /* not on Vercel — the promise still runs */ }
 }
 
 async function notifyBuyer(

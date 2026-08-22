@@ -1,27 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/check-expiries",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/retarget",
-      "schedule": "0 10 * * *"
-    },
-    {
-      "path": "/api/cron/retarget-model",
-      "schedule": "0 11 * * *"
-    },
-    {
-      "path": "/api/cron/warm-cache",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/meta-ads",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/screenshot-cleanup",
+      "path": "/api/cron/daily",
       "schedule": "0 2 * * *"
     }
   ]
