@@ -154,6 +154,14 @@ describe('a credential never reaches a third party', () => {
     expect(src).toContain('$referrer')
   })
 
+  it('the browser scrubs the URL before posting it to Paqar’s own server', () => {
+    // Even a first-party POST puts the token in request logs. Both halves are
+    // scrubbed: here, and again in meta-capi before anything reaches Meta.
+    const src = readFileSync(join(ROOT, 'lib/meta-events.ts'), 'utf8')
+    expect(src).toContain('scrubUrl')
+    expect(src).not.toMatch(/url:\s*window\.location\.href/)
+  })
+
   it('the server-side CAPI relay scrubs the URL before it leaves', () => {
     // The pixel fix does not cover this. /api/meta/event takes the current URL
     // from the client and forwards it to Meta as event_source_url, so on a

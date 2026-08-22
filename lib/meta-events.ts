@@ -1,5 +1,6 @@
 'use client'
 
+import { scrubUrl } from '@/lib/sensitive-routes'
 import { normalizeReferrer } from '@/lib/traffic-source'
 
 /**
@@ -75,10 +76,21 @@ export function trackAdEvent(
   // See the attribution rules in lib/traffic-source.ts.
   const referrer = normalizeReferrer(document.referrer, window.location.origin)
 
+  // Scrubbed BEFORE it leaves the browser, on the same principle as the
+  // referrer above. On a paid report window.location.href is
+  // /laporan-pembeli/<id>?claim_token=<token>, and that token is the entire
+  // authorisation for the report.
+  //
+  // lib/meta-capi already scrubs it again before anything reaches Meta. This
+  // is the other half: without it the token still travels to Paqar's own
+  // server in a POST body and lands in request logs, which is not somewhere a
+  // bearer credential should be sitting either.
+  const url = String(scrubUrl(window.location.href) ?? window.location.origin)
+
   void fetch('/api/meta/event', {
     method:   'POST',
     headers:  { 'Content-Type': 'application/json' },
-    body:     JSON.stringify({ event, url: window.location.href, referrer, ...opts }),
+    body:     JSON.stringify({ event, url, referrer, ...opts }),
     keepalive: true, // survives the navigation that follows a valuation start
   }).catch(() => { /* tracking must never break the funnel */ })
 }
