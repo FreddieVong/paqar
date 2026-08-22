@@ -133,6 +133,47 @@ function MarketOverride({ resolved }: { resolved: 'used' | 'recon' }) {
   )
 }
 
+/**
+ * The trim, picked from what the comparables actually say.
+ *
+ * This was a bare text box, and on the first real paid review it was the one
+ * thing the reviewer could not complete: the advert names the trim, but typing
+ * it was a guess about whether it would match any comparable — and a trim that
+ * matches two listings is worse than none, because it silently falls back to
+ * the mixed cohort.
+ *
+ * The count is therefore the feature. "Flagship (5)" means the cohort holds;
+ * "Premium (1)" means it will not, before the reviewer commits. Free text is
+ * still accepted for a trim NVIC does not list.
+ */
+function VariantOverride(
+  { options, applied }: { options: { token: string; count: number }[]; applied: string | null },
+) {
+  return (
+    <label className="block">
+      <span className="font-heading font-bold text-[11px] text-[#6B7280]">
+        Varian {applied ? `(guna: ${applied})` : '(iklan setanding)'}
+      </span>
+      <input
+        name="override_variant"
+        list="variant-options"
+        defaultValue=""
+        placeholder={applied ?? (options.length ? `cth: ${options[0]!.token}` : '—')}
+        className="w-full border border-[#D1D5DB] rounded-[8px] px-2.5 py-2 text-[14px] font-body mt-1"
+      />
+      <datalist id="variant-options">
+        {options.map(o => <option key={o.token} value={o.token} label={`${o.token} — ${o.count} iklan`} />)}
+      </datalist>
+      {options.length > 0 && (
+        <span className="font-body text-[10px] text-[#6B7280] mt-1 block leading-relaxed">
+          {options.map(o => `${o.token} (${o.count})`).join(' · ')}
+          {' — '}kurang 3 iklan akan kekal campuran varian.
+        </span>
+      )}
+    </label>
+  )
+}
+
 async function QueueCard({ row }: { row: ReviewQueueRow }) {
   const { report, check } = row
   // Cache-only, and the same cohort the buyer's report reads. Without it a
@@ -287,7 +328,7 @@ async function QueueCard({ row }: { row: ReviewQueueRow }) {
               <Override name="brand"  label="Jenama"  draft={check?.brand} />
               <Override name="model"  label="Model"   draft={check?.model} />
               <Override name="year"   label="Tahun"   draft={check?.year} />
-              <Override name="variant" label="Varian" draft="" />
+              <VariantOverride options={prices?.variantOptions ?? []} applied={prices?.variantApplied ?? null} />
               <Override name="askingPriceRm"    label="Seller minta (RM)" draft={report.asking_price_rm} />
               <Override name="currentMileageKm" label="Mileage iklan (km)" draft={report.claimed_mileage_km} />
               <MarketOverride resolved={prices?.market ?? resolveListingMarket(check?.listing_url, false, undefined)} />

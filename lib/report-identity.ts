@@ -42,6 +42,12 @@ export interface CarIdentity {
   /** True when a registered record contributed, not merely the advert. */
   fromRegistry: boolean
   /**
+   * The trim a reviewer read off the advert, if they supplied one. Narrows the
+   * comparable cohort — see CohortOptions.variantToken. Null means nobody has
+   * confirmed a trim and the cohort stays mixed, which is the honest default.
+   */
+  variantToken: string | null
+  /**
    * Which market to price this car in. Resolved HERE, beside the year and the
    * model, because it selects the cohort exactly as they do — and because the
    * four surfaces that must agree about the car must agree about this too. A
@@ -88,6 +94,7 @@ export function resolveCarIdentity(params: {
       ? String(v!.description || v!.model)
       : model,
     fromRegistry: hasLookup,
+    variantToken: o.variant?.trim() || null,
     market: resolveListingMarket(params.check.listing_url, hasLookup, o.market),
   }
 }

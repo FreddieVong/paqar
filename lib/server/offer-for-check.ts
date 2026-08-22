@@ -85,6 +85,7 @@ export async function resolveOfferForCheck(params: {
     model:           null,
     isSpecialVariant,
     market:          identity.market,
+    variantToken:    identity.variantToken,
   })
 
   return {

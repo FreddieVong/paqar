@@ -126,12 +126,14 @@ interface Props {
    * the one it promised — or, for a recon, none at all.
    */
   cohortMarket?:  ListingMarket
+  /** Trim the reviewer confirmed off the advert. Narrows the comparables. */
+  cohortVariantToken?: string | null
   cohortModel?:   string | null
   cohortVariant?: string | null
   cohortBrand?:   string | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null, cohortBrand = null, cohortMarket = 'used' }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null, cohortBrand = null, cohortMarket = 'used', cohortVariantToken = null }: Props) {
   // The reading that may support a TAMPERING claim — null unless a human
   // confirmed it. Distinct from claimedMileageKm, which is still displayed as
   // context. Conflating the two is what published a false rollback warning
@@ -203,6 +205,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
     model:            cohortModel  ?? vehicleData?.model ?? null,
     isSpecialVariant,
     market:           cohortMarket,
+    variantToken:     cohortVariantToken,
   })
   const relevantListings = cohort.listings
   const mPrices          = cohort.prices

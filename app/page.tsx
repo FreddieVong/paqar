@@ -72,7 +72,7 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Apa yang saya dapat untuk RM29?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Keputusan untuk satu kereta: sama ada patut diteruskan, skrip rundingan siap pakai, soalan penting untuk penjual, semakan varian rasmi berbanding apa yang penjual iklankan, dan checklist sebelum bayar deposit. Setiap laporan dibaca dan disemak oleh manusia sebelum dihantar.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Keputusan untuk satu kereta: sama ada patut diteruskan, skrip rundingan siap pakai, soalan penting untuk penjual, semakan varian yang diiklankan supaya harga dibanding dengan varian yang sama, dan checklist sebelum bayar deposit. Setiap laporan dibaca dan disemak oleh manusia sebelum dihantar.' },
         },
         {
           '@type': 'Question',
@@ -263,7 +263,7 @@ export default async function HomePage() {
               { title: 'Patut teruskan atau tidak',   desc: 'Keputusan jelas untuk unit ini, bukan data mentah.' },
               { title: 'Skrip rundingan harga',       desc: 'Ayat siap pakai berdasarkan iklan setanding.' },
               { title: 'Soalan penting untuk penjual', desc: 'Soalan yang boleh dedahkan risiko awal-awal.' },
-              { title: 'Semakan varian rasmi',        desc: 'Apa yang penjual iklankan vs rekod pendaftaran.' },
+              { title: 'Varian disemak',              desc: 'Harga dibanding varian yang sama, bukan campuran.' },
               { title: 'Checklist sebelum deposit',   desc: 'Apa yang perlu disahkan sebelum anda bayar.' },
             ].map((item, i, arr) => (
               <div key={item.title} className={`flex gap-2.5 items-start py-3 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>

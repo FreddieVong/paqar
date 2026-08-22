@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/server'
+import { variantLabel } from '@/lib/variant-label'
 
 export interface VehicleValuation {
   wmNewPrice:  number
@@ -98,4 +99,40 @@ function map(data: Record<string, unknown>, floor: number | null): VehicleValuat
     year:       data.year as number,
     familyFloorNewPrice: floor,
   }
+}
+
+
+/**
+ * The trim names NVIC lists for one model-year — the vocabulary a reviewer
+ * picks from, and the only trustworthy source of it.
+ *
+ * Normalised through variantLabel so "1.5 TGDI PREMIUM" reads "PREMIUM": the
+ * reviewer is matching against how ADVERTS are written, and no Mudah title
+ * repeats the engine displacement in the trim position.
+ *
+ * Returns [] on any failure. A reviewer with no suggestions still has the
+ * free-text box; a reviewer shown a broken list would trust it.
+ */
+export async function listVariantNames(
+  make:   string,
+  family: string,
+  year:   string,
+): Promise<string[]> {
+  try {
+    const supabase = createServiceClient()
+    const { data } = await supabase
+      .from('vehicle_valuations')
+      .select('variant')
+      .ilike('make', make)
+      .ilike('family', family)
+      .eq('year', year)
+      .limit(200)
+    if (!data) return []
+    const names = new Set<string>()
+    for (const row of data) {
+      const label = variantLabel(String((row as { variant?: unknown }).variant ?? ''))
+      if (label) names.add(label)
+    }
+    return [...names]
+  } catch { return [] }
 }

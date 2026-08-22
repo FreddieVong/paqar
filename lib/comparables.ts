@@ -257,6 +257,38 @@ export function matchListingsByVariant<T extends PricedListing>(listings: T[], t
   })
 }
 
+/**
+ * Which trims a reviewer could pick, and how many comparables each would leave.
+ *
+ * The reviewer's problem on the first real paid review was not that they could
+ * not SEE the trim — the advert was open in front of them — but that typing it
+ * into a free-text box was a guess about whether it would match anything. A
+ * trim that matches two listings is worse than no trim at all: it falls back to
+ * the mixed cohort and wastes the correction.
+ *
+ * So the count is the point. "Flagship (5)" tells the reviewer the cohort will
+ * hold; "Premium (1)" tells them it will not, before they choose.
+ *
+ * Vocabulary comes from the caller (NVIC trim names for the model), never from
+ * parsing the titles: inventing tokens out of free text is exactly what
+ * lib/listing-extract refuses to do, and for the same reason.
+ */
+export function variantCandidates<T extends PricedListing>(
+  listings: T[],
+  vocabulary: string[],
+): { token: string; count: number }[] {
+  const seen = new Set<string>()
+  const out: { token: string; count: number }[] = []
+  for (const raw of vocabulary) {
+    const token = raw.trim()
+    if (!token || seen.has(token.toUpperCase())) continue
+    seen.add(token.toUpperCase())
+    const count = matchListingsByVariant(listings, token).length
+    if (count > 0) out.push({ token, count })
+  }
+  return out.sort((a, b) => b.count - a.count || a.token.localeCompare(b.token))
+}
+
 // ── Performance MODELS in a mainstream cohort ──────────────────────────────
 //
 // Distinct from PERFORMANCE_TOKENS above, and deliberately so. Those tokens are
@@ -599,6 +631,20 @@ interface CohortOptions {
    * positively knows the car is an unregistered import passes 'recon'.
    */
   market?:           ListingMarket
+  /**
+   * A trim the REVIEWER read off the advert ("Flagship", "Premium", "V").
+   *
+   * Distinct from officialVariant, which is an NVIC string that only narrows
+   * the cohort when the car is a performance model. An ordinary trim ladder
+   * — X50 Standard/Executive/Premium/Flagship — never narrowed anything, so a
+   * Flagship was priced against Standards and the band came back wide enough
+   * to call almost any asking price WAJAR.
+   *
+   * Applied whatever isSpecialVariant says, and always with the same
+   * minSample fallback: too few same-trim listings falls back to the mixed
+   * cohort rather than pricing off two cars.
+   */
+  variantToken?:     string | null
 }
 
 // ── Product policy ─────────────────────────────────────────────────────────
@@ -761,7 +807,7 @@ export function buildComparableCohort<T extends PricedListing>(
 ): ComparableCohort<T> {
   const {
     year, officialVariant, model, isSpecialVariant = false, minSample = 3,
-    market = 'used',
+    market = 'used', variantToken: explicitToken = null,
   } = opts
 
   // DO NOT REMOVE. The two markets never mix in one cohort.
@@ -785,6 +831,41 @@ export function buildComparableCohort<T extends PricedListing>(
   const yearMatched = year != null && year !== ''
     ? filterListingsByYear(inMarket, year)
     : inMarket
+
+  // A TRIM A HUMAN READ OFF THE ADVERT, applied before anything else.
+  //
+  // The performance-variant machinery below only ever fires for cars whose new
+  // price towers over their family floor. An ordinary ladder — X50 Standard /
+  // Executive / Premium / Flagship — failed every one of its tests, so a
+  // Flagship was priced against Standards. On the first real paid review the
+  // band came back RM49,800-RM56,800 for a Proton X50 2021: wide enough that
+  // almost any asking price lands inside it and the verdict says WAJAR by
+  // default.
+  //
+  // Reviewer-supplied, never inferred from free text: lib/listing-extract
+  // refuses to read a trim out of a title precisely because "V", "E" and "RS"
+  // collide with ordinary words, and a wrong trim silently reprices the car.
+  // A human who opened the advert is the one source that does not guess.
+  if (explicitToken) {
+    const sameTrim = trimListings(
+      matchListingsByVariant(excludePerformanceModels(yearMatched), explicitToken),
+    )
+    if (sameTrim.length >= minSample) {
+      return assemble(sameTrim, {
+        // 'listing_title': the OTHER cars are identified by how their adverts
+        // are labelled, which is a claim by their sellers, not a verified fact.
+        // The report must say so rather than implying a registry check.
+        mode: 'same_variant', matchBasis: 'listing_title', variantToken: explicitToken,
+        fallback: false, fallbackReason: null,
+      })
+    }
+    // Too few of this trim to price on. Fall back to the mixed cohort and SAY
+    // it is mixed, rather than publishing a median built from two cars.
+    return assemble(trimListings(excludePerformanceModels(yearMatched)), {
+      mode: 'mixed_variants', matchBasis: null, variantToken: explicitToken,
+      fallback: true, fallbackReason: 'insufficient_variant_matches',
+    })
+  }
 
   if (!isSpecialVariant) {
     // A mainstream car is not comparable to the performance model that shares

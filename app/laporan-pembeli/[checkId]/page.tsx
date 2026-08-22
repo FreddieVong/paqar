@@ -307,6 +307,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               cohortVariant={identity?.model ?? null}
               cohortBrand={identity?.brand ?? null}
               cohortMarket={identity?.market ?? 'used'}
+              cohortVariantToken={identity?.variantToken ?? null}
               askingPriceRm={reviewed.askingPriceRm}
               vehicleData={vehicleData}
               marketPrices={marketPrices}

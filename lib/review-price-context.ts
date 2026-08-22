@@ -2,7 +2,8 @@ import 'server-only'
 import { getCachedMarketPrices } from '@/lib/db/market-prices'
 import { getCachedVehicleData }  from '@/lib/db/plate-lookups'
 import { decrypt }               from '@/lib/crypto'
-import { buildComparableCohort, isPerformanceModelText } from '@/lib/comparables'
+import { buildComparableCohort, isPerformanceModelText, variantCandidates } from '@/lib/comparables'
+import { listVariantNames } from '@/lib/db/vehicle-valuations'
 import type { ListingMarket } from '@/lib/comparables'
 import { resolveCarIdentity }    from '@/lib/report-identity'
 
@@ -49,6 +50,14 @@ export interface ReviewPrices {
    * the URL misled the resolver.
    */
   market: ListingMarket
+  /**
+   * Trims the reviewer can pick, with how many comparables each would leave.
+   * Empty when NVIC lists no trims for the model-year — the reviewer still has
+   * the free-text box, but gets no list they might wrongly trust.
+   */
+  variantOptions: { token: string; count: number }[]
+  /** The trim already applied, if the reviewer set one. */
+  variantApplied: string | null
 }
 
 export async function reviewPriceContext(params: {
@@ -80,11 +89,30 @@ export async function reviewPriceContext(params: {
     model:            null,
     isSpecialVariant: isPerformanceModelText(identity.variantSource),
     market:           identity.market,
+    variantToken:     identity.variantToken,
   })
+
+  // Counted against the YEAR-MATCHED set rather than the final cohort: once a
+  // trim is applied the cohort is already narrowed to it, and every other trim
+  // would report zero — the reviewer needs to see what the alternatives are
+  // worth, including the one they would switch to.
+  const yearMatchedForCounting = buildComparableCohort(cached.listings, {
+    year:             identity.year,
+    officialVariant:  identity.model,
+    model:            null,
+    isSpecialVariant: false,
+    market:           identity.market,
+  }).listings
+  const variantOptions = variantCandidates(
+    yearMatchedForCounting,
+    await listVariantNames(identity.brand, identity.model, identity.year),
+  )
 
   const asking = params.askingPriceRm
   return {
     market: identity.market,
+    variantOptions,
+    variantApplied: identity.variantToken,
     label:  `${identity.brand} ${identity.model} ${identity.year}`,
     median: cohort.median,
     // The band the verdict and the buyer's report both use, not the extremes

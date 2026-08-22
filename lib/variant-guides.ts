@@ -299,7 +299,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
       },
       {
         q: 'Macam mana nak tahu Myvi tu betul-betul varian AV?',
-        a: 'Jangan percaya emblem sahaja — emblem boleh ditampal. Sahkan ciri sebenar: kerusi separa kulit, lampu auto, dan skrin navigasi. Laporan Paqar juga menunjukkan varian rasmi berdasarkan rekod kenderaan.',
+        a: 'Jangan percaya emblem sahaja — emblem boleh ditampal. Sahkan ciri sebenar: kerusi separa kulit, lampu auto, dan skrin navigasi. Laporan Paqar membandingkan harga dengan iklan yang dilabel varian yang sama.',
       },
       {
         q: 'Myvi 1.3 ke 1.5 — mana patut pilih?',
