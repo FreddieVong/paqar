@@ -32,6 +32,12 @@ type ReportReadyParams = {
   reviewerNote: string
   /** Human reference for support. Safe to print: not a credential. */
   checkId?:     string
+  /**
+   * Which release this is. 'first' is the report itself; 'history' is the
+   * second review, after the accident/claim records were read against the
+   * decision. Defaults to 'first' so every existing caller is unchanged.
+   */
+  kind?:        'first' | 'history'
 }
 
 /** Renders the note as HTML text, preserving the reviewer's line breaks. */
@@ -51,7 +57,12 @@ export async function sendReportReadyEmail(params: ReportReadyParams): Promise<v
 
   const resend     = new Resend(env.RESEND_API_KEY)
   const plateLabel = params.plate ? ` (${params.plate})` : ''
-  const subject    = `Laporan anda dah siap — Paqar${plateLabel}`
+  // A SECOND release is not a first one. The buyer already has this report and
+  // has already read "laporan anda dah siap"; sending it again for the claim
+  // records reads like a duplicate and buries the thing that actually changed.
+  const subject    = params.kind === 'history'
+    ? `Rekod claim dah masuk dalam laporan anda — Paqar${plateLabel}`
+    : `Laporan anda dah siap — Paqar${plateLabel}`
   const supportUrl = whatsappUrl(
     `Hai Paqar, saya ada soalan tentang laporan saya.${params.checkId ? `\n\nRujukan: ${params.checkId}` : ''}`
   ) ?? SITE_URL

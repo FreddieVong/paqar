@@ -1,3 +1,5 @@
+import { JomCheckSection } from '@/components/report/JomCheckSection'
+import type { JomCheckResult } from '@/lib/jomcheck/core'
 import { notFound } from 'next/navigation'
 import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
@@ -330,6 +332,26 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
               ? <span className="italic">&ldquo;{report.reviewer_note}&rdquo;</span>
               : <span className="text-[#9CA3AF]">(tiada)</span>}
           </p>
+
+          {/* THE RECORDS THEMSELVES.
+              This card shipped with the queue, the note field and the release
+              button — and no way to READ the claim records the whole review is
+              about. The reviewer would have had to open /admin/jomcheck or the
+              database to do the job this screen exists for.
+
+              Rendered with the SAME component the buyer's report uses, so the
+              reviewer decides against exactly what the buyer will read rather
+              than against a summary that could describe it differently. */}
+          {report.jomcheck_data ? (
+            <JomCheckSection
+              data={report.jomcheck_data as unknown as JomCheckResult}
+              currentOdometerKm={report.claimed_mileage_km ?? null}
+            />
+          ) : (
+            <p className="font-body text-[12px] text-[#B45309]">
+              Tiada data claim pada rekod ini — jangan lepaskan, siasat dahulu.
+            </p>
+          )}
           <form action={releaseHistoryAction} className="space-y-3">
             <input type="hidden" name="reportId" value={report.id} />
             <textarea

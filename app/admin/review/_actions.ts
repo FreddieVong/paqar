@@ -198,7 +198,7 @@ export async function releaseHistoryAction(formData: FormData): Promise<void> {
   // Non-blocking, for the same reason as the first release: the section is
   // already visible at the link the buyer holds, so a mail outage must not
   // make this look failed and invite a second attempt.
-  notifyBuyer(report.check_id, report.buyer_email, note)
+  notifyBuyer(report.check_id, report.buyer_email, note, 'history')
     .catch(err => console.error('[admin/review] history notification failed', err))
 
   revalidatePath(PATH)
@@ -334,7 +334,10 @@ async function notifyUndeliverable(checkId: string, toEmail: string, reason: str
   await sendUndeliverableEmail({ toEmail, plate, reason, checkId })
 }
 
-async function notifyBuyer(checkId: string, toEmail: string, reviewerNote: string): Promise<void> {
+async function notifyBuyer(
+  checkId: string, toEmail: string, reviewerNote: string,
+  kind: 'first' | 'history' = 'first',
+): Promise<void> {
   const row = await getCheck(checkId)
   const claimToken = row?.check.claim_token ?? null
 
@@ -350,5 +353,5 @@ async function notifyBuyer(checkId: string, toEmail: string, reviewerNote: strin
   let plate: string | null = null
   try { plate = decrypt(row!.check.plate_encrypted as string).toUpperCase() } catch { /* cosmetic */ }
 
-  await sendReportReadyEmail({ toEmail, plate, reportUrl, reviewerNote, checkId })
+  await sendReportReadyEmail({ toEmail, plate, reportUrl, reviewerNote, checkId, kind })
 }

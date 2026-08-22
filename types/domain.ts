@@ -86,7 +86,12 @@ export interface BuyerReport {
   listing_url:        string | null
   vehicleapi_data:    Record<string, unknown> | null
   add_jomcheck:        boolean
-  jomcheck_status:     'not_requested' | 'pending' | 'success' | 'failed'
+  /**
+   * 'success' means the claim records ARRIVED; 'reviewed' means a person has
+   * read them against the decision and released them. Only 'reviewed' renders
+   * to the buyer — see lib/jomcheck/core and listReportsAwaitingHistoryReview.
+   */
+  jomcheck_status:     'not_requested' | 'pending' | 'success' | 'reviewed' | 'failed'
   jomcheck_data:       Record<string, unknown> | null
   jomcheck_checked_at: string | null
   /**
