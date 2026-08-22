@@ -89,7 +89,7 @@ export function Shell({
             )}
           </div>
           <SocialLinks />
-          <p className="font-body text-[11px] text-[#D1D5DB]">
+          <p className="font-body text-[11px] text-[#6B7280]">
             © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
           </p>
         </div>

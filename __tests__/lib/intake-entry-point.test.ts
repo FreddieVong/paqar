@@ -23,9 +23,25 @@ describe('pasting a link starts something the buyer can see', () => {
   })
 
   it('offers a visible button as well, because blur and Enter cannot be seen', () => {
-    const btn = FORM.slice(FORM.indexOf("listingUrl.trim() !== ''"))
-    expect(btn).toContain('Baca iklan ini')
-    expect(btn).toContain('onClick={readListingUrl}')
+    expect(FORM).toContain('Semak kereta ini')
+  })
+
+  /**
+   * The button used to render only once the field had text. A screenshot of
+   * the rendered hero showed the cost: the page whose entire job is one action
+   * had no coloured control anywhere above the fold, and a first-time reader
+   * had nothing telling them what the page wanted.
+   *
+   * Disabling it instead was worse — a large dead slab in the middle of the
+   * card is indistinguishable from broken. So it is always live, and with an
+   * empty field it focuses the field and says what is missing.
+   */
+  it('is always present and always does something', () => {
+    expect(FORM, 'the button is conditional on the field having text')
+      .not.toMatch(/\{listingUrl\.trim\(\) !== ''\s*&&\s*\(\s*<button/)
+    const btn = FORM.slice(FORM.indexOf('ref={submitRef}'))
+    expect(btn).toContain('urlRef.current?.focus()')
+    expect(btn).toContain('void readListingUrl()')
   })
 
   it('cannot run two extractions against one intake', () => {

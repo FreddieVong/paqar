@@ -1277,7 +1277,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       <InspectionCTA plate={plate} />
       <InsuranceCTA />
 
-      <p className="font-body text-[11px] text-[#D1D5DB] text-center pt-2">
+      <p className="font-body text-[11px] text-[#6B7280] text-center pt-2">
         Disediakan oleh Paqar · paqar.my
       </p>
 

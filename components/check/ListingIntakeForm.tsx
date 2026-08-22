@@ -98,6 +98,8 @@ export function ListingIntakeForm({
   // Screenshots are the secondary path — revealed on request, so a first-time
   // reader sees one action rather than a choice between two.
   const [showUpload,  setShowUpload]  = useState(false)
+  const urlRef    = useRef<HTMLInputElement>(null)
+  const submitRef = useRef<HTMLButtonElement>(null)
   const [busy,       setBusy]       = useState(false)
   const [error,      setError]      = useState<string | null>(null)
   const [status,     setStatus]     = useState<string | null>(null)
@@ -479,6 +481,7 @@ export function ListingIntakeForm({
           </label>
           <input
             id="li-url"
+            ref={urlRef}
             type="url"
             value={listingUrl}
             onChange={e => { setListingUrl(e.target.value); markEngaged() }}
@@ -494,21 +497,39 @@ export function ListingIntakeForm({
             disabled={phase === 'working'}
             className={`${INPUT_CLS} disabled:opacity-60`}
           />
-          {/* THE VISIBLE WAY TO START. Blur and Enter both work, but neither is
-              something a buyer can SEE — and a field that appears to do nothing
-              is indistinguishable from a broken one. The button only appears
-              once there is something to read, so the resting state stays as
-              quiet as it was. */}
-          {listingUrl.trim() !== '' && (
-            <button
-              type="button"
-              onClick={readListingUrl}
-              disabled={phase === 'working' || busy}
-              className="w-full min-h-[44px] mt-2 bg-[#3D472F] text-white font-heading font-bold text-[14px] rounded-[10px] disabled:opacity-60"
-            >
-              {phase === 'working' || busy ? 'Sedang baca iklan…' : 'Baca iklan ini →'}
-            </button>
-          )}
+          {/* ALWAYS VISIBLE, not revealed on typing.
+              Blur and Enter both work, but neither is something a buyer can
+              SEE, and a field that appears to do nothing is indistinguishable
+              from a broken one. It used to appear only once there was text, to
+              keep the resting state quiet — and a screenshot of the rendered
+              hero showed what that actually cost: the page whose entire job is
+              one action had no coloured control anywhere above the fold.
+
+              Disabled while empty rather than hidden. A control a buyer can see
+              from the start tells them what the page wants; one that
+              materialises later asks them to discover it. */}
+          <button
+            type="button"
+            ref={submitRef}
+            onClick={() => {
+              // EMPTY IS NOT A REASON TO DO NOTHING.
+              // Disabled, this rendered as a large dead slab in the middle of
+              // the card — the most prominent thing on the page, and inert.
+              // A first-time reader cannot tell that apart from broken. Live,
+              // it always does something: with no link it puts the cursor
+              // where the link goes and says so.
+              if (listingUrl.trim() === '') {
+                setError('Tampal link iklan kereta itu dahulu, atau muat naik screenshot.')
+                urlRef.current?.focus()
+                return
+              }
+              void readListingUrl()
+            }}
+            disabled={phase === 'working' || busy}
+            className="w-full min-h-[48px] mt-2.5 bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[15px] rounded-[12px] transition-colors disabled:opacity-60"
+          >
+            {phase === 'working' || busy ? 'Sedang baca iklan…' : 'Semak kereta ini →'}
+          </button>
         </div>
 
         {/* The screenshot path, one tap away. A real link is not always

@@ -133,9 +133,15 @@ export default async function HomePage() {
         <div className="max-w-xl mx-auto">
 
           <div className="mb-5">
-            <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.5">
-              <span className="w-2 h-2 bg-[#16A34A] rounded-full" />
-              <span className="font-heading font-bold text-[12px] text-[#15803D]">
+            {/* BRAND FAMILY, not the success green.
+                This pill was mint on mint — the same palette the report uses
+                to mean "no claim found". Seen against the olive headline it
+                read as a stray notification rather than the page's own
+                eyebrow, and it is the first thing on the page. Success green
+                keeps its meaning by being reserved for success. */}
+            <div className="inline-flex items-center gap-2 bg-[#F4F6F0] border border-[#CBD4BB] rounded-full px-3 py-1.5">
+              <span className="w-2 h-2 bg-[#3D472F] rounded-full" />
+              <span className="font-heading font-bold text-[12px] text-[#3D472F]">
                 Untuk pembeli · Disemak oleh manusia
               </span>
             </div>
@@ -188,15 +194,24 @@ export default async function HomePage() {
 
       {/* ── DIBINA UNTUK PEMBELI ── */}
       <section className="bg-white px-5 pb-10 border-b border-[#F3F4F6]">
-        <div className="max-w-xl mx-auto grid grid-cols-3 gap-3">
+        {/* ONE LINE, NOT THREE COLUMNS.
+            A three-column grid at 390px broke every claim across two or three
+            lines — "Bukan ganti / pemeriksaan / fizikal" — so the row read as
+            ragged fragments rather than three plain statements. Wrapping as a
+            flow with separators lets each claim break only where it must. */}
+        <div className="max-w-xl mx-auto flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
           {[
             'Tidak menjual kereta',
             'Tidak dibayar oleh penjual',
             'Bukan ganti pemeriksaan fizikal',
-          ].map((claim) => (
-            <p key={claim} className="font-body text-[12px] text-[#6B7280] leading-snug text-center">
-              {claim}
-            </p>
+          ].map((claim, i) => (
+            // Separator AFTER each claim rather than before the next one: a
+            // wrapped line that BEGINS with a stray dot reads as a bullet
+            // point that lost its list.
+            <span key={claim} className="flex items-center gap-2.5">
+              <span className="font-body text-[12px] text-[#6B7280] leading-snug">{claim}</span>
+              {i < 2 && <span aria-hidden="true" className="text-[#CBD4BB]">·</span>}
+            </span>
           ))}
         </div>
       </section>
@@ -520,38 +535,38 @@ export default async function HomePage() {
       {/* ── FOOTER ── */}
       <footer className="bg-white border-t border-[#E5E7EB] px-5 py-6 text-center">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-4">
-          <Link href="/checklist-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Checklist</Link>
+          <Link href="/checklist-beli-kereta-terpakai" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Checklist</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/cara-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Cara Beli</Link>
+          <Link href="/cara-beli-kereta-terpakai" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Cara Beli</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/risiko-beli-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Risiko</Link>
+          <Link href="/risiko-beli-kereta-terpakai" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Risiko</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/harga-kereta-terpakai" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Harga Model</Link>
+          <Link href="/harga-kereta-terpakai" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Harga Model</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Kira Ansuran</Link>
+          <Link href="/kira-ansuran-kereta" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Kira Ansuran</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/pemeriksaan-fizikal" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Pemeriksaan Fizikal</Link>
+          <Link href="/pemeriksaan-fizikal" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Pemeriksaan Fizikal</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/banding-insurans" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Banding Insurans</Link>
+          <Link href="/banding-insurans" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Banding Insurans</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/bandingkan" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Bandingkan</Link>
+          <Link href="/bandingkan" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Bandingkan</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/panduan" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Semua Panduan</Link>
+          <Link href="/panduan" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Semua Panduan</Link>
         </div>
-        <p className="font-body text-[12px] text-[#D1D5DB] leading-relaxed mb-2">
+        <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-2">
           © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
         </p>
         <SocialLinks className="mb-2" />
         <div className="flex items-center justify-center gap-4">
-          <Link href="/tentang" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Tentang</Link>
+          <Link href="/tentang" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Tentang</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/privasi" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Privasi</Link>
+          <Link href="/privasi" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Privasi</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/terma" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Terma</Link>
+          <Link href="/terma" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Terma</Link>
           {contactHref && (
             <>
               <span className="text-[#E5E7EB]">·</span>
-              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Hubungi Kami</a>
+              <a href={contactHref} target="_blank" rel="noopener noreferrer" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Hubungi Kami</a>
             </>
           )}
         </div>

@@ -159,6 +159,33 @@ describe('the checkout form is usable without sight', () => {
   })
 })
 
+describe('every control can be hit and every word can be read', () => {
+  /**
+   * Measured on the live site at 390x844: thirteen footer links rendered 18px
+   * tall. WCAG 2.5.8 asks for 24px, and a 12px link with no padding cannot
+   * reach it. Padding lifts them to 30px without touching the type.
+   */
+  it('gives footer links a real tap target', () => {
+    const bare = /className="font-body text-\[12px\] text-\[#6B7280\] hover:text-\[#3D472F\]/
+    const offenders = ['app/page.tsx', 'components/layout/Shell.tsx']
+      .filter(f => bare.test(read(f)))
+    expect(offenders, `footer links with no vertical padding: ${offenders.join(', ')}`).toEqual([])
+  })
+
+  /**
+   * #D1D5DB on white is about 1.5:1 — lighter than anything already fixed for
+   * contrast, and it was colouring the line that says Paqar is not a
+   * government service. Still fine as a placeholder or a bullet glyph.
+   */
+  it('never sets prose in the lightest grey', () => {
+    const bad: string[] = []
+    for (const f of ['app/page.tsx', 'components/layout/Shell.tsx']) {
+      if (/<p className="[^"]*text-\[#D1D5DB\]/.test(read(f))) bad.push(f)
+    }
+    expect(bad, `unreadable prose in: ${bad.join(', ')}`).toEqual([])
+  })
+})
+
 describe('the page has a landmark to skip to', () => {
   it('renders one main landmark and a focusable skip link', () => {
     const layout = read('app/layout.tsx')
