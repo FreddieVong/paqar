@@ -7,6 +7,7 @@ import { readScreenshot } from '@/lib/screenshot-storage'
 import { extractFromScreenshots, ocrToExtracted } from '@/lib/listing-ocr'
 import { isExtractable } from '@/lib/listing-fetch'
 import { extractListingViaScraper } from '@/lib/listing-scraper'
+import { parseListingUrlSlug } from '@/lib/listing-extract'
 import { mergeListing, readyForCoverage } from '@/lib/listing-merge'
 
 /**
@@ -55,6 +56,36 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (intake.listing_url && isExtractable(intake.listing_url)) {
     const scraped = await extractListingViaScraper(intake.listing_url)
     if (scraped.ok) fromUrl = scraped.extracted
+  }
+
+  // ── The car in the URL itself, for the platforms we cannot read ────────
+  //
+  // Carlist is behind Cloudflare and Facebook Marketplace needs a login, so
+  // neither can be fetched — and a buyer pasting one was handed four empty
+  // fields while the car sat in the link they had just given us:
+  // /recon-cars/2023-toyota-alphard-2-5-sc-dim-sunroof/18950179.
+  //
+  // Fills only what the page did not. A slug is the platform's rendering of
+  // the seller's own title, so it is weaker evidence than the page, and it
+  // never carries a price — that field stays the buyer's.
+  if (intake.listing_url) {
+    const fromSlug = parseListingUrlSlug(intake.listing_url)
+    if (fromSlug.brand || fromSlug.model || fromSlug.year) {
+      const field = <T,>(v: T | null) => ({
+        value:    v,
+        status:   v == null ? ('missing' as const) : ('medium' as const),
+        evidence: v == null ? null : 'url_slug',
+      })
+      const merged = {
+        brand:         fromUrl?.brand?.value         != null ? fromUrl.brand         : field(fromSlug.brand),
+        model:         fromUrl?.model?.value         != null ? fromUrl.model         : field(fromSlug.model),
+        year:          fromUrl?.year?.value          != null ? fromUrl.year          : field(fromSlug.year),
+        askingPriceRm: fromUrl?.askingPriceRm        ?? field<number>(null),
+        mileageKm:     fromUrl?.mileageKm            ?? field<number>(null),
+        variant:       fromUrl?.variant              ?? field<string>(null),
+      }
+      fromUrl = merged as typeof fromUrl
+    }
   }
 
   // ── Screenshots: only the ones not yet read ────────────────────────────

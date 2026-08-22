@@ -133,6 +133,50 @@ const field = <T>(value: T | null, status: FieldStatus, evidence?: string | null
   ({ value, status, evidence: value == null ? null : evidence ?? null })
 
 /**
+ * Read the car out of the URL the buyer pasted.
+ *
+ * ── WHY THIS EXISTS ────────────────────────────────────────────────────────
+ *
+ * Car portals slugify the listing title into the path, so the buyer usually
+ * hands us the car in the link itself:
+ *
+ *   carlist.my/recon-cars/2023-toyota-alphard-2-5-sc-dim-sunroof/18950179
+ *   mudah.my/honda-city-1-5-ivtec-v-spec-1owner-original-condi-115552872.htm
+ *
+ * Only Mudah can be READ — Carlist sits behind Cloudflare and Facebook
+ * Marketplace requires a login, and going around either is off the table. So a
+ * Carlist buyer was handed four empty fields and asked to type a car we were
+ * already holding.
+ *
+ * This fetches NOTHING. It parses a string the buyer gave us, which is neither
+ * a fetch nor an access-control question, and it works on any platform whose
+ * URLs carry the model — which is most of them.
+ *
+ * NOT THE PRICE. Slugs almost never carry one, and a number lifted out of
+ * "2-5-sc" would be a fabricated asking price on the one field a buyer must
+ * not have invented for them. The price stays theirs to enter.
+ */
+export function parseListingUrlSlug(rawUrl: string): { brand: string | null; model: string | null; year: string | null } {
+  let path: string
+  try {
+    path = new URL(rawUrl).pathname
+  } catch {
+    return { brand: null, model: null, year: null }
+  }
+
+  // Hyphens and slashes to spaces; drop the trailing numeric ad id and any
+  // file extension so they cannot be read as a year.
+  const words = decodeURIComponent(path)
+    .replace(/\.[a-z]{2,4}$/i, '')
+    .replace(/[/\-_]+/g, ' ')
+    .replace(/\b\d{6,}\b/g, ' ')
+    .trim()
+
+  const { brand, model } = parseVehicle(words)
+  return { brand, model, year: parseYear(words) }
+}
+
+/**
  * Extract from a fetched listing page.
  *
  * Structured metadata (og:*) is treated as HIGH confidence: the site authored
