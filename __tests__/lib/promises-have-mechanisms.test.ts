@@ -81,6 +81,29 @@ describe('disclosure matches what the site actually loads', () => {
   })
 })
 
+describe('the checkout form is usable without sight', () => {
+  /**
+   * All four labels closed BEFORE their input and carried no htmlFor, and the
+   * inputs carried no id — so nothing associated them. A screen reader
+   * announced four unlabelled boxes on the one form where a mistake costs the
+   * buyer money, and where the fields (price, mileage, email, phone) are
+   * indistinguishable without their labels.
+   */
+  it('associates every label with its field', () => {
+    const src = read('components/report/PaymentForm.tsx')
+    for (const id of ['pf-price', 'pf-mileage', 'pf-email', 'pf-phone']) {
+      expect(src, `no label for ${id}`).toContain(`htmlFor="${id}"`)
+      expect(src, `no input id ${id}`).toContain(`id="${id}"`)
+    }
+  })
+
+  it('keeps the autofill hints the browser needs', () => {
+    const src = read('components/report/PaymentForm.tsx')
+    expect(src).toContain('autoComplete="email"')
+    expect(src).toContain('autoComplete="tel"')
+  })
+})
+
 describe('the page has a landmark to skip to', () => {
   it('renders one main landmark and a focusable skip link', () => {
     const layout = read('app/layout.tsx')

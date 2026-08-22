@@ -85,6 +85,23 @@ describe('Paqar never advertises what it cannot deliver', () => {
     expect(bad, `advertise the free verdict: ${bad.join(', ')}`).toEqual([])
   })
 
+  it('never promises the add-on lands instantly either', () => {
+    // The RM88 add-on waits for a SECOND human review. Its CTA used to say
+    // "keputusan terus dalam laporan ini selepas bayaran", which stopped being
+    // true the moment that review became the product.
+    const raw = readFileSync(join(ROOT, 'components/report/JomCheckUpsell.tsx'), 'utf8')
+    expect(visibleCopy(raw)).not.toContain('Keputusan terus dalam laporan ini selepas bayaran')
+    expect(raw).toContain('REVIEW_SLA_HOURS')
+    expect(visibleCopy(raw)).toMatch(/[Dd]isemak oleh manusia/)
+  })
+
+  it('never leads with a tampering question it cannot answer', () => {
+    // visibleCopy, not the raw file: the comment explaining what was removed
+    // necessarily quotes the phrase it removed.
+    const raw = readFileSync(join(ROOT, 'components/report/JomCheckUpsell.tsx'), 'utf8')
+    expect(visibleCopy(raw)).not.toMatch(/pernah dipusing\?/)
+  })
+
   it('never promises an instant report — every report waits for a human', () => {
     const bad = files.filter(f =>
       /Tiada masa menunggu/i.test(f.text) ||

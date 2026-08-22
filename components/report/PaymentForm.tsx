@@ -186,10 +186,11 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
 
         {/* Asking price */}
         <div>
-          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+          <label htmlFor="pf-price" className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
             Harga Diminta Penjual (RM)
           </label>
           <input
+            id="pf-price"
             type="number"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
@@ -212,10 +213,11 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
 
         {/* Claimed mileage — unlocks the mileage plausibility check */}
         <div>
-          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+          <label htmlFor="pf-mileage" className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
             Mileage (km) <span className="text-[#9CA3AF] font-normal normal-case tracking-normal">— pilihan</span>
           </label>
           <input
+            id="pf-mileage"
             type="number"
             value={mileage}
             onChange={(e) => setMileage(e.target.value)}
@@ -238,10 +240,11 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
 
         {/* Email */}
         <div>
-          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+          <label htmlFor="pf-email" className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
             Alamat E-mel <span className="text-[#DC2626] ml-0.5">*</span>
           </label>
           <input
+            id="pf-email"
             type="email"
             // Autofill at the one field that gates the sale. type=email
             // already gives the right keyboard; autoComplete is what lets the
@@ -268,10 +271,11 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             the wrong way round. An unrecognised number is dropped server-side
             rather than blocking the bill. */}
         <div>
-          <label className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
+          <label htmlFor="pf-phone" className="block font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#111827] mb-1.5">
             No. WhatsApp <span className="text-[#9CA3AF] font-normal normal-case tracking-normal">— pilihan</span>
           </label>
           <input
+            id="pf-phone"
             type="tel"
             inputMode="tel"
             autoComplete="tel"

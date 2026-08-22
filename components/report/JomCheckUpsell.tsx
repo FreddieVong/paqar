@@ -1,5 +1,6 @@
 'use client'
 
+import { REVIEW_SLA_HOURS } from '@/lib/report-release'
 import { useState, useTransition } from 'react'
 import { initiateJomCheckUpgrade } from '@/app/laporan-pembeli/[checkId]/_actions'
 import { analytics }               from '@/lib/analytics'
@@ -37,8 +38,13 @@ export function JomCheckUpsell({ checkId, claimToken }: Props) {
         </p>
         <span className="font-heading font-bold text-[12px] text-[#064E4A] flex-shrink-0">+RM88</span>
       </div>
+      {/* NOT "meter kereta ni pernah dipusing?". Paqar holds no independent
+          dated odometer reading, so it cannot answer that question — leading
+          with it sells a finding the report is not allowed to make. What the
+          add-on actually delivers is the recorded claim history and a person
+          saying what it means for this purchase. */}
       <p className="font-heading font-extrabold text-[16px] text-[#111827] leading-tight mb-1.5">
-        Meter kereta ni pernah dipusing? Pernah accident teruk?
+        Kereta ni ada rekod claim insurans?
       </p>
       <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
         Semak rekod claim insurans sebenar — termasuk <span className="font-semibold">meter
@@ -66,8 +72,14 @@ export function JomCheckUpsell({ checkId, claimToken }: Props) {
       >
         {isPending ? 'Memproses…' : 'Tambah ke Laporan Ini — RM88 →'}
       </button>
-      <p className="font-body text-[11px] text-[#9CA3AF] text-center mt-2">
-        Keputusan terus dalam laporan ini selepas bayaran
+      {/* THE WAIT, BEFORE THE MONEY. This said "keputusan terus dalam laporan
+          ini selepas bayaran" — instant. It is not: the records go back to a
+          person who reads them against the decision already written, and only
+          their release reaches the buyer. Discovering that after paying is the
+          same betrayal the RM29 checkout was fixed to avoid. */}
+      <p className="font-body text-[11px] text-[#6B7280] text-center mt-2 leading-relaxed">
+        Rekod disemak oleh manusia, kemudian keputusan anda dikemaskini dalam
+        laporan ini &mdash; dalam {REVIEW_SLA_HOURS} jam.
       </p>
     </div>
   )
