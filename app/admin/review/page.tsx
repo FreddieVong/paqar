@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
 import { isTeamEmail } from '@/lib/team-emails'
+import { serviceMinutesBetween, TYPICAL_MINUTES } from '@/lib/review-capacity'
 import { reviewPriceContext } from '@/lib/review-price-context'
 import { listReportsAwaitingReview, listReportsAwaitingRefund, listRecentlyReleased, type ReviewQueueRow } from '@/lib/db/report-review'
 import { hoursAwaitingReview, REVIEW_SLA_HOURS } from '@/lib/report-release'
@@ -44,18 +45,37 @@ function safePlate(plateEncrypted: string | null | undefined): string {
  * a glance. The 24-hour promise is made to the buyer before they pay; a broken
  * one has to be visible, not inferable.
  */
-function AgeBadge({ hours }: { hours: number | null }) {
+function AgeBadge({ hours, serviceMinutes }: { hours: number | null; serviceMinutes: number }) {
   if (hours === null) return null
-  const overdue = hours >= REVIEW_SLA_HOURS
-  const urgent  = !overdue && hours >= REVIEW_SLA_HOURS * 0.75
-  const cls = overdue
+
+  // TWO CLOCKS, BECAUSE TWO DIFFERENT THINGS CAN BE WRONG.
+  //
+  // Red is the promise the buyer paid against: 24 hours of wall clock, the
+  // only commitment Paqar makes. Amber is the target that describes the
+  // product: 30 minutes of time the reviewer was actually awake.
+  //
+  // Amber cannot use wall clock. An order taken at 23:55 is nine hours old by
+  // 09:00 and nothing has gone wrong — the reviewer was asleep, which the
+  // buyer was told before paying. On wall clock the whole queue turns red
+  // every morning, and a badge that is always red is a badge nobody reads.
+  const late    = hours >= REVIEW_SLA_HOURS
+  const slow    = !late && serviceMinutes > TYPICAL_MINUTES
+  const cls = late
     ? 'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]'
-    : urgent
+    : slow
       ? 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]'
       : 'bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]'
+
+  // Minutes while the number is small enough to act on; hours once it is not.
+  const label = late
+    ? `LEWAT · ${hours.toFixed(1)} jam`
+    : serviceMinutes < 90
+      ? `${serviceMinutes} min semakan`
+      : `${(serviceMinutes / 60).toFixed(1)} jam semakan`
+
   return (
     <span className={`font-heading font-bold text-[11px] px-2 py-1 rounded-full border ${cls}`}>
-      {overdue ? 'LEWAT · ' : ''}{hours.toFixed(1)} jam
+      {label}
     </span>
   )
 }
@@ -95,6 +115,10 @@ async function QueueCard({ row }: { row: ReviewQueueRow }) {
         .catch(() => null)
     : null
   const hours       = hoursAwaitingReview(report)
+  // Time the reviewer was awake for, which is what the 30-minute target means.
+  const serviceMinutes = report.paid_at
+    ? serviceMinutesBetween(new Date(report.paid_at), new Date())
+    : 0
   const status      = report.review_status ?? 'pending'
   const refund      = report.refund_status ?? 'not_required'
   const inReview    = status === 'in_review'
@@ -115,7 +139,7 @@ async function QueueCard({ row }: { row: ReviewQueueRow }) {
             {status}{refund !== 'not_required' && ` · refund: ${refund}`}
           </p>
         </div>
-        <AgeBadge hours={hours} />
+        <AgeBadge hours={hours} serviceMinutes={serviceMinutes} />
       </div>
 
       {/* ── EVIDENCE ─────────────────────────────────────────────────────
@@ -416,6 +440,12 @@ export default async function AdminReviewPage() {
   const realPending = pending.filter(r => !isInternal(r))
   const testPending = pending.filter(isInternal)
   const overdue = realPending.filter(r => (hoursAwaitingReview(r.report) ?? 0) >= REVIEW_SLA_HOURS).length
+  // Slower than the product's own description, measured in waking minutes.
+  const slowCount = realPending.filter(r =>
+    r.report.paid_at
+    && (hoursAwaitingReview(r.report) ?? 0) < REVIEW_SLA_HOURS
+    && serviceMinutesBetween(new Date(r.report.paid_at), new Date()) > TYPICAL_MINUTES,
+  ).length
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] px-4 py-8">
@@ -436,6 +466,9 @@ export default async function AdminReviewPage() {
             {realPending.length} menunggu
             {overdue > 0 && (
               <span className="text-[#B91C1C] font-bold"> · {overdue} lewat melebihi {REVIEW_SLA_HOURS} jam</span>
+            )}
+            {slowCount > 0 && (
+              <span className="text-[#B45309] font-bold"> · {slowCount} melebihi {TYPICAL_MINUTES} min semakan</span>
             )}
             {owedRefunds.length > 0 && (
               <span className="text-[#B91C1C] font-bold"> · {owedRefunds.length} refund belum selesai</span>

@@ -80,10 +80,15 @@ export function withinReviewHours(now: Date): boolean {
  * double a human's workload on paper without their agreeing to it.
  */
 export function serviceDayKey(now: Date): string {
-  const { hour, dayKey } = klParts(now)
-  if (hour >= REVIEW_CLOSES_HOUR) return dayKey
-  const yesterday = new Date(now.getTime() - 86_400_000)
-  return klParts(yesterday).dayKey
+  // A CALENDAR DAY, now that the sitting ends at midnight.
+  //
+  // This used to reach back a day for orders before 02:00, because the sitting
+  // ran past midnight and a 01:00 order belonged to the evening before.
+  // It does not any more, and the branch that did it became unreachable —
+  // `hour >= 0` is always true — while its comment went on describing
+  // behaviour the code no longer had. Dead code that still explains itself is
+  // worse than none: the next reader believes it.
+  return klParts(now).dayKey
 }
 
 export interface CapacityState {
@@ -120,6 +125,37 @@ export function capacityState(usedToday: number, now: Date = new Date()): Capaci
       ? `Semakan manusia sedang berjalan. Biasanya siap dalam ${TYPICAL_MINUTES} minit; maksimum ${MAX_PROMISE_HOURS} jam.`
       : `Semakan manusia bermula ${REVIEW_OPENS_HOUR} pagi. Keputusan anda dihantar dalam tempoh ${MAX_PROMISE_HOURS} jam.`,
   }
+}
+
+/**
+ * Minutes the reviewer was actually AWAKE between two instants.
+ *
+ * Wall-clock age is the wrong measure for a thirty-minute target. An order
+ * taken at 23:55 is nine hours old at 09:00 and the reviewer has done nothing
+ * wrong — they were asleep, which the buyer was told. Counting those hours
+ * paints the queue red every morning, and a badge that is always red is a
+ * badge nobody reads.
+ *
+ * Walks hour by hour rather than solving it in closed form. The window is at
+ * most a day or two, the arithmetic is exact at every boundary, and the closed
+ * form would need re-deriving the moment the hours change again — which they
+ * just did.
+ */
+export function serviceMinutesBetween(from: Date, to: Date): number {
+  if (!(to > from)) return 0
+  let minutes = 0
+  // Step in whole minutes from the first minute boundary at or after `from`.
+  const cursor = new Date(Math.ceil(from.getTime() / 60_000) * 60_000)
+  const end = to.getTime()
+  // A guard, not a limit: 3 days of minutes is far past any real queue age and
+  // stops a bad clock spinning this forever.
+  // Strictly BEFORE the end: a minute is counted for the interval it opens,
+  // so 14:00→14:40 is the forty intervals 14:00..14:39, not forty-one instants.
+  for (let i = 0; cursor.getTime() < end && i < 3 * 24 * 60; i++) {
+    if (withinReviewHours(cursor)) minutes++
+    cursor.setTime(cursor.getTime() + 60_000)
+  }
+  return minutes
 }
 
 /**
@@ -197,10 +233,11 @@ export function expectedDeliveryCopy(from: Date = new Date()): string {
  * Used to count how many reports today's sitting already carries.
  */
 export function serviceDayStart(now: Date = new Date()): Date {
-  const { hour } = klParts(now)
-  // Before 02:00 the sitting began yesterday at 10:00.
-  const base = hour < REVIEW_CLOSES_HOUR ? new Date(now.getTime() - 86_400_000) : now
-  const { dayKey } = klParts(base)
+  // Today's 10:00, always — see serviceDayKey for why the look-back is gone.
+  //
+  // Before opening this returns a moment in the FUTURE, which is correct: the
+  // sitting has not begun, so nothing has been counted against it yet.
+  const { dayKey } = klParts(now)
   const [y, m, d] = dayKey.split('-').map(Number) as [number, number, number]
   // 10:00 MYT == 02:00 UTC the same calendar day.
   return new Date(Date.UTC(y, m - 1, d, REVIEW_OPENS_HOUR - 8, 0, 0))

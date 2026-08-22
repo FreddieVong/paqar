@@ -206,3 +206,45 @@ describe('the expected delivery time is right at every hour', () => {
     }
   })
 })
+
+/**
+ * The boundaries themselves, because every off-by-one here is a promise.
+ */
+describe('the edges of the sitting', () => {
+  it.each([
+    ['09:59 — one minute before opening', 9, 59, false],
+    ['10:00 — the moment it opens',      10,  0, true],
+    ['23:59 — the last minute',          23, 59, true],
+    ['00:00 — shut',                      0,  0, false],
+  ])('%s', (_l, h, m, open) => {
+    expect(withinReviewHours(kl('2026-08-21', h, m))).toBe(open)
+  })
+
+  it('counts the whole sitting against one day, midnight included', () => {
+    // 23:59 and 00:00 are consecutive minutes in different sittings. If they
+    // shared a service day the 20-a-day ceiling would span two nights.
+    expect(serviceDayKey(kl('2026-08-21', 23, 59))).toBe('2026-08-21')
+    expect(serviceDayKey(kl('2026-08-22',  0,  0))).toBe('2026-08-22')
+  })
+
+  it('points a pre-opening order at a sitting that has not started', () => {
+    // 09:00 → today's 10:00, which is still ahead. Nothing has been counted
+    // against it, which is exactly right: the reviewer has not sat down.
+    const start = serviceDayStart(kl('2026-08-21', 9))
+    expect(start.toISOString()).toBe('2026-08-21T02:00:00.000Z')
+    expect(start.getTime()).toBeGreaterThan(kl('2026-08-21', 9).getTime())
+  })
+
+  it('still accepts orders while the reviewer is asleep', () => {
+    // Refusing overnight would turn a 24-hour guarantee Paqar can easily keep
+    // into a lost sale. It accepts and says when work begins.
+    const state = capacityState(0, kl('2026-08-22', 3))
+    expect(state.acceptingNow).toBe(true)
+    expect(state.withinHours).toBe(false)
+  })
+
+  it('refuses only when the day is genuinely full', () => {
+    expect(capacityState(DAILY_CAPACITY, kl('2026-08-21', 14)).acceptingNow).toBe(false)
+    expect(capacityState(DAILY_CAPACITY - 1, kl('2026-08-21', 14)).acceptingNow).toBe(true)
+  })
+})
