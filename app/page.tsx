@@ -331,11 +331,11 @@ export default async function HomePage() {
                 key={item.label}
                 className={`rounded-[12px] px-4 py-3.5 border ${
                   item.highlight
-                    ? 'bg-[#F0FDF4] border-[#BBF7D0]'
+                    ? 'bg-[#F4F6F0] border-[#CBD4BB]'
                     : 'bg-white border-[#E5E7EB]'
                 }`}
               >
-                <p className={`font-heading font-bold text-[13px] mb-0.5 ${item.highlight ? 'text-[#15803D]' : 'text-[#111827]'}`}>
+                <p className={`font-heading font-bold text-[13px] mb-0.5 ${item.highlight ? 'text-[#3D472F]' : 'text-[#111827]'}`}>
                   {item.label}
                 </p>
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">{item.desc}</p>
@@ -480,7 +480,7 @@ export default async function HomePage() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="font-body text-[13px] text-[#3D472F] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[8px] px-3 py-1.5 hover:bg-[#DCFCE7] transition-colors"
+                    className="font-body text-[13px] text-[#3D472F] bg-[#F4F6F0] border border-[#CBD4BB] rounded-[8px] px-3 py-1.5 hover:bg-[#E7EBDF] transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -502,7 +502,7 @@ export default async function HomePage() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="font-body text-[13px] text-[#3D472F] bg-[#F0FDF4] border border-[#BBF7D0] rounded-[8px] px-3 py-1.5 hover:bg-[#DCFCE7] transition-colors"
+                    className="font-body text-[13px] text-[#3D472F] bg-[#F4F6F0] border border-[#CBD4BB] rounded-[8px] px-3 py-1.5 hover:bg-[#E7EBDF] transition-colors"
                   >
                     {item.label}
                   </Link>
