@@ -49,7 +49,7 @@ export function BuyerReportPitch({ plate }: { plate: string }) {
         {plate && (
           <div className="mt-3">
             <p className="font-heading font-bold text-[9px] text-white/40 uppercase tracking-widest mb-0.5">Untuk</p>
-            <p className="font-heading font-extrabold text-[28px] text-white leading-none tracking-tight">{plate}</p>
+            <p className="font-plate font-semibold text-[26px] text-white leading-none tracking-[0.06em]">{plate}</p>
           </div>
         )}
       </div>

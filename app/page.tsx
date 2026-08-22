@@ -133,18 +133,14 @@ export default async function HomePage() {
         <div className="max-w-xl mx-auto">
 
           <div className="mb-5">
-            {/* BRAND FAMILY, not the success green.
-                This pill was mint on mint — the same palette the report uses
-                to mean "no claim found". Seen against the olive headline it
-                read as a stray notification rather than the page's own
-                eyebrow, and it is the first thing on the page. Success green
-                keeps its meaning by being reserved for success. */}
-            <div className="inline-flex items-center gap-2 bg-[#F4F6F0] border border-[#CBD4BB] rounded-full px-3 py-1.5">
-              <span className="w-2 h-2 bg-[#3D472F] rounded-full" />
-              <span className="font-heading font-bold text-[12px] text-[#3D472F]">
-                Untuk pembeli · Disemak oleh manusia
-              </span>
-            </div>
+            {/* THE EYEBROW IS GONE.
+                It read "Untuk pembeli · Disemak oleh manusia" — and four lines
+                below it, the meta line says "Disemak oleh manusia" again. Two
+                claims, one fact, on the page a tester had already called full
+                of text.
+                Removing it also lets the headline land first, which is the
+                stronger opening: the pill was a label on the page, and the
+                headline is the reason to stay. */}
           </div>
 
           <h1 className="font-heading font-extrabold text-[30px] md:text-[36px] leading-[1.1] tracking-[-0.03em] text-[#111827] mb-3">

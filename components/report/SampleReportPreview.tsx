@@ -97,7 +97,7 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
             <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-0.5">
               Contoh Laporan
             </p>
-            <p className="font-heading font-extrabold text-[18px] text-[#111827]">WXY 1234</p>
+            <p className="font-plate font-semibold text-[17px] tracking-[0.06em] text-[#111827]">WXY 1234</p>
           </div>
           {/* Neutral, not success green. This badge means "not a real report",
               and mint reads as a verdict — the same palette a clean claim

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import dynamic from 'next/dynamic'
-import { Plus_Jakarta_Sans, DM_Sans } from 'next/font/google'
+import { Archivo, IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
 import { AnalyticsProvider } from '@/components/layout/AnalyticsProvider'
 import { MetaPixelScript } from '@/components/layout/MetaPixelScript'
@@ -8,17 +8,55 @@ import { AdLandingTracker } from '@/components/layout/AdLandingTracker'
 
 const GoogleTagScript = dynamic(() => import('@/components/layout/GoogleTagScript').then(mod => ({ default: mod.GoogleTagScript })), { ssr: false })
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+/**
+ * ── THE TYPE SYSTEM, AND WHY IT IS THIS ONE ────────────────────────────────
+ *
+ * It was Plus Jakarta Sans over DM Sans: a good pairing, and the pairing
+ * anyone reaches for on any project. Nothing about it said used cars, or
+ * Malaysia, or a document you rely on before handing over RM55,000.
+ *
+ * What Paqar actually produces is a RECORD about a REGISTERED VEHICLE —
+ * closer to a roadtax disc or a geran than to a dashboard. So the type comes
+ * from that world:
+ *
+ *   Archivo        headings. A grotesque with institutional weight and a
+ *                  slight condensation, so a three-line Malay headline holds
+ *                  its line without shrinking. Confident rather than friendly,
+ *                  which is the register of a verdict.
+ *
+ *   IBM Plex Sans  body. Drawn for technical documentation, which is exactly
+ *                  what a claim record and a variant comparison are, and its
+ *                  numerals are unusually clear at 12-13px — the size most of
+ *                  Paqar's money is set in.
+ *
+ *   IBM Plex Mono  plates, reference codes and comparable prices. A Malaysian
+ *                  number plate IS monospaced type on a white ground; setting
+ *                  WXY 1234 in mono makes it read as a plate rather than as a
+ *                  word. Loaded at two weights only, for the handful of places
+ *                  that are genuinely data.
+ *
+ * Weights are trimmed to what is used. Archivo drops 400 and 500 — headings
+ * here are never light — which pays for the third family rather than adding to
+ * the page.
+ */
+const archivo = Archivo({
   subsets: ['latin'],
   variable: '--font-heading',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['600', '700', '800'],
   display: 'swap',
 })
 
-const dmSans = DM_Sans({
+const plexSans = IBM_Plex_Sans({
   subsets: ['latin'],
   variable: '--font-body',
   weight: ['400', '500', '600'],
+  display: 'swap',
+})
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  weight: ['500', '600'],
   display: 'swap',
 })
 
@@ -61,7 +99,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ms" className={`${plusJakartaSans.variable} ${dmSans.variable}`}>
+    <html lang="ms" className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable}`}>
       <body className="bg-[#F8FAF7] font-body antialiased">
         <GoogleTagScript />
         <MetaPixelScript />

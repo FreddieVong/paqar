@@ -12,6 +12,9 @@ const config: Config = {
         heading: ['var(--font-heading)', 'ui-sans-serif', 'system-ui'],
         body:    ['var(--font-body)', 'ui-sans-serif', 'system-ui'],
         sans:    ['var(--font-body)', 'ui-sans-serif', 'system-ui'],
+        // Plates, reference codes and comparable prices — the places that are
+        // genuinely data rather than prose. See the note in app/layout.
+        plate:   ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
         background:  'hsl(var(--background))',

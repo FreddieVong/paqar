@@ -330,7 +330,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             <p className="font-body text-[10px] text-white/40">Dijana: {generatedLabel}</p>
           )}
         </div>
-        <p className="font-heading font-extrabold text-[30px] text-white leading-none tracking-tight mb-1.5">
+        <p className="font-plate font-semibold text-[28px] text-white leading-none tracking-[0.06em] mb-1.5">
           {plate}
         </p>
         {carIdentity && (

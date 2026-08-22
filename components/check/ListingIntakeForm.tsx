@@ -423,7 +423,17 @@ export function ListingIntakeForm({
     !summary || summary[k].value == null || !!summary[k].conflict
 
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+    // ── THE ONE DARK BLOCK ON THE PAGE ──────────────────────────────────
+    // This card is the only thing the homepage is for, and it was white on a
+    // near-white ground with a hairline border — visually the quietest element
+    // above the fold, holding the single action.
+    //
+    // Inverted, it becomes unmissable without adding a word, which is the only
+    // kind of emphasis this page can afford: a tester has already said there
+    // is too much text to read. The three roles are now told apart by colour
+    // rather than by reading — dark ground is the frame, white is where you
+    // put something, yellow is what you press.
+    <div className="bg-[#3D472F] rounded-[18px] p-5 shadow-[0_10px_30px_-12px_rgba(61,71,47,0.55)]">
       <div className="space-y-4">
 
         {/*
@@ -476,7 +486,7 @@ export function ListingIntakeForm({
             lives inside that panel, where it is read by someone who has
             already decided to upload. */}
         <div>
-          <label htmlFor="li-url" className={LABEL_CLS}>
+          <label htmlFor="li-url" className="block font-heading font-bold text-[12px] text-[#E7EBDF] mb-1.5">
             Link iklan kereta itu
           </label>
           <input
@@ -489,13 +499,17 @@ export function ListingIntakeForm({
             onKeyDown={e => {
               if (e.key === 'Enter') { e.preventDefault(); void readListingUrl() }
             }}
-            placeholder="Mudah, Carlist, Facebook Marketplace…"
+            placeholder="Mudah, Carlist, FB Marketplace…"
             inputMode="url"
             autoComplete="off"
             // Disabled while reading: re-pasting mid-extraction starts a second
             // run against the same intake and confuses the summary.
             disabled={phase === 'working'}
-            className={`${INPUT_CLS} disabled:opacity-60`}
+            className={`w-full bg-white border-[1.5px] border-transparent rounded-xl px-4 py-3.5
+              font-body font-medium text-[16px] text-[#111827]
+              placeholder:text-[#9CA3AF] placeholder:font-normal
+              focus:outline-none focus:border-[#FACC15] focus:ring-[3px] focus:ring-[#FACC15]/35
+              transition-all disabled:opacity-60`}
           />
           {/* ALWAYS VISIBLE, not revealed on typing.
               Blur and Enter both work, but neither is something a buyer can
@@ -526,7 +540,7 @@ export function ListingIntakeForm({
               void readListingUrl()
             }}
             disabled={phase === 'working' || busy}
-            className="w-full min-h-[48px] mt-2.5 bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[15px] rounded-[12px] transition-colors disabled:opacity-60"
+            className="w-full min-h-[48px] mt-2.5 bg-[#FACC15] hover:bg-[#EAB308] text-[#1F2513] font-heading font-extrabold text-[15px] rounded-[12px] transition-colors disabled:opacity-60"
           >
             {phase === 'working' || busy ? 'Sedang baca iklan…' : 'Semak kereta ini →'}
           </button>
@@ -540,7 +554,7 @@ export function ListingIntakeForm({
           <button
             type="button"
             onClick={() => setShowUpload(true)}
-            className="w-full min-h-[44px] font-body text-[13px] text-[#3D472F] underline underline-offset-2 hover:text-[#2E3523]"
+            className="w-full min-h-[44px] font-body text-[13px] text-[#CBD4BB] underline underline-offset-2 hover:text-white transition-colors"
           >
             Tiada link? Muat naik screenshot iklan
           </button>
