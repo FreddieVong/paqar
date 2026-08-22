@@ -90,6 +90,9 @@ export function ListingIntakeForm({
   const [dirty,      setDirty]      = useState(false)
   const [editing,    setEditing]    = useState(false)
   const [coverage,   setCoverage]   = useState<Coverage | null>(null)
+  // The link was a results page, not one advert. Not an error state — the
+  // buyer pasted the page they were looking at.
+  const [searchPage, setSearchPage] = useState(false)
   const [busy,       setBusy]       = useState(false)
   const [error,      setError]      = useState<string | null>(null)
   const [status,     setStatus]     = useState<string | null>(null)
@@ -139,8 +142,9 @@ export function ListingIntakeForm({
       if (!res.ok) { setPhase('start'); setStatus(null); return }
       const j = await res.json() as {
         summary: MergedListing; ready: boolean; needScreenshots: boolean
-        ocrUnavailable: boolean; ocrOurFault?: boolean
+        ocrUnavailable: boolean; ocrOurFault?: boolean; searchPage?: boolean
       }
+      setSearchPage(j.searchPage === true)
       setSummary(j.summary)
       setNeedShots(j.needScreenshots || j.ocrUnavailable)
       setOurFault(j.ocrOurFault === true)
@@ -357,6 +361,15 @@ export function ListingIntakeForm({
         headers: authHeaders(),
         body: JSON.stringify({ plate: plate.trim() || undefined, buyerConcern: concern.trim() || undefined }),
       })
+      // 422 is the one-listing gate, and it deserves its own words: "Ralat —
+      // sila cuba semula" would send the buyer to retry a link that can never
+      // work, instead of telling them what to send.
+      if (res.status === 422) {
+        const body = await res.json().catch(() => ({})) as { message?: string }
+        setSearchPage(true)
+        setError(body.message ?? 'Hantar link satu unit tertentu atau screenshot iklan itu.')
+        return
+      }
       if (!res.ok) { setError('Ralat — sila cuba semula'); return }
       const { checkId, claimToken } = await res.json() as CreateCheckResponse
       const params = new URLSearchParams({ claim_token: claimToken, source: 'listing' })
@@ -638,6 +651,17 @@ export function ListingIntakeForm({
                        placeholder="cth: 59000" min={1000} max={2000000} inputMode="numeric" className={INPUT_CLS} />
               </div>
             )}
+          </div>
+        )}
+
+        {searchPage && (
+          <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[12px] p-4">
+            <p className="font-heading font-bold text-[13px] text-[#92400E] mb-1">
+              Ini halaman carian, bukan satu iklan kereta.
+            </p>
+            <p className="font-body text-[13px] text-[#78350F] leading-relaxed">
+              Hantar link satu unit tertentu, atau screenshot iklan itu.
+            </p>
           </div>
         )}
 

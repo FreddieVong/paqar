@@ -8,6 +8,7 @@ import { extractFromScreenshots, ocrToExtracted } from '@/lib/listing-ocr'
 import { isExtractable } from '@/lib/listing-fetch'
 import { extractListingViaScraper } from '@/lib/listing-scraper'
 import { parseListingUrlSlug } from '@/lib/listing-extract'
+import { isSearchPage } from '@/lib/listing-page-kind'
 import { mergeListing, readyForCoverage } from '@/lib/listing-merge'
 
 /**
@@ -52,8 +53,22 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   // robots.txt forbids automated access, so a direct fetch produced nothing on
   // every request in production. The scraper already runs a real browser
   // against Mudah for comparables; this is that same access, for one advert.
+  //
+  // ── ONE CAR, OR A PAGE OF CARS? ────────────────────────────────────────
+  //
+  // Checked BEFORE anything reads the URL. Paqar sells a decision about one
+  // listing, and nothing verified the link was one: a Mudah results page for
+  // "Honda City 2019" yielded Honda / City / 2019 from the slug exactly as
+  // designed, found comparables, and walked the buyer to RM29 for a search
+  // query — leaving the reviewer to open a page of forty cars.
+  //
+  // A search page contributes NOTHING rather than being rejected outright,
+  // because the buyer may also have uploaded screenshots of the real advert.
+  // Those still work; only the URL is disregarded.
+  const searchPage = intake.listing_url ? isSearchPage(intake.listing_url) : false
+
   let fromUrl = null
-  if (intake.listing_url && isExtractable(intake.listing_url)) {
+  if (!searchPage && intake.listing_url && isExtractable(intake.listing_url)) {
     const scraped = await extractListingViaScraper(intake.listing_url)
     if (scraped.ok) fromUrl = scraped.extracted
   }
@@ -68,7 +83,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   // Fills only what the page did not. A slug is the platform's rendering of
   // the seller's own title, so it is weaker evidence than the page, and it
   // never carries a price — that field stays the buyer's.
-  if (intake.listing_url) {
+  if (!searchPage && intake.listing_url) {
     const fromSlug = parseListingUrlSlug(intake.listing_url)
     if (fromSlug.brand || fromSlug.model || fromSlug.year) {
       const field = <T,>(v: T | null) => ({
@@ -143,5 +158,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // could not run the read at all, and asking the buyer to try another
     // screenshot would be blaming them for our outage.
     ocrOurFault:     ocrFailure !== null && ocrFailure !== 'invalid_output',
+    // The link was a results page. Told to the buyer as a redirection to the
+    // right input, never as an error — they did nothing wrong, they pasted
+    // the page they were looking at.
+    searchPage,
   })
 }

@@ -51,17 +51,12 @@ export default function LaporanPembelihPage() {
           {
             '@type': 'Question',
             name: 'Apa yang ada dalam Laporan Pembeli RM29 Paqar?',
-            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM29 merangkumi: keputusan harga pasaran (murah/wajar/mahal), harga tengah dan julat harga berdasarkan listing semasa, anggaran trade-in, maklumat kenderaan (tahun daftar, enjin, jenis badan, nombor rangka), skrip rundingan harga siap pakai, soalan penting untuk penjual, dan checklist sebelum bayar deposit.' },
+            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli RM29 merangkumi: keputusan untuk unit itu — patut diteruskan, dirunding atau dilepaskan — nota daripada orang yang menyemak iklan anda, sasaran harga dan skrip rundingan siap pakai, soalan penting untuk penjual, checklist sebelum bayar deposit, dan harga yang sedang diiklankan untuk kereta setanding sebagai bukti di sebaliknya. Setiap laporan disemak oleh manusia sebelum dihantar.' },
           },
           {
             '@type': 'Question',
             name: 'Berapa lama untuk dapat laporan selepas bayar?',
-            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli dijana serta-merta selepas bayaran disahkan. Tiada masa menunggu.' },
-          },
-          {
-            '@type': 'Question',
-            name: 'Boleh tambah semakan accident/claim kemudian?',
-            acceptedAnswer: { '@type': 'Answer', text: 'Ya. Anda boleh tambah Semakan Accident/Claim Insurans (+RM88) selepas dapat Laporan Pembeli RM29.' },
+            acceptedAnswer: { '@type': 'Answer', text: 'Setiap laporan disemak oleh manusia sebelum dihantar. Biasanya dalam 30 minit pada waktu semakan (10 pagi hingga 12 malam), dan dijamin dalam 24 jam. Kalau kami tidak dapat siapkan, duit dikembalikan sepenuhnya.' },
           },
           {
             '@type': 'Question',
@@ -155,26 +150,19 @@ export default function LaporanPembelihPage() {
             </div>
           </div>
 
-          {/* Upgrade option */}
-          <div className="bg-[#F0FAFA] border border-[#99D4D1] rounded-[14px] p-5">
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#064E4A] mb-2">
-              Nak semak rekod accident/claim?
-            </p>
-            <p className="font-heading font-bold text-[15px] text-[#111827] mb-1">
-              Tambah Semakan Accident/Claim Insurans — +RM88
-            </p>
-            <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
-              Semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika
-              direkodkan — termasuk <span className="font-semibold">meter ketika claim</span> dan amaran
-              kalau meter mungkin pernah dipusing balik. Laporan + Semakan berharga RM100 keseluruhan.
-            </p>
-            <Link
-              href="/semak-accident-claim-insurans-kereta"
-              className="font-body text-[13px] text-[#064E4A] font-semibold underline underline-offset-2"
-            >
-              Ketahui lebih lanjut tentang Semakan Accident/Claim →
-            </Link>
-          </div>
+          {/* THE ACCIDENT/CLAIM UPSELL IS GONE, not hidden.
+              It advertised "+RM88 … Laporan + Semakan RM100" for a service
+              that does not exist: HISTORY_UPGRADE_OPERATIONAL is false in
+              lib/pricing precisely because the purchase -> second review ->
+              revised decision -> release journey was never built. Hiding the
+              button while leaving this copy crawlable would still be selling
+              it — to buyers, to Google and to every AI that reads the page.
+
+              The same paragraph also promised "amaran kalau meter mungkin
+              pernah dipusing balik". Paqar has no independent dated odometer
+              reading, so it can never support a tampering finding — a rule
+              lib/mileage-provenance enforces in the report and this page
+              contradicted in marketing. */}
 
           {/* Limitations */}
           <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">
@@ -206,7 +194,6 @@ export default function LaporanPembelihPage() {
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
             <Link href="/contoh-laporan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Lihat contoh laporan →</Link>
-            <Link href="/semak-accident-claim-insurans-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semakan Accident/Claim Insurans RM100 →</Link>
             <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Checklist lengkap sebelum bayar deposit →</Link>
             <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Panduan cara beli kereta terpakai →</Link>
           </div>

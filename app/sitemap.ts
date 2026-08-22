@@ -27,7 +27,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Core product pages
     { url: `${base}/contoh-laporan`,                                     lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/laporan-pembeli-kereta-terpakai`,                    lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/semak-accident-claim-insurans-kereta`,               lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
+    // /semak-accident-claim-insurans-kereta is noindex while the service is
+    // not sold (HISTORY_UPGRADE_OPERATIONAL === false). Listing a noindex URL
+    // in the sitemap tells Google two opposite things.
     { url: `${base}/kira-ansuran-kereta`,                                lastModified: now,                        changeFrequency: 'monthly', priority: 0.9 },
     // Variant decision guides
     { url: `${base}/varian/perodua-myvi`,                                lastModified: now,                        changeFrequency: 'monthly', priority: 0.85 },

@@ -1,7 +1,23 @@
 import posthog from 'posthog-js'
 import type { OfferStateMeasurement } from '@/lib/offer-state'
+import { scrubUrl } from '@/lib/sensitive-routes'
 
 let initialised = false
+
+/**
+ * Properties PostHog fills in by itself, every one of which is a URL.
+ *
+ * capture_pageview sends $current_url on every page. On a paid report that URL
+ * is /laporan-pembeli/<id>?claim_token=<token>, and that token is the entire
+ * authorisation for the report — no account, no login. It was going to PostHog
+ * on every view, including for real paying customers.
+ *
+ * sanitize_properties runs on EVERY event, not just pageviews, so a future
+ * capture that happens to carry a URL is covered without anyone remembering.
+ */
+const URL_PROPERTIES = [
+  '$current_url', '$referrer', '$pathname', '$initial_current_url', '$initial_referrer',
+] as const
 
 export function initAnalytics() {
   if (initialised || typeof window === 'undefined') return
@@ -9,6 +25,23 @@ export function initAnalytics() {
     api_host:         process.env.NEXT_PUBLIC_POSTHOG_HOST,
     person_profiles:  'identified_only',
     capture_pageview: true,
+    sanitize_properties: (properties) => {
+      const out = { ...properties }
+      for (const key of URL_PROPERTIES) {
+        if (key in out) {
+          const cleaned = scrubUrl(out[key])
+          if (cleaned === undefined) delete out[key]
+          else out[key] = cleaned
+        }
+      }
+      return out
+    },
+    session_recording: {
+      // A replay of a report page would capture the address bar content and
+      // whatever the buyer typed. Neither is worth a session recording.
+      maskAllInputs:     true,
+      maskTextSelector:  '[data-ph-mask]',
+    },
   })
   initialised = true
 }

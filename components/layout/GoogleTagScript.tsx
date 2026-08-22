@@ -45,8 +45,23 @@ export function GoogleTagScript() {
 
     window.gtag('js', new Date())
 
-    // Initialize Google Ads
-    window.gtag('config', 'AW-18167043406')
+    // Set the clean URL BEFORE any config or event. The conversion components
+    // poll for window.gtag and can fire before this component's later effects
+    // run, so the default must be safe from the first millisecond.
+    window.gtag('set', {
+      page_path:     window.location.pathname,
+      page_location: window.location.pathname + sanitizeSearchParams(
+        new URLSearchParams(window.location.search),
+      ),
+    })
+
+    // Initialize Google Ads.
+    //
+    // send_page_view:false here as well as on GA4. The Ads config sends its own
+    // page view by default, built from document.location.href — which on
+    // /laporan-pembeli/<id>?claim_token=<token> is the report's authorisation
+    // token. GA4 was already guarded; Google Ads was not.
+    window.gtag('config', 'AW-18167043406', { send_page_view: false })
 
     // Initialize GA4 if measurement ID is configured
     const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
@@ -79,6 +94,21 @@ export function GoogleTagScript() {
       page_path: pathname,
       page_location: pageUrl,
     })
+  }, [pathname, searchParams])
+
+  // EVERY OTHER EVENT, not just the page view.
+  //
+  // gtag.js fills page_location from document.location.href on any event that
+  // does not override it — including the purchase conversion, which fires on
+  // /laporan-pembeli/<id>/selesai?claim_token=<token>. Sanitising only the
+  // page view left the conversion carrying the token to Google.
+  //
+  // `set` makes the clean value the default for everything sent afterwards, so
+  // a conversion added later is covered without anyone remembering.
+  useEffect(() => {
+    if (!window.__gtagLoaded || !window.gtag) return
+    const pageUrl = pathname + sanitizeSearchParams(searchParams)
+    window.gtag('set', { page_path: pathname, page_location: pageUrl })
   }, [pathname, searchParams])
 
   return null

@@ -1,5 +1,7 @@
 'use client'
 
+
+import { isSensitivePath } from '@/lib/sensitive-routes'
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
@@ -16,11 +18,28 @@ declare global {
 // Meta Pixel — dormant until NEXT_PUBLIC_META_PIXEL_ID is set in Vercel.
 // Installed ahead of any ad spend so retargeting audiences and purchase
 // data accumulate from today; audiences can't be built retroactively.
+/**
+ * ── WHY THE PIXEL IS SILENT ON REPORT AND ADMIN ROUTES ─────────────────────
+ *
+ * fbq reads document.location.href itself and sends it as `dl`. There is no
+ * supported way to override it, so on /laporan-pembeli/<id>?claim_token=<token>
+ * the pixel was shipping the report's authorisation token to Meta on every
+ * view — a page real paying customers land on.
+ *
+ * Suppressing it costs no attribution. Every Meta event Paqar sends already
+ * goes server-side through lib/meta-capi with the same eventID, and Meta
+ * collapses the browser/server pair — that deduplication is why both sides
+ * call checkoutEventId. The browser copy on these pages was the redundant
+ * half, and it was the half that leaked.
+ */
 export function MetaPixelScript() {
   const pathname = usePathname()
 
   useEffect(() => {
     if (!PIXEL_ID || window.__fbqLoaded) return
+    // Never bootstrap on a credential-bearing route: loading the script is
+    // itself what starts the automatic collection.
+    if (isSensitivePath(pathname)) return
     window.__fbqLoaded = true
 
     // Standard fbq bootstrap (queues calls until the script loads)
@@ -52,11 +71,15 @@ export function MetaPixelScript() {
 
     fbq('init', PIXEL_ID)
     fbq('track', 'PageView')
-  }, [])
+    // pathname, not []: a session that STARTS on a report page skips the
+    // bootstrap above, and an empty dependency list would leave the pixel dead
+    // for the rest of that session. __fbqLoaded still guarantees one init.
+  }, [pathname])
 
   // Client-side route changes don't reload the page — fire PageView manually
   useEffect(() => {
     if (!PIXEL_ID || !window.__fbqLoaded) return
+    if (isSensitivePath(pathname)) return
     window.fbq?.('track', 'PageView')
   }, [pathname])
 

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { nanoid } from 'nanoid'
+import { isSensitivePath } from '@/lib/sensitive-routes'
 
 const SESSION_COOKIE = 'paqar_sid'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 90
@@ -45,7 +46,42 @@ export async function middleware(request: NextRequest) {
     })
   }
 
+  applySecurityHeaders(response, request.nextUrl.pathname)
   return response
+}
+
+/**
+ * Headers that cost nothing and were simply absent. HSTS was already set by
+ * the platform; everything below was not.
+ *
+ * REFERRER-POLICY is the one that matters here, and it is set to no-referrer
+ * on report and admin routes specifically. Those URLs carry the claim token
+ * that authorises a paid report, and the report links out to third parties —
+ * the physical-inspection and insurance partners. Without this header the
+ * browser sends the full report URL, token and all, to whoever the buyer
+ * clicks through to.
+ *
+ * The CSP is deliberately narrow: frame-ancestors, base-uri and object-src
+ * only. Those three constrain framing, <base> hijacking and plugin content
+ * without saying anything about script sources, so they cannot break Google,
+ * Meta, PostHog or the uploader. A real script-src policy needs a
+ * report-only observation period first and is not something to switch on in
+ * the same change as everything else.
+ */
+function applySecurityHeaders(response: NextResponse, pathname: string): void {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set(
+    'Referrer-Policy',
+    isSensitivePath(pathname) ? 'no-referrer' : 'strict-origin-when-cross-origin',
+  )
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), interest-cohort=()',
+  )
+  response.headers.set(
+    'Content-Security-Policy',
+    "frame-ancestors 'self'; base-uri 'self'; object-src 'none'",
+  )
 }
 
 export const config = {

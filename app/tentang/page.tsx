@@ -69,7 +69,7 @@ export default function TentangPage() {
             </div>
 
             <div>
-              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semakan Accident/Claim Insurans — RM100</p>
+              <p className="font-heading font-bold text-[13px] text-[#064E4A] mb-1">Semakan Accident/Claim Insurans — belum dibuka</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                 Semakan rekod claim insurans untuk kereta yang anda minat — own damage, banjir, windscreen atau total loss jika direkodkan. Sesuai digunakan sebelum bayar deposit.
               </p>
@@ -146,8 +146,7 @@ export default function TentangPage() {
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Laman utama</p>
             <Link href="/" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semak harga kereta terpakai — percuma →</Link>
             <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Laporan Pembeli RM29 →</Link>
-            <Link href="/semak-accident-claim-insurans-kereta" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Semakan Accident/Claim Insurans RM100 →</Link>
-            <Link href="/contoh-laporan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Contoh laporan →</Link>
+                        <Link href="/contoh-laporan" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Contoh laporan →</Link>
             <Link href="/privasi" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Dasar privasi →</Link>
             <Link href="/terma" className="block font-body text-[13px] text-[#064E4A] underline underline-offset-2">Terma penggunaan →</Link>
           </div>

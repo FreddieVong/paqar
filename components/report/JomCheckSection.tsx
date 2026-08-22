@@ -149,7 +149,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
           <p className="font-body text-[12px] text-[#991B1B] leading-relaxed">
             Satu claim direkodkan pada <span className="font-bold">{rollback.claimMileage.toLocaleString()} km</span>
             {currentOdometerKm != null ? ` — tetapi odometer sekarang ${currentOdometerKm.toLocaleString()} km, lebih rendah.` : '.'}{' '}
-            Ini petanda meter mungkin dipusing balik. Sahkan dengan penjual, minta bukti servis, dan pastikan plat tidak pernah ditukar (rekod ikut nombor pendaftaran).
+            Bacaan tidak sepadan — sila sahkan dengan penjual dan rekod servis, dan pastikan plat tidak pernah ditukar (rekod ikut nombor pendaftaran).
           </p>
         </div>
       )}

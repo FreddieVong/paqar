@@ -7,6 +7,8 @@ import { encrypt, hash } from '@/lib/crypto'
 import { normaliseConcern } from '@/lib/listing-intake'
 import { SESSION_COOKIE } from '@/lib/attribution'
 import { readyForCoverage } from '@/lib/listing-merge'
+import { isSearchPage, SEARCH_PAGE_MESSAGE } from '@/lib/listing-page-kind'
+import { listScreenshots } from '@/lib/db/listing-screenshots'
 import { capacityState, serviceDayStart } from '@/lib/review-capacity'
 import { paidReportsInServiceDay } from '@/lib/db/report-review'
 
@@ -45,6 +47,26 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   // minutes stale, and this is the step that creates a billable journey.
   if (!summary || !readyForCoverage(summary)) {
     return NextResponse.json({ error: 'not_ready' }, { status: 409 })
+  }
+
+  // ── THE REVIEWER MUST HAVE SOMETHING TO OPEN ────────────────────────────
+  //
+  // A results page is not a car. The buyer can still have typed a plausible
+  // brand, model, year and price by hand — readyForCoverage is satisfied by
+  // those four fields alone — so without this check a search link converts to
+  // a payable check whose only evidence is a link to forty other cars.
+  //
+  // Screenshots rescue it: if the buyer photographed the advert, the reviewer
+  // has the advert, and the stale URL beside it costs nothing. This refuses
+  // only the case where there is genuinely nothing to review.
+  if (intake.listing_url && isSearchPage(intake.listing_url)) {
+    const shots = await listScreenshots(params.id).catch(() => [])
+    if (shots.length === 0) {
+      return NextResponse.json(
+        { error: 'search_page', message: SEARCH_PAGE_MESSAGE },
+        { status: 422 },
+      )
+    }
   }
 
   // ── CAPACITY ────────────────────────────────────────────────────────────

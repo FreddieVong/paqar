@@ -1,36 +1,50 @@
 # Paqar — Malaysian Used Car Buyer Tool
 # https://paqar.my
 
-Paqar helps Malaysian used-car buyers check whether a car price is fair and get a buyer report before paying booking or deposit.
+Paqar gives Malaysian used-car buyers a decision on ONE specific car they are
+looking at, reviewed by a person before it is sent, so they know whether to
+proceed, negotiate or walk away before paying a deposit.
 
 ## What Paqar Does
 
-- Free price check: Enter car brand, model, year, and asking price to get a market price verdict (murah/wajar/mahal) instantly. No account needed.
-- Laporan Pembeli (RM12): A one-time buyer report including market price verdict, price range evidence, trade-in estimate, vehicle information, negotiation script, seller questions, and deposit checklist.
-- Semakan Accident/Claim Insurans (RM100): Everything in Laporan Pembeli plus insurance claim record checking — own damage, flood, windscreen, or total loss claims if recorded.
+- Free coverage check: send the listing link or a screenshot of the advert.
+  Paqar answers one question for free — whether it has enough comparable
+  adverts to produce a decision for that car. No verdict, no prices, no
+  account needed.
+- Laporan Pembeli (RM29): a decision for that one listing — proceed, negotiate
+  or walk away — with the reviewer's note, a negotiation target and a
+  ready-to-send script, the questions to ask that seller, what to verify
+  before paying a deposit, and the comparable advertised prices behind it.
+  Every report is read and checked by a person before release. Normally about
+  30 minutes during review hours, guaranteed within 24 hours. Full refund if
+  Paqar cannot produce the decision.
 
 ## Pricing
 
-- Free price check: RM0 (no account needed)
-- Laporan Pembeli: RM12 (one-time payment, no account)
-- Laporan + Semakan Accident/Claim Insurans: RM100 (one-time)
-- Add-on only (existing RM12 report): +RM88
+- Free coverage check: RM0 (no account needed)
+- Laporan Pembeli: RM29 (one-time payment, no account)
 
 ## Important Limitations
 
 - Paqar is NOT a government platform. Not affiliated with JPJ or PDRM.
-- Paqar does not verify real mileage or odometer readings.
-- Not every accident has an insurance claim record.
-- A clean claim record does not guarantee the car has no issues.
-- Insurance claim data covers recorded claims only — not all accidents result in a claim.
+- Paqar does not verify real mileage or odometer readings, and never claims a
+  reading has been tampered with.
+- Market figures are prices sellers are ASKING in current adverts. They are
+  not completed sale prices.
+- Vehicle registration details come from a third-party data provider, not from
+  a government record.
+- A car's variant is matched by how comparable adverts are LABELLED. Without a
+  plate, Paqar cannot verify a variant against any registration record.
+- Paqar does not currently sell an accident or insurance-claim report.
+- Paqar reviews one listing at a time. A search page, category page or results
+  page is not a car and is refused before payment.
 - Users should still inspect the car physically and ask the seller the right questions.
 
 ## Main Pages
 
-- Homepage / Free check: https://paqar.my
+- Homepage / Send a listing: https://paqar.my
 - Sample report: https://paqar.my/contoh-laporan
 - Laporan Pembeli landing page: https://paqar.my/laporan-pembeli-kereta-terpakai
-- Semakan Accident/Claim Insurans: https://paqar.my/semak-accident-claim-insurans-kereta
 - Used car buying guide: https://paqar.my/cara-beli-kereta-terpakai
 - Pre-deposit checklist: https://paqar.my/checklist-beli-kereta-terpakai
 - Used car risk guide: https://paqar.my/risiko-beli-kereta-terpakai

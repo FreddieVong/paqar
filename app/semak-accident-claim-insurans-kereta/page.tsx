@@ -30,7 +30,18 @@ const JOMCHECK_ON = historyUpgradeAvailable()
 const DESCRIPTION_BASE =
   'Semak rekod claim insurans kereta terpakai — own damage, banjir, windscreen atau total loss jika direkodkan.'
 
+/**
+ * NOINDEX while the service does not exist.
+ *
+ * lib/pricing sets HISTORY_UPGRADE_OPERATIONAL = false because the
+ * purchase -> second human review -> revised decision -> release journey was
+ * never built. A page ranking as a product page for something nobody can buy
+ * sends real buyers to a dead end and teaches every AI crawler that Paqar
+ * sells insurance-claim reports. Kept as an explanation of the risk, not as a
+ * shopfront, and removed from the sitemap to match.
+ */
 export const metadata: Metadata = {
+  robots: { index: false, follow: true },
   title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia | Paqar',
   description: JOMCHECK_ON
     ? `${DESCRIPTION_BASE} Paqar Semakan Accident/Claim Insurans RM100 sebelum bayar deposit.`
@@ -163,13 +174,13 @@ export default function SemakAccidentClaimInsuransPage() {
           {/* Meter-at-claim / rollback — the highest-value signal, honest about limits */}
           <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded-[14px] p-5">
             <h2 className="font-heading font-bold text-[15px] text-[#991B1B] mb-2">
-              Meter pernah dipusing balik?
+              Bacaan meter tidak sepadan?
             </h2>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-2">
-              Setiap rekod claim menyimpan bacaan meter (odometer) pada masa itu. Kami banding
-              bacaan tertinggi dengan odometer yang penjual tunjuk sekarang — kalau meter sekarang
-              lebih rendah, itu petanda meter mungkin dipusing balik. Kami juga tunjuk tahap
-              keseriousan setiap claim (rendah hingga teruk).
+              Setiap rekod claim menyimpan bacaan meter (odometer) pada masa itu. Kalau bacaan
+              itu lebih tinggi daripada odometer yang penjual tunjuk sekarang, dua nombor itu
+              tidak sepadan — sahkan dengan penjual dan rekod servis sebelum bayar apa-apa.
+              Paqar tidak membuat tuduhan tentang meter.
             </p>
             <p className="font-body text-[11px] text-[#9CA3AF] leading-relaxed">
               Paqar tidak mengesahkan bacaan odometer sebenar — kami tunjuk petanda supaya anda
@@ -218,7 +229,7 @@ export default function SemakAccidentClaimInsuransPage() {
                 { title: 'Soalan penting untuk penjual', desc: 'Tanya soalan yang boleh dedahkan risiko tersembunyi.' },
                 { title: 'Checklist sebelum bayar deposit', desc: 'Senarai semak lengkap untuk pembeli.' },
                 { title: 'Semakan Accident/Claim Insurans', desc: 'Own damage, banjir, windscreen, total loss jika direkodkan.' },
-                { title: 'Meter ketika claim & amaran meter dipusing', desc: 'Kami banding meter ketika claim dengan odometer semasa — petanda kalau meter mungkin dipusing balik.' },
+                { title: 'Meter ketika claim', desc: 'Banding bacaan meter dalam rekod claim dengan odometer semasa — kalau tak sepadan, sahkan dengan penjual.' },
                 { title: 'Tahap keseriousan setiap claim', desc: 'Rendah hingga teruk — tahu mana claim kecil, mana yang serius.' },
               ].map((item, i, arr) => (
                 <div key={item.title} className={`flex gap-2.5 items-start py-2.5 ${i < arr.length - 1 ? 'border-b border-[#F9FAFB]' : ''}`}>

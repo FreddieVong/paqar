@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useId } from 'react'
+import { useRef } from 'react'
 import { CopyButton } from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
 import { HistoryRiskBanner } from './HistoryRiskBanner'
@@ -54,7 +54,11 @@ const SAMPLE_JOMCHECK: JomCheckResult = {
   ],
 }
 type Tier = 'asas' | 'premium'
-const TIERS: readonly Tier[] = ['asas', 'premium']
+// ONE TIER. The accident/claim tier is not sold — HISTORY_UPGRADE_OPERATIONAL
+// is false in lib/pricing because the purchase -> second review -> revised
+// decision journey was never built. This sample sits on /contoh-laporan, which
+// is crawlable, so leaving the tab here advertised an unavailable product to
+// buyers, to Google and to every AI that reads the page.
 
 const SAMPLE_CURRENT_ODOMETER = 78_000  // below the 95,000 km claim → rollback flag fires
 
@@ -64,32 +68,25 @@ const SAMPLE_CURRENT_ODOMETER = 78_000  // below the 95,000 km claim → rollbac
  *   the moment the buyer expands the full sample.
  */
 export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCard?: boolean } = {}) {
-  const [tab, setTab] = useState<Tier>('asas')
+  // One tier while the second is not sold. A constant rather than state, so
+  // nothing can select a tier that cannot be bought.
+  //
+  // Widened to Tier rather than narrowed to 'asas': the premium branches below
+  // are the second tier's sample content, kept intact and simply unreachable,
+  // ready to render again when HISTORY_UPGRADE_OPERATIONAL flips. Narrowing
+  // would force deleting content that will be needed, and the guard against it
+  // leaking is the rendered-output assertion in
+  // __tests__/components/SampleReportTabs, not the type.
+  const tab = 'asas' as Tier
   const topRef = useRef<HTMLDivElement>(null)
-  const baseId  = useId()
-  const tabId   = (t: Tier) => `${baseId}-tab-${t}`
-  const panelId = `${baseId}-panel`
 
-  // Left/Right move between tabs and take focus with them, per the WAI-ARIA
-  // tabs pattern. Home/End cost nothing once the tier list is the source.
-  function onTabKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    const i = TIERS.indexOf(tab)
-    let next: Tier | null = null
-    if      (e.key === 'ArrowRight') next = TIERS[(i + 1) % TIERS.length]!
-    else if (e.key === 'ArrowLeft')  next = TIERS[(i - 1 + TIERS.length) % TIERS.length]!
-    else if (e.key === 'Home')       next = TIERS[0]!
-    else if (e.key === 'End')        next = TIERS[TIERS.length - 1]!
-    if (!next) return
-    e.preventDefault()
-    setTab(next)
-    document.getElementById(tabId(next))?.focus()
-  }
-
-  function switchToPremium() {
-    setTab('premium')
-    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
+  // The tab machinery — useId-scoped ids, roving tabIndex, Left/Right/Home/End
+  // per the WAI-ARIA tabs pattern, and switchToPremium's scroll-to-top — lived
+  // here and was correct. It is removed rather than left unused because a
+  // keyboard handler wired to nothing is a trap for the next reader.
+  //
+  // Restore it from git history in the same change that ships the second
+  // review, alongside the tests in __tests__/components/SampleReportTabs.
   return (
     <div>
       <div ref={topRef} className="bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden">
@@ -107,50 +104,27 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
           </span>
         </div>
 
-        {/* Tier selector — real tab semantics, not two buttons that merely look
-            selected. Roving tabIndex plus arrow keys is the expected pattern:
-            one Tab stop for the group, arrows to move within it.
+        {/* NO TAB SELECTOR WHILE THERE IS ONE TIER.
+            This was a two-tab selector: "Laporan Pembeli RM29" and
+            "+ Accident/Claim RM100". The second tier is not sold —
+            HISTORY_UPGRADE_OPERATIONAL is false in lib/pricing because the
+            purchase -> second review -> revised decision journey was never
+            built — and this preview renders on /contoh-laporan, which is
+            crawlable. A tablist with one tab is not an accessible control, it
+            is a decoration that announces a choice nobody has, so the whole
+            selector goes rather than being rendered with a single tab.
 
-            Ids come from useId because this preview renders on the homepage,
-            /contoh-laporan and the paywall, and two on one page would otherwise
-            share ids and cross-wire their aria-controls. */}
+            Restore it, with its roving tabIndex and arrow keys intact in git
+            history, in the same change that ships the second review. */}
         <div className="px-5 py-3 border-b border-[#F3F4F6]">
-          <div
-            role="tablist"
-            aria-label="Pilih jenis laporan"
-            onKeyDown={onTabKeyDown}
-            className="flex rounded-[10px] bg-[#F3F4F6] p-1 gap-1"
-          >
-            {TIERS.map(t => (
-              <button
-                key={t}
-                type="button"
-                role="tab"
-                id={tabId(t)}
-                aria-selected={tab === t}
-                aria-controls={panelId}
-                tabIndex={tab === t ? 0 : -1}
-                onClick={() => setTab(t)}
-                className={`flex-1 py-2 rounded-[8px] font-heading font-bold text-[12px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064E4A]/40 ${
-                  tab === t
-                    ? 'bg-white text-[#111827] shadow-sm'
-                    : 'text-[#6B7280] hover:text-[#374151]'
-                }`}
-              >
-                {t === 'asas' ? 'Laporan Pembeli RM29' : '+ Accident/Claim RM100'}
-              </button>
-            ))}
-          </div>
-          {tab === 'premium' && (
-            <p className="font-body text-[11px] text-[#064E4A] font-semibold mt-2">
-              Termasuk semakan Accident/Claim Insurans · jumlah RM100
-            </p>
-          )}
+          <p className="font-heading font-bold text-[12px] text-[#111827]">
+            Laporan Pembeli RM29
+          </p>
         </div>
 
-        {/* One panel for both tabs: the tier changes what is inside it, not
-            which region it is. aria-labelledby names the selected tab. */}
-        <div role="tabpanel" id={panelId} aria-labelledby={tabId(tab)}>
+        {/* One tier, so this is a plain region rather than a tabpanel. A
+            tabpanel with no tablist to label it is a dangling aria reference. */}
+        <div>
 
         {/* History risk — leads the premium report, above the price verdict.
             Renders the REAL HistoryRiskBanner so the sample can't drift. The
@@ -253,15 +227,6 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
               <p className="font-heading font-bold text-[14px] text-[#064E4A] mb-1">
                 Risau kereta pernah accident?
               </p>
-              <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-3">
-                Tambah Semakan Accident/Claim Insurans untuk semak rekod claim insurans seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum anda bayar deposit.
-              </p>
-              <button
-                onClick={switchToPremium}
-                className="w-full border border-[#064E4A] text-[#064E4A] font-heading font-bold text-[13px] rounded-[10px] py-2.5 transition-colors hover:bg-[#064E4A] hover:text-white"
-              >
-                Lihat Contoh RM100
-              </button>
             </div>
           </div>
         )}
