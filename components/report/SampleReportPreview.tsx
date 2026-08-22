@@ -99,7 +99,10 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
             </p>
             <p className="font-heading font-extrabold text-[18px] text-[#111827]">WXY 1234</p>
           </div>
-          <span className="font-body text-[10px] text-[#15803D] bg-[#DCFCE7] border border-[#BBF7D0] px-2.5 py-1 rounded-full font-bold">
+          {/* Neutral, not success green. This badge means "not a real report",
+              and mint reads as a verdict — the same palette a clean claim
+              record uses two sections down. */}
+          <span className="font-body text-[10px] text-[#6B7280] bg-[#F3F4F6] border border-[#E5E7EB] px-2.5 py-1 rounded-full font-bold">
             Contoh Sahaja
           </span>
         </div>
@@ -116,11 +119,7 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
 
             Restore it, with its roving tabIndex and arrow keys intact in git
             history, in the same change that ships the second review. */}
-        <div className="px-5 py-3 border-b border-[#F3F4F6]">
-          <p className="font-heading font-bold text-[12px] text-[#111827]">
-            Laporan Pembeli RM29
-          </p>
-        </div>
+
 
         {/* One tier, so this is a plain region rather than a tabpanel. A
             tabpanel with no tablist to label it is a dangling aria reference. */}

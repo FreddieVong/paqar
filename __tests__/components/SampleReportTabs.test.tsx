@@ -3,6 +3,8 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { SampleReportPreview } from '@/components/report/SampleReportPreview'
 import { HISTORY_UPGRADE_OPERATIONAL } from '@/lib/pricing'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 /**
  * This file used to guard a two-tab tier selector — real tab semantics, roving
@@ -30,9 +32,22 @@ describe('the sample shows only what Paqar actually sells', () => {
     expect(container.textContent).not.toMatch(/Accident\/Claim/i)
   })
 
-  it('names the one tier it does sell', () => {
+  it('leaves the price to the page that frames it', () => {
+    // A lone "Laporan Pembeli RM29" bar sat where the tier selector had been
+    // and read as an orphaned row. This preview is embedded on the homepage,
+    // on /contoh-laporan and at the paywall, each of which states the price in
+    // its own voice — repeating it inside the card was the tablist's leftover.
     const { container } = render(<SampleReportPreview />)
-    expect(container.textContent).toMatch(/Laporan Pembeli RM29/)
+    expect(container.textContent).not.toMatch(/Laporan Pembeli RM29/)
+
+    const raw = readFileSync(join(__dirname, '..', '..', 'app/contoh-laporan/page.tsx'), 'utf8')
+    expect(raw, '/contoh-laporan no longer names the price').toMatch(/RM29/)
+
+    // Comments stripped: the note explaining the removed instruction has to
+    // quote it. Only what ships counts.
+    const visible = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+    expect(visible, 'still tells the reader to choose between tiers')
+      .not.toMatch(/Pilih laporan yang sesuai/)
   })
 
   it('exposes no tablist, because a tablist with one tab is a decoration', () => {

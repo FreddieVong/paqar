@@ -42,8 +42,12 @@ export default function ContohLaporanPage() {
           <h1 className="font-heading font-extrabold text-[22px] tracking-tight text-[#111827] mb-1">
             Lihat apa yang anda akan dapat
           </h1>
+          {/* "Pilih laporan yang sesuai untuk anda" — choose the report that
+              suits you — was written for a two-tier selector that no longer
+              exists. One tier means there is nothing to choose, and an
+              instruction to choose is a small lie the reader has to resolve. */}
           <p className="font-body text-[13px] text-[#6B7280] mb-5">
-            Pilih laporan yang sesuai untuk anda.
+            Satu laporan, RM29. Ini contoh penuh &mdash; setiap bahagian yang anda dapat.
           </p>
           <SampleReportPreview />
           <div className="mt-5">
