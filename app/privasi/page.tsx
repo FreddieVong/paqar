@@ -35,7 +35,7 @@ export default function PrivasiPage() {
               Privasi Anda
             </h1>
             <p className="font-body text-[13px] text-[#9CA3AF]">
-              Dikemaskini: Mei 2026
+              Dikemaskini: Ogos 2026
             </p>
           </div>
 
@@ -46,19 +46,31 @@ export default function PrivasiPage() {
             },
             {
               title: 'Data Yang Kami Kumpul',
-              body: 'Kami mengumpul nombor plat kenderaan untuk menjalankan semakan. Nombor plat disulitkan menggunakan AES-256-GCM sebelum disimpan — kami tidak menyimpan data dalam teks biasa. Kami juga mengumpul alamat e-mel apabila anda membuat akaun atau membuat pembayaran.',
+              body: 'Bergantung kepada apa yang anda hantar: link iklan kereta, screenshot iklan, butiran kenderaan yang kami baca daripadanya (jenama, model, tahun, harga yang penjual minta, jarak tempuh), nombor plat jika anda beri (pilihan), apa yang anda risaukan tentang kereta itu, alamat e-mel dan nombor telefon untuk menghantar laporan, status pembayaran dan laporan, serta maklum balas anda. Nombor plat disulitkan menggunakan AES-256-GCM sebelum disimpan — kami tidak menyimpannya dalam teks biasa.',
+            },
+            {
+              title: 'Laporan Anda Dibaca Oleh Manusia',
+              body: 'Setiap laporan disemak oleh seorang pekerja Paqar sebelum dihantar kepada anda. Untuk berbuat demikian, mereka membuka link iklan dan screenshot yang anda hantar, dan melihat butiran kenderaan serta apa yang anda tulis. Ini adalah sebahagian daripada perkhidmatan yang anda bayar, bukan pemprosesan tambahan.',
             },
             {
               title: 'Cara Kami Menggunakan Data Anda',
               body: 'Data yang dikumpul digunakan semata-mata untuk menjalankan semakan status kenderaan, menghantar notifikasi tamat tempoh dokumen, menghantar resit pembayaran, dan menghubungi anda berkaitan perkhidmatan kami.',
             },
             {
-              title: 'Perkongsian Data',
-              body: 'Kami tidak menjual, menyewakan, atau berkongsi data peribadi anda kepada pihak ketiga untuk tujuan pemasaran. Data anda hanya diakses oleh sistem kami dan pembekal perkhidmatan infrastruktur (Supabase untuk pangkalan data, Vercel untuk pengehosan, Resend untuk e-mel). Kami juga menggunakan alat pengukuran pengiklanan seperti Meta Pixel untuk memahami keberkesanan pemasaran kami — data ini dikongsi dalam bentuk yang disamarkan (hashed).',
+              title: 'Siapa Menerima Data Anda',
+              body: 'Kami tidak menjual atau menyewakan data peribadi anda. Pembekal yang memproses data bagi pihak kami: Supabase (pangkalan data dan storan screenshot), Vercel (pengehosan), Resend (e-mel), Billplz (pembayaran — mereka mengendalikan butiran kad atau bank anda, bukan kami), Anthropic (membaca screenshot iklan secara automatik untuk mengeluarkan butiran kereta), dan pembekal data pihak ketiga untuk maklumat pendaftaran kenderaan apabila anda beri nombor plat. Nombor telefon, jika anda beri, digunakan hanya supaya kami boleh hubungi anda tentang laporan anda apabila perlu — laporan itu sendiri dihantar melalui e-mel dan pautan laporan anda.',
             },
             {
-              title: 'Penyimpanan Data',
-              body: 'Data semakan disimpan selama 30 hari selepas semakan dibuat. Data akaun disimpan selagi akaun anda aktif. Anda boleh meminta penghapusan data anda pada bila-bila masa dengan menghubungi kami.',
+              title: 'Pengukuran & Pengiklanan',
+              body: 'Laman ini memuatkan Google Analytics, Google Ads, Meta Pixel dan PostHog untuk memahami cara orang menggunakan Paqar dan keberkesanan iklan kami. Halaman laporan, checkout dan admin dikecualikan: Meta Pixel tidak dimuatkan langsung di situ, dan kod token laporan anda dibuang daripada setiap alamat sebelum dihantar kepada mana-mana alat pengukuran. PostHog boleh merakam sesi pelayaran; semua medan input ditutup (masked) dan tidak dirakam. Anda boleh menyekat semua ini dengan tetapan penyekat penjejakan pada pelayar anda.',
+            },
+            {
+              title: 'Perkhidmatan Rakan Kongsi',
+              body: 'Kami memaut kepada perkhidmatan pihak ketiga untuk pemeriksaan fizikal dan perbandingan insurans. Apabila anda klik pautan itu, anda meninggalkan Paqar dan tertakluk kepada dasar privasi mereka. Kami mungkin menerima komisen rujukan. Kami tidak menghantar data anda kepada mereka — anda yang mengisi maklumat di laman mereka.',
+            },
+            {
+              title: 'Berapa Lama Kami Simpan',
+              body: 'Screenshot yang anda hantar tetapi tidak bayar dipadam selepas 24 jam. Screenshot bagi laporan yang dibayar dipadam selepas 30 hari — ia adalah bukti yang menyokong keputusan yang anda bayar. Pemadaman ini dijalankan secara automatik setiap hari, fail dahulu kemudian rekod, supaya tiada fail tertinggal. Butiran laporan dan rekod pembayaran disimpan lebih lama untuk perakaunan. Anda boleh meminta penghapusan data anda pada bila-bila masa dengan menghubungi kami.',
             },
             {
               title: 'Keselamatan',

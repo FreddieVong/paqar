@@ -93,6 +93,8 @@ export function ListingIntakeForm({
   // The link was a results page, not one advert. Not an error state — the
   // buyer pasted the page they were looking at.
   const [searchPage, setSearchPage] = useState(false)
+  const [notifyEmail, setNotifyEmail] = useState('')
+  const [notifySent,  setNotifySent]  = useState(false)
   const [busy,       setBusy]       = useState(false)
   const [error,      setError]      = useState<string | null>(null)
   const [status,     setStatus]     = useState<string | null>(null)
@@ -338,6 +340,35 @@ export function ListingIntakeForm({
       if (!res.ok) { setError('Ralat — sila cuba semula'); return }
       setCoverage(await res.json() as Coverage)
       setPhase('coverage')
+    } catch {
+      setError('Ralat rangkaian — sila cuba semula')
+    } finally { setBusy(false) }
+  }
+
+  /**
+   * "Tell me when you can" — stored as an ordinary model lead, marked
+   * no_coverage so the nightly cron re-checks coverage instead of sending the
+   * generic retarget these people must never receive.
+   */
+  async function requestNotify() {
+    const email = notifyEmail.trim()
+    if (!email || !summaryState) return
+    setBusy(true); setError(null)
+    try {
+      const res = await fetch('/api/capture-model-lead', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          brand: String(summaryState.brand.value ?? ''),
+          model: String(summaryState.model.value ?? ''),
+          year:  String(summaryState.year.value ?? ''),
+          askingPrice: summaryState.askingPriceRm.value ?? undefined,
+          verdict: 'no_coverage',
+          listingCount: 0,
+        }),
+      })
+      if (!res.ok) { setError('Ralat — sila cuba semula'); return }
+      setNotifySent(true)
     } catch {
       setError('Ralat rangkaian — sila cuba semula')
     } finally { setBusy(false) }
@@ -750,6 +781,43 @@ export function ListingIntakeForm({
                 Kami belum jumpa cukup iklan setanding untuk model dan tahun ini,
                 jadi kami tidak jual keputusan yang tidak dapat kami sokong.
               </p>
+
+              {/* A REFUSAL WAS A DEAD END.
+                  The buyer got this box and nothing else — no next step, no way
+                  back. Measured on the cache, roughly one model-year in eight
+                  lands here, and they are the buyers who were ready to pay.
+
+                  What is offered is only what Paqar can actually keep: the
+                  comparables cache refreshes daily, the nightly cron re-runs
+                  THIS SAME coverage check for anyone waiting, and the email
+                  goes out when the answer changes. If it never changes, nothing
+                  is ever sent — silence is what "we will tell you when we can"
+                  promises, and a "still nothing" email would break it. */}
+              {notifySent ? (
+                <p className="font-body text-[13px] text-[#15803D] leading-relaxed mt-3 pt-3 border-t border-[#F3F4F6]">
+                  ✓ Kami e-mel anda sebaik kami boleh semak {coverage.modelLabel}.
+                </p>
+              ) : (
+                <div className="mt-3 pt-3 border-t border-[#F3F4F6]">
+                  <label htmlFor="li-notify" className={LABEL_CLS}>
+                    Nak kami beritahu bila boleh?
+                  </label>
+                  <div className="flex gap-2">
+                    <input id="li-notify" type="email" value={notifyEmail} inputMode="email"
+                           autoComplete="email" placeholder="e-mel anda"
+                           onChange={e => setNotifyEmail(e.target.value)}
+                           className={`${INPUT_CLS} flex-1`} />
+                    <button type="button" onClick={() => void requestNotify()}
+                            disabled={busy || notifyEmail.trim() === ''}
+                            className="min-h-[44px] px-4 bg-[#064E4A] hover:bg-[#053D3A] text-white font-heading font-bold text-[13px] rounded-xl transition-colors disabled:opacity-50">
+                      Hantar
+                    </button>
+                  </div>
+                  <p className="font-body text-[11px] text-[#6B7280] mt-2 leading-relaxed">
+                    Satu e-mel sahaja, bila kami dah boleh semak model ini. Tiada bayaran.
+                  </p>
+                </div>
+              )}
             </div>
           )
         )}

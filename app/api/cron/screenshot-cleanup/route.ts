@@ -37,8 +37,15 @@ import { deleteScreenshots, verifyDeleted } from '@/lib/screenshot-storage'
  * intake's created_at, because a lost extension would otherwise let this sweep
  * delete a live order's evidence, and deletion is final.
  *
- * NOT SCHEDULED. vercel.json is unchanged deliberately: adding a cron is a
- * deployment concern and this pass does not deploy.
+ * SCHEDULED DAILY at 02:00 UTC (10:00 MYT) in vercel.json.
+ *
+ * It was written and left unscheduled — "adding a cron is a deployment
+ * concern" — and that turned /privasi into a false statement rather than a
+ * pending task. The page tells every buyer their screenshots are kept 30 days;
+ * with nothing sweeping, they were kept forever. Screenshots are the most
+ * sensitive thing Paqar holds: photographs of adverts that routinely carry a
+ * seller's phone number and plate. A retention promise nobody enforces is
+ * worse than no promise, because the buyer relied on it.
  */
 
 export const maxDuration = 60

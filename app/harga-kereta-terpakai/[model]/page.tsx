@@ -112,16 +112,16 @@ const MODELS: Record<ModelHubSlug, ModelConfig> = {
   },
   'honda-city': {
     brand: 'Honda', model: 'City', yearKey: 'city',
-    description: 'Honda City adalah sedan Jepun popular di Malaysia dengan ruang dalaman luas dan prestasi enjin yang baik. Nilai tukar ganti yang stabil menjadikannya pilihan pelaburan yang bijak.',
+    description: 'Honda City adalah sedan Jepun popular di Malaysia dengan ruang dalaman luas dan prestasi enjin yang baik. Nilai tukar gantinya secara amnya stabil berbanding sedan sekelas.',
     buyerTips: [
-      'City 2020 (generasi 7) sangat berbeza dari generasi sebelum — lebih besar, lebih selamat, Honda Sensing standard',
+      'City 2020 (generasi ke-5 mengikut Honda Malaysia) sangat berbeza dari generasi sebelum — lebih besar dan lebih selamat. Honda SENSING TIDAK standard: ia mula ditawarkan pada varian RS e:HEV sahaja',
       'Semak rekod servis di Honda Service Centre — penyelenggaraan teratur penting untuk enjin VTEC',
-      'Airbag curtain dan Honda Sensing hanya pada City 2020 ke atas — periksa varian sebelum beli',
+      'Honda SENSING bergantung varian: RS e:HEV dahulu, kemudian V-SENSING mulai November 2021. Curtain airbag pula sudah ada pada varian V generasi sebelumnya — jangan andaikan ikut tahun, sahkan ikut varian',
       'Bunyi ketukan dari enjin pada idle boleh menandakan isu VTC actuator — biasa pada City 2009-2013',
     ],
     faqs: [
-      { q: 'Berapa harga Honda City terpakai 2020?', a: 'Harga bergantung kepada varian dan jarak tempuh. City generasi 7 paling berbaloi kerana ada Honda Sensing. Rujuk jadual harga pasaran di atas untuk julat berdasarkan iklan semasa.' },
-      { q: 'City generasi berapa yang paling berbaloi dibeli terpakai?', a: 'Generasi 7 (2020-2023) paling berbaloi — ada Honda Sensing, lebih selamat, dan enjin lebih efisien. Tapi harga lebih tinggi. Generasi 6 (2014-2019) lebih murah tapi kurang ciri keselamatan.' },
+      { q: 'Berapa harga Honda City terpakai 2020?', a: 'Harga bergantung kepada varian dan jarak tempuh — dan varian penting di sini, kerana Honda SENSING hanya pada sesetengah varian, bukan semua City 2020. Rujuk jadual harga pasaran di atas untuk julat berdasarkan iklan semasa.' },
+      { q: 'City generasi berapa yang paling berbaloi dibeli terpakai?', a: 'Model 2020 ke atas (generasi ke-5 mengikut Honda Malaysia) lebih selamat dan enjinnya lebih efisien, tapi harganya lebih tinggi — dan Honda SENSING bergantung varian, bukan tahun. Model 2014-2019 lebih murah; sahkan ciri keselamatan ikut varian, bukan ikut tahun.' },
       { q: 'Honda City ada isu biasa apa?', a: 'City 2009-2013 ada isu VTC actuator yang menyebabkan bunyi ketukan. City 2014-2019 umumnya lebih boleh dipercayai. City 2020 ke atas adalah yang paling moden dan selamat.' },
     ],
   },

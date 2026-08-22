@@ -155,7 +155,7 @@ const MODEL_MAP: Record<string, ModelInfo> = {
     hubSlug: 'honda-city',
     description: 'Honda City ialah sedan Jepun yang popular di Malaysia. Kos servis berpatutan, kereta tahan lama, dan nilai jual semula yang baik.',
     tips: [
-      'City 2020 ke atas (generasi 7) lebih besar dan ada Honda Sensing — nilai lebih baik',
+      'City 2020 ke atas (generasi ke-5 mengikut Honda Malaysia) lebih besar dan lebih selamat — tapi Honda SENSING ikut varian, bukan ikut tahun',
       'Semak rekod servis di Honda Service Centre — City perlu servis setiap 5,000–10,000km',
       'Periksa CVT (Earth Dreams) — tahan lama tetapi perlu tukar minyak secara berkala',
       'Semak sama ada pernah digunakan untuk e-hailing — City popular untuk Grab',

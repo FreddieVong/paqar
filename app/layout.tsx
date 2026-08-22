@@ -66,7 +66,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <GoogleTagScript />
         <MetaPixelScript />
         <AdLandingTracker />
-        <AnalyticsProvider>{children}</AnalyticsProvider>
+        {/* SKIP LINK + MAIN LANDMARK.
+            There was no <main> anywhere, so a screen-reader user had no way to
+            jump past the header on any page, and a keyboard user had to tab
+            through the whole navigation on every navigation. Both are one
+            element each.
+
+            Visible only on focus: it must be reachable, not decorative. */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-3 focus:left-3 focus:bg-[#064E4A] focus:text-white focus:px-4 focus:py-2 focus:rounded-[10px] focus:font-heading focus:font-bold focus:text-[14px]"
+        >
+          Terus ke kandungan
+        </a>
+        <main id="main-content">
+          <AnalyticsProvider>{children}</AnalyticsProvider>
+        </main>
       </body>
     </html>
   )

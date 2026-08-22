@@ -530,11 +530,11 @@ export default async function HomePage() {
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/kira-ansuran-kereta" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Kira Ansuran</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/pemeriksaan-fizikal" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Pemeriksaan Fizikal</Link>
+          <Link href="/pemeriksaan-fizikal" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Pemeriksaan Fizikal</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/banding-insurans" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Banding Insurans</Link>
+          <Link href="/banding-insurans" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Banding Insurans</Link>
           <span className="text-[#E5E7EB]">·</span>
-          <Link href="/bandingkan" className="font-body text-[12px] text-[#9CA3AF] hover:text-[#064E4A] transition-colors">Bandingkan</Link>
+          <Link href="/bandingkan" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Bandingkan</Link>
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/panduan" className="font-body text-[12px] text-[#6B7280] hover:text-[#064E4A] transition-colors">Semua Panduan</Link>
         </div>
