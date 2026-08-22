@@ -1,3 +1,4 @@
+import { scrubUrl } from '@/lib/sensitive-routes'
 import 'server-only'
 import { createHash } from 'crypto'
 import { env } from '@/lib/env'
@@ -71,6 +72,31 @@ export interface SendMetaEventParams {
  * Fire-and-forget by design: a Meta outage must never fail a payment or a
  * page render. Failures are logged (redacted) and swallowed.
  */
+/**
+ * The page URL Meta is told the event came from — with any credential removed.
+ *
+ * ── WHY THIS IS NOT COVERED BY THE BROWSER FIX ─────────────────────────────
+ *
+ * The Meta PIXEL is suppressed on report routes, so nothing leaks from the
+ * browser. But /api/meta/event takes the current URL from the client and
+ * forwards it here as event_source_url, and on a paid report that URL is
+ * /laporan-pembeli/<id>?claim_token=<token>. The token reached Meta anyway,
+ * one hop later, through Paqar's own server.
+ *
+ * Found by driving a real browser against production and watching every
+ * outbound request, which is the only way it WOULD have been found: the
+ * pixel-side fix looks complete from the code, and the server hop is invisible
+ * in a config review.
+ *
+ * Scrubbed HERE rather than at the route, because three call sites build this
+ * payload and a fourth would not know to. This is the last point before the
+ * value leaves the building.
+ */
+function safeSourceUrl(raw: string | null | undefined): string {
+  const cleaned = scrubUrl(raw ?? undefined)
+  return typeof cleaned === 'string' && cleaned !== '' ? cleaned : 'https://paqar.my/'
+}
+
 export async function sendMetaEvent(params: SendMetaEventParams): Promise<boolean> {
   const pixelId = env.META_PIXEL_ID
   const token   = env.META_CAPI_TOKEN
@@ -111,7 +137,7 @@ export async function sendMetaEvent(params: SendMetaEventParams): Promise<boolea
             event_time:       Math.floor((params.eventTime ?? new Date()).getTime() / 1000),
             event_id:         params.eventId,
             action_source:    'website',
-            event_source_url: params.sourceUrl ?? 'https://paqar.my/',
+            event_source_url: safeSourceUrl(params.sourceUrl),
             user_data:        userData,
             custom_data:      customData,
           }],

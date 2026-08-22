@@ -154,6 +154,18 @@ describe('a credential never reaches a third party', () => {
     expect(src).toContain('$referrer')
   })
 
+  it('the server-side CAPI relay scrubs the URL before it leaves', () => {
+    // The pixel fix does not cover this. /api/meta/event takes the current URL
+    // from the client and forwards it to Meta as event_source_url, so on a
+    // report page the token reached Meta through Paqar's own server. Caught by
+    // driving a real browser against production, not by reading the config.
+    const src = readFileSync(join(ROOT, 'lib/meta-capi.ts'), 'utf8')
+    expect(src).toContain('safeSourceUrl')
+    expect(src).toContain('scrubUrl')
+    // The raw value must not be reachable by any caller.
+    expect(src).not.toMatch(/event_source_url:\s*params\.sourceUrl/)
+  })
+
   it('Google Ads does not send its own page view', () => {
     const src = readFileSync(join(ROOT, 'components/layout/GoogleTagScript.tsx'), 'utf8')
     expect(src).toMatch(/AW-\d+',\s*\{\s*send_page_view:\s*false/)
