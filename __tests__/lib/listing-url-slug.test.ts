@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseListingUrlSlug } from '@/lib/listing-extract'
+import { parseListingUrlSlug , isOpaqueListingSource } from '@/lib/listing-extract'
 
 /**
  * A Carlist buyer pasted a link and was handed four empty fields — while the
@@ -81,5 +81,45 @@ describe('hyphenated model names survive a URL slug', () => {
   it('prefers the longer name, so CX-30 never reads as CX-3', () => {
     expect(parseListingUrlSlug('https://www.carlist.my/used-cars/2022-mazda-cx-30-high/1').model)
       .toBe('CX-30')
+  })
+})
+
+/**
+ * Freddie: "facebook link input always not working."
+ *
+ * It was working — the intake was created, the URL stored, the fields offered.
+ * What failed was the framing. A Facebook Marketplace link is
+ * /marketplace/item/<id>/: an opaque number with no slug, so nothing can be
+ * read from it today and nothing will read tomorrow either. Showing the amber
+ * "Kami tak dapat baca link itu" over four empty dropdowns says something went
+ * wrong, and a buyer who reads that concludes Paqar does not work with
+ * Facebook.
+ */
+describe('sources that can never carry the car', () => {
+  it.each([
+    'https://www.facebook.com/marketplace/item/1807893153529117/?ref=browse_tab',
+    'https://m.facebook.com/marketplace/item/123/',
+    'https://web.facebook.com/marketplace/item/123/',
+    'https://www.instagram.com/p/abc123/',
+    'https://wa.me/60123456789',
+  ])('recognises %s', (url) => {
+    expect(isOpaqueListingSource(url)).toBe(true)
+  })
+
+  it.each([
+    'https://www.mudah.my/honda-city-1-5-115552872.htm',
+    'https://www.carlist.my/used-cars/2019-honda-city-1-5-v/12345678',
+  ])('does not claim %s is opaque — those carry the car', (url) => {
+    expect(isOpaqueListingSource(url)).toBe(false)
+  })
+
+  it('is null-safe', () => {
+    expect(isOpaqueListingSource(null)).toBe(false)
+    expect(isOpaqueListingSource('not a url')).toBe(false)
+  })
+
+  it('a Facebook URL genuinely yields nothing, which is why it needs its own answer', () => {
+    const got = parseListingUrlSlug('https://www.facebook.com/marketplace/item/1807893153529117/')
+    expect(got).toEqual({ brand: null, model: null, year: null })
   })
 })

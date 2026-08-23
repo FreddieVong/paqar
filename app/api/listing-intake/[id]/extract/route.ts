@@ -9,6 +9,7 @@ import { isExtractable } from '@/lib/listing-fetch'
 import { extractListingViaScraper } from '@/lib/listing-scraper'
 import { parseListingUrlSlug } from '@/lib/listing-extract'
 import { isSearchPage } from '@/lib/listing-page-kind'
+import { isOpaqueListingSource } from '@/lib/listing-extract'
 import { mergeListing, readyForCoverage } from '@/lib/listing-merge'
 
 /**
@@ -162,5 +163,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // right input, never as an error — they did nothing wrong, they pasted
     // the page they were looking at.
     searchPage,
+    // Facebook, Instagram and the like carry no car in the URL by
+    // construction. Told apart from a READ FAILURE so the buyer is not shown
+    // an amber warning for something that is simply how those links are.
+    opaqueSource: intake.listing_url ? isOpaqueListingSource(intake.listing_url) : false,
   })
 }

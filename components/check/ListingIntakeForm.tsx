@@ -95,6 +95,8 @@ export function ListingIntakeForm({
   // The link was a results page, not one advert. Not an error state — the
   // buyer pasted the page they were looking at.
   const [searchPage, setSearchPage] = useState(false)
+  /** Facebook and the like: the URL carries no car, and never will. */
+  const [opaqueSource, setOpaqueSource] = useState(false)
   const [notifyEmail, setNotifyEmail] = useState('')
   const [notifySent,  setNotifySent]  = useState(false)
   // Screenshots are the secondary path — revealed on request, so a first-time
@@ -155,8 +157,10 @@ export function ListingIntakeForm({
       const j = await res.json() as {
         summary: MergedListing; ready: boolean; needScreenshots: boolean
         ocrUnavailable: boolean; ocrOurFault?: boolean; searchPage?: boolean
+        opaqueSource?: boolean
       }
       setSearchPage(j.searchPage === true)
+      setOpaqueSource(j.opaqueSource === true)
       setSummary(j.summary)
       setNeedShots(j.needScreenshots || j.ocrUnavailable)
       setOurFault(j.ocrOurFault === true)
@@ -682,8 +686,14 @@ export function ListingIntakeForm({
           </div>
         )}
 
-        {/* ONE SUMMARY. Everything found, editable, no confirmation step. */}
-        {phase === 'summary' && summary && !editing && (
+        {/* ONE SUMMARY. Everything found, editable, no confirmation step.
+            Rendered only when something WAS found: with a Facebook link
+            nothing is, and the panel became a green "Paqar akan semak / Isi
+            butiran kereta di bawah" confirming nothing, over a "Maklumat
+            salah? Ubah" link offering to correct a car that was never read.
+            The fields below already say what to do. */}
+        {phase === 'summary' && summary && !editing
+          && (summary.brand.value || summary.model.value || summary.year.value) && (
           <div ref={summaryRef} className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[12px] p-4">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#15803D] mb-1.5">
               Paqar akan semak
@@ -716,7 +726,44 @@ export function ListingIntakeForm({
           </div>
         )}
 
-        {needShots && phase === 'summary' && (
+        {/* ── A KNOWN PLATFORM IS NOT A FAILURE ──────────────────────────
+            A Facebook Marketplace link is /marketplace/item/<id>/ — an opaque
+            number and nothing else. There is no slug and there never will be,
+            so this link cannot be read today and will not read tomorrow
+            either. Showing the amber "Kami tak dapat baca link itu" for it
+            says something went wrong, and a buyer who reads that concludes
+            Paqar does not work with Facebook — which is exactly what happened.
+
+            Naming the platform is truer and calmer, and the screenshot path is
+            offered rather than four empty dropdowns: measured on real intakes,
+            screenshots reach a usable summary 86% of the time against 19% for
+            links, and here there is no link to read at all. */}
+        {opaqueSource && phase === 'summary' && (
+          <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-[12px] p-4">
+            <p className="font-heading font-bold text-[14px] text-[#3D472F] mb-1">
+              Link Facebook tak ada butiran kereta di dalamnya
+            </p>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+              Itu biasa &mdash; Facebook simpan nombor sahaja dalam link. Link anda
+              tetap disimpan dan orang kami akan buka sendiri semasa menyemak.
+            </p>
+            <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
+              Cara paling cepat: hantar screenshot iklan itu. Atau isi empat
+              butiran di bawah.
+            </p>
+            {!showUpload && (
+              <button
+                type="button"
+                onClick={() => setShowUpload(true)}
+                className="w-full min-h-[44px] mt-3 bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-bold text-[14px] rounded-[10px] transition-colors"
+              >
+                Muat naik screenshot iklan
+              </button>
+            )}
+          </div>
+        )}
+
+        {needShots && !opaqueSource && phase === 'summary' && (
           <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[12px] p-4">
             {/* NAME WHAT ACTUALLY FAILED. This said "screenshot" whatever the
                 buyer had given us, so someone who pasted a link was told their

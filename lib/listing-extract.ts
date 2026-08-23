@@ -208,6 +208,39 @@ const field = <T>(value: T | null, status: FieldStatus, evidence?: string | null
  * unregistered import — and null lets that evidence speak instead of being
  * overridden by a guess made here.
  */
+/**
+ * Hosts whose URLs cannot carry the car, by construction.
+ *
+ * A Facebook Marketplace link is /marketplace/item/1807893153529117/ — an
+ * opaque numeric id and nothing else. There is no slug, no title, no year, and
+ * there never will be, because Facebook does not put them in the path. The
+ * same is true of an Instagram post or a wa.me share.
+ *
+ * ── WHY THIS DESERVES ITS OWN ANSWER ───────────────────────────────────────
+ *
+ * The intake already handled these correctly — it stores the link, tells the
+ * buyer a human will open it, and asks for the four details. What it got wrong
+ * was the FRAMING: "Kami tak dapat baca link itu" over an amber warning reads
+ * as a fault, something that went wrong and might work next time. For these
+ * hosts nothing went wrong and nothing will ever be different, and a buyer who
+ * reads it as breakage concludes the product does not work with Facebook —
+ * which is what Freddie concluded.
+ *
+ * Naming the host instead is both truer and calmer: Paqar knows what Facebook
+ * links look like, this is expected, here is the fast way through.
+ */
+const OPAQUE_HOSTS = [
+  'facebook.com', 'fb.com', 'fb.watch', 'messenger.com', 'instagram.com', 'wa.me',
+]
+
+export function isOpaqueListingSource(rawUrl: string | null | undefined): boolean {
+  if (!rawUrl) return false
+  let host: string
+  try { host = new URL(rawUrl).hostname.toLowerCase() } catch { return false }
+  host = host.replace(/^(www|m|mobile|web)\./, '')
+  return OPAQUE_HOSTS.some(h => host === h || host.endsWith(`.${h}`))
+}
+
 export function detectListingMarket(rawUrl: string | null | undefined): ListingMarket | null {
   if (!rawUrl) return null
   let path: string

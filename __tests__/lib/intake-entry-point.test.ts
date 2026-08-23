@@ -56,8 +56,11 @@ describe('pasting a link starts something the buyer can see', () => {
   it('names the input that actually failed', () => {
     // The failure notice said "screenshot" whatever the buyer had given us, so
     // someone who pasted a link was told their screenshot could not be read.
-    const notice = FORM.slice(FORM.indexOf('Kami tak dapat baca'))
-      .slice(0, 900)
+    // Comments stripped: the note explaining why Facebook gets its OWN,
+    // non-error message necessarily quotes the amber wording it replaced, and
+    // an un-stripped slice lands in that comment instead of the notice.
+    const visible = FORM.replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
+    const notice = visible.slice(visible.indexOf('Kami tak dapat baca')).slice(0, 900)
     expect(notice).toContain('Kami tak dapat baca link itu')
     expect(notice).toContain('Kami tak dapat baca screenshot itu')
     expect(notice).toContain('shotCount')
