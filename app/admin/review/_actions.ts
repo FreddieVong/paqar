@@ -132,14 +132,26 @@ export async function releaseReportAction(formData: FormData): Promise<void> {
   })
 
   if (blocks.length > 0) {
-    // Nothing is released. The reviewer sees the queue again with the report
-    // still pending, which is the correct outcome — the alternative is a buyer
-    // receiving it.
+    // Nothing is released. That is the correct outcome — the alternative is a
+    // buyer receiving it — but it used to be SILENT.
+    //
+    // The reasons went to console.error, a server log no reviewer reads. From
+    // the queue it looked like the button did nothing: press "Lepaskan laporan
+    // & hantar", watch the page refresh, find the report still sitting there.
+    // The validation exists precisely to catch the contradictions a human
+    // would otherwise release — a price changed with no reason given, a
+    // tampering warning with no dated record behind it — and it was reporting
+    // them to nobody.
+    //
+    // Carried in the URL because this is a plain server action: no
+    // useActionState, no client component, no state to keep in sync.
     console.error('[admin/review] release blocked', {
       reportId, codes: blocks.map(b => b.code),
     })
     revalidatePath(PATH)
-    return
+    redirect(`${PATH}?blocked=${encodeURIComponent(reportId)}&codes=${
+      encodeURIComponent(blocks.map(b => b.code).join(','))
+    }`)
   }
 
   // The guarded UPDATE decides the race, not this process. `won` is false when

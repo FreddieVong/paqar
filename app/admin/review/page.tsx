@@ -1,3 +1,4 @@
+import { RELEASE_BLOCK_HELP, type ReleaseBlockCode } from '@/lib/release-validation'
 import { JomCheckSection } from '@/components/report/JomCheckSection'
 import type { JomCheckResult } from '@/lib/jomcheck/core'
 import { notFound } from 'next/navigation'
@@ -176,7 +177,10 @@ function VariantOverride(
   )
 }
 
-async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; historyReview?: boolean }) {
+async function QueueCard(
+  { row, historyReview = false, blockedCodes = [] }:
+  { row: ReviewQueueRow; historyReview?: boolean; blockedCodes?: ReleaseBlockCode[] },
+) {
   const { report, check } = row
   // Cache-only, and the same cohort the buyer's report reads. Without it a
   // reviewer had to open the draft in a second tab to learn whether the asking
@@ -377,6 +381,30 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
 
       {!historyReview && inReview && (
         <div className="border-t border-[#F3F4F6] pt-4 space-y-4">
+          {/* WHY THE BUTTON DID NOTHING.
+              Release validation exists to catch the contradictions a human
+              would otherwise ship — a price changed with no reason given, a
+              tampering warning with no dated record behind it — and it
+              reported them to console.error, which no reviewer reads. From
+              here it looked like the button was broken: press it, watch the
+              page refresh, find the report still sitting there.
+
+              Each line says what to DO. "Release blocked" with no next step is
+              the same silence in a louder font. */}
+          {blockedCodes.length > 0 && (
+            <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-[10px] p-3.5">
+              <p className="font-heading font-bold text-[13px] text-[#B91C1C] mb-1.5">
+                Tidak dilepaskan — {blockedCodes.length} perkara perlu dibetulkan
+              </p>
+              <ul className="space-y-1.5">
+                {blockedCodes.map(c => (
+                  <li key={c} className="font-body text-[12px] text-[#7F1D1D] leading-relaxed">
+                    • {RELEASE_BLOCK_HELP[c] ?? c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {/* Corrections rebuild the actual report. A note explaining a wrong
               report is not a fix — the reviewer changes the output itself. */}
           <form action={releaseReportAction} className="space-y-3">
@@ -523,7 +551,9 @@ async function QueueCard({ row, historyReview = false }: { row: ReviewQueueRow; 
   )
 }
 
-export default async function AdminReviewPage() {
+export default async function AdminReviewPage(
+  { searchParams }: { searchParams?: { blocked?: string; codes?: string } },
+) {
   if (!env.ADMIN_SECRET) notFound()
 
   if (!isAdminAuthenticated()) {
@@ -549,6 +579,12 @@ export default async function AdminReviewPage() {
       </div>
     )
   }
+
+  // A refused release comes back as codes in the URL — see releaseReportAction.
+  const blockedId    = searchParams?.blocked ?? null
+  const blockedCodes = (searchParams?.codes ?? '')
+    .split(',').filter(Boolean) as ReleaseBlockCode[]
+  const codesFor = (id: string) => (id === blockedId ? blockedCodes : [])
 
   const [pending, owedRefunds, released, historyPending] = await Promise.all([
     listReportsAwaitingReview(),
@@ -664,7 +700,9 @@ export default async function AdminReviewPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {realPending.map(row => <QueueCard key={row.report.id} row={row} />)}
+            {realPending.map(row => (
+              <QueueCard key={row.report.id} row={row} blockedCodes={codesFor(row.report.id)} />
+            ))}
           </div>
         )}
 
@@ -678,7 +716,9 @@ export default async function AdminReviewPage() {
                 Tidak dikira dalam SLA. Alamat e-mel dalam lib/team-emails.
               </p>
             </div>
-            {testPending.map(row => <QueueCard key={row.report.id} row={row} />)}
+            {testPending.map(row => (
+              <QueueCard key={row.report.id} row={row} blockedCodes={codesFor(row.report.id)} />
+            ))}
           </div>
         )}
 

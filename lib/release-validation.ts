@@ -199,3 +199,30 @@ export function mayRelease(c: ReleaseCandidate): boolean {
 export function mustRefund(c: ReleaseCandidate): boolean {
   return validateForRelease(c).some(b => b.fatal)
 }
+
+
+/**
+ * What a reviewer is told when a release is refused.
+ *
+ * The blocks above carry a `message` built from the report's own figures, but
+ * those objects live only inside the action that computed them. A refusal is
+ * carried back to the queue as CODES in the URL, so the codes need words —
+ * and the words need to say what to DO, because "release blocked" without a
+ * next step is the same silence in a louder font.
+ */
+export const RELEASE_BLOCK_HELP: Record<ReleaseBlockCode, string> = {
+  seller_price_changed:
+    'Anda ubah harga penjual. Tulis sebabnya dalam nota — pembeli mesti tahu kenapa nombor itu berubah.',
+  mileage_provenance:
+    'Mileage tidak sepadan dengan rekod claim, tetapi sumbernya hanya dakwaan penjual. Guna wording "sila sahkan", bukan tuduhan meter dipusing.',
+  unsupported_rollback:
+    'Amaran meter dipusing tidak boleh dikeluarkan tanpa bacaan rasmi bertarikh. Sekat amaran itu, atau refund.',
+  identity_conflict:
+    'Rekod pendaftaran dan iklan tidak sepadan tentang kereta mana ini. Betulkan butiran, atau refund.',
+  registration_claim_without_plate:
+    'Laporan mendakwa maklumat pendaftaran disemak, tetapi tiada nombor plat. Buang dakwaan itu, atau refund.',
+  empty_reviewer_note:
+    'Nota daripada manusia wajib — itu yang pembeli bayar RM29 untuk.',
+  unsupported_verdict:
+    'Tidak cukup iklan setanding untuk menyokong keputusan harga. Refund kalau tidak dapat disokong.',
+}

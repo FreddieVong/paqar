@@ -85,3 +85,40 @@ describe('what the buyer is told', () => {
     expect(upsell).toContain('REVIEW_SLA_HOURS')
   })
 })
+
+/**
+ * Release validation exists to catch the contradictions a human would
+ * otherwise ship — a price changed with no reason given, a tampering warning
+ * with no dated record behind it, a registration claim on a plateless check.
+ * It reported every one of them to console.error, which no reviewer reads.
+ *
+ * From the queue it looked like the button was broken: press "Lepaskan laporan
+ * & hantar", watch the page refresh, find the report still sitting there. The
+ * one safeguard between a reviewer and a false report was talking to a log
+ * file.
+ */
+describe('a refused release says why', () => {
+  it('carries the reasons back instead of swallowing them', () => {
+    const actions = read('app/admin/review/_actions.ts')
+    const fn = actions.slice(actions.indexOf('export async function releaseReportAction'))
+    expect(fn, 'the refusal is still silent').toMatch(/redirect\(`\$\{PATH\}\?blocked=/)
+  })
+
+  it('the queue renders them on the card that was refused', () => {
+    const page = read('app/admin/review/page.tsx')
+    expect(page).toContain('blockedCodes')
+    expect(page).toContain('RELEASE_BLOCK_HELP')
+    expect(page).toMatch(/Tidak dilepaskan/)
+  })
+
+  it('every block code has words a reviewer can act on', () => {
+    const src = read('lib/release-validation.ts')
+    const codes = (src.match(/^\s*\|\s*'([a-z_]+)'$/gm) ?? [])
+      .map(l => l.replace(/[^a-z_]/g, ''))
+    expect(codes.length).toBeGreaterThan(4)
+    const help = src.slice(src.indexOf('RELEASE_BLOCK_HELP'))
+    for (const c of codes) {
+      expect(help, `no guidance for ${c}`).toContain(`${c}:`)
+    }
+  })
+})
