@@ -231,3 +231,37 @@ describe('nothing renders dark on dark', () => {
     expect(form).toContain('penyedia data pihak ketiga')
   })
 })
+
+/**
+ * The last block before the pay button led with "Dalam tempoh 24 jam" in bold,
+ * and that ceiling was the only number on it. Presented alone it is the worst
+ * case — and it misrepresents the product pessimistically: the typical is
+ * thirty minutes and the one real review took two.
+ *
+ * expectedDeliveryCopy already computed the true expected time and was shown
+ * only on the waiting screen, AFTER payment, so the reassuring number arrived
+ * too late to inform the decision it should have informed.
+ */
+describe('the wait is quoted honestly in both directions', () => {
+  const form = read('components/report/PaymentForm.tsx')
+
+  it('leads with the real expected time, not the ceiling', () => {
+    expect(form).toContain('expectedDelivery')
+    expect(form, 'the 24-hour ceiling is still the first thing quoted')
+      .not.toMatch(/Dalam tempoh\{' '\}\s*<span[^>]*>\{REVIEW_SLA_HOURS\} jam<\/span>/)
+  })
+
+  it('still states the guarantee explicitly', () => {
+    // Removing it would be the betrayal this block exists to prevent: a buyer
+    // discovering a 24-hour ceiling only after paying.
+    expect(form).toContain('REVIEW_SLA_HOURS')
+    expect(form).toMatch(/Dijamin dalam \{REVIEW_SLA_HOURS\} jam/)
+  })
+
+  it('computes the time on the server, so it cannot mismatch on hydration', () => {
+    const page = read('app/laporan-pembeli/[checkId]/page.tsx')
+    expect(page).toContain('expectedDelivery={expectedDeliveryCopy()}')
+    expect(form, 'PaymentForm reads the clock itself')
+      .not.toContain('expectedDeliveryCopy(')
+  })
+})

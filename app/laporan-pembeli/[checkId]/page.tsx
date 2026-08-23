@@ -31,6 +31,7 @@ import { getCachedMarketPrices,
          fetchAndCacheMarketPrices }  from '@/lib/db/market-prices'
 import type { CachedMarketPrices }    from '@/lib/db/market-prices'
 import { resolveCarIdentity }        from '@/lib/report-identity'
+import { expectedDeliveryCopy }      from '@/lib/review-capacity'
 import { AnalyticsEvent }             from '@/components/layout/AnalyticsEvent'
 import { AskingPriceForm }            from '@/components/report/AskingPriceForm'
 import { MarketPricePoller }          from '@/components/report/MarketPricePoller'
@@ -406,6 +407,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   claimToken={claimToken}
                   // The SAME gate that decides what is billed and fulfilled.
                   historyAddOnAvailable={historyUpgradeAvailable()}
+                  // Computed here, not in the browser: a client clock would
+                  // disagree with the server's and mismatch on hydration.
+                  expectedDelivery={expectedDeliveryCopy()}
                   valuationPath="plate_report"
                   defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
                   defaultMileageKm={intakeMileageKm ?? undefined}
@@ -424,6 +428,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   claimToken={claimToken}
                   // The SAME gate that decides what is billed and fulfilled.
                   historyAddOnAvailable={historyUpgradeAvailable()}
+                  // Computed here, not in the browser: a client clock would
+                  // disagree with the server's and mismatch on hydration.
+                  expectedDelivery={expectedDeliveryCopy()}
                   valuationPath="plate_report"
                   defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
                   defaultMileageKm={intakeMileageKm ?? undefined}

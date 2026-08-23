@@ -34,6 +34,13 @@ interface Props {
    * the billing path will drop.
    */
   historyAddOnAvailable?: boolean
+  /**
+   * The real expected delivery time for this buyer, e.g. "Biasanya sebelum
+   * 7.15 malam." Computed on the SERVER from lib/review-capacity: computing it
+   * in the browser would render a different clock than the server did and
+   * mismatch on hydration.
+   */
+  expectedDelivery?:     string
   checkId:             string
   claimToken:          string
   defaultAskingPrice?: number
@@ -49,7 +56,7 @@ interface Props {
   valuationPath:       ValuationPathKey
 }
 
-export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMileageKm, valuationPath, historyAddOnAvailable = false }: Props) {
+export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMileageKm, valuationPath, historyAddOnAvailable = false, expectedDelivery = '' }: Props) {
   const [email,        setEmail]        = useState('')
   const [phone,        setPhone]        = useState('')
   const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
@@ -343,12 +350,31 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
           <p className="font-heading font-bold text-[13px] text-[#111827] mb-1">
             Bila anda dapat keputusan
           </p>
-          <p className="font-body text-[12px] text-[#6B7280] leading-relaxed">
-            Dalam tempoh{' '}
-            <span className="font-bold text-[#3D472F]">{REVIEW_SLA_HOURS} jam</span>,
-            melalui e-mel. Anda tak perlu tunggu di halaman ini &mdash; link
-            yang anda ada sekarang akan bertukar kepada laporan penuh dengan
-            sendirinya.
+          {/* THE TYPICAL FIRST, THE GUARANTEE UNDER IT.
+              This led with "Dalam tempoh 24 jam" in bold, and 24 jam was the
+              only number on the last block before the pay button. That is the
+              WORST case presented alone — and it misrepresents the product in
+              the pessimistic direction: the typical is thirty minutes and the
+              one real review took two.
+
+              expectedDeliveryCopy already computes the true expected time for
+              this buyer at this moment, and correctly rolls an after-hours
+              order to the morning instead of promising a sleeping reviewer. It
+              was being shown only AFTER payment, on the waiting screen, so the
+              reassuring number arrived too late to inform the decision it
+              should have informed.
+
+              The guarantee stays, and stays explicit. Discovering a 24-hour
+              ceiling after paying would be the betrayal this block exists to
+              prevent — it is the floor under the estimate, not a replacement
+              for it. */}
+          <p className="font-body text-[12px] text-[#374151] leading-relaxed">
+            <span className="font-bold text-[#3D472F]">{expectedDelivery}</span>{' '}
+            Dijamin dalam {REVIEW_SLA_HOURS} jam, melalui e-mel.
+          </p>
+          <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mt-1">
+            Anda tak perlu tunggu di halaman ini &mdash; link yang anda ada
+            sekarang akan bertukar kepada laporan penuh dengan sendirinya.
           </p>
         </div>
 
