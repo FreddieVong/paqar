@@ -491,3 +491,41 @@ describe('one screen when there is nothing to confirm', () => {
     expect(screen.queryByText(/Paqar boleh semak/i)).toBeNull()
   })
 })
+
+/**
+ * "Screenshot upload failed twice" — reported after the size fix, and the
+ * upload was returning 200 the whole time.
+ *
+ * needScreenshots is `!ready && !fromShots && !fromUrl`, so when OCR RAN and
+ * found nothing readable, fromShots was a non-null object of nulls and the
+ * notice stayed hidden. The buyer uploaded, the request succeeded, and the
+ * form showed four empty dropdowns with no acknowledgement and no explanation
+ * — while the "1 dimuat naik" counter vanished with the uploader as the phase
+ * changed. Indistinguishable from a failure, and fairly described as one.
+ */
+describe('a screenshot that reads as nothing still says it arrived', () => {
+  it('confirms receipt and explains, instead of showing bare fields', async () => {
+    routes['/extract'] = {
+      summary: {
+        brand:         { value: null, status: 'missing', provenance: null },
+        model:         { value: null, status: 'missing', provenance: null },
+        year:          { value: null, status: 'missing', provenance: null },
+        variant:       { value: null, status: 'missing', provenance: null },
+        askingPriceRm: { value: null, status: 'missing', provenance: null },
+        mileageKm:     { value: null, status: 'missing', provenance: null },
+        plate:         { value: null, status: 'missing', provenance: null },
+      },
+      // OCR ran and succeeded; it simply found no car. This is the shape that
+      // used to render in total silence.
+      ready: false, needScreenshots: false, ocrUnavailable: false,
+    }
+    render(<ListingIntakeForm />)
+    uploadScreenshot()
+
+    // Both the heading and the body confirm receipt — that repetition is the
+    // point, since the heading is what a scanning eye lands on.
+    await screen.findByText(/tak dapat baca butirannya/i, undefined, { timeout: 5000 })
+    expect(screen.getAllByText(/screenshot diterima/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/orang kami akan baca sendiri/i)).toBeTruthy()
+  })
+})

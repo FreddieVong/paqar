@@ -163,7 +163,21 @@ export function ListingIntakeForm({
       setSearchPage(j.searchPage === true)
       setOpaqueSource(j.opaqueSource === true)
       setSummary(j.summary)
-      setNeedShots(j.needScreenshots || j.ocrUnavailable)
+      // ── A SILENT SUCCESS IS INDISTINGUISHABLE FROM A FAILURE ─────────
+      // needScreenshots is `!ready && !fromShots && !fromUrl`, so when OCR RAN
+      // and simply found nothing readable, fromShots is a non-null object of
+      // nulls and this stayed false. The buyer uploaded a screenshot, the
+      // request returned 200, and the form showed them four empty dropdowns
+      // with no acknowledgement and no explanation — while the "1 dimuat naik"
+      // counter vanished with the uploader as the phase changed.
+      //
+      // Reviewed as "screenshot upload failed twice", which is what it looks
+      // like from the outside and is a fair description of the experience.
+      const gotNothing = !j.ready
+        && j.summary.brand.value == null
+        && j.summary.model.value == null
+        && j.summary.year.value == null
+      setNeedShots(j.needScreenshots || j.ocrUnavailable || gotNothing)
       setOurFault(j.ocrOurFault === true)
       // Prefill the fallback fields with whatever WAS found, so a buyer only
       // completes the gaps.
@@ -812,7 +826,9 @@ export function ListingIntakeForm({
             <p className="font-heading font-bold text-[14px] text-[#B45309] mb-1">
               {ourFault
                 ? 'Ada masalah teknikal di pihak kami'
-                : shotCount === 0
+                : shotCount > 0
+                  ? `${shotCount} screenshot diterima — tapi kami tak dapat baca butirannya`
+                  : shotCount === 0
                   ? 'Kami tak dapat baca link itu'
                   : listingUrl.trim() !== ''
                     ? 'Kami tak dapat baca iklan itu'
@@ -823,7 +839,7 @@ export function ListingIntakeForm({
                 ? 'Screenshot anda tak ada masalah — sistem bacaan kami yang gagal. Apa yang anda hantar tetap disimpan dan akan dibaca oleh manusia semasa menyemak.'
                 : shotCount === 0
                   ? 'Link anda tetap disimpan dan akan dibuka oleh manusia semasa menyemak.'
-                  : 'Apa yang anda hantar tetap disimpan dan akan dibaca oleh manusia semasa menyemak.'}
+                  : `${shotCount} screenshot diterima dan disimpan — orang kami akan baca sendiri semasa menyemak.`}
               {' '}Isi butiran kereta di bawah supaya kami boleh semak liputan dahulu.
             </p>
           </div>
