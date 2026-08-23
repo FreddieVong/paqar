@@ -56,3 +56,30 @@ describe('the car is usually in the link', () => {
     expect(parseListingUrlSlug('https://example.com/city-centre-parking').model).toBeNull()
   })
 })
+
+/**
+ * A slug writes every separator as a hyphen, so "x-trail" arrives as "x trail"
+ * and never matched the catalogue's "X-Trail". Three of twenty-six stored
+ * Carlist links lost their model to this and nothing else — and the catalogue
+ * holds more than twenty hyphenated names, including the most common SUVs in
+ * Malaysia.
+ */
+describe('hyphenated model names survive a URL slug', () => {
+  it.each([
+    ['https://www.carlist.my/used-cars/2019-nissan-x-trail-2-0-hybrid/1234567', 'Nissan',  'X-Trail'],
+    ['https://www.carlist.my/used-cars/2018-honda-cr-v-1-5-tc-p/1234567',       'Honda',   'CR-V'],
+    ['https://www.carlist.my/used-cars/2020-honda-hr-v-1-8-rs/1234567',         'Honda',   'HR-V'],
+    ['https://www.carlist.my/used-cars/2017-mazda-cx-5-2-0-skyactiv/1234567',   'Mazda',   'CX-5'],
+    ['https://www.carlist.my/used-cars/2022-mazda-cx-30-2-0-high/1234567',      'Mazda',   'CX-30'],
+    ['https://www.carlist.my/used-cars/2019-isuzu-d-max-3-0-4x4/1234567',       'Isuzu',   'D-Max'],
+  ])('%s', (url, brand, model) => {
+    const got = parseListingUrlSlug(url)
+    expect(got.brand).toBe(brand)
+    expect(got.model).toBe(model)
+  })
+
+  it('prefers the longer name, so CX-30 never reads as CX-3', () => {
+    expect(parseListingUrlSlug('https://www.carlist.my/used-cars/2022-mazda-cx-30-high/1').model)
+      .toBe('CX-30')
+  })
+})

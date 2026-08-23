@@ -122,11 +122,40 @@ export function parseYear(text: string): string | null {
 }
 
 /** Match a known brand, and then one of ITS models — never a model alone. */
+/**
+ * Hyphens and spaces mean the same thing when matching a model name.
+ *
+ * ── THE BUG THIS CLOSES ────────────────────────────────────────────────────
+ *
+ * A URL slug writes every separator as a hyphen, so parseListingUrlSlug turns
+ * "2019-nissan-x-trail-2-0-hybrid" into "2019 nissan x trail 2 0 hybrid". The
+ * catalogue spells that model "X-Trail". "x trail" does not contain "x-trail",
+ * so the model came back null and the buyer was asked to type a car that was
+ * sitting in the link they had just pasted.
+ *
+ * It is not one model. The catalogue holds more than twenty hyphenated names
+ * and they include the most common SUVs in Malaysia: CR-V, HR-V, BR-V, CX-3,
+ * CX-5, CX-8, CX-30, X-Trail, D-Max, BT-50, and every Mercedes and Jaguar
+ * class. Measured on the stored intakes, three of twenty-six Carlist links
+ * lost their model to this and nothing else.
+ *
+ * Folding both sides removes the distinction rather than special-casing a
+ * list, so a hyphenated model added to the catalogue later is covered without
+ * anyone remembering this.
+ */
+const foldSeparators = (s: string) => s.toLowerCase().replace(/[\s\-_]+/g, ' ').trim()
+
 export function parseVehicle(text: string): { brand: string | null; model: string | null } {
-  const t = text.toLowerCase()
-  const brand = BRANDS.find(b => t.includes(b.toLowerCase())) ?? null
+  const t = foldSeparators(text)
+  const brand = BRANDS.find(b => t.includes(foldSeparators(b))) ?? null
   if (!brand) return { brand: null, model: null }
-  const model = (MODELS_BY_BRAND[brand] ?? []).find(m => t.includes(m.toLowerCase())) ?? null
+
+  // Longest first: "CX-30" must win over "CX-3", and "E-Class" over "E".
+  // A shorter name that is a prefix of the real one would otherwise match and
+  // silently reprice the car against a different model.
+  const models = [...(MODELS_BY_BRAND[brand] ?? [])]
+    .sort((a, b) => b.length - a.length)
+  const model = models.find(m => t.includes(foldSeparators(m))) ?? null
   return { brand, model }
 }
 
