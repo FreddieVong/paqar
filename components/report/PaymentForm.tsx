@@ -35,6 +35,13 @@ interface Props {
    */
   historyAddOnAvailable?: boolean
   /**
+   * Whether this check carries a plate. The claim lookup is keyed on the
+   * registration number, so without one there is nothing to look up — and the
+   * webhook's fulfilment already fires only on `add_jomcheck && plate`.
+   * Offering the add-on without it sells a silence.
+   */
+  hasPlate?:             boolean
+  /**
    * The real expected delivery time for this buyer, e.g. "Biasanya sebelum
    * 7.15 malam." Computed on the SERVER from lib/review-capacity: computing it
    * in the browser would render a different clock than the server did and
@@ -56,7 +63,7 @@ interface Props {
   valuationPath:       ValuationPathKey
 }
 
-export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMileageKm, valuationPath, historyAddOnAvailable = false, expectedDelivery = '' }: Props) {
+export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMileageKm, valuationPath, historyAddOnAvailable = false, hasPlate = false, expectedDelivery = '' }: Props) {
   const [email,        setEmail]        = useState('')
   const [phone,        setPhone]        = useState('')
   const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
@@ -441,7 +448,24 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             Below the button it is still discoverable and still one tap, but it
             no longer interrupts the purchase the buyer came to make. */}
         {/* JomCheck add-on — only shown when feature flag is enabled */}
-        {historyAddOnAvailable && (
+        {/* NO PLATE, NO ADD-ON — and say why rather than hiding it.
+            The lookup is keyed on the registration number. A buyer without one
+            could previously tick +RM88 and be billed RM117 while the webhook's
+            fulfilment, which fires on `add_jomcheck && plate`, never ran: money
+            taken and then silence.
+            Named instead of silently absent, because a buyer who wants the
+            claim check should know it is one field away, not conclude Paqar
+            does not offer it. */}
+        {historyAddOnAvailable && !hasPlate && (
+          <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mt-4">
+            Nak tambah <span className="font-semibold text-[#374151]">Semakan Accident/Claim
+            Insurans</span>? Kami perlukan nombor plat kereta itu &mdash; rekod claim
+            disimpan mengikut nombor pendaftaran. Mula semula dan isi nombor plat
+            untuk tambah semakan ini.
+          </p>
+        )}
+
+        {historyAddOnAvailable && hasPlate && (
           <button
             type="button"
             onClick={() => setAddJomCheck(v => !v)}

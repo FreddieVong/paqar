@@ -217,3 +217,35 @@ describe('the history add-on cannot be sold while undeliverable', () => {
     expect(offenders, `ungated: ${offenders.join(' | ')}`).toEqual([])
   })
 })
+
+/**
+ * The claim lookup is keyed on the registration number, and the webhook has
+ * always known it — fulfilment fires on `add_jomcheck && plate`. Nothing
+ * enforced the other half. A buyer with no plate (the default journey since
+ * migration 032) could tick +RM88, be billed RM117, and have no fulfilment
+ * alert raised at all: money taken, then silence, because nobody was told to
+ * produce anything.
+ */
+describe('the add-on cannot be sold without a plate', () => {
+  it('the biller refuses to charge for it', () => {
+    const actions = readFileSync(join(ROOT, 'app/laporan-pembeli/[checkId]/_actions.ts'), 'utf8')
+    expect(actions).toMatch(/const hasPlate\s*=\s*!!row\.check\.plate_encrypted/)
+    expect(actions).toMatch(/effectiveAddJomCheck\s*=\s*jomcheckEnabled && hasPlate/)
+  })
+
+  it('and the checkout does not offer it', () => {
+    const form = readFileSync(join(ROOT, 'components/report/PaymentForm.tsx'), 'utf8')
+    expect(form).toMatch(/historyAddOnAvailable && hasPlate &&/)
+  })
+
+  it('but says why, so a buyer knows it is one field away', () => {
+    const form = code(readFileSync(join(ROOT, 'components/report/PaymentForm.tsx'), 'utf8'))
+    expect(form).toMatch(/historyAddOnAvailable && !hasPlate &&/)
+    expect(form).toMatch(/nombor plat/i)
+  })
+
+  it('the webhook still guards its own half', () => {
+    const hook = readFileSync(join(ROOT, 'app/api/webhooks/billplz/route.ts'), 'utf8')
+    expect(hook).toMatch(/add_jomcheck && plate/)
+  })
+})

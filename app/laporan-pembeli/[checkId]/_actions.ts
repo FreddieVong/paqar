@@ -298,8 +298,24 @@ async function initiateBuyerReportImpl(
 
   // Hoisted above the reuse check: which product the buyer is asking for
   // decides which bill may be handed back. Pure computation, no side effects.
+  //
+  // ── THE ADD-ON NEEDS A PLATE, AND THE BILLER IS WHERE THAT IS DECIDED ──
+  //
+  // The claim lookup is keyed on the registration number. There is nothing to
+  // look up without one, and the webhook already knows it: fulfilment fires on
+  // `add_jomcheck && plate`. Nothing enforced the other half. A buyer with no
+  // plate — the default journey since migration 032 — could tick +RM88, be
+  // billed RM117, and have no fulfilment alert raised at all. Money taken, and
+  // then silence, because nobody was ever told to produce anything.
+  //
+  // Checked HERE rather than only in the checkbox, for the same reason the
+  // availability gate moved server-side: a client cannot be the last word on
+  // what may be charged. Downgrading rather than refusing is deliberate — the
+  // buyer still wants the RM29 report they came for, and losing the sale to
+  // punish a missing optional field helps nobody.
   const jomcheckEnabled      = historyUpgradeAvailable()
-  const effectiveAddJomCheck = jomcheckEnabled && !!params.addJomCheck
+  const hasPlate             = !!row.check.plate_encrypted
+  const effectiveAddJomCheck = jomcheckEnabled && hasPlate && !!params.addJomCheck
   const amountCents          = effectiveAddJomCheck ? COMBINED_CENTS : BASE_REPORT_CENTS
 
   // ONE UNPAID INTENT, ONE PAYABLE BILL.

@@ -407,6 +407,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   claimToken={claimToken}
                   // The SAME gate that decides what is billed and fulfilled.
                   historyAddOnAvailable={historyUpgradeAvailable()}
+                  // The lookup is keyed on the registration number; the biller
+                  // enforces the same rule, this only stops it being offered.
+                  hasPlate={!!row.check.plate_encrypted}
                   // Computed here, not in the browser: a client clock would
                   // disagree with the server's and mismatch on hydration.
                   expectedDelivery={expectedDeliveryCopy()}
@@ -428,6 +431,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   claimToken={claimToken}
                   // The SAME gate that decides what is billed and fulfilled.
                   historyAddOnAvailable={historyUpgradeAvailable()}
+                  // The lookup is keyed on the registration number; the biller
+                  // enforces the same rule, this only stops it being offered.
+                  hasPlate={!!row.check.plate_encrypted}
                   // Computed here, not in the browser: a client clock would
                   // disagree with the server's and mismatch on hydration.
                   expectedDelivery={expectedDeliveryCopy()}
