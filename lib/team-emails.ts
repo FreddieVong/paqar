@@ -22,6 +22,11 @@ export const TEAM_EMAILS = new Set([
   'test@example.com',
   'lyethengchoo@gmail.com',
   'liyingaun@gmail.com',
+  // Added 2026-08-23. This address bought RM29 on the 22nd as a test and was
+  // counted as Paqar's fourth paying stranger for a day — the newest one, and
+  // the only purchase after that morning's fixes, so it was carrying more
+  // weight in the read of the funnel than any other single row.
+  'ask.xianyu@gmail.com',
   'freddie.vong@yahoo.com',
 ])
 
