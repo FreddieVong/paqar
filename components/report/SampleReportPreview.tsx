@@ -7,19 +7,28 @@ import { HistoryRiskBanner } from './HistoryRiskBanner'
 import type { JomCheckResult } from '@/lib/jomcheck/core'
 import { SampleVerdictCard } from './SampleVerdictCard'
 
-const MARKET_PRICES = ['RM37,500', 'RM38,000', 'RM39,800', 'RM41,500', 'RM42,000', 'RM43,000', 'RM44,500', 'RM45,000', 'RM46,200', 'RM47,000']
+// The real cohort, trimmed to ten for width. Production held 15 comparables
+// for Perodua Myvi 2019 spanning RM25,000-RM44,700; these are the ten inside
+// the typical band, which is what the report shows.
+const MARKET_PRICES = ['RM30,000', 'RM31,000', 'RM33,000', 'RM34,000', 'RM35,000', 'RM35,500', 'RM36,000', 'RM37,000', 'RM37,500', 'RM37,800']
 
-const SAMPLE_SCRIPT = `Salam, saya berminat dengan Perodua Myvi 2019 yang tuan/puan jual.
+const SAMPLE_SCRIPT = `Salam, saya berminat dengan Perodua Myvi 2019 (1.3 X) yang tuan/puan jual.
 
-Saya dah semak 10 iklan setanding — harga tengahnya RM42,750, dalam julat RM37,500–RM47,000.
+Saya dah semak 15 iklan setanding — harga tengahnya RM34,900, kebanyakannya dalam julat RM29,900–RM37,800.
 
-Harga RM55,000 agak tinggi berbanding iklan-iklan itu. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM38,000–RM43,000?`
+Harga RM39,800 sedikit di atas julat itu. Kalau condition cantik dan dokumen lengkap, boleh consider sekitar RM36,000?`
 
+/**
+ * Two of these are specific to the advert in this sample, and that is the
+ * point. The list was five generic questions any article about buying a used
+ * car would give you for free — which is exactly the comparison a buyer makes
+ * when deciding whether RM29 is worth it.
+ */
 const SELLER_QUESTIONS = [
-  'Ada accident besar sebelum ini?',
-  'Ada flood damage?',
+  'Iklan tulis 1.5 AV — boleh tunjuk geran untuk sahkan varian?',
+  'Meter 78,000 km — ada rekod servis untuk tunjuk?',
   'Kereta masih ada loan bank?',
-  'Geran atas nama siapa?',
+  'Geran atas nama penjual sendiri?',
   'Boleh buat inspection sebelum bayar deposit?',
 ]
 
@@ -153,6 +162,40 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
           </div>
         )}
 
+        {/* THE REVIEWER'S NOTE, WHICH IS THE PRODUCT.
+            The sample showed a decision and a price table and nothing that a
+            person had done, on a page whose whole claim is that a person did
+            it. "Disemak oleh manusia" was asserted everywhere and demonstrated
+            nowhere — so the sample read as an automated report with a human
+            badge, which is what the buyer is being asked to pay extra for.
+
+            Written the way a real note is: what was noticed in THIS advert,
+            what could not be verified, and the condition under which the
+            reviewer would proceed. Nothing here is generic enough to have been
+            written without seeing the listing. */}
+        <div className="px-5 py-4 border-b border-[#F3F4F6] bg-[#F4F6F0]">
+          <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#3D472F] mb-2">
+            Nota daripada penyemak
+          </p>
+          <p className="font-body text-[13px] text-[#111827] leading-relaxed mb-2">
+            Iklan tulis &ldquo;1.5 AV&rdquo; tapi gambar meter dan spec dalam iklan
+            padan dengan 1.3 X. Harga AV memang lebih tinggi &mdash; itu sebabnya
+            RM39,800 nampak munasabah kalau anda percaya iklan, dan tinggi kalau
+            tidak.
+          </p>
+          <p className="font-body text-[13px] text-[#111827] leading-relaxed mb-2">
+            Saya tak dapat sahkan mileage 78,000 km dari iklan sahaja &mdash;
+            minta rekod servis.
+          </p>
+          <p className="font-body text-[13px] font-semibold text-[#111827] leading-relaxed">
+            Saya akan teruskan tengok kereta ini hanya jika seller setuju buat
+            inspection dan turun bawah RM36,500.
+          </p>
+          <p className="font-body text-[11px] text-[#6B7280] leading-relaxed mt-2">
+            Ditulis oleh orang yang baca iklan anda &mdash; bukan dijana automatik.
+          </p>
+        </div>
+
         {/* 3. Perbandingan Harga */}
         <div className="px-5 py-4 border-b border-[#F3F4F6]">
           <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-3">
@@ -169,12 +212,12 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
           </div>
           <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
             <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
-            <p className="font-heading font-bold text-[13px] text-[#111827]">RM55,000</p>
+            <p className="font-heading font-bold text-[13px] text-[#111827]">RM39,800</p>
           </div>
           <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti daripada Iklan Setanding</p>
           <div className="flex items-center justify-between bg-[#F4F6F0] rounded-lg px-3 py-2 mb-2">
             <p className="font-body text-[12px] text-[#6B7280]">Harga tengah iklan setanding</p>
-            <p className="font-heading font-bold text-[13px] text-[#3D472F]">RM42,750</p>
+            <p className="font-heading font-bold text-[13px] text-[#3D472F]">RM34,900</p>
           </div>
           <div className="flex flex-wrap gap-1.5 mb-2">
             {MARKET_PRICES.map(price => (
@@ -184,7 +227,7 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
             ))}
           </div>
           <p className="font-body text-[11px] text-[#6B7280] mb-1">
-            Berdasarkan 10 iklan setanding yang kami jumpa
+            Berdasarkan 15 iklan setanding yang kami jumpa
           </p>
           {/* Same qualifier as the real report, in the same place — the sample
               must not promise a provenance the report then walks back. */}
@@ -202,7 +245,7 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
           </div>
           <div className="pt-3 border-t border-[#F3F4F6]">
             <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Anggaran trade-in</p>
-            <p className="font-heading font-bold text-[13px] text-[#111827]">RM34,000 – RM37,000</p>
+            <p className="font-heading font-bold text-[13px] text-[#111827]">RM28,000 – RM31,000</p>
             <p className="font-body text-[11px] text-[#6B7280] mt-0.5 leading-relaxed">
               Lebih kurang harga yang dealer akan bagi untuk kereta ni. Boleh guna ni bila nak tawar harga.
             </p>
@@ -212,7 +255,7 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
           </div>
           <div className="pt-3 mt-3 border-t border-[#F3F4F6]">
             <p className="font-body text-[12px] text-[#6B7280] mb-0.5">Harga ketika baru (anggaran)</p>
-            <p className="font-heading font-bold text-[13px] text-[#111827]">RM46,000</p>
+            <p className="font-heading font-bold text-[13px] text-[#111827]">RM46,590</p>
             <p className="font-body text-[11px] text-[#6B7280] mt-0.5 leading-relaxed">
               Model ni pegang nilai berbanding kereta lain seusia — biasanya senang jual balik nanti.
             </p>
@@ -353,7 +396,8 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
       </div>
 
       <p className="font-body text-[12px] text-[#6B7280] text-center mt-3 leading-relaxed">
-        Ini contoh sahaja. Laporan sebenar dijana berdasarkan nombor plat dan harga yang anda semak.
+        Ini contoh sahaja. Laporan sebenar dibuat daripada iklan yang anda hantar
+        &mdash; link atau screenshot &mdash; dan dibaca oleh manusia sebelum dihantar.
       </p>
     </div>
   )

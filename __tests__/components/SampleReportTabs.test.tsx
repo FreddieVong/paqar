@@ -70,3 +70,56 @@ describe('the sample shows only what Paqar actually sells', () => {
     expect(container.textContent!.length).toBeGreaterThan(500)
   })
 })
+
+/**
+ * The sample asked RM55,000 for a 2019 Myvi against a claimed median of
+ * RM42,750, while stating the car's new price as RM46,000 — a seller asking
+ * nine thousand ringgit MORE than the car cost new, six years later. Nobody
+ * has met that case. It made the report look staged, which is the opposite of
+ * what a sample is for.
+ *
+ * Every figure now comes from the production cache and the NVIC table.
+ */
+describe('the sample is a case a buyer could actually meet', () => {
+  it('asks less than the car cost new', () => {
+    const { container } = render(<SampleReportPreview />)
+    const text = container.textContent ?? ''
+    expect(text).toMatch(/RM39,800/)      // asking
+    expect(text).toMatch(/RM46,590/)      // NVIC new price
+    expect(text, 'the invented asking price is back').not.toMatch(/RM55,000/)
+  })
+
+  it('quotes the real cohort, not an invented one', () => {
+    const { container } = render(<SampleReportPreview />)
+    const text = container.textContent ?? ''
+    expect(text).toMatch(/RM34,900/)                 // real median
+    expect(text).toMatch(/15 iklan setanding/)       // real count
+    expect(text, 'the invented median is back').not.toMatch(/RM42,750/)
+  })
+
+  it('puts trade-in below retail, where it belongs', () => {
+    // It was RM34,000-37,000 against a retail median of RM34,900 — a dealer
+    // offering full retail, which is not a thing.
+    const { container } = render(<SampleReportPreview />)
+    expect(container.textContent).toMatch(/RM28,000\s*–\s*RM31,000/)
+  })
+
+  it('shows what a person did, not just what a table says', () => {
+    const { container } = render(<SampleReportPreview />)
+    const text = container.textContent ?? ''
+    expect(text).toMatch(/Nota daripada penyemak/)
+    // A condition to proceed on — the thing an automated report cannot write.
+    expect(text).toMatch(/hanya jika seller setuju buat inspection/)
+  })
+
+  it('asks questions that needed the advert to write', () => {
+    const { container } = render(<SampleReportPreview />)
+    expect(container.textContent, 'the questions are generic again')
+      .toMatch(/boleh tunjuk geran untuk sahkan varian/i)
+  })
+
+  it('describes the product that exists, not the plate-first one', () => {
+    const { container } = render(<SampleReportPreview />)
+    expect(container.textContent).not.toMatch(/dijana berdasarkan nombor plat/)
+  })
+})

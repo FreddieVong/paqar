@@ -21,15 +21,37 @@
  */
 
 /** The illustrative figures. Exported so tests can assert on them directly. */
+/**
+ * ── EVERY FIGURE HERE IS REAL ──────────────────────────────────────────────
+ *
+ * These were invented, and the invention showed. The sample asked RM55,000 for
+ * a 2019 Myvi against a claimed median of RM42,750 — while stating the car's
+ * new price as RM46,000. A seller asking nine thousand ringgit MORE than the
+ * car cost new, six years later, is not a case anyone has met. It made the
+ * whole report look staged, which is the opposite of what a sample is for.
+ *
+ * Rebuilt on the production cache and the NVIC table, both read on
+ * 2026-08-24:
+ *
+ *   cohort        Perodua Myvi 2019, 15 comparables
+ *   median        RM34,900
+ *   typical band  RM29,900 - RM37,800
+ *   new price     RM46,590   NVIC "PREMIUM X", which is the 1.3 X shown below
+ *
+ * The asking price is set at RM39,800: about RM4,900 over the median and just
+ * past the top of the band. That is the case a buyer actually meets — a seller
+ * who believes their car is the good one — and it is the case where a decision
+ * is worth RM29. An absurd overprice needs no report to spot.
+ */
 export const SAMPLE_VERDICT = {
   badge:       'MAHAL',
   action:      'Jangan bayar deposit dulu.',
-  askingPrice: 'RM55,000',
+  askingPrice: 'RM39,800',
   rangeLabel:  'Julat iklan setanding',
-  range:       'RM38,000 – RM46,000',
-  gapLabel:    'Anggaran lebih tinggi',
-  gap:         'RM9,000+',
-  suggestion:  'Target RM38,000–RM43,000. Kalau seller tak boleh turun, cari unit lain.',
+  range:       'RM29,900 – RM37,800',
+  gapLabel:    'Lebih tinggi dari harga tengah',
+  gap:         'RM4,900',
+  suggestion:  'Target RM34,000–RM36,500. Kalau seller tak boleh turun bawah RM36,500, cari unit lain.',
 } as const
 
 /**
