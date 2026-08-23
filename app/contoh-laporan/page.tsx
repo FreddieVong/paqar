@@ -2,6 +2,7 @@ import Link                   from 'next/link'
 import { Nav }                 from '@/components/layout/Nav'
 import { Shell }               from '@/components/layout/Shell'
 import { SampleReportPreview } from '@/components/report/SampleReportPreview'
+import { historyUpgradeAvailable } from '@/lib/pricing'
 
 export const metadata = {
   title: 'Contoh Laporan Pembeli Kereta Terpakai — Paqar',
@@ -49,7 +50,7 @@ export default function ContohLaporanPage() {
           <p className="font-body text-[13px] text-[#6B7280] mb-5">
             Satu laporan, RM29. Ini contoh penuh &mdash; setiap bahagian yang anda dapat.
           </p>
-          <SampleReportPreview />
+          <SampleReportPreview showHistoryAddOn={historyUpgradeAvailable()} />
           <div className="mt-5">
             <Link
               href="/#semak"

@@ -275,3 +275,28 @@ describe('the payment screen claims only what Paqar has', () => {
     expect(src).toContain('REVIEW_SLA_HOURS')
   })
 })
+
+/**
+ * The paid report cannot accuse a seller of winding back a meter unless the
+ * current reading is an official dated record: odometerEvidence returns null
+ * otherwise, and release-validation carries a FATAL block for it.
+ *
+ * The SAMPLE renders no release validation. Its fixture was built to trigger
+ * that finding — "78_000 // below the 95,000 km claim → rollback flag fires" —
+ * so restoring the add-on section put "Meter kereta ini mungkin dipusing
+ * balik" on a public marketing page: the one finding the product is forbidden
+ * to make, in the one place nobody reviews.
+ */
+describe('the sample obeys the rules the report obeys', () => {
+  const sample = readFileSync(join(ROOT, 'components/report/SampleReportPreview.tsx'), 'utf8')
+
+  it('runs its odometer through the same provenance filter as the report', () => {
+    expect(sample).toContain('odometerEvidence')
+    expect(visibleCopy(sample), 'the fixture hardcodes an official reading again')
+      .not.toMatch(/SAMPLE_CURRENT_ODOMETER\s*=\s*\d/)
+  })
+
+  it('treats the advertised mileage as what it is — a seller’s claim', () => {
+    expect(sample).toMatch(/source:\s*'listing_claimed'/)
+  })
+})

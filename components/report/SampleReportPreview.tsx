@@ -1,5 +1,7 @@
 'use client'
 
+import { odometerEvidence } from '@/lib/mileage-provenance'
+import { JOMCHECK_UPGRADE_CENTS, ringgit } from '@/lib/pricing'
 import { useRef } from 'react'
 import { CopyButton } from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
@@ -69,24 +71,69 @@ type Tier = 'asas' | 'premium'
 // is crawlable, so leaving the tab here advertised an unavailable product to
 // buyers, to Google and to every AI that reads the page.
 
-const SAMPLE_CURRENT_ODOMETER = 78_000  // below the 95,000 km claim → rollback flag fires
+/**
+ * The odometer the sample shows, run through the SAME provenance filter the
+ * paid report uses.
+ *
+ * ── WHY THIS IS NOT JUST 78_000 ────────────────────────────────────────────
+ *
+ * It used to be, with a comment saying "below the 95,000 km claim → rollback
+ * flag fires" — the fixture was built to TRIGGER an accusation. With the
+ * add-on section restored, the public sample page began headlining "Meter
+ * kereta ini mungkin dipusing balik".
+ *
+ * The paid report cannot say that. odometerEvidence returns null unless the
+ * reading is an official dated record, and release-validation carries a FATAL
+ * block, unsupported_rollback, for exactly this case. The sample renders no
+ * release validation, so it was publishing the one finding the product is
+ * forbidden to make — on marketing, where nobody reviews it.
+ *
+ * 78,000 km here is what the ADVERT claims, which is a seller's assertion. So
+ * it goes through odometerEvidence like any other, comes back null, and the
+ * banner falls to the wording the product is actually allowed to use: the two
+ * numbers do not match, go and verify. The claim records still show in full —
+ * only the accusation is gone.
+ */
+const SAMPLE_LISTING_ODOMETER = 78_000
+const SAMPLE_CURRENT_ODOMETER = odometerEvidence({
+  km: SAMPLE_LISTING_ODOMETER,
+  source: 'listing_claimed',
+})
 
 /**
  * @param showVerdictCard - false on the homepage, where the proof beat already
  *   renders the card above the expander. Without this the card appears twice
  *   the moment the buyer expands the full sample.
  */
-export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCard?: boolean } = {}) {
+export function SampleReportPreview(
+  { showVerdictCard = true, showHistoryAddOn = false }:
+  { showVerdictCard?: boolean; showHistoryAddOn?: boolean } = {},
+) {
   // One tier while the second is not sold. A constant rather than state, so
   // nothing can select a tier that cannot be bought.
   //
+  // ── THE ADD-ON SECTION IS BACK ──────────────────────────────────────
+  // It was hidden when HISTORY_UPGRADE_OPERATIONAL was false, because the
+  // sample must not advertise something nobody can buy. The add-on is now
+  // sold, and nothing restored this — the sample showed a report missing the
+  // section the buyer is being charged +RM88 for, on the page whose job is
+  // showing what the money buys. Freddie noticed it was still hidden.
+  //
+  // Inline and badged rather than behind a tab: that is how the PAID report
+  // renders it, so the sample cannot promise a layout the report does not
+  // have — and a tablist asked the reader to choose before they had a reason
+  // to.
+  //
+  // Availability is passed in, never decided here. A client component cannot
+  // read JOMCHECK_ENABLED, and the sample deciding for itself is exactly how
+  // the checkout and the biller came to disagree.
+  const tab: Tier = showHistoryAddOn ? 'premium' : 'asas'
   // Widened to Tier rather than narrowed to 'asas': the premium branches below
   // are the second tier's sample content, kept intact and simply unreachable,
   // ready to render again when HISTORY_UPGRADE_OPERATIONAL flips. Narrowing
   // would force deleting content that will be needed, and the guard against it
   // leaking is the rendered-output assertion in
   // __tests__/components/SampleReportTabs, not the type.
-  const tab = 'asas' as Tier
   const topRef = useRef<HTMLDivElement>(null)
 
   // The tab machinery — useId-scoped ids, roving tabIndex, Left/Right/Home/End
@@ -155,8 +202,16 @@ export function SampleReportPreview({ showVerdictCard = true }: { showVerdictCar
             JomCheckSection so the preview is always identical to a paid report. */}
         {tab === 'premium' && (
           <div className="px-5 py-4 border-b border-[#F3F4F6]">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#3D472F]">
+                Tambahan: Semakan Accident/Claim
+              </p>
+              <span className="font-heading font-bold text-[11px] text-[#3D472F] flex-shrink-0">
+                +RM{ringgit(JOMCHECK_UPGRADE_CENTS)}
+              </span>
+            </div>
             <p className="font-body text-[12px] text-[#6B7280] mb-2 italic">
-              Data contoh — bukan kereta sebenar. Laporan anda gunakan rekod plat yang anda semak.
+              Data contoh — bukan kereta sebenar. Perlu nombor plat untuk semakan ini.
             </p>
             <JomCheckSection data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
           </div>

@@ -12,9 +12,16 @@ import { SampleReportPreview } from './SampleReportPreview'
  */
 export function CollapsibleSampleReport({
   showVerdictCard = true,
+  showHistoryAddOn = false,
   source = 'paywall',
 }: {
   showVerdictCard?: boolean
+  /**
+   * Whether the accident/claim add-on may be shown. Decided by the SERVER with
+   * historyUpgradeAvailable() and passed down; defaults to false so a client
+   * caller can never advertise something the server has switched off.
+   */
+  showHistoryAddOn?: boolean
   source?: 'paywall' | 'homepage_proof'
 } = {}) {
   const [open, setOpen] = useState(false)
@@ -47,7 +54,7 @@ export function CollapsibleSampleReport({
           alignment must not depend on where the expander happens to sit. */}
       {open && (
         <div id={panelId} className="mt-2 text-left">
-          <SampleReportPreview showVerdictCard={showVerdictCard} />
+          <SampleReportPreview showVerdictCard={showVerdictCard} showHistoryAddOn={showHistoryAddOn} />
         </div>
       )}
     </div>

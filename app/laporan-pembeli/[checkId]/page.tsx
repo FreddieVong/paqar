@@ -414,7 +414,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                   defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
                   defaultMileageKm={intakeMileageKm ?? undefined}
                 />
-                <CollapsibleSampleReport />
+                <CollapsibleSampleReport showHistoryAddOn={historyUpgradeAvailable()} />
               </>
             ) : (
               <>

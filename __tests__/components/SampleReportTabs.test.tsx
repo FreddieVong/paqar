@@ -123,3 +123,38 @@ describe('the sample is a case a buyer could actually meet', () => {
     expect(container.textContent).not.toMatch(/dijana berdasarkan nombor plat/)
   })
 })
+
+/**
+ * The add-on section was hidden while HISTORY_UPGRADE_OPERATIONAL was false —
+ * correctly, since the sample must not advertise something nobody can buy. The
+ * add-on then went live and nothing restored it, so the proof page showed a
+ * report missing the section a buyer is charged +RM88 for. Freddie spotted it.
+ */
+describe('the add-on section follows what is actually sold', () => {
+  it('renders when the server says the add-on is available', () => {
+    const { container } = render(<SampleReportPreview showHistoryAddOn />)
+    const text = container.textContent ?? ''
+    expect(text).toMatch(/Tambahan: Semakan Accident\/Claim/)
+    expect(text).toMatch(/\+RM88/)
+    // The real section, not a description of it.
+    expect(text).toMatch(/Own Damage|Banjir|Total Loss/)
+  })
+
+  it('stays hidden when it is not', () => {
+    const { container } = render(<SampleReportPreview showHistoryAddOn={false} />)
+    expect(container.textContent).not.toMatch(/Tambahan: Semakan Accident\/Claim/)
+  })
+
+  it('never decides availability for itself', () => {
+    // A client component cannot read JOMCHECK_ENABLED, and a surface deciding
+    // for itself is how the checkout and the biller came to disagree.
+    const src = readFileSync(join(__dirname, '..', '..', 'components/report/SampleReportPreview.tsx'), 'utf8')
+    expect(src).not.toMatch(/process\.env\.[A-Z_]*JOMCHECK/)
+    expect(src).toContain('showHistoryAddOn')
+  })
+
+  it('says a plate is needed, because the lookup cannot run without one', () => {
+    const { container } = render(<SampleReportPreview showHistoryAddOn />)
+    expect(container.textContent).toMatch(/nombor plat/i)
+  })
+})
