@@ -194,3 +194,40 @@ describe('the page has a landmark to skip to', () => {
     expect(layout).toMatch(/focus:not-sr-only/)
   })
 })
+
+/**
+ * The intake card's ground changes with the phase: dark while it IS the call
+ * to action, light once it holds content the buyer must read and correct.
+ *
+ * It was dark for every phase and only the first was restyled, so labels,
+ * helper text and buttons rendered near-black on near-black — invisible.
+ * Freddie found it on his phone, which is the only place it was visible as a
+ * problem, because in source every one of those elements is unremarkable.
+ */
+describe('nothing renders dark on dark', () => {
+  const form = read('components/check/ListingIntakeForm.tsx')
+
+  it('the card only goes dark while it is the call to action', () => {
+    expect(form).toContain("const onDark = phase === 'start' || phase === 'working'")
+    expect(form, 'the dark ground is applied unconditionally again')
+      .not.toMatch(/<div className="bg-\[#3D472F\] rounded-\[18px\]/)
+  })
+
+  it('the later phases keep the shared dark-text label class', () => {
+    // LABEL_CLS is near-black. It is correct ONLY on a light ground, so its
+    // presence is what makes the conditional above load-bearing.
+    expect(form).toContain("text-[#111827] mb-1.5")
+  })
+
+  it('sets no prose in the lightest grey on white', () => {
+    // #9CA3AF is ~2.5:1 on white. Fine for a placeholder, not for words.
+    const prose = form.split('\n').filter(l =>
+      l.includes('text-[#9CA3AF]') && !l.includes('placeholder:'))
+    expect(prose, `low-contrast text: ${prose.join(' | ')}`).toEqual([])
+  })
+
+  it('never calls provider data an official record', () => {
+    expect(form).not.toMatch(/rekod rasmi/)
+    expect(form).toContain('penyedia data pihak ketiga')
+  })
+})

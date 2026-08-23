@@ -98,6 +98,9 @@ export function ListingIntakeForm({
   // Screenshots are the secondary path — revealed on request, so a first-time
   // reader sees one action rather than a choice between two.
   const [showUpload,  setShowUpload]  = useState(false)
+  // Dark only while the card IS the call to action; light once it holds
+  // content the buyer has to read and correct.
+  const onDark = phase === 'start' || phase === 'working'
   const urlRef    = useRef<HTMLInputElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
   const [busy,       setBusy]       = useState(false)
@@ -433,7 +436,23 @@ export function ListingIntakeForm({
     // is too much text to read. The three roles are now told apart by colour
     // rather than by reading — dark ground is the frame, white is where you
     // put something, yellow is what you press.
-    <div className="bg-[#3D472F] rounded-[18px] p-5 shadow-[0_10px_30px_-12px_rgba(61,71,47,0.55)]">
+    // ── DARK FOR THE FRONT DOOR ONLY ────────────────────────────────────
+    // The dark block exists to make ONE action unmissable on a page a
+    // first-time reader has not committed to. That job ends the moment the
+    // buyer has given us a car: from then on the card holds things they must
+    // READ and CORRECT — the matched model, the asking price, the plate, what
+    // worries them — and content leads, not the frame around it.
+    //
+    // It was applied to every phase and only the first was restyled, so labels
+    // and buttons rendered near-black on near-black. Freddie caught it on his
+    // phone. Making the ground follow the phase fixes the whole class of it
+    // rather than repainting twenty elements one at a time, and it doubles as
+    // a signal that a step has been completed.
+    <div className={`rounded-[18px] p-5 transition-colors ${
+      onDark
+        ? 'bg-[#3D472F] shadow-[0_10px_30px_-12px_rgba(61,71,47,0.55)]'
+        : 'bg-white border border-[#E5E7EB] shadow-[0_1px_4px_rgba(0,0,0,0.06)]'
+    }`}>
       <div className="space-y-4">
 
         {/*
@@ -794,20 +813,20 @@ export function ListingIntakeForm({
                     of taking their word. Still optional, and still honest that
                     the check happens after payment. */}
                 <label htmlFor="li-plate" className={LABEL_CLS}>
-                  Nombor plat <span className="font-normal text-[#9CA3AF]">(pilihan)</span>
+                  Nombor plat <span className="font-normal text-[#6B7280]">(pilihan)</span>
                 </label>
                 <input id="li-plate" value={plate} onChange={e => setPlate(e.target.value.toUpperCase())}
                        maxLength={10} placeholder="WWW 1234" className={`${INPUT_CLS} uppercase tracking-[.12em]`} />
                 <p className="font-body text-[12px] text-[#374151] mt-1.5 leading-relaxed">
-                  Ada plat? Kami sahkan tahun, enjin dan varian kereta ini dengan
-                  <strong> rekod rasmi</strong> &mdash; bukan dengan apa yang seller tulis
-                  dalam iklan.
+                  Ada plat? Kami semak tahun, enjin dan varian kereta ini dengan
+                  <strong> maklumat pendaftaran daripada penyedia data pihak ketiga</strong>
+                  &mdash; bukan dengan apa yang seller tulis dalam iklan.
                 </p>
               </div>
 
               <div>
                 <label htmlFor="li-concern" className={LABEL_CLS}>
-                  Apa yang buat anda ragu? <span className="font-normal text-[#9CA3AF]">(pilihan)</span>
+                  Apa yang buat anda ragu? <span className="font-normal text-[#6B7280]">(pilihan)</span>
                 </label>
                 <textarea id="li-concern" value={concern} onChange={e => setConcern(e.target.value)} rows={3}
                           placeholder="cth: seller kata takde accident tapi bumper nampak lain warna"
@@ -825,7 +844,7 @@ export function ListingIntakeForm({
                       className="w-full min-h-[44px] bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60">
                 {busy ? 'Memproses…' : `Dapatkan keputusan — ${BASE_REPORT_LABEL} →`}
               </button>
-              <p className="font-body text-[11px] text-[#9CA3AF] text-center leading-relaxed">
+              <p className="font-body text-[11px] text-[#6B7280] text-center leading-relaxed">
                 Disemak oleh manusia · Biasanya {TYPICAL_MINUTES} minit ·
                 Duit dikembalikan jika kami tidak dapat siapkan
               </p>
