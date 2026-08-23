@@ -80,6 +80,10 @@ function seed(over: Record<string, unknown> = {}) {
   fake.rows('buyer_reports').push({
     id: REPORT, check_id: CHECK, status: 'paid', buyer_email: 'b@e.com',
     amount_cents: 1200, add_jomcheck: false, created_at: '2026-08-01T00:00:00Z',
+    // A RESOLVED plate lookup. Not decoration: the upgrade is only sellable
+    // once the provider has confirmed the registration is a real vehicle, so
+    // every reconciliation case below presupposes that has happened.
+    vehicleapi_data: { make: 'PERODUA', model: 'MYVI', registrationYear: '2019' },
     upgrade_bill_id: null, upgrade_bill_url: null, ...over,
   })
 }
@@ -362,5 +366,34 @@ describe('the add-on gate needs both halves', () => {
     try {
       expect(real.historyUpgradeAvailable()).toBe(real.HISTORY_UPGRADE_OPERATIONAL)
     } finally { process.env.JOMCHECK_ENABLED = prev }
+  })
+})
+
+/**
+ * The add-on moved here from the checkout precisely because this check is
+ * possible here and was not possible there. If it stops being made, the move
+ * bought nothing.
+ */
+describe('an unresolved plate cannot be upgraded', () => {
+  it('refuses when the lookup never returned a vehicle', async () => {
+    seed({ vehicleapi_data: null })
+    const r = await initiateJomCheckUpgrade(ARGS)
+    expect(r.error).toBeTruthy()
+    expect(createBill).not.toHaveBeenCalled()
+  })
+
+  it('refuses a lookup row that came back without a make', async () => {
+    // What a mistyped plate actually produces: a response, with nothing in it.
+    seed({ vehicleapi_data: { valuation: null } })
+    const r = await initiateJomCheckUpgrade(ARGS)
+    expect(r.error).toBeTruthy()
+    expect(createBill).not.toHaveBeenCalled()
+  })
+
+  it('sells it once the plate resolves', async () => {
+    seed()
+    const r = await initiateJomCheckUpgrade(ARGS)
+    expect(r.error).toBeNull()
+    expect(createBill).toHaveBeenCalledTimes(1)
   })
 })

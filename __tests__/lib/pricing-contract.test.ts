@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import {
   BASE_REPORT_CENTS, BASE_REPORT_LABEL, HISTORY_UPGRADE_OPERATIONAL,
-  COMBINED_CENTS, JOMCHECK_UPGRADE_CENTS,
+  COMBINED_CENTS, JOMCHECK_UPGRADE_CENTS, ringgit,
 } from '@/lib/pricing'
 
 const ROOT = join(__dirname, '..', '..')
@@ -129,25 +129,55 @@ describe('the total always equals its parts', () => {
  * price, told nothing, and got no claim records — their opt-in discarded in
  * silence.
  */
-describe('one gate decides the add-on, not two', () => {
+/**
+ * The add-on left the pre-payment checkout entirely.
+ *
+ * A fake plate walked through the gate that guarded it: the check asked
+ * whether a plate had been SUPPLIED, not whether it resolved, so "WXY1234"
+ * enabled a RM117 button for a lookup that would find nothing. That gate could
+ * not be fixed in place, because at checkout the answer does not exist — the
+ * RM0.81 provider call fires AFTER payment so a stranger who never converts
+ * costs nothing.
+ *
+ * So it is sold from the RELEASED report instead, where the lookup has run and
+ * `vehicleData?.make` proves the registration resolved. Same money, one step
+ * later, and it can no longer be sold against a plate that does not exist.
+ */
+describe('the add-on is sold after release, not at checkout', () => {
   const form = readFileSync(join(ROOT, 'components/report/PaymentForm.tsx'), 'utf8')
 
-  it('the checkout reads no environment variable of its own', () => {
-    expect(code(form), 'PaymentForm decides availability for itself again')
-      .not.toMatch(/process\.env\.[A-Z_]*JOMCHECK/)
+  it('the checkout sells exactly one product', () => {
+    const c = code(form)
+    expect(c, 'the add-on checkbox is back on the checkout').not.toMatch(/setAddJomCheck/)
+    expect(c, 'the checkout can still bill the combined amount')
+      .not.toMatch(/amountCents:\s*addJomCheck/)
   })
 
-  it('it is told by the server instead', () => {
-    expect(form).toContain('historyAddOnAvailable')
+  it('and reads no environment variable of its own', () => {
+    expect(code(form)).not.toMatch(/process\.env\.[A-Z_]*JOMCHECK/)
   })
 
-  it('and the server tells it with the same function that bills', () => {
+  it('the released report sells it, and only on a resolved lookup', () => {
     const page = readFileSync(join(ROOT, 'app/laporan-pembeli/[checkId]/page.tsx'), 'utf8')
-    expect(page).toMatch(/historyAddOnAvailable=\{historyUpgradeAvailable\(\)\}/)
+    expect(page).toMatch(/upsellJomCheck=\{[\s\S]{0,200}vehicleData\?\.make/)
+    expect(page).toContain('historyUpgradeAvailable()')
+  })
 
+  it('the biller cannot be asked for the combined amount at all', () => {
+    // Stronger than the gate it replaces. The old server check downgraded a
+    // plateless request to the base price; this removes the request. A server
+    // action is a public endpoint, so "the UI no longer offers it" is not a
+    // control — the parameter being gone is.
     const actions = readFileSync(join(ROOT, 'app/laporan-pembeli/[checkId]/_actions.ts'), 'utf8')
-    expect(actions, 'billing uses a different gate from the checkout')
-      .toContain('historyUpgradeAvailable()')
+    const iface = actions.slice(
+      actions.indexOf('interface InitiateBuyerReportParams'),
+      actions.indexOf('export async function initiateBuyerReport'),
+    )
+    expect(iface, 'the checkout accepts an add-on flag again').not.toContain('addJomCheck')
+    expect(actions).toMatch(/const amountCents = BASE_REPORT_CENTS/)
+
+    // And the one path that MAY sell it still exists, post-release.
+    expect(actions).toContain('initiateJomCheckUpgrade')
   })
 })
 
@@ -226,26 +256,45 @@ describe('the history add-on cannot be sold while undeliverable', () => {
  * alert raised at all: money taken, then silence, because nobody was told to
  * produce anything.
  */
-describe('the add-on cannot be sold without a plate', () => {
-  it('the biller refuses to charge for it', () => {
-    const actions = readFileSync(join(ROOT, 'app/laporan-pembeli/[checkId]/_actions.ts'), 'utf8')
-    expect(actions).toMatch(/const hasPlate\s*=\s*!!row\.check\.plate_encrypted/)
-    expect(actions).toMatch(/effectiveAddJomCheck\s*=\s*jomcheckEnabled && hasPlate/)
+
+/**
+ * The RM12 sweep checked COPY, and structured data is not copy.
+ *
+ * A JSON-LD Offer writes the price as a bare number — `price: '12'` — so every
+ * regex looking for "RM12" walked straight past it. It survived the price
+ * change on /laporan-pembeli-kereta-terpakai, the page whose entire job is to
+ * describe what the report costs, and the accident page still advertised '100'
+ * after the total became RM117.
+ *
+ * This is worse than a stale line of copy: Google may surface an Offer price
+ * directly in a result, so the wrong number reaches a buyer before they ever
+ * open the site, and Merchant listings can be penalised for a price that
+ * disagrees with the page.
+ */
+describe('structured data quotes a price the constants produce', () => {
+  const ALLOWED = new Set([
+    String(ringgit(BASE_REPORT_CENTS)),
+    String(ringgit(JOMCHECK_UPGRADE_CENTS)),
+    String(ringgit(COMBINED_CENTS)),
+  ])
+
+  it('every JSON-LD Offer price is derived, never a literal', () => {
+    const offenders: string[] = []
+    for (const f of SOURCES) {
+      const src = code(readFileSync(join(ROOT, f), 'utf8'))
+      // Scoped to Offer NODES. `price` is an ordinary key elsewhere — the
+      // verdict copy keys a message off it — and flagging those would make the
+      // test noisy enough to be loosened, which is how guards die.
+      for (const m of src.matchAll(/'@type':\s*'Offer'[^}]*/g)) {
+        const lit = m[0].match(/price:\s*(['"`])([^'"`]*)\1/)
+        if (lit) offenders.push(`${relative('.', f)}: price: '${lit[2]}'`)
+      }
+    }
+    expect(offenders, `hardcoded Offer price in: ${offenders.join(' | ')}`).toEqual([])
   })
 
-  it('and the checkout does not offer it', () => {
-    const form = readFileSync(join(ROOT, 'components/report/PaymentForm.tsx'), 'utf8')
-    expect(form).toMatch(/historyAddOnAvailable && hasPlate &&/)
-  })
-
-  it('but says why, so a buyer knows it is one field away', () => {
-    const form = code(readFileSync(join(ROOT, 'components/report/PaymentForm.tsx'), 'utf8'))
-    expect(form).toMatch(/historyAddOnAvailable && !hasPlate &&/)
-    expect(form).toMatch(/nombor plat/i)
-  })
-
-  it('the webhook still guards its own half', () => {
-    const hook = readFileSync(join(ROOT, 'app/api/webhooks/billplz/route.ts'), 'utf8')
-    expect(hook).toMatch(/add_jomcheck && plate/)
+  it('and the derived values are prices Paqar actually charges', () => {
+    for (const v of ALLOWED) expect(Number(v)).toBeGreaterThan(0)
+    expect(ALLOWED.has(String(ringgit(COMBINED_CENTS)))).toBe(true)
   })
 })

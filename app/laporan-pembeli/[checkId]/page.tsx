@@ -319,8 +319,17 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               generatedAt={report.created_at}
               claimedMileageKm={reviewed.mileageKm}
               rollbackSuppressed={reviewed.suppressMileageWarning}
+              // ── SOLD ONLY ONCE THE PLATE IS KNOWN GOOD ──────────────────
+              // This is now the ONLY place the add-on is sold, and the
+              // condition it was missing is `vehicleData?.make`: proof the
+              // provider actually resolved this registration to a vehicle.
+              //
+              // A supplied plate is not a verified one. "WXY1234" is supplied.
+              // Selling a claim lookup against it takes RM88 for a search that
+              // returns nothing — and here, unlike at checkout, the answer
+              // exists, because the RM0.81 call has already run.
               upsellJomCheck={
-                historyUpgradeAvailable() && !report.add_jomcheck
+                historyUpgradeAvailable() && !report.add_jomcheck && !!vehicleData?.make
                   ? { checkId: params.checkId, claimToken: claimToken ?? '' }
                   : null
               }
@@ -373,7 +382,18 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               DEFAULT journey, so that was the majority experience.
               Nothing is lost by withholding it — the coverage card below already
               names the car Paqar matched. */}
-          {plate && <VehiclePreviewTeaser checkId={params.checkId} claimToken={claimToken} />}
+          {/* lookupDeferred: this branch is the UNPAID page. The RM0.81 call
+              fires from the Billplz webhook, so no lookup is running here and
+              polling for one told the buyer a lie for 24 seconds. It still
+              polls briefly, because a plate resolved for anyone before is
+              already in the shared cache and free to show. */}
+          {plate && (
+            <VehiclePreviewTeaser
+              checkId={params.checkId}
+              claimToken={claimToken}
+              lookupDeferred
+            />
+          )}
 
           {/* Free price evidence BEFORE the ask. PlateCheckerForm promises
               that adding the asking price reveals whether the seller's price is
@@ -405,11 +425,6 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                 <PaymentForm
                   checkId={params.checkId}
                   claimToken={claimToken}
-                  // The SAME gate that decides what is billed and fulfilled.
-                  historyAddOnAvailable={historyUpgradeAvailable()}
-                  // The lookup is keyed on the registration number; the biller
-                  // enforces the same rule, this only stops it being offered.
-                  hasPlate={!!row.check.plate_encrypted}
                   // Computed here, not in the browser: a client clock would
                   // disagree with the server's and mismatch on hydration.
                   expectedDelivery={expectedDeliveryCopy()}
@@ -429,11 +444,6 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                 <PaymentForm
                   checkId={params.checkId}
                   claimToken={claimToken}
-                  // The SAME gate that decides what is billed and fulfilled.
-                  historyAddOnAvailable={historyUpgradeAvailable()}
-                  // The lookup is keyed on the registration number; the biller
-                  // enforces the same rule, this only stops it being offered.
-                  hasPlate={!!row.check.plate_encrypted}
                   // Computed here, not in the browser: a client clock would
                   // disagree with the server's and mismatch on hydration.
                   expectedDelivery={expectedDeliveryCopy()}

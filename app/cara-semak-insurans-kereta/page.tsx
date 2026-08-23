@@ -198,7 +198,7 @@ export default function CaraSemakInsuransPage() {
                 went live, on a page nobody thinks to revisit. */}
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-4">
               {historyAddOnSellable()
-                ? `Paqar menjualnya sebagai tambahan kepada Laporan Pembeli (${HISTORY_ADDON_LABEL}, perlu nombor plat). Ingat: tidak semua kemalangan ada rekod claim, dan rekod bersih tidak bermakna kereta tiada isu.`
+                ? `Paqar menjualnya sebagai tambahan kepada Laporan Pembeli (${HISTORY_ADDON_LABEL}) — ditambah dari dalam laporan anda selepas nombor plat disahkan. Ingat: tidak semua kemalangan ada rekod claim, dan rekod bersih tidak bermakna kereta tiada isu.`
                 : 'Paqar belum membuka semakan rekod claim insurans, jadi kami tidak menjualnya buat masa ini. Kalau anda semak sendiri melalui penyedia lain, ingat: tidak semua kemalangan ada rekod claim, dan rekod bersih tidak bermakna kereta tiada isu.'}
             </p>
             <Link

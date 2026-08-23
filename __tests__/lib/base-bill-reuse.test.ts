@@ -229,14 +229,19 @@ describe('14: two concurrent checkouts do not mint two bills', () => {
     expect(billplz.created).toBeGreaterThan(first)
   })
 
-  it('the base and bundle products are keyed apart', async () => {
-    // A buyer switching from RM12 to RM100 must not be handed the RM12 bill
-    // merely because it is in flight.
-    await Promise.all([
+  it('collapses concurrent presses into ONE bill', () => {
+    // This used to assert the opposite for two tiers: a buyer switching from
+    // the base report to the bundle had to get a second bill rather than be
+    // handed the cheaper one in flight. There is one product now — the add-on
+    // is sold from the released report — so two simultaneous presses are the
+    // same purchase, and minting two payable links for it is the double-payment
+    // surface this suite exists to keep shut.
+    return Promise.all([
       initiateBuyerReport({ checkId: 'ch_1', claimToken: 't', buyerEmail: 'b@example.com', baseUrl: 'https://paqar.my' }),
-      initiateBuyerReport({ checkId: 'ch_1', claimToken: 't', buyerEmail: 'b@example.com', baseUrl: 'https://paqar.my', addJomCheck: true }),
-    ])
-    expect(billplz.created).toBe(2)
+      initiateBuyerReport({ checkId: 'ch_1', claimToken: 't', buyerEmail: 'b@example.com', baseUrl: 'https://paqar.my' }),
+    ]).then(() => {
+      expect(billplz.created).toBe(1)
+    })
   })
 })
 

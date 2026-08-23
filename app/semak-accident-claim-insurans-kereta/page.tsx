@@ -86,7 +86,7 @@ export default function SemakAccidentClaimInsuransPage() {
         // No Offer node when the add-on cannot be bought: an InStock price in
         // structured data is a promise Google may surface in a result.
         ...(JOMCHECK_ON
-          ? { offers: { '@type': 'Offer', price: '100', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' } }
+          ? { offers: { '@type': 'Offer', price: String(ringgit(COMBINED_CENTS)), priceCurrency: 'MYR', availability: 'https://schema.org/InStock' } }
           : {}),
       },
       {
@@ -110,7 +110,7 @@ export default function SemakAccidentClaimInsuransPage() {
           ...(JOMCHECK_ON ? [{
             '@type': 'Question',
             name: 'Berapa harga Semakan Accident/Claim Insurans?',
-            acceptedAnswer: { '@type': 'Answer', text: `Laporan Pembeli + Semakan Accident/Claim Insurans berharga RM${ringgit(COMBINED_CENTS)} (satu bayaran). Atau tambah +RM${ringgit(JOMCHECK_UPGRADE_CENTS)} kepada Laporan Pembeli ${BASE_REPORT_LABEL} sedia ada.` },
+            acceptedAnswer: { '@type': 'Answer', text: `Jumlahnya RM${ringgit(COMBINED_CENTS)}, dalam dua langkah. Anda bayar Laporan Pembeli ${BASE_REPORT_LABEL} dahulu; selepas laporan dilepaskan dan nombor plat disahkan, tambah Semakan Accident/Claim Insurans +RM${ringgit(JOMCHECK_UPGRADE_CENTS)} dari dalam laporan. Kami tidak menjual semakan claim untuk nombor plat yang tidak dapat disahkan.` },
           }] : []),
           {
             '@type': 'Question',
@@ -213,10 +213,24 @@ export default function SemakAccidentClaimInsuransPage() {
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
             <div className="bg-[#3D472F] px-5 py-4">
               <p className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/45 mb-1">
-                Laporan + Semakan Accident/Claim Insurans — RM{ringgit(COMBINED_CENTS)}
+                {BASE_REPORT_LABEL} + RM{ringgit(JOMCHECK_UPGRADE_CENTS)} — jumlah RM{ringgit(COMBINED_CENTS)}
               </p>
               <p className="font-heading font-extrabold text-[15px] text-white leading-snug">
                 Semua dalam Laporan Pembeli RM29, ditambah semakan rekod claim insurans.
+              </p>
+              {/*
+                ── SAY THE ORDER, BECAUSE THE ORDER IS THE POINT ──────────────
+                This used to read "satu bayaran". It was not one payment even
+                before, and it certainly is not now: the claim check is bought
+                from inside the released report, after the registration number
+                has actually resolved to a vehicle. A buyer who reads "one
+                payment" and is asked for a second one has been misled at the
+                exact moment Paqar is asking to be trusted with RM117.
+              */}
+              <p className="font-body text-[11px] text-white/70 leading-snug mt-2">
+                Bayar {BASE_REPORT_LABEL} dahulu. Semakan claim ditambah dari dalam
+                laporan anda selepas nombor plat disahkan — supaya anda tidak bayar
+                {' '}RM{ringgit(JOMCHECK_UPGRADE_CENTS)} untuk carian yang tiada apa-apa untuk dicari.
               </p>
             </div>
             <div className="px-5 py-1">
@@ -244,7 +258,7 @@ export default function SemakAccidentClaimInsuransPage() {
             </div>
             <div className="px-5 py-3 bg-[#F8FAF7] border-t border-[#F3F4F6]">
               <p className="font-body text-[11px] text-[#6B7280]">
-                Satu bayaran sahaja · Tanpa daftar akaun ·{' '}
+                Dua langkah · Tanpa daftar akaun ·{' '}
                 <Link href="/contoh-laporan" className="text-[#3D472F] font-semibold hover:underline">
                   Lihat contoh laporan →
                 </Link>
@@ -296,6 +310,7 @@ export default function SemakAccidentClaimInsuransPage() {
               { q: 'Adakah semua kemalangan ada rekod?', a: 'Tidak. Pemilik yang membaiki sendiri tanpa buat tuntutan tidak akan ada rekod. Ini adalah had sistem — bukan kegagalan semakan.' },
               { q: 'Rekod claim banyak bermakna apa?', a: 'Rekod ada tidak semestinya buruk. Sebuah tuntutan windscreen RM800 berbeza dengan own damage RM30,000. Guna maklumat ini untuk bertanya soalan lebih tepat kepada penjual.' },
               { q: 'Boleh semak tanpa pergi tengok kereta?', a: 'Ya. Anda hanya perlukan nombor plat. Sesuai digunakan sebelum pergi tengok kereta atau sebelum bayar deposit.' },
+              { q: 'Kenapa semakan claim tidak boleh dibeli terus?', a: `Sebab kami perlu sahkan nombor plat itu wujud dahulu. Semakan claim dicari guna nombor pendaftaran — kalau plat yang dimasukkan tersalah taip, carian itu tidak akan jumpa apa-apa, dan anda sudah bayar. Jadi kami sahkan plat dalam Laporan Pembeli ${BASE_REPORT_LABEL}, kemudian barulah tawarkan semakan claim.` },
             ].map(faq => (
               <details key={faq.q} className="group bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
                 <summary className="flex items-center justify-between p-4 cursor-pointer list-none">

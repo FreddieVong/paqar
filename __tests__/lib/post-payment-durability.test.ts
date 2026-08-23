@@ -242,12 +242,13 @@ describe('payment form trust affordances', () => {
     expect(msg).not.toContain('claim_token')
   })
 
-  it('puts the RM88 add-on AFTER the RM12 pay button', () => {
-    // It used to sit between the RM12 offer and the RM12 button, badged
-    // "Paling disyorkan" — an 8x upsell as the last thing read before paying.
-    const payButton = form.indexOf('type="submit"')
-    const addOn     = form.indexOf('JomCheck add-on')
-    expect(payButton).toBeGreaterThan(-1)
-    expect(addOn).toBeGreaterThan(payButton)
+  it('does not sell the RM88 add-on on this screen at all', () => {
+    // It used to sit between the offer and the pay button, badged "Paling
+    // disyorkan" — an upsell as the last thing read before paying. Moving it
+    // below the button fixed the pressure; removing it fixed the real problem,
+    // which was that a plate typed into a box is not a plate that exists.
+    // It is sold from the released report now, once the lookup has resolved.
+    expect(form).not.toContain('JomCheck add-on')
+    expect(form).not.toContain('setAddJomCheck')
   })
 })

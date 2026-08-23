@@ -155,7 +155,10 @@ describe('the client fires the submit event before Billplz is ever called', () =
     // this guards is "a constant chosen by the tier", not two literals. The
     // point of the assertion is unchanged: nothing the buyer typed may decide
     // what they are charged.
-    expect(form).toMatch(/amountCents:\s*addJomCheck \? COMBINED_CENTS : BASE_REPORT_CENTS/)
+    // One tier now — the add-on moved to the released report — so the constant
+    // no longer varies. The invariant it was written for is untouched: a named
+    // constant travels, never anything the buyer typed.
+    expect(form).toMatch(/amountCents:\s*BASE_REPORT_CENTS/)
     // The submit event's payload must not reach for anything the buyer typed.
     const call = form.slice(
       form.indexOf("trackAdEvent('payment_form_submitted'"),

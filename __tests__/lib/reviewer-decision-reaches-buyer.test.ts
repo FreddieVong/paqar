@@ -141,6 +141,6 @@ describe('a plateless check is a first-class buyer', () => {
   })
 
   it('mounts no plate-dependent teaser without a plate', () => {
-    expect(page).toContain('{plate && <VehiclePreviewTeaser')
+    expect(page).toMatch(/\{plate && \([\s\S]{0,80}<VehiclePreviewTeaser/)
   })
 })

@@ -121,7 +121,9 @@ describe('payment_form_submitted brackets createBill', () => {
     // here kept passing after the base report became RM29 while the event
     // carried the wrong tier. The point of the assertion is that a CONSTANT
     // travels rather than a form value, so it checks for the constants.
-    expect(call).toMatch(/amountCents: addJomCheck \? COMBINED_CENTS : BASE_REPORT_CENTS/)
+    // One tier now: the add-on is sold after release, not here. The invariant
+    // is unchanged — a named constant travels, never a form value.
+    expect(call).toMatch(/amountCents: BASE_REPORT_CENTS/)
     for (const field of ['email', 'phone', 'price', 'mileage', 'claimToken']) {
       expect(call, `${field} must not travel on this event`).not.toContain(field)
     }

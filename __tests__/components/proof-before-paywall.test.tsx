@@ -475,19 +475,15 @@ describe('intentional Malaysian product language survives', () => {
     expect(all).toMatch(/\bTarget\b/)
   })
 
-  it('does not let the base tier imply the Accident/Claim check', () => {
+  it('does not let the checkout imply the Accident/Claim check', () => {
     const form = read('components/report/PaymentForm.tsx')
 
-    // Asserted on the STRUCTURE, not on one literal string. The titles moved
-    // to template literals when the price moved to lib/pricing, and pinning
-    // the old exact line made this test fail for a reason it does not care
-    // about. What it does care about is unchanged: only the bundle branch may
-    // mention the add-on.
+    // The two tiers became one. The add-on is sold from the released report,
+    // where the plate has actually resolved — so this form has a single title
+    // and a single price, and the assertion is simply that neither of them
+    // promises claim records this RM29 does not buy.
     const title = form.slice(form.indexOf('const title'), form.indexOf('const ctaText'))
-    expect(title, 'title is derived from addJomCheck').toContain('addJomCheck')
-
-    const [bundleBranch, baseBranch] = title.split(':')
-    expect(bundleBranch, 'the bundle names the add-on').toContain('Accident/Claim')
-    expect(baseBranch,   'the base tier must not imply the add-on').not.toContain('Accident/Claim')
+    expect(title, 'the checkout must not imply the add-on').not.toContain('Accident/Claim')
+    expect(title, 'a second tier is back on the checkout').not.toContain('addJomCheck')
   })
 })

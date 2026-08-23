@@ -6,41 +6,39 @@ import { analytics }               from '@/lib/analytics'
 import { checkoutEventId }        from '@/lib/checkout-event-id'
 import { trackAdEvent, type ValuationPathKey } from '@/lib/meta-events'
 import { whatsappUrl }         from '@/lib/site'
-import { BASE_REPORT_CENTS, COMBINED_CENTS, BASE_REPORT_LABEL, ringgit, REVIEW_SLA_HOURS, REFUND_GUARANTEE_SHORT } from '@/lib/pricing'
+import { BASE_REPORT_CENTS, BASE_REPORT_LABEL, ringgit, REVIEW_SLA_HOURS, REFUND_GUARANTEE_SHORT } from '@/lib/pricing'
 
-// ── ONE GATE, PASSED IN ────────────────────────────────────────────────────
+// ── THIS FORM SELLS ONE PRODUCT ────────────────────────────────────────────
 //
-// This computed its own availability from NEXT_PUBLIC_JOMCHECK_ENABLED while
-// the server used JOMCHECK_ENABLED. Two variables, free to disagree — and in
-// production they did: the checkout offered the "+RM88" add-on, and the
-// server-side gate that decides what is actually billed and fulfilled said the
-// add-on was off.
+// It used to carry the RM88 accident/claim add-on as a checkbox, and it went
+// wrong twice for the same underlying reason — the surface that took the money
+// was reasoning about state it did not actually have.
 //
-// Nobody was overcharged; _actions bills the base price when its own gate is
-// shut. The failure was quieter than that. A buyer who deliberately ticked the
-// box asking for claim records was charged RM29, told nothing, and received no
-// records — their opt-in silently discarded.
+// FIRST, availability. It computed its own from NEXT_PUBLIC_JOMCHECK_ENABLED
+// while the server used JOMCHECK_ENABLED. Two variables, free to disagree, and
+// in production they did: the checkout offered the add-on while the server gate
+// that decides what is billed and fulfilled was shut. Nobody was overcharged,
+// and that was the quiet part — a buyer who deliberately ticked the box asking
+// for claim records was charged RM29, told nothing, and received no records.
+// Their opt-in was discarded in silence. Fixed by passing the server's own
+// historyUpgradeAvailable() down as a prop.
 //
-// A client component cannot read a server-only variable, so the fix is not a
-// third check here: availability is decided once, server-side, by the same
-// historyUpgradeAvailable() that governs billing and fulfilment, and handed
-// down as a prop. Divergence stops being possible rather than being unlikely.
+// SECOND, the plate. The remaining gate asked whether a plate had been
+// SUPPLIED. "WXY1234" is supplied. So a mistyped or invented registration
+// enabled a RM117 button for a claim search that would find nothing, which
+// Freddie reproduced on the live site.
+//
+// That one could not be fixed here at all. At checkout the answer does not
+// exist yet: the RM0.81 provider call fires AFTER payment, from the Billplz
+// webhook, so a stranger who never converts costs nothing — an ordering worth
+// keeping at 531 checks a month and ~0.5% conversion.
+//
+// So the add-on left this form entirely. It is sold from the RELEASED report,
+// where the lookup has run and the registration is known to resolve. The
+// buyer's first price is RM29 with no RM117 anchor beside it, and the add-on
+// is offered at the moment it can be honoured.
 
 interface Props {
-  /**
-   * Whether the accident/claim add-on may be offered AT ALL. Computed by the
-   * server with historyUpgradeAvailable() — the same function that decides
-   * what gets billed and fulfilled — so the checkbox cannot promise something
-   * the billing path will drop.
-   */
-  historyAddOnAvailable?: boolean
-  /**
-   * Whether this check carries a plate. The claim lookup is keyed on the
-   * registration number, so without one there is nothing to look up — and the
-   * webhook's fulfilment already fires only on `add_jomcheck && plate`.
-   * Offering the add-on without it sells a silence.
-   */
-  hasPlate?:             boolean
   /**
    * The real expected delivery time for this buyer, e.g. "Biasanya sebelum
    * 7.15 malam." Computed on the SERVER from lib/review-capacity: computing it
@@ -63,12 +61,11 @@ interface Props {
   valuationPath:       ValuationPathKey
 }
 
-export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMileageKm, valuationPath, historyAddOnAvailable = false, hasPlate = false, expectedDelivery = '' }: Props) {
+export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMileageKm, valuationPath, expectedDelivery = '' }: Props) {
   const [email,        setEmail]        = useState('')
   const [phone,        setPhone]        = useState('')
   const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
   const [mileage,      setMileage]      = useState(defaultMileageKm ? String(defaultMileageKm) : '')
-  const [addJomCheck,  setAddJomCheck]  = useState(false)
   const [error,        setError]        = useState<string | null>(null)
   const [isPending,    startTransition] = useTransition()
 
@@ -112,15 +109,12 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
   // Carries the check id so a stuck buyer does not have to explain the whole
   // purchase from scratch. Never the claim token.
   const supportUrl = whatsappUrl(`Hai Paqar, saya ada masalah untuk bayar.\n\nCheck ID: ${checkId}`)
-  const title = addJomCheck
-    ? `Laporan + Accident/Claim — RM${ringgit(COMBINED_CENTS)}`
-    : `Laporan Pembeli — ${BASE_REPORT_LABEL}`
+  // One product on this form. The add-on is sold from the released report.
+  const title = `Laporan Pembeli — ${BASE_REPORT_LABEL}`
   // NOT "Buka Laporan". The report is no longer handed over at payment — a
   // human reads it first (lib/report-release.ts), so a button promising to
   // open something would be a lie told at the exact moment money moves.
-  const ctaText = addJomCheck
-    ? `Bayar RM${ringgit(COMBINED_CENTS)} →`
-    : `Bayar ${BASE_REPORT_LABEL} →`
+  const ctaText = `Bayar ${BASE_REPORT_LABEL} →`
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -140,12 +134,12 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
     // ad_events column, so no form value is ever transmitted.
     const attemptId = crypto.randomUUID()
     attemptRef.current = attemptId
-    analytics.paymentFormSubmitted({ tier: addJomCheck ? 'rm100' : 'rm29', valuation_path: valuationPath })
+    analytics.paymentFormSubmitted({ tier: 'rm29', valuation_path: valuationPath })
     trackAdEvent('payment_form_submitted', {
       checkId,
       valuationPath,
       attemptId,
-      amountCents: addJomCheck ? COMBINED_CENTS : BASE_REPORT_CENTS,
+      amountCents: BASE_REPORT_CENTS,
     })
     // Meta funnel signal — no-op unless the pixel is loaded. The eventID is
     // derived from (check, product) rather than generated per click, so a
@@ -159,8 +153,8 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
     ;(window as { fbq?: (...a: unknown[]) => void }).fbq?.(
       'track',
       'InitiateCheckout',
-      { currency: 'MYR', value: ringgit(addJomCheck ? COMBINED_CENTS : BASE_REPORT_CENTS) },
-      { eventID: checkoutEventId(checkId, addJomCheck) }
+      { currency: 'MYR', value: ringgit(BASE_REPORT_CENTS) },
+      { eventID: checkoutEventId(checkId, false) }
     )
     startTransition(async () => {
       const result = await initiateBuyerReport({
@@ -169,7 +163,6 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
         buyerEmail:    email,
         buyerPhone:    phone,
         baseUrl:       window.location.origin,
-        addJomCheck,
         // The journey this checkout belongs to. Until now the server derived
         // nothing and passed nothing, so every checkout_started and every
         // purchase in ad_events carried valuation_path = NULL — 100% of them —
@@ -439,95 +432,32 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
           </p>
         )}
 
-        {/* The RM88 add-on sits AFTER the RM12 button on purpose.
-            It used to sit between the RM12 offer and the RM12 button, badged
-            "Paling disyorkan", immediately after the pitch had said the ad's
-            accident/claim promise was NOT included in RM12. The last thing a
-            buyer read before paying was an 8x more expensive upsell, which
-            reframes RM12 as the stingy option at the exact moment of decision.
-            Below the button it is still discoverable and still one tap, but it
-            no longer interrupts the purchase the buyer came to make. */}
-        {/* JomCheck add-on — only shown when feature flag is enabled */}
-        {/* NO PLATE, NO ADD-ON — and say why rather than hiding it.
-            The lookup is keyed on the registration number. A buyer without one
-            could previously tick +RM88 and be billed RM117 while the webhook's
-            fulfilment, which fires on `add_jomcheck && plate`, never ran: money
-            taken and then silence.
-            Named instead of silently absent, because a buyer who wants the
-            claim check should know it is one field away, not conclude Paqar
-            does not offer it. */}
-        {historyAddOnAvailable && !hasPlate && (
-          <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mt-4">
-            Nak tambah <span className="font-semibold text-[#374151]">Semakan Accident/Claim
-            Insurans</span>? Kami perlukan nombor plat kereta itu &mdash; rekod claim
-            disimpan mengikut nombor pendaftaran. Mula semula dan isi nombor plat
-            untuk tambah semakan ini.
-          </p>
-        )}
+        {/* ── THE ADD-ON IS NOT SOLD HERE ANY MORE ────────────────────────
+            Twice moved, then removed. It first sat BETWEEN the offer and the
+            pay button, badged "Paling disyorkan" — an 8x upsell as the last
+            thing read before paying, which reframes the base report as the
+            stingy option at the moment of decision. It was moved below the
+            button to stop that.
 
-        {historyAddOnAvailable && hasPlate && (
-          <button
-            type="button"
-            onClick={() => setAddJomCheck(v => !v)}
-            className={`w-full text-left rounded-[14px] border-[1.5px] p-4 transition-all ${
-              addJomCheck
-                ? 'border-[#3D472F] bg-[#F0FDFA]'
-                : 'border-[#E5E7EB] bg-white hover:border-[#3D472F]/40'
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              {/* Checkbox indicator */}
-              <div className={`mt-0.5 w-[18px] h-[18px] rounded-[5px] border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                addJomCheck ? 'bg-[#3D472F] border-[#3D472F]' : 'border-[#D1D5DB] bg-white'
-              }`}>
-                {addJomCheck && (
-                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </div>
+            Then the real defect surfaced, and placement was not it. A fake
+            plate walked straight through the gate: it asked whether a plate
+            had been SUPPLIED, not whether it resolved to a real vehicle, so
+            "WXY1234" enabled a RM117 button for a lookup that would find
+            nothing.
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <p className="font-heading font-bold text-[13px] text-[#111827]">
-                    Semakan Accident/Claim Insurans
-                  </p>
-                  <p className={`font-heading font-bold text-[13px] flex-shrink-0 ${addJomCheck ? 'text-[#3D472F]' : 'text-[#6B7280]'}`}>
-                    +RM88
-                  </p>
-                </div>
+            That gate cannot be fixed here, because at this moment the answer
+            does not exist. The RM0.81 provider call deliberately fires AFTER
+            payment, from the Billplz webhook, so a stranger who never converts
+            costs nothing. Before payment every plate is equally unknown.
 
-                <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-2">
-                  Semak kalau kereta ni pernah <span className="font-semibold text-[#374151]">accident teruk, total loss,
-                  atau bacaan meter tidak sepadan</span> — kami banding meter ketika claim dengan
-                  odometer semasa. Semak sebelum bayar deposit.
-                </p>
+            So the add-on moves to where the answer IS known: the released
+            report, through JomCheckUpsell, once the lookup has actually
+            returned a vehicle. Same money, one step later, and it can no
+            longer be sold against a plate that does not exist.
 
-                {/* NO "PALING DISYORKAN" BADGE.
-                    It read "Paling disyorkan — risiko paling mahal kalau
-                    terlepas". Paqar cannot know that accident history is THIS
-                    buyer's most expensive risk — it has not seen the car, and
-                    for many the mileage or the variant matters more. A ranking
-                    claim about a risk nobody has assessed is pressure wearing
-                    the clothes of advice, on the screen where money moves.
-
-                    The add-on is described and priced; that is enough for a
-                    buyer to decide. */}
-
-                {/* Feature chips */}
-                <div className="flex flex-wrap gap-1.5">
-                  {['Own Damage', 'Banjir', 'Windscreen', 'Total Loss'].map(tag => (
-                    <span key={tag} className={`font-body text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                      addJomCheck ? 'bg-[#CCFBF1] text-[#047857]' : 'bg-[#F3F4F6] text-[#9CA3AF]'
-                    }`}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </button>
-        )}
+            It also takes RM117 out of the first price a buyer ever sees.
+            Anchoring the product there, before they have experienced any of
+            it, is a good way to depress the RM29 sale that funds everything. */}
       </form>
     </div>
   )

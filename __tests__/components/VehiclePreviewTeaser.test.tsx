@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup, waitFor } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 const tracked = vi.hoisted(() => ({ ad: [] as Array<{ event: string; opts: unknown }> }))
 
@@ -157,8 +159,9 @@ describe('6. pending and poll-timeout stay distinct', () => {
       'Rekod kenderaan tidak dijumpai',
       'Semakan kenderaan tergendala',
       'Masih diproses',
+      'Nombor plat anda disemak selepas bayaran',
     ]
-    expect(new Set(copy).size).toBe(4)
+    expect(new Set(copy).size).toBe(5)
   })
 })
 
@@ -187,5 +190,59 @@ describe('7. found behaviour is unchanged', () => {
     await screen.findByText('Kenderaan Dijumpai')
     expect(screen.queryByText('Rekod kenderaan tidak dijumpai')).toBeNull()
     expect(screen.queryByText('Semakan kenderaan tergendala')).toBeNull()
+  })
+})
+
+/**
+ * Pre-payment, no lookup is running — and this component spent 24 seconds
+ * pretending one was.
+ *
+ * The RM0.81 provider call moved to the Billplz webhook so a stranger who
+ * never converts costs nothing. Nothing moved this component with it, so on
+ * the checkout screen it polled sixteen times over a lookup that had not
+ * started and then told the buyer "Masih diproses — muat semula halaman ini":
+ * a false progress indicator followed by a false suggestion, immediately above
+ * the pay button, advising a reload that could never produce anything.
+ */
+describe('the pre-payment page does not pretend a lookup is running', () => {
+  const mountDeferred = () =>
+    render(<VehiclePreviewTeaser checkId="ch_1" claimToken="tok" lookupDeferred />)
+
+  it('says what the plate is FOR instead of spinning', async () => {
+    reply({ check: {}, vehiclePreview: null, lookupStatus: null })
+    mountDeferred()
+    expect(await screen.findByText('Nombor plat anda disemak selepas bayaran', {}, { timeout: 4000 })).toBeTruthy()
+  })
+
+  it('never shows the "reload the page" advice, which was the actual lie', async () => {
+    reply({ check: {}, vehiclePreview: null, lookupStatus: null })
+    mountDeferred()
+    await screen.findByText('Nombor plat anda disemak selepas bayaran', {}, { timeout: 4000 })
+    expect(screen.queryByText('Masih diproses')).toBeNull()
+    expect(screen.queryByText('Rekod kenderaan tidak dijumpai')).toBeNull()
+  })
+
+  it('still shows a CACHED vehicle, which is free proof and worth the short wait', async () => {
+    reply({
+      check: {}, lookupStatus: 'found',
+      vehiclePreview: { description: 'Perodua Myvi 1.5', make: 'Perodua', model: 'Myvi', registrationYear: '2019' },
+    })
+    mountDeferred()
+    expect(await screen.findByText(/Perodua Myvi 1\.5/)).toBeTruthy()
+    expect(screen.queryByText('Nombor plat anda disemak selepas bayaran')).toBeNull()
+  })
+
+  it('spends far fewer requests than the old budget', async () => {
+    reply({ check: {}, vehiclePreview: null, lookupStatus: null })
+    mountDeferred()
+    await screen.findByText('Nombor plat anda disemak selepas bayaran', {}, { timeout: 4000 })
+    // 16 polls was the budget for waiting on a real lookup. Three is enough to
+    // read a shared cache, which is the only thing that can answer here.
+    expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(4)
+  })
+
+  it('the unpaid report page is the surface that asks for it', () => {
+    const src = readFileSync(join(__dirname, '..', '..', 'app/laporan-pembeli/[checkId]/page.tsx'), 'utf8')
+    expect(src).toMatch(/<VehiclePreviewTeaser[\s\S]{0,220}lookupDeferred/)
   })
 })

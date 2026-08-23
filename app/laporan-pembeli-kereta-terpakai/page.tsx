@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Nav }                 from '@/components/layout/Nav'
 import { Shell }               from '@/components/layout/Shell'
+import { BASE_REPORT_CENTS, ringgit } from '@/lib/pricing'
 import { ListingIntakeForm }   from '@/components/check/ListingIntakeForm'
 
 export const metadata: Metadata = {
@@ -43,7 +44,7 @@ export default function LaporanPembelihPage() {
         description: 'Laporan Pembeli RM29 merangkumi keputusan harga pasaran, harga tengah dan julat harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
         provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
         areaServed: { '@type': 'Country', name: 'Malaysia' },
-        offers: { '@type': 'Offer', price: '12', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
+        offers: { '@type': 'Offer', price: String(ringgit(BASE_REPORT_CENTS)), priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
       },
       {
         '@type': 'FAQPage',

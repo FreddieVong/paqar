@@ -1,6 +1,6 @@
 'use server'
 
-import { BASE_REPORT_CENTS, COMBINED_CENTS, historyUpgradeAvailable } from '@/lib/pricing'
+import { BASE_REPORT_CENTS, JOMCHECK_UPGRADE_CENTS, historyUpgradeAvailable } from '@/lib/pricing'
 import { createBill, getBill }    from '@/lib/billplz'
 import { resolveOfferForCheck }  from '@/lib/server/offer-for-check'
 import { freezeOfferSnapshot }   from '@/lib/db/offer-snapshots'
@@ -189,7 +189,6 @@ export interface InitiateBuyerReportParams {
   /** Optional. Never validated strictly enough to block a payment. */
   buyerPhone?:       string
   baseUrl:           string
-  addJomCheck?:      boolean
   askingPriceRm?:    number
   claimedMileageKm?: number
   /**
@@ -205,7 +204,7 @@ export interface InitiateBuyerReportParams {
 export async function initiateBuyerReport(
   params: InitiateBuyerReportParams,
 ): Promise<{ error: string | null; billUrl?: string; billId?: string }> {
-  const key = `${params.checkId}|${params.addJomCheck ? 'bundle' : 'base'}`
+  const key = `${params.checkId}|base`
   const running = checkoutInFlight.get(key)
   if (running) return running
 
@@ -296,27 +295,28 @@ async function initiateBuyerReportImpl(
     return { error: OFFER_UNAVAILABLE_MESSAGE }
   }
 
-  // Hoisted above the reuse check: which product the buyer is asking for
-  // decides which bill may be handed back. Pure computation, no side effects.
+  // ── THIS CHECKOUT SELLS ONE PRODUCT ────────────────────────────────────
   //
-  // ── THE ADD-ON NEEDS A PLATE, AND THE BILLER IS WHERE THAT IS DECIDED ──
+  // The RM88 add-on used to be tickable here, gated on `plate_encrypted` being
+  // present. That gate asked whether a plate had been SUPPLIED, not whether it
+  // EXISTS — so "WXY1234" typed into the box passed it, and the buyer was
+  // billed RM117 for a claim search against a registration that resolves to
+  // nothing. Freddie reproduced exactly that.
   //
-  // The claim lookup is keyed on the registration number. There is nothing to
-  // look up without one, and the webhook already knows it: fulfilment fires on
-  // `add_jomcheck && plate`. Nothing enforced the other half. A buyer with no
-  // plate — the default journey since migration 032 — could tick +RM88, be
-  // billed RM117, and have no fulfilment alert raised at all. Money taken, and
-  // then silence, because nobody was ever told to produce anything.
+  // The gate could not be tightened in place, because at checkout the answer
+  // genuinely is not known: the RM0.81 provider call fires AFTER payment, from
+  // the webhook, so a stranger who never converts costs nothing. That ordering
+  // is worth keeping — 531 checks in 30 days at ~0.5% conversion.
   //
-  // Checked HERE rather than only in the checkbox, for the same reason the
-  // availability gate moved server-side: a client cannot be the last word on
-  // what may be charged. Downgrading rather than refusing is deliberate — the
-  // buyer still wants the RM29 report they came for, and losing the sale to
-  // punish a missing optional field helps nobody.
-  const jomcheckEnabled      = historyUpgradeAvailable()
-  const hasPlate             = !!row.check.plate_encrypted
-  const effectiveAddJomCheck = jomcheckEnabled && hasPlate && !!params.addJomCheck
-  const amountCents          = effectiveAddJomCheck ? COMBINED_CENTS : BASE_REPORT_CENTS
+  // So the add-on is sold from the RELEASED report instead
+  // (initiateJomCheckUpgrade, below), where the lookup has already run and
+  // `vehicleData.make` proves the plate resolved. Same money, one step later,
+  // against a vehicle that is known to be real.
+  //
+  // The parameter is GONE rather than ignored. A field a caller may still send
+  // and the server quietly drops is how this comes back: it typechecks, it
+  // reads as supported, and nothing fails until money moves.
+  const amountCents = BASE_REPORT_CENTS
 
   // ONE UNPAID INTENT, ONE PAYABLE BILL.
   //
@@ -366,9 +366,7 @@ async function initiateBuyerReportImpl(
   }
 
   try {
-    const description      = effectiveAddJomCheck
-      ? `Laporan Pembeli + Semakan Accident/Claim - ${params.checkId}`
-      : `Laporan Pembeli Paqar - ${params.checkId}`
+    const description      = `Laporan Pembeli Paqar - ${params.checkId}`
 
     // Dropped silently when unrecognised: Billplz rejects a malformed number
     // and losing the sale to a typo is worse than losing the number.
@@ -394,7 +392,6 @@ async function initiateBuyerReportImpl(
         billplzBillUrl:   bill.url,
         buyerPhone:       mobile,
         amountCents,
-        addJomCheck:      effectiveAddJomCheck,
         askingPriceRm:    params.askingPriceRm,
         claimedMileageKm: params.claimedMileageKm,
       })
@@ -421,7 +418,7 @@ async function initiateBuyerReportImpl(
       billId:        bill.id,
       checkId:       params.checkId,
       buyerReportId: report.id,
-      product:       effectiveAddJomCheck ? 'buyer_report_bundle' : 'buyer_report',
+      product:       'buyer_report',
       amountCents,
       buyerEmail:    params.buyerEmail,
       valuationPath: params.valuationPath ?? null,
@@ -480,6 +477,22 @@ export async function initiateJomCheckUpgrade(params: {
   if (!report || report.status !== 'paid') return { error: 'Laporan belum dibayar' }
   if (report.add_jomcheck) return { error: 'Semakan Accident/Claim sudah ditambah' }
 
+  // ── THE PLATE MUST HAVE RESOLVED, NOT MERELY BEEN TYPED ────────────────────
+  //
+  // This is the check the old checkout could not make, and the whole reason the
+  // add-on is sold from here instead. `plate_encrypted` being set only means a
+  // buyer put SOMETHING in the box — "WXY1234" satisfies it. A make on the
+  // stored lookup means the provider answered with a real registered vehicle,
+  // which is the only state in which an RM88 claim search can return anything.
+  //
+  // Checked server-side as well as in the report UI, for the same reason the
+  // checkout's parameter was deleted rather than ignored: a server action is a
+  // public endpoint, and "the button is not rendered" is not a control.
+  const vehicle = report.vehicleapi_data as Record<string, unknown> | null
+  if (!vehicle?.make) {
+    return { error: 'Kami belum dapat sahkan nombor plat kereta ini, jadi semakan claim tidak boleh dibeli lagi. Hubungi kami jika nombor plat anda betul.' }
+  }
+
   // Send them back to the bill they already have — but only while it can
   // actually still be paid.
   //
@@ -516,7 +529,7 @@ export async function initiateJomCheckUpgrade(params: {
       // again, so the webhook needs investigating. If it was already granted,
       // this is just a second click on a finished purchase.
       reportMoneyPathFailure('upgrade_bill_already_paid_on_retry', {
-        billId: report.upgrade_bill_id, buyerReportId: report.id, amountCents: 8800,
+        billId: report.upgrade_bill_id, buyerReportId: report.id, amountCents: JOMCHECK_UPGRADE_CENTS,
         reason: granted ? 'entitlement granted on retry — webhook was missed' : 'already granted',
       }, granted ? 'error' : 'info')
       return { error: 'Semakan Accident/Claim sudah ditambah' }

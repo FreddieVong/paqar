@@ -8,7 +8,7 @@ import { ServiceShortcuts } from '@/components/home/ServiceShortcuts'
 import { SocialLinks }    from '@/components/layout/SocialLinks'
 import { getCheckCount } from '@/lib/db/checks'
 import { organizationSchema, whatsappUrl } from '@/lib/site'
-import { BASE_REPORT_LABEL, REVIEW_SLA_HOURS, REFUND_WORKING_DAYS } from '@/lib/pricing'
+import { BASE_REPORT_LABEL, BASE_REPORT_CENTS, ringgit, REVIEW_SLA_HOURS, REFUND_WORKING_DAYS } from '@/lib/pricing'
 import { TYPICAL_MINUTES, REVIEW_OPENS_HOUR } from '@/lib/review-capacity'
 
 // Title, description and the social image are inherited from the root layout,
@@ -60,7 +60,7 @@ const homeSchema = {
       description: 'Hantar iklan kereta terpakai yang anda nak beli. Paqar beritahu sama ada patut diteruskan, berapa patut anda tawar, dan apa yang perlu ditanya penjual. Setiap laporan dibaca oleh orang kami — biasanya dalam 30 minit.',
       provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
       areaServed: { '@type': 'Country', name: 'Malaysia' },
-      offers: { '@type': 'Offer', price: '29', priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
+      offers: { '@type': 'Offer', price: String(ringgit(BASE_REPORT_CENTS)), priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
     },
     {
       '@type': 'FAQPage',

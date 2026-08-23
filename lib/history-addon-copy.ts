@@ -28,7 +28,19 @@ import { historyUpgradeAvailable, JOMCHECK_UPGRADE_CENTS, ringgit } from '@/lib/
  *     leaves none
  *   - the mileage in a claim is what was recorded THEN, by an insurer. It is
  *     not a verified odometer reading and can never support an accusation
- *   - it is keyed on the registration number, so it needs a plate
+ *   - it is keyed on the registration number, so it needs a plate — and now,
+ *     a plate that has been CHECKED, not merely typed
+ *
+ * ── WHERE IT IS SOLD, AND WHY THAT CHANGED ─────────────────────────────────
+ *
+ * It used to be a checkbox at checkout, gated on a plate having been supplied.
+ * "WXY1234" satisfied that gate, so a buyer could be billed RM117 for a claim
+ * search against a registration that resolves to nothing. At checkout there is
+ * no way to know better: the RM0.81 lookup deliberately runs after payment.
+ *
+ * So it is sold from inside the RELEASED report, where the lookup has run.
+ * Copy that describes it must say so — a buyer told "+RM88, perlu nombor plat"
+ * will reasonably go looking for a checkbox that is no longer there.
  */
 
 /** True when the add-on may be described as something a buyer can purchase. */
@@ -43,14 +55,14 @@ export const HISTORY_ADDON_LABEL = `+RM${ringgit(JOMCHECK_UPGRADE_CENTS)}`
  */
 export function historyAddOnLimitLine(): string {
   return historyUpgradeAvailable()
-    ? `Rekod tuntutan insurans dijual sebagai tambahan (${HISTORY_ADDON_LABEL}, perlu nombor plat). Tidak semua kemalangan ada rekod tuntutan, dan Paqar tidak mengesahkan bacaan odometer sebenar.`
+    ? `Rekod tuntutan insurans dijual sebagai tambahan (${HISTORY_ADDON_LABEL}), ditambah dari dalam laporan anda selepas nombor plat disahkan. Tidak semua kemalangan ada rekod tuntutan, dan Paqar tidak mengesahkan bacaan odometer sebenar.`
     : 'Paqar tidak menjual rekod tuntutan, dan tidak mengesahkan bacaan odometer sebenar.'
 }
 
 /** A short status line for pages that name the add-on as a product. */
 export function historyAddOnStatusLine(): string {
   return historyUpgradeAvailable()
-    ? `Semakan Accident/Claim Insurans — ${HISTORY_ADDON_LABEL}, perlu nombor plat`
+    ? `Semakan Accident/Claim Insurans — ${HISTORY_ADDON_LABEL}, ditambah dari dalam laporan selepas plat disahkan`
     : 'Semakan Accident/Claim Insurans — belum dibuka'
 }
 
@@ -60,4 +72,5 @@ export const HISTORY_ADDON_LIMITS: readonly string[] = [
   'Rekod tuntutan bersih tidak bermakna kereta tiada isu.',
   'Bacaan meter dalam rekod tuntutan adalah bacaan ketika itu, direkodkan oleh penanggung insurans. Ia bukan pengesahan odometer sebenar.',
   'Semakan ini ikut nombor pendaftaran, jadi kami perlukan nombor plat kereta itu.',
+  'Kami hanya tawarkan semakan ini selepas nombor plat itu disahkan dalam Laporan Pembeli anda — supaya anda tidak bayar untuk carian yang tiada apa-apa untuk dicari.',
 ]

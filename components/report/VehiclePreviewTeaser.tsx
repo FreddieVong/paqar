@@ -16,6 +16,26 @@ const POLL_INTERVAL_MS = 1_500
 const MAX_POLLS        = 16
 
 /**
+ * Pre-payment there is nothing to wait for, so waiting is dishonest.
+ *
+ * The RM0.81 provider call used to fire at intake. It now fires from the
+ * Billplz webhook, AFTER payment — deliberately, because 531 checks a month at
+ * ~0.5% conversion cannot each cost a lookup. Nothing moved this component,
+ * so on the checkout screen it kept spending 24 seconds and 16 requests
+ * spinning "Mencari maklumat kenderaan…" over a lookup that had not started,
+ * then landed on "Masih diproses — muat semula halaman ini untuk menyemak":
+ * a false progress bar and then a false suggestion, at the top of the page
+ * where the buyer is being asked for money, telling them to reload instead of
+ * pay. Reloading forever would never have produced anything.
+ *
+ * A SHORT budget is still worth spending, because the lookup cache is shared:
+ * if this plate was resolved for anyone before, the answer is already there
+ * and free to show. Three polls is enough to read a cache; sixteen is only
+ * enough to wait for something that is not coming.
+ */
+const DEFERRED_POLLS   = 3
+
+/**
  * What the visitor is shown while and after the plate is looked up.
  *
  * Previously this returned null unless a vehicle was found, so a plate with no
@@ -28,10 +48,14 @@ type TeaserState =
   | 'not_found'   // no record for this plate — a VALID outcome, not an error
   | 'error'       // provider timeout / provider error — technical
   | 'timed_out'   // client stopped waiting; the lookup may still land
+  | 'deferred'    // pre-payment: no lookup is running, and none will run yet
 
 const CARD = 'rounded-[14px] p-4 border'
 
-export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string; claimToken: string }) {
+export function VehiclePreviewTeaser(
+  { checkId, claimToken, lookupDeferred = false }:
+  { checkId: string; claimToken: string; lookupDeferred?: boolean },
+) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [preview, setPreview] = useState<VehiclePreview | null>(null)
@@ -109,8 +133,18 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
         }
       } catch { /* best-effort */ }
 
-      if (polls < MAX_POLLS) {
+      const budget = lookupDeferred ? DEFERRED_POLLS : MAX_POLLS
+      if (polls < budget) {
         setTimeout(poll, POLL_INTERVAL_MS)
+      } else if (lookupDeferred) {
+        // Not a timeout. Nothing was running, so nothing failed — and the
+        // buyer is told what the plate is actually FOR, which is the reason
+        // the field is on the form at all.
+        setState('deferred')
+        if (!trackedRef.current) {
+          trackedRef.current = true
+          analytics.teaserShown({ has_vehicle: false })
+        }
       } else {
         setState('timed_out')
         if (!trackedRef.current) {
@@ -127,7 +161,7 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
 
     void poll()
     return () => { stopped = true }
-  }, [checkId, claimToken, pathname, searchParams])
+  }, [checkId, claimToken, pathname, searchParams, lookupDeferred])
 
   if (state === 'searching') {
     return (
@@ -138,6 +172,21 @@ export function VehiclePreviewTeaser({ checkId, claimToken }: { checkId: string;
             Mencari maklumat kenderaan…
           </p>
         </div>
+      </div>
+    )
+  }
+
+  if (state === 'deferred') {
+    return (
+      <div className={`${CARD} bg-[#F4F6F0] border-[#CBD4BB]`} aria-live="polite">
+        <p className="font-heading font-extrabold text-[15px] text-[#111827] leading-tight mb-1">
+          Nombor plat anda disemak selepas bayaran
+        </p>
+        <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
+          Kami tarik rekod pendaftaran rasmi — tahun daftar, enjin, jenis badan
+          dan nombor rangka — dan bandingkan dengan apa yang penjual iklankan.
+          Kalau tak sepadan, ia ada dalam laporan anda.
+        </p>
       </div>
     )
   }

@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { FakeSupabase } from '../helpers/fake-supabase'
 
@@ -134,10 +136,18 @@ describe('no offer means no charge — and it fails closed', () => {
   })
 })
 
-describe('the RM100 bundle is gated too', () => {
-  it('refuses the bundle when no offer exists', async () => {
+describe('the bundle cannot be requested from this checkout at all', () => {
+  it('does not accept an add-on flag, so it cannot bill for one', async () => {
+    // Removed rather than ignored: a parameter the server silently drops still
+    // typechecks and still reads as supported at the call site. The add-on is
+    // sold from the released report now, where the plate is known to resolve.
+    const src = readFileSync(join(__dirname, '..', '..', 'app/laporan-pembeli/[checkId]/_actions.ts'), 'utf8')
+    const iface = src.slice(src.indexOf('interface InitiateBuyerReportParams'),
+                            src.indexOf('export async function initiateBuyerReport'))
+    expect(iface).not.toContain('addJomCheck')
+
     resolveOfferForCheck.mockResolvedValue({ status: 'resolved', offer: { available: false, reason: 'mixed_variants' } })
-    const r = await initiateBuyerReport({ ...BASE, addJomCheck: true })
+    const r = await initiateBuyerReport({ ...BASE })
     expect(r.error).toBeTruthy()
     expect(createBill).not.toHaveBeenCalled()
   })
