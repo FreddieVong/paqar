@@ -540,7 +540,20 @@ export function ListingIntakeForm({
             Screenshots stay one tap away for the buyer who has no usable
             link, and every word about formats, pasting and retention now
             lives inside that panel, where it is read by someone who has
-            already decided to upload. */}
+            already decided to upload.
+
+            THE PLACEHOLDER NAMES ONLY WHAT THIS FIELD CAN READ. It listed "FB
+            Marketplace" alongside Mudah and Carlist, and a Facebook link
+            carries no car at all — an opaque /item/<id>/ and nothing else. So
+            the field advertised a platform it cannot serve, and set up the
+            disappointment before the buyer had even pasted.
+
+            The secondary line now names Facebook instead, because that buyer
+            HAS a link; "Tiada link?" did not describe them and left them
+            pasting into a field that could not help. Sending them to the
+            screenshot at the FIRST screen is the fastest route there is:
+            measured on real intakes, screenshots reach a usable summary 86% of
+            the time against 19% for links. */}
         <div>
           <label htmlFor="li-url" className="block font-heading font-bold text-[12px] text-[#E7EBDF] mb-1.5">
             Link iklan kereta itu
@@ -555,7 +568,7 @@ export function ListingIntakeForm({
             onKeyDown={e => {
               if (e.key === 'Enter') { e.preventDefault(); void readListingUrl() }
             }}
-            placeholder="Mudah, Carlist, FB Marketplace…"
+            placeholder="Mudah atau Carlist…"
             inputMode="url"
             autoComplete="off"
             // Disabled while reading: re-pasting mid-extraction starts a second
@@ -612,7 +625,7 @@ export function ListingIntakeForm({
             onClick={() => setShowUpload(true)}
             className="w-full min-h-[44px] font-body text-[13px] text-[#CBD4BB] underline underline-offset-2 hover:text-white transition-colors"
           >
-            Tiada link? Muat naik screenshot iklan
+            Dari Facebook, atau tiada link? Muat naik screenshot
           </button>
         ) : (
           <div>

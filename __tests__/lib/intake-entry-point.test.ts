@@ -75,7 +75,16 @@ describe('pasting a link starts something the buyer can see', () => {
     // form was a wall of text he had to read before he could act, and he was
     // right. The same promise is now made by the PLACEHOLDER, which names the
     // platforms instead of describing them, and is read without effort.
-    expect(FORM).toContain('Mudah, Carlist, Facebook Marketplace')
+    // ONLY WHAT THIS FIELD CAN READ. It named "FB Marketplace" too, and a
+    // Facebook link carries no car — an opaque /item/<id>/ and nothing else.
+    // Advertising a platform the field cannot serve sets up the
+    // disappointment before the buyer has pasted anything.
+    expect(FORM).toContain('Mudah atau Carlist')
+    expect(FORM, 'the link field advertises Facebook again')
+      .not.toMatch(/placeholder="[^"]*(?:FB|Facebook)/)
+    // And the buyer who HAS a Facebook link is routed to the screenshot at the
+    // first screen rather than after a failed paste.
+    expect(FORM).toContain('Dari Facebook, atau tiada link?')
 
     // "A human opens it" is the half that makes ANY platform work, and it is
     // the thing an automated competitor cannot match — so it is still stated.
