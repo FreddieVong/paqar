@@ -796,8 +796,20 @@ export function ListingIntakeForm({
                 <p className="font-heading font-bold text-[14px] text-[#15803D] mb-1">
                   ✓ Paqar boleh semak {coverage.modelLabel}
                 </p>
+                {/* WHAT THEY GET, NOT WHAT WE HOLD.
+                    This read "Kami jumpa cukup iklan setanding untuk buat
+                    keputusan tentang unit ini" — Paqar describing its own
+                    sample. lib/coverage withholds the comparable COUNT for
+                    exactly that reason: it describes Paqar's sample rather
+                    than the buyer's car and invites auditing the sample
+                    instead of acting on the answer. Naming the sample without
+                    a number is the same move with the number filed off.
+
+                    "apa patut buat" is the hero's own verb, so the promise
+                    made here is worded the same as the promise made at the
+                    top of the page and delivered in the report. */}
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                  Kami jumpa cukup iklan setanding untuk buat keputusan tentang unit ini.
+                  Kami boleh beritahu anda apa patut buat dengan unit ini.
                 </p>
               </div>
 

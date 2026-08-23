@@ -185,10 +185,9 @@ export function CoverageSignal({
         </span>
       </div>
       <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-        Kami jumpa cukup iklan setanding untuk{' '}
-        <strong className="font-heading font-bold text-[#111827]">{data.modelLabel}</strong>,
-        jadi kami boleh bandingkan harga yang penjual minta dan beritahu anda apa
-        patut buat.
+        Kami ada cukup maklumat untuk{' '}
+        <strong className="font-heading font-bold text-[#111827]">{data.modelLabel}</strong>{' '}
+        &mdash; kami boleh beritahu anda apa patut buat dengan unit ini.
       </p>
       {/* THE CORRECTION INVITATION, AND IT MUST BE ACTIONABLE.
           It first read "Betulkan butiran sebelum bayar" with nothing to click:
