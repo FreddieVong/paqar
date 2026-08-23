@@ -89,6 +89,8 @@ export function ListingIntakeForm({
    */
   const [dirty,      setDirty]      = useState(false)
   const [editing,    setEditing]    = useState(false)
+  /** Set when extraction found everything; the effect below skips the tap. */
+  const [autoCover,  setAutoCover]  = useState(false)
   const [coverage,   setCoverage]   = useState<Coverage | null>(null)
   // The link was a results page, not one advert. Not an error state — the
   // buyer pasted the page they were looking at.
@@ -165,6 +167,22 @@ export function ListingIntakeForm({
       if (j.summary.year.value)  setYear(String(j.summary.year.value))
       if (j.summary.askingPriceRm.value) setPrice(String(j.summary.askingPriceRm.value))
       setPhase('summary')
+      // ── ONE SCREEN, NOT TWO ──────────────────────────────────────────
+      // When extraction produced all four fields, the summary screen was a
+      // confirmation and a tap: it showed the car, showed the asking price,
+      // and asked the buyer to press a button to see the same car again on
+      // the next screen. A step that only repeats itself is a step to remove,
+      // and at 0.56% conversion every one of them is expensive.
+      //
+      // It is NOT removed when a field is missing. Then the screen is not a
+      // confirmation, it is where the buyer types the thing we could not read,
+      // and skipping it would mean asking for a price on the paywall instead.
+      //
+      // Deferred to an effect rather than called here: this callback is
+      // memoised with no dependencies, so calling checkCoverage from inside it
+      // would capture the first render's listingUrl — empty — and lose the
+      // recon/used market signal the URL carries.
+      if (j.ready) setAutoCover(true)
       setStatus(null)
     } catch {
       setPhase('start'); setStatus(null)
@@ -271,6 +289,21 @@ export function ListingIntakeForm({
     // component would fail at exactly the moment it has an answer to show.
     summaryRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
   }, [phase])
+
+  /**
+   * Skip the confirmation tap when there is nothing to confirm.
+   *
+   * Runs from an effect so it reads the CURRENT listingUrl — the extract
+   * callback is memoised with no dependencies and would hand coverage an empty
+   * URL, losing the recon/used signal. Clears its own flag first so a
+   * re-render cannot fire it twice.
+   */
+  useEffect(() => {
+    if (!autoCover || phase !== 'summary' || !summaryState) return
+    setAutoCover(false)
+    void checkCoverage(summaryState)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCover, phase, summaryState])
 
   /** Apply the buyer's corrections and re-merge. */
   /** Returns the re-merged summary, or null if the save failed. */
@@ -811,7 +844,25 @@ export function ListingIntakeForm({
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                   Kami boleh beritahu anda apa patut buat dengan unit ini.
                 </p>
-              </div>
+                              {/* THE CORRECTION GUARD, CARRIED OVER.
+                    Skipping the confirmation screen must not skip the CHANCE
+                    to correct. Silently analysing the wrong car is the failure
+                    this experiment most needs to avoid, and showing the match
+                    with a way to fix it is the cheapest guard there is — the
+                    buyer corrects us for free.
+
+                    Sends them back to the summary rather than editing in
+                    place: that screen already owns the fields and the save,
+                    and a second edit surface would be a second thing to keep
+                    right. */}
+                <button
+                  type="button"
+                  onClick={() => { setEditing(true); setPhase('summary') }}
+                  className="font-body text-[12px] text-[#3D472F] underline underline-offset-2 hover:text-[#2E3523] mt-2 min-h-[44px]"
+                >
+                  Maklumat salah? Ubah
+                </button>
+</div>
 
               <div>
                 {/* MOTIVATE THE PLATE, do not merely permit it.
@@ -870,6 +921,16 @@ export function ListingIntakeForm({
                 Kami belum jumpa cukup iklan setanding untuk model dan tahun ini,
                 jadi kami tidak jual keputusan yang tidak dapat kami sokong.
               </p>
+              {/* A refusal about the WRONG car is the worst form of this
+                  failure: the buyer leaves believing Paqar cannot help, when
+                  in fact Paqar read the wrong model. */}
+              <button
+                type="button"
+                onClick={() => { setEditing(true); setPhase('summary') }}
+                className="font-body text-[12px] text-[#3D472F] underline underline-offset-2 hover:text-[#2E3523] mt-2 min-h-[44px]"
+              >
+                Maklumat salah? Ubah
+              </button>
 
               {/* A REFUSAL WAS A DEAD END.
                   The buyer got this box and nothing else — no next step, no way

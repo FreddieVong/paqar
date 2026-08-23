@@ -204,9 +204,7 @@ describe('coverage', () => {
   it('shows capability only — never a verdict, median or range', async () => {
     render(<ListingIntakeForm />)
     uploadScreenshot()
-    await screen.findByText(/Paqar akan semak/i, undefined, { timeout: 5000 })
-
-    fireEvent.click(screen.getByRole('button', { name: /Semak kereta ini/i }))
+    // No tap: a complete extraction goes straight to coverage.
     await screen.findByText(/Paqar boleh semak/i, undefined, { timeout: 5000 })
 
     const body = document.body.textContent ?? ''
@@ -219,9 +217,6 @@ describe('coverage', () => {
     routes['/api/price-check'] = { eligible: false, modelLabel: 'Honda City 2019' }
     render(<ListingIntakeForm />)
     uploadScreenshot()
-    await screen.findByText(/Paqar akan semak/i, undefined, { timeout: 5000 })
-
-    fireEvent.click(screen.getByRole('button', { name: /Semak kereta ini/i }))
     await screen.findByText(/belum boleh bantu/i, undefined, { timeout: 5000 })
     expect(screen.queryByText(/Dapatkan keputusan/i)).toBeNull()
   })
@@ -232,8 +227,7 @@ describe('the price sits above the pay button', () => {
     routes['/convert'] = { checkId: 'ch_1', claimToken: 'ct_1' }
     render(<ListingIntakeForm />)
     uploadScreenshot()
-    await screen.findByText(/Paqar akan semak/i, undefined, { timeout: 5000 })
-    fireEvent.click(screen.getByRole('button', { name: /Semak kereta ini/i }))
+    await screen.findByText(/Paqar boleh semak/i, undefined, { timeout: 5000 })
     await screen.findByText(/Paqar boleh semak/i, undefined, { timeout: 5000 })
 
     expect(screen.getAllByText(/Seller minta RM55,000/).length).toBeGreaterThan(0)
@@ -300,8 +294,13 @@ describe('uploading a screenshot', () => {
     fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement,
       { target: { files: [file()] } })
 
-    await screen.findByText(/Paqar akan semak/i, undefined, { timeout: 5000 })
-    expect(screen.getByText(/Honda · City · 2019/)).toBeTruthy()
+    // The car must be NAMED before payment, wherever the flow lands — that is
+    // the guard against silently analysing the wrong model. With a complete
+    // extraction it now lands on coverage, which names it in the heading.
+    await screen.findByText(/Paqar boleh semak/i, undefined, { timeout: 5000 })
+    expect(screen.getByText(/Honda City 2019/)).toBeTruthy()
+    // And the correction is still one tap away.
+    expect(screen.getByRole('button', { name: /Maklumat salah/i })).toBeTruthy()
   })
 
   it('never shows storage or HTTP language when an upload fails', async () => {
@@ -448,5 +447,47 @@ describe('one obvious action', () => {
     expect(screen.queryByText(/skrin berlainan/i)).toBeNull()
     fireEvent.click(screen.getByText(/Tiada link\? Muat naik screenshot/i))
     expect(screen.getByText(/skrin berlainan/i)).toBeTruthy()
+  })
+})
+
+/**
+ * The confirmation screen showed the car, showed the asking price, and asked
+ * for a tap to see the same car again on the next screen. A step that only
+ * repeats itself is a step to remove — at 0.56% conversion each one is
+ * expensive. But removing it must not remove the CHANCE TO CORRECT, which was
+ * that screen's real job.
+ */
+describe('one screen when there is nothing to confirm', () => {
+  it('goes straight to coverage when extraction found everything', async () => {
+    render(<ListingIntakeForm />)
+    uploadScreenshot()
+    await screen.findByText(/Paqar boleh semak/i, undefined, { timeout: 5000 })
+    // The intermediate tap is gone.
+    expect(screen.queryByRole('button', { name: /^Semak kereta ini/i })).toBeNull()
+  })
+
+  it('still lets the buyer correct a wrong match, from coverage', async () => {
+    render(<ListingIntakeForm />)
+    uploadScreenshot()
+    await screen.findByText(/Paqar boleh semak/i, undefined, { timeout: 5000 })
+
+    fireEvent.click(screen.getByRole('button', { name: /Maklumat salah/i }))
+    // Back on the summary, with the fields open and a way to re-check.
+    await waitFor(() => expect(screen.getByLabelText(/Jenama/i)).toBeTruthy())
+    expect(screen.getByRole('button', { name: /Semak kereta ini/i })).toBeTruthy()
+  })
+
+  it('keeps the confirmation step when a field is missing', async () => {
+    // Then the screen is not a confirmation — it is where the buyer types the
+    // thing we could not read, and skipping it would move that to the paywall.
+    routes['/extract'] = {
+      summary: { ...SUMMARY, askingPriceRm: { value: null, status: 'missing', provenance: null } },
+      ready: false, needScreenshots: false, ocrUnavailable: false,
+    }
+    render(<ListingIntakeForm />)
+    uploadScreenshot()
+    await waitFor(() => expect(screen.getByLabelText(/Harga yang penjual minta/i)).toBeTruthy(),
+      { timeout: 5000 })
+    expect(screen.queryByText(/Paqar boleh semak/i)).toBeNull()
   })
 })
