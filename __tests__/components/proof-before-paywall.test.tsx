@@ -82,7 +82,10 @@ const COVERED   = { state: 'covered',           modelLabel: 'Perodua Myvi 2020' 
 const TOO_THIN  = { state: 'insufficient_data', modelLabel: 'Perodua Myvi 2020' }
 
 /** The copy that means "a truthful answer is on screen". */
-const COVERED_TEXT = /Paqar boleh semak kereta ini/i
+// Was the pill's wording. The pill is gone — it repeated the sentence under
+// it, which says the same thing AND names the car. The sentence is now the
+// signal that a truthful answer is on screen.
+const COVERED_TEXT = /Kami ada cukup maklumat untuk/i
 const SPINNER_TEXT = /Sedang semak iklan setanding/i
 
 beforeEach(() => { trackAdEvent.mockClear(); posthog.mockClear() })

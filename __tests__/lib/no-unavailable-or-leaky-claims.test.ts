@@ -234,3 +234,44 @@ describe('one car, not a page of cars', () => {
     expect(isSearchPage('https://dealer.example/anything', one)).toBe(false)
   })
 })
+
+describe('the payment screen claims only what Paqar has', () => {
+  const paywall = ['components/report/LockedReportPreview.tsx', 'components/report/PaymentForm.tsx']
+    .map(p => ({ path: p, text: visibleCopy(readFileSync(join(ROOT, p), 'utf8')) }))
+
+  /**
+   * "Harga sebenar kereta serupa yang DIJUAL di Malaysia sekarang" sat on the
+   * page where money changes hands, contradicting its own row title. Paqar
+   * reads adverts — what sellers are asking, never what anyone paid — and that
+   * distinction is the whole basis of the negotiation target it sells.
+   */
+  it('never calls an advertised price a sale price', () => {
+    for (const f of paywall) {
+      expect(/harga sebenar[^.]{0,40}dijual/i.test(f.text), `${f.path} claims sale prices`).toBe(false)
+      expect(/harga jualan sebenar/i.test(f.text), `${f.path} claims sale prices`).toBe(false)
+    }
+  })
+
+  /**
+   * "Paling disyorkan — risiko paling mahal kalau terlepas" ranked a risk
+   * nobody has assessed. Paqar has not seen the car; for many buyers the
+   * mileage or the variant matters more than claim history.
+   */
+  it('ranks no risk it has not assessed', () => {
+    for (const f of paywall) {
+      expect(/risiko paling mahal/i.test(f.text), `${f.path} ranks an unassessed risk`).toBe(false)
+      expect(/[Pp]aling disyorkan/.test(f.text), `${f.path} badges an upsell as recommended`).toBe(false)
+    }
+  })
+
+  /**
+   * The typical time and the guaranteed time are 48x apart. Stated in separate
+   * blocks they read as two conflicting promises; stated together, the second
+   * is the floor under the first.
+   */
+  it('states the typical time and the guarantee together, not apart', () => {
+    const src = readFileSync(join(ROOT, 'components/report/LockedReportPreview.tsx'), 'utf8')
+    expect(src).toContain('TYPICAL_MINUTES')
+    expect(src).toContain('REVIEW_SLA_HOURS')
+  })
+})

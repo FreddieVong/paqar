@@ -453,12 +453,16 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
                   odometer semasa. Semak sebelum bayar deposit.
                 </p>
 
-                {/* Recommended badge */}
-                <span className={`inline-block font-heading font-bold text-[10px] px-2 py-0.5 rounded-full mb-2 ${
-                  addJomCheck ? 'bg-[#CCFBF1] text-[#047857]' : 'bg-[#FEF2F2] text-[#B91C1C]'
-                }`}>
-                  Paling disyorkan — risiko paling mahal kalau terlepas
-                </span>
+                {/* NO "PALING DISYORKAN" BADGE.
+                    It read "Paling disyorkan — risiko paling mahal kalau
+                    terlepas". Paqar cannot know that accident history is THIS
+                    buyer's most expensive risk — it has not seen the car, and
+                    for many the mileage or the variant matters more. A ranking
+                    claim about a risk nobody has assessed is pressure wearing
+                    the clothes of advice, on the screen where money moves.
+
+                    The add-on is described and priced; that is enough for a
+                    buyer to decide. */}
 
                 {/* Feature chips */}
                 <div className="flex flex-wrap gap-1.5">

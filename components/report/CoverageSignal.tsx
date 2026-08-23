@@ -178,13 +178,13 @@ export function CoverageSignal({
 
   return (
     <div className="bg-white border border-[#BBF7D0] rounded-[14px] p-5">
-      <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.5 mb-3">
-        <span className="w-2 h-2 bg-[#16A34A] rounded-full" />
-        <span className="font-heading font-bold text-[12px] text-[#15803D]">
-          Paqar boleh semak kereta ini
-        </span>
-      </div>
-      <p className="font-body text-[13px] text-[#374151] leading-relaxed">
+      {/* THE PILL IS GONE. It said "Paqar boleh semak kereta ini"; the sentence
+          directly under it says the same thing AND names the car. Three lines
+          into the page the buyer had already been told the car's name twice
+          (the heading, then this) and the capability twice (the pill, then the
+          sentence). Removing the pill loses nothing and takes a line off the
+          most crowded screen in the funnel. */}
+      <p className="font-body text-[14px] text-[#374151] leading-relaxed">
         Kami ada cukup maklumat untuk{' '}
         <strong className="font-heading font-bold text-[#111827]">{data.modelLabel}</strong>{' '}
         &mdash; kami boleh beritahu anda apa patut buat dengan unit ini.

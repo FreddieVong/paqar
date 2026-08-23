@@ -1,4 +1,5 @@
 import { BASE_REPORT_LABEL } from '@/lib/pricing'
+import { REVIEW_SLA_HOURS } from '@/lib/report-release'
 import { TYPICAL_MINUTES } from '@/lib/review-capacity'
 
 /**
@@ -42,8 +43,13 @@ const REGISTRATION: Row = {
 
 const LOCKED_SECTIONS: Row[] = [
   {
+    // "Harga sebenar ... yang DIJUAL" was false, and it contradicted this row's
+    // own title. Paqar reads ADVERTS: what sellers are asking today, not what
+    // anyone paid. The distinction is the whole basis of a negotiation target,
+    // and claiming sale prices on the page where money changes hands is the
+    // one place it cannot be a loose phrase.
     title: 'Harga iklan setanding',
-    desc:  'Harga sebenar kereta serupa yang dijual di Malaysia sekarang, bukan anggaran.',
+    desc:  'Harga yang penjual lain minta untuk kereta serupa sekarang — nombor sebenar dari iklan, bukan anggaran.',
   },
   {
     // The three commodity sections, collapsed into one row on purpose. They are
@@ -82,7 +88,8 @@ export function LockedReportPreview({ hasPlate = false }: { hasPlate?: boolean }
           </p>
           <p className="font-body text-[12px] text-[#4B5563] leading-relaxed mt-0.5">
             Bukan jawapan auto. Kami buka iklan yang anda hantar, semak varian dan
-            tahun kereta itu, dan hantar keputusan &mdash; biasanya dalam {TYPICAL_MINUTES} minit.
+            tahun kereta itu, dan hantar keputusan &mdash; biasanya dalam{' '}
+            {TYPICAL_MINUTES} minit, dijamin dalam {REVIEW_SLA_HOURS} jam.
           </p>
         </div>
       </div>
