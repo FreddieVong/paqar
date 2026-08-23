@@ -404,6 +404,8 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                 <PaymentForm
                   checkId={params.checkId}
                   claimToken={claimToken}
+                  // The SAME gate that decides what is billed and fulfilled.
+                  historyAddOnAvailable={historyUpgradeAvailable()}
                   valuationPath="plate_report"
                   defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
                   defaultMileageKm={intakeMileageKm ?? undefined}
@@ -420,6 +422,8 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                 <PaymentForm
                   checkId={params.checkId}
                   claimToken={claimToken}
+                  // The SAME gate that decides what is billed and fulfilled.
+                  historyAddOnAvailable={historyUpgradeAvailable()}
                   valuationPath="plate_report"
                   defaultAskingPrice={searchParams.asking_price ? parseInt(searchParams.asking_price, 10) : undefined}
                   defaultMileageKm={intakeMileageKm ?? undefined}

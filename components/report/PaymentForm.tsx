@@ -6,14 +6,34 @@ import { analytics }               from '@/lib/analytics'
 import { checkoutEventId }        from '@/lib/checkout-event-id'
 import { trackAdEvent, type ValuationPathKey } from '@/lib/meta-events'
 import { whatsappUrl }         from '@/lib/site'
-import { BASE_REPORT_CENTS, COMBINED_CENTS, BASE_REPORT_LABEL, ringgit, REVIEW_SLA_HOURS, REFUND_GUARANTEE_SHORT, HISTORY_UPGRADE_OPERATIONAL } from '@/lib/pricing'
+import { BASE_REPORT_CENTS, COMBINED_CENTS, BASE_REPORT_LABEL, ringgit, REVIEW_SLA_HOURS, REFUND_GUARANTEE_SHORT } from '@/lib/pricing'
 
-// BOTH gates. HISTORY_UPGRADE_OPERATIONAL is false until the second human
-// review that the add-on promises actually exists — see lib/pricing.
-const JOMCHECK_ENABLED =
-  HISTORY_UPGRADE_OPERATIONAL && process.env.NEXT_PUBLIC_JOMCHECK_ENABLED === 'true'
+// ── ONE GATE, PASSED IN ────────────────────────────────────────────────────
+//
+// This computed its own availability from NEXT_PUBLIC_JOMCHECK_ENABLED while
+// the server used JOMCHECK_ENABLED. Two variables, free to disagree — and in
+// production they did: the checkout offered the "+RM88" add-on, and the
+// server-side gate that decides what is actually billed and fulfilled said the
+// add-on was off.
+//
+// Nobody was overcharged; _actions bills the base price when its own gate is
+// shut. The failure was quieter than that. A buyer who deliberately ticked the
+// box asking for claim records was charged RM29, told nothing, and received no
+// records — their opt-in silently discarded.
+//
+// A client component cannot read a server-only variable, so the fix is not a
+// third check here: availability is decided once, server-side, by the same
+// historyUpgradeAvailable() that governs billing and fulfilment, and handed
+// down as a prop. Divergence stops being possible rather than being unlikely.
 
 interface Props {
+  /**
+   * Whether the accident/claim add-on may be offered AT ALL. Computed by the
+   * server with historyUpgradeAvailable() — the same function that decides
+   * what gets billed and fulfilled — so the checkbox cannot promise something
+   * the billing path will drop.
+   */
+  historyAddOnAvailable?: boolean
   checkId:             string
   claimToken:          string
   defaultAskingPrice?: number
@@ -29,7 +49,7 @@ interface Props {
   valuationPath:       ValuationPathKey
 }
 
-export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMileageKm, valuationPath }: Props) {
+export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMileageKm, valuationPath, historyAddOnAvailable = false }: Props) {
   const [email,        setEmail]        = useState('')
   const [phone,        setPhone]        = useState('')
   const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
@@ -395,7 +415,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             Below the button it is still discoverable and still one tap, but it
             no longer interrupts the purchase the buyer came to make. */}
         {/* JomCheck add-on — only shown when feature flag is enabled */}
-        {JOMCHECK_ENABLED && (
+        {historyAddOnAvailable && (
           <button
             type="button"
             onClick={() => setAddJomCheck(v => !v)}

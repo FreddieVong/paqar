@@ -119,6 +119,38 @@ describe('the total always equals its parts', () => {
   })
 })
 
+/**
+ * The checkout and the biller must agree about whether the add-on exists.
+ *
+ * PaymentForm computed its own availability from NEXT_PUBLIC_JOMCHECK_ENABLED
+ * while the server used JOMCHECK_ENABLED. In production they disagreed: the
+ * checkout showed the "+RM88" checkbox, and the server gate that decides what
+ * is billed and fulfilled was shut. A buyer who ticked it was charged the base
+ * price, told nothing, and got no claim records — their opt-in discarded in
+ * silence.
+ */
+describe('one gate decides the add-on, not two', () => {
+  const form = readFileSync(join(ROOT, 'components/report/PaymentForm.tsx'), 'utf8')
+
+  it('the checkout reads no environment variable of its own', () => {
+    expect(code(form), 'PaymentForm decides availability for itself again')
+      .not.toMatch(/process\.env\.[A-Z_]*JOMCHECK/)
+  })
+
+  it('it is told by the server instead', () => {
+    expect(form).toContain('historyAddOnAvailable')
+  })
+
+  it('and the server tells it with the same function that bills', () => {
+    const page = readFileSync(join(ROOT, 'app/laporan-pembeli/[checkId]/page.tsx'), 'utf8')
+    expect(page).toMatch(/historyAddOnAvailable=\{historyUpgradeAvailable\(\)\}/)
+
+    const actions = readFileSync(join(ROOT, 'app/laporan-pembeli/[checkId]/_actions.ts'), 'utf8')
+    expect(actions, 'billing uses a different gate from the checkout')
+      .toContain('historyUpgradeAvailable()')
+  })
+})
+
 describe('the history add-on cannot be sold while undeliverable', () => {
   /**
    * The invariant was never "the add-on is off" — it is "the add-on is on only
