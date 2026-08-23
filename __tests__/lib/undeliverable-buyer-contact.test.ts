@@ -121,7 +121,24 @@ describe('the waiting screen promises only channels that exist', () => {
       return src.split('\n').some(line => {
         if (/seller|penjual/i.test(line)) return false          // buyer → seller
         if (/WhatsApp dan e-?mel|e-?mel dan WhatsApp/i.test(line)) return true
-        return /(hantar|dihantar)[^\n]{0,60}melalui WhatsApp/i.test(line)
+
+        // DIRECTION IS THE WHOLE POINT, and the first version of this rule
+        // could not see it. What must never appear is PAQAR promising to
+        // deliver something over WhatsApp, because nothing in this codebase
+        // sends one. A buyer being invited to message US is the opposite: a
+        // wa.me link that genuinely works, and the only recovery route a
+        // buyer has when a screenshot upload fails.
+        //
+        //   flagged  "Kami menghantar laporan melalui WhatsApp"   (we send)
+        //   flagged  "Laporan dihantar melalui WhatsApp"          (passive)
+        //   allowed  "Hantar screenshot melalui WhatsApp"         (you send)
+        if (/dihantar[^\n]{0,60}melalui WhatsApp/i.test(line)) return true
+        // "kami" must be the SUBJECT of the sending, not merely present in the
+        // line. "Sistem kami ada masalah sekejap. Cuba lagi, atau hantar
+        // melalui WhatsApp" is an instruction to the buyer with "kami"
+        // belonging to a different clause; at most two words may sit between
+        // the pronoun and the verb ("Kami juga menghantar ...").
+        return /\bkami\b(?:\s+\w+){0,2}\s+(?:meng)?hantar[^\n]{0,40}melalui WhatsApp/i.test(line)
       })
     })
     expect(offenders, 'these promise a WhatsApp message nothing sends').toEqual([])

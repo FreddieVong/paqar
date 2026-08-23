@@ -1,5 +1,6 @@
 'use client'
 
+import { whatsappUrl } from '@/lib/site'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
@@ -33,6 +34,22 @@ const LONG_EDGE = 1600
 const QUALITY   = 0.82
 /** Below this, re-encoding costs quality and saves nothing. */
 const SKIP_COMPRESSION_BELOW = 400 * 1024
+
+/**
+ * The largest body this upload may send.
+ *
+ * lib/image-validation caps at 8MB, which the SERVER can honour — but the
+ * platform's serverless request-body limit is 4.5MB and it is enforced before
+ * any of our code runs. A screenshot in that gap was accepted by the client,
+ * killed mid-flight, and surfaced as `fetch` rejecting: the generic "Muat naik
+ * gagal. Cuba lagi." with no size mentioned and nothing the buyer could act on.
+ *
+ * Held below the platform ceiling so a rejection is OURS to explain. Almost
+ * nothing reaches it — compress() puts a phone screenshot well under 1MB — but
+ * compression falls back to the original file whenever the browser cannot
+ * decode the image, and that is exactly when the file is largest.
+ */
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
 
 async function compress(file: File): Promise<Blob> {
   if (file.size <= SKIP_COMPRESSION_BELOW) return file
@@ -100,9 +117,22 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
     let latest   = count
     try {
       for (const file of files.slice(0, room)) {
+        const payload = await compress(file)
+
+        // CHECKED AFTER COMPRESSION, and named. compress() returns the ORIGINAL
+        // whenever the browser cannot decode the image, so this is the case
+        // that used to sail past the client and die at the platform.
+        if (payload.size > MAX_UPLOAD_BYTES) {
+          setError(
+            `Gambar ini terlalu besar (${(payload.size / 1024 / 1024).toFixed(1)}MB). ` +
+            `Maksimum 4MB — cuba screenshot semula, atau hantar melalui WhatsApp.`,
+          )
+          break
+        }
+
         const body = new FormData()
         body.append('intakeId', owner.id)
-        body.append('file', await compress(file), 'screenshot')
+        body.append('file', payload, 'screenshot')
 
         const res = await fetch('/api/listing-screenshots', {
           method:  'POST',
@@ -112,7 +142,15 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
           body,
         })
         const json = await res.json().catch(() => ({})) as { error?: string; count?: number }
-        if (!res.ok) { setError(json.error ?? 'Gambar ini tidak dapat dibaca.'); break }
+        if (!res.ok) {
+          // The server's own words when it has any; otherwise name the status,
+          // because "tidak dapat dibaca" blamed the buyer's picture for a 429
+          // or a 500 that had nothing to do with it.
+          setError(json.error ?? (res.status >= 500
+            ? 'Sistem kami ada masalah sekejap. Cuba lagi, atau hantar melalui WhatsApp.'
+            : 'Gambar ini tidak dapat dibaca. Cuba PNG atau JPG.'))
+          break
+        }
         if (typeof json.count === 'number') { setCount(json.count); latest = json.count }
         uploaded++
       }
@@ -127,7 +165,14 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
       // them together can reconcile them.
       if (uploaded > 0) onUploaded(latest)
     } catch {
-      setError('Muat naik gagal. Cuba lagi.')
+      // Reached when the request never completes: no signal, a dropped 4G
+      // connection, or a body the platform closed on. Say which of those the
+      // buyer can do something about instead of "cuba lagi".
+      setError(
+        navigator.onLine === false
+          ? 'Tiada sambungan internet. Cuba lagi bila ada talian.'
+          : 'Muat naik terputus. Cuba lagi, atau hantar screenshot melalui WhatsApp.',
+      )
     } finally {
       setBusy(false)
     }
@@ -145,6 +190,10 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
   }, [send])
 
   const full = count >= MAX_FILES
+  // Built once, not per render, and only if a support number is configured.
+  const uploadHelpHref = whatsappUrl(
+    'Hai Paqar, saya tak dapat muat naik screenshot iklan. Boleh saya hantar di sini?',
+  )
 
   return (
     <div>
@@ -185,7 +234,30 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
         onChange={e => { void send(Array.from(e.target.files ?? [])); e.target.value = '' }}
       />
 
-      {error && <p className="font-body text-[12px] text-[#DC2626] mt-1.5">{error}</p>}
+      {/* AN ERROR WITH NO WAY OUT IS STILL A DEAD END.
+          Every failure here used to end at a red sentence. Screenshots are the
+          only entrance for a buyer whose listing is on Facebook, so a buyer
+          who cannot upload has no route into the product at all — and RM29 was
+          never the obstacle, the upload was.
+
+          WhatsApp is a real fallback rather than a gesture: a person receives
+          the screenshot and can create the check by hand. It appears only on
+          failure, so the happy path stays one action. */}
+      {error && (
+        <div className="mt-1.5">
+          <p role="alert" className="font-body text-[12px] text-[#DC2626] leading-relaxed">{error}</p>
+          {uploadHelpHref && (
+            <a
+              href={uploadHelpHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block min-h-[44px] font-body text-[12px] font-semibold text-[#3D472F] underline underline-offset-2 mt-1"
+            >
+              Hantar screenshot melalui WhatsApp
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Required disclosure, stated plainly and where it applies. */}
       <p className="font-body text-[11px] text-[#9CA3AF] mt-2 leading-relaxed">
