@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { historyUpgradeAvailable } from '@/lib/pricing'
+import { historyUpgradeAvailable, COMBINED_CENTS, JOMCHECK_UPGRADE_CENTS, BASE_REPORT_LABEL, ringgit } from '@/lib/pricing'
 import Link from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
@@ -43,14 +43,14 @@ const DESCRIPTION_BASE =
 export const metadata: Metadata = {
   title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia | Paqar',
   description: JOMCHECK_ON
-    ? `${DESCRIPTION_BASE} Paqar Semakan Accident/Claim Insurans RM100 sebelum bayar deposit.`
+    ? `${DESCRIPTION_BASE} Paqar Semakan Accident/Claim Insurans RM${ringgit(COMBINED_CENTS)} sebelum bayar deposit.`
     : `${DESCRIPTION_BASE} Ketahui apa yang boleh dan tidak boleh disemak sebelum bayar deposit.`,
   alternates: { canonical: 'https://paqar.my/semak-accident-claim-insurans-kereta' },
   openGraph: {
       locale: 'ms_MY',
     title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia',
     description: JOMCHECK_ON
-      ? `${DESCRIPTION_BASE} RM100 sebelum bayar deposit.`
+      ? `${DESCRIPTION_BASE} RM${ringgit(COMBINED_CENTS)} sebelum bayar deposit.`
       : `${DESCRIPTION_BASE} Sebelum bayar deposit.`,
     url: 'https://paqar.my/semak-accident-claim-insurans-kereta',
     images: [{ url: '/api/og?title=Semak%20Rekod%20Claim%20Insurans%20Kereta&subtitle=Sebelum%20bayar%20deposit', width: 1200, height: 630 }],
@@ -110,7 +110,7 @@ export default function SemakAccidentClaimInsuransPage() {
           ...(JOMCHECK_ON ? [{
             '@type': 'Question',
             name: 'Berapa harga Semakan Accident/Claim Insurans?',
-            acceptedAnswer: { '@type': 'Answer', text: 'Laporan Pembeli + Semakan Accident/Claim Insurans berharga RM100 (satu bayaran). Atau tambah +RM88 kepada Laporan Pembeli RM29 sedia ada.' },
+            acceptedAnswer: { '@type': 'Answer', text: `Laporan Pembeli + Semakan Accident/Claim Insurans berharga RM${ringgit(COMBINED_CENTS)} (satu bayaran). Atau tambah +RM${ringgit(JOMCHECK_UPGRADE_CENTS)} kepada Laporan Pembeli ${BASE_REPORT_LABEL} sedia ada.` },
           }] : []),
           {
             '@type': 'Question',
@@ -213,7 +213,7 @@ export default function SemakAccidentClaimInsuransPage() {
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] overflow-hidden">
             <div className="bg-[#3D472F] px-5 py-4">
               <p className="font-heading font-bold text-[9px] uppercase tracking-[.1em] text-white/45 mb-1">
-                Laporan + Semakan Accident/Claim Insurans — RM100
+                Laporan + Semakan Accident/Claim Insurans — RM{ringgit(COMBINED_CENTS)}
               </p>
               <p className="font-heading font-extrabold text-[15px] text-white leading-snug">
                 Semua dalam Laporan Pembeli RM29, ditambah semakan rekod claim insurans.

@@ -32,11 +32,25 @@
 /** The reviewed buyer report. Billed exactly, so cents is the source unit. */
 export const BASE_REPORT_CENTS = 2900
 
-/** The accident/claim add-on. Unchanged — dormant, see the plan's "Not doing". */
+/** The accident/claim add-on, on top of the base report. */
 export const JOMCHECK_UPGRADE_CENTS = 8800
 
-/** Base + add-on bought together in one bill. */
-export const COMBINED_CENTS = 10000
+/**
+ * Base + add-on bought together in one bill. DERIVED, never typed.
+ *
+ * It was hardcoded to 10000, from when the base report was RM12: 12 + 88 = 100.
+ * The base moved to RM29 and this did not, so the checkout showed "Bayar RM29"
+ * beside "+RM88" and billed RM100. Freddie caught it on the live page.
+ *
+ * Deriving it is the actual fix. A total that is typed can disagree with its
+ * parts; a total that is computed cannot, and this bug was only possible
+ * because three numbers were maintained where two would do.
+ *
+ * NOTE FOR A PRICING DECISION, not a code one: this now charges RM117. If the
+ * RM100 price point is wanted back, change JOMCHECK_UPGRADE_CENTS to 7100 and
+ * the add-on will read "+RM71" everywhere by itself — do not re-pin this.
+ */
+export const COMBINED_CENTS = BASE_REPORT_CENTS + JOMCHECK_UPGRADE_CENTS
 
 /** Every amount the payment surfaces may legitimately produce. */
 export const VALID_AMOUNTS_CENTS = [

@@ -50,6 +50,29 @@ export interface Coverage {
  *   should hold open with waitUntil. Returned rather than awaited: a buyer
  *   waiting on a coverage answer must not wait on a scrape too.
  */
+
+/**
+ * How long a buyer may be kept waiting for a first look at their model-year.
+ *
+ * The nightly warm-cache run averages about four seconds per model, so this is
+ * generous rather than tight — and the intake already shows a reading state,
+ * so the wait is visible rather than a frozen screen.
+ */
+const SCRAPE_WAIT_MS = 12_000
+
+/** Resolves true if the scrape finished inside the budget, false if it timed out. */
+async function waitForScrape(make: string, model: string, year: string): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      fetchAndCacheMarketPrices(make, model, year).then(() => true).catch(() => false),
+      new Promise<boolean>(resolve => { timer = setTimeout(() => resolve(false), SCRAPE_WAIT_MS) }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
 export async function assessCoverage(params: {
   brand:        string
   model:        string
@@ -75,7 +98,27 @@ export async function assessCoverage(params: {
   const refresh = () =>
     params.refetch?.(fetchAndCacheMarketPrices(brand, modelKeyword, year).catch(() => {}))
 
-  const cached = await getCachedMarketPrices(brand, modelKeyword, year).catch(() => null)
+  let cached = await getCachedMarketPrices(brand, modelKeyword, year).catch(() => null)
+
+  // ── A COLD CACHE IS NOT AN ANSWER ABOUT THE MARKET ──────────────────────
+  //
+  // This kicked off a background scrape and refused in the same breath, so the
+  // FIRST person to ask about any model-year was always told "Paqar belum
+  // boleh bantu" — and the cache warmed behind them, for whoever came next.
+  // Reproduced on production: Nissan Almera 2017 refused, then answered
+  // twenty seconds later with no other change.
+  //
+  // Malaysia has far more model-years than the few hundred already cached, so
+  // that refusal was landing on real buyers, and it was not true: Paqar could
+  // help, it just had not looked yet. Waiting a few seconds is a far smaller
+  // cost than turning away someone who was ready to pay.
+  //
+  // Bounded, because a buyer must not wait on a stuck scrape. If the wait
+  // expires the answer is the honest one it always was.
+  if (!cached || cached.listings.length === 0) {
+    await waitForScrape(brand, modelKeyword, year)
+    cached = await getCachedMarketPrices(brand, modelKeyword, year).catch(() => null)
+  }
   if (!cached || cached.listings.length === 0) {
     refresh()
     return { eligible: false, reason: 'no_comparables' }
@@ -91,10 +134,26 @@ export async function assessCoverage(params: {
 
   const eligibility = evaluateVerdictEligibility(cohort, askingPrice)
 
-  // Too thin to build a report on. Refetch in the background so a sparse
-  // cached row self-heals before its TTL expires rather than staying below the
-  // threshold for a week.
+  // Too thin to build a report on — but a row can be thin because it was
+  // scraped when the market was quiet, not because the market is quiet now. So
+  // the same rule applies as for a missing row: look before refusing, once.
   if (eligibility.suppressionReason === 'insufficient_data') {
+    const refreshed = await waitForScrape(brand, modelKeyword, year)
+      ? await getCachedMarketPrices(brand, modelKeyword, year).catch(() => null)
+      : null
+
+    if (refreshed && refreshed.listings.length > cached.listings.length) {
+      const retry = buildComparableCohort(refreshed.listings, {
+        year,
+        officialVariant: model,
+        model:           null,
+        isSpecialVariant: isPerformanceModelText(params.variantSource ?? model),
+        market:           params.market ?? 'used',
+      })
+      if (evaluateVerdictEligibility(retry, askingPrice).suppressionReason !== 'insufficient_data') {
+        return { eligible: true, reason: null }
+      }
+    }
     refresh()
     return { eligible: false, reason: 'no_comparables' }
   }

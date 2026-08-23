@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import {
   BASE_REPORT_CENTS, BASE_REPORT_LABEL, HISTORY_UPGRADE_OPERATIONAL,
+  COMBINED_CENTS, JOMCHECK_UPGRADE_CENTS,
 } from '@/lib/pricing'
 
 const ROOT = join(__dirname, '..', '..')
@@ -93,10 +94,31 @@ describe('the price the buyer sees is the price they are charged', () => {
 })
 
 /**
- * The RM88 add-on is purchasable in production today, and the second human
- * review it now promises does not exist. Selling it would take money for a
- * revision nobody can produce.
+ * The combined price was typed as 10000 — correct when the base was RM12, and
+ * silently wrong the moment it became RM29. The checkout then showed
+ * "Bayar RM29" beside "+RM88" and billed RM100. Freddie caught it on the live
+ * page, which is the worst place to catch a price.
  */
+describe('the total always equals its parts', () => {
+  it('is derived, not typed', () => {
+    expect(COMBINED_CENTS).toBe(BASE_REPORT_CENTS + JOMCHECK_UPGRADE_CENTS)
+  })
+
+  it('is computed in source, so it cannot be re-pinned by hand', () => {
+    const src = readFileSync(join(ROOT, 'lib/pricing.ts'), 'utf8')
+    expect(src).toMatch(/COMBINED_CENTS\s*=\s*BASE_REPORT_CENTS\s*\+\s*JOMCHECK_UPGRADE_CENTS/)
+  })
+
+  it('names no total in copy that the constants do not produce', () => {
+    // A page that writes the total as a literal will disagree with the bill
+    // the next time either price moves — which is exactly what happened.
+    const page = readFileSync(join(ROOT, 'app/semak-accident-claim-insurans-kereta/page.tsx'), 'utf8')
+    const visible = page.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+    expect(visible, 'a hardcoded total is back on the accident page')
+      .not.toMatch(/RM\s?100\b/)
+  })
+})
+
 describe('the history add-on cannot be sold while undeliverable', () => {
   /**
    * The invariant was never "the add-on is off" — it is "the add-on is on only

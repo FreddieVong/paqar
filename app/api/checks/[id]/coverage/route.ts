@@ -40,6 +40,9 @@ import { resolveListingMarket } from '@/lib/listing-extract'
  * absent when it does not.
  */
 
+// Same reason as /api/price-check: coverage may wait for a first scrape.
+export const maxDuration = 30
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } },

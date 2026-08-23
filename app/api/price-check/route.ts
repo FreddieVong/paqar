@@ -56,6 +56,12 @@ const schema = z.object({
  * takes — 8, 14 and 30 all sound small. That judgement predates this change
  * and survives it.
  */
+// Coverage may now WAIT for a first scrape of an uncached model-year
+// rather than refusing and warming the cache behind the buyer. That wait is
+// bounded at 12s in lib/coverage; this gives the route room for it plus the
+// cohort work, instead of the platform default cutting the answer short.
+export const maxDuration = 30
+
 export async function POST(request: NextRequest) {
   let body: unknown
   try { body = await request.json() } catch {
