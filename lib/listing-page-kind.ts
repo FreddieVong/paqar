@@ -95,3 +95,15 @@ export function isSearchPage(rawUrl: string, html?: string | null): boolean {
 /** What the buyer is told. Not an error — a redirection to the right input. */
 export const SEARCH_PAGE_MESSAGE =
   'Ini halaman carian, bukan satu iklan kereta. Hantar link satu unit tertentu atau screenshot iklan itu.'
+
+/**
+ * Shown when a buyer has given Paqar no advert at all — no link it could
+ * store, and no screenshot.
+ *
+ * Says what is missing and both ways to supply it, rather than refusing. The
+ * four car details they have already typed are kept; what is absent is the one
+ * thing that makes this a specific unit rather than a model.
+ */
+export const NO_LISTING_MESSAGE =
+  'Kami perlukan iklan kereta itu dahulu — tampal link iklan, atau muat naik screenshot. ' +
+  'Butiran yang anda isi tadi kekal.'

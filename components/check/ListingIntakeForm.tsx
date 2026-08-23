@@ -1,5 +1,6 @@
 'use client'
 
+import { normaliseListingUrl } from '@/lib/listing-intake'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CreateCheckResponse } from '@/types/api'
@@ -221,6 +222,22 @@ export function ListingIntakeForm({
   async function readListingUrl() {
     const url = listingUrl.trim()
     if (!url || reading.current) return
+
+    // ── NOT A LINK, SAID AT ONCE ────────────────────────────────────────
+    // normaliseListingUrl rejects anything that is not a URL, and rejects it
+    // SILENTLY: the intake was created with no link, extraction ran for about
+    // fifteen seconds against nothing, and the buyer was then asked to type
+    // the car by hand as though a read had been attempted and failed.
+    //
+    // Typing a car name here is the obvious mistake to make — the field sits
+    // under a headline about checking a car — so it deserves an answer, not a
+    // wait followed by a form.
+    if (!normaliseListingUrl(url)) {
+      setError('Itu bukan link. Tampal alamat penuh iklan (bermula https://), atau muat naik screenshot.')
+      urlRef.current?.focus()
+      return
+    }
+
     reading.current = true
     setBusy(true)
     try {
@@ -441,8 +458,12 @@ export function ListingIntakeForm({
       // sila cuba semula" would send the buyer to retry a link that can never
       // work, instead of telling them what to send.
       if (res.status === 422) {
-        const body = await res.json().catch(() => ({})) as { message?: string }
-        setSearchPage(true)
+        const body = await res.json().catch(() => ({})) as { error?: string; message?: string }
+        // Two different refusals share this status: a results page, and no
+        // advert at all. Only the first is about the LINK being wrong, so only
+        // the first should raise the search-page notice.
+        if (body.error === 'search_page') setSearchPage(true)
+        else setShowUpload(true)
         setError(body.message ?? 'Hantar link satu unit tertentu atau screenshot iklan itu.')
         return
       }

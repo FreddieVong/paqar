@@ -3,7 +3,22 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const read = (p: string) => readFileSync(join(__dirname, '..', '..', p), 'utf8')
-const FORM = read('components/check/ListingIntakeForm.tsx')
+
+/**
+ * Source with comments removed.
+ *
+ * Four assertions in this repo have now tripped on their own explanatory
+ * comments: a note describing a phrase that was REMOVED necessarily quotes it,
+ * and a slice taken from the first match then lands inside the note instead of
+ * the code. Stripping once, here, is cheaper than remembering per assertion —
+ * and only what ships is what these tests are about.
+ */
+const code = (src: string) =>
+  src.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
+     .replace(/\/\*[\s\S]*?\*\//g, '')
+     .replace(/(^|[^:])\/\/.*$/gm, '$1')
+
+const FORM = code(read('components/check/ListingIntakeForm.tsx'))
 
 /**
  * The entry point fails by being SILENT, not by being wrong.
@@ -56,11 +71,7 @@ describe('pasting a link starts something the buyer can see', () => {
   it('names the input that actually failed', () => {
     // The failure notice said "screenshot" whatever the buyer had given us, so
     // someone who pasted a link was told their screenshot could not be read.
-    // Comments stripped: the note explaining why Facebook gets its OWN,
-    // non-error message necessarily quotes the amber wording it replaced, and
-    // an un-stripped slice lands in that comment instead of the notice.
-    const visible = FORM.replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
-    const notice = visible.slice(visible.indexOf('Kami tak dapat baca')).slice(0, 900)
+    const notice = FORM.slice(FORM.indexOf('Kami tak dapat baca')).slice(0, 900)
     expect(notice).toContain('Kami tak dapat baca link itu')
     expect(notice).toContain('Kami tak dapat baca screenshot itu')
     expect(notice).toContain('shotCount')
@@ -112,5 +123,39 @@ describe('the answer is brought to the buyer', () => {
   it('attaches the ref to the card that actually carries the answer', () => {
     const card = FORM.slice(FORM.indexOf("phase === 'summary' && summary && !editing"))
     expect(card.slice(0, 200)).toContain('ref={summaryRef}')
+  })
+})
+
+/**
+ * Freddie submitted the word "hello". Paqar spent about fifteen seconds
+ * "reading the listing", asked him to type the car by hand, then sold a
+ * checkout saying "Orang kami baca iklan anda sendiri".
+ *
+ * There was no iklan. normaliseListingUrl rejects anything that is not a URL
+ * and rejects it silently, so nothing was stored — and readyForCoverage is
+ * satisfied by four fields the buyer typed themselves. A reviewer would have
+ * opened the queue to a car with no advert, no screenshot and no link.
+ *
+ * That is not a thin report. It is a false one, and no care at review time
+ * repairs it: the four fields describe a MODEL, and the product sells a
+ * decision about a UNIT.
+ */
+describe('nothing is sold without an advert', () => {
+  it('refuses to convert when there is no link and no screenshot', () => {
+    const convert = read('app/api/listing-intake/[id]/convert/route.ts')
+    expect(convert).toMatch(/!intake\.listing_url && shots\.length === 0/)
+    expect(convert).toContain('no_listing')
+  })
+
+  it('says so instead of running extraction against nothing', () => {
+    const fn = FORM.slice(FORM.indexOf('async function readListingUrl')).slice(0, 900)
+    expect(fn, 'plain text still reaches extraction').toContain('normaliseListingUrl(url)')
+    expect(fn).toContain('Itu bukan link')
+  })
+
+  it('keeps the guard against two extractions racing', () => {
+    const fn = FORM.slice(FORM.indexOf('async function readListingUrl')).slice(0, 900)
+    expect(fn).toContain('reading.current')
+    expect(fn).toMatch(/finally\s*\{/)
   })
 })

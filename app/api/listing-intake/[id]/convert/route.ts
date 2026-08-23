@@ -7,7 +7,7 @@ import { encrypt, hash } from '@/lib/crypto'
 import { normaliseConcern } from '@/lib/listing-intake'
 import { SESSION_COOKIE } from '@/lib/attribution'
 import { readyForCoverage } from '@/lib/listing-merge'
-import { isSearchPage, SEARCH_PAGE_MESSAGE } from '@/lib/listing-page-kind'
+import { isSearchPage, SEARCH_PAGE_MESSAGE, NO_LISTING_MESSAGE } from '@/lib/listing-page-kind'
 import { listScreenshots } from '@/lib/db/listing-screenshots'
 import { capacityState, serviceDayStart } from '@/lib/review-capacity'
 import { paidReportsInServiceDay } from '@/lib/db/report-review'
@@ -59,14 +59,39 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   // Screenshots rescue it: if the buyer photographed the advert, the reviewer
   // has the advert, and the stale URL beside it costs nothing. This refuses
   // only the case where there is genuinely nothing to review.
+  const shots = await listScreenshots(params.id).catch(() => [])
+
   if (intake.listing_url && isSearchPage(intake.listing_url)) {
-    const shots = await listScreenshots(params.id).catch(() => [])
     if (shots.length === 0) {
       return NextResponse.json(
         { error: 'search_page', message: SEARCH_PAGE_MESSAGE },
         { status: 422 },
       )
     }
+  }
+
+  // ── THERE MUST BE AN ADVERT AT ALL ──────────────────────────────────────
+  //
+  // The search-page guard above assumed a URL exists. Nothing checked the case
+  // where there is NO evidence whatsoever, and readyForCoverage cannot: it is
+  // satisfied by four fields the buyer typed themselves.
+  //
+  // Typing "hello" in the link box stores nothing — normaliseListingUrl
+  // rejects anything that is not a URL — so a buyer could then fill in Honda
+  // City 2019 RM46,999 by hand and reach a checkout that says "Orang kami baca
+  // iklan anda sendiri". There was no iklan. The reviewer would have opened
+  // the queue to a car with no advert, no screenshot and no link, and Paqar
+  // would have taken RM29 for reading something that does not exist.
+  //
+  // That is not a thin report, it is a false one, and no amount of care at
+  // review time can repair it. The four fields describe a MODEL; the product
+  // sells a decision about a UNIT, and the advert is the only thing that makes
+  // it a unit.
+  if (!intake.listing_url && shots.length === 0) {
+    return NextResponse.json(
+      { error: 'no_listing', message: NO_LISTING_MESSAGE },
+      { status: 422 },
+    )
   }
 
   // ── CAPACITY ────────────────────────────────────────────────────────────
