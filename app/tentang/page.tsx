@@ -1,3 +1,4 @@
+import { historyAddOnStatusLine } from '@/lib/history-addon-copy'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
@@ -69,7 +70,7 @@ export default function TentangPage() {
             </div>
 
             <div>
-              <p className="font-heading font-bold text-[13px] text-[#3D472F] mb-1">Semakan Accident/Claim Insurans — belum dibuka</p>
+              <p className="font-heading font-bold text-[13px] text-[#3D472F] mb-1">{historyAddOnStatusLine()}</p>
               <p className="font-body text-[13px] text-[#374151] leading-relaxed">
                 Semakan rekod claim insurans untuk kereta yang anda minat — own damage, banjir, windscreen atau total loss jika direkodkan. Sesuai digunakan sebelum bayar deposit.
               </p>

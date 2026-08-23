@@ -1,3 +1,4 @@
+import { historyAddOnSellable, HISTORY_ADDON_LABEL } from '@/lib/history-addon-copy'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
@@ -191,8 +192,14 @@ export default function CaraSemakInsuransPage() {
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-3">
               Cara semak insurans di atas sahkan sama ada polisi masih aktif. Ini berbeza daripada semakan rekod claim insurans — iaitu sama ada kereta pernah ada tuntutan seperti own damage, banjir, windscreen atau total loss.
             </p>
+            {/* Follows the flag rather than stating a fact that expires. This
+                line said "Paqar belum membuka semakan rekod claim insurans"
+                and was true when written; it became false the day the add-on
+                went live, on a page nobody thinks to revisit. */}
             <p className="font-body text-[13px] text-[#374151] leading-relaxed mb-4">
-              Paqar belum membuka semakan rekod claim insurans, jadi kami tidak menjualnya buat masa ini. Kalau anda semak sendiri melalui penyedia lain, ingat: tidak semua kemalangan ada rekod claim, dan rekod bersih tidak bermakna kereta tiada isu.
+              {historyAddOnSellable()
+                ? `Paqar menjualnya sebagai tambahan kepada Laporan Pembeli (${HISTORY_ADDON_LABEL}, perlu nombor plat). Ingat: tidak semua kemalangan ada rekod claim, dan rekod bersih tidak bermakna kereta tiada isu.`
+                : 'Paqar belum membuka semakan rekod claim insurans, jadi kami tidak menjualnya buat masa ini. Kalau anda semak sendiri melalui penyedia lain, ingat: tidak semua kemalangan ada rekod claim, dan rekod bersih tidak bermakna kereta tiada isu.'}
             </p>
             <Link
               href="/semak-accident-claim-insurans-kereta"

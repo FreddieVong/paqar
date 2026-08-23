@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { historyAddOnLimitLine } from '@/lib/history-addon-copy'
 import Link           from 'next/link'
 import { unstable_cache } from 'next/cache'
 import { Nav }           from '@/components/layout/Nav'
@@ -102,7 +103,7 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Apakah had atau limitasi Paqar?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Harga iklan adalah harga yang diminta, bukan harga jualan sebenar. Mileage dan keadaan fizikal boleh mengubah nilai dengan ketara. Paqar tidak mengesahkan bacaan odometer sebenar dan tidak menjual rekod tuntutan. Pemeriksaan fizikal masih perlu sebelum bayar deposit.' },
+          acceptedAnswer: { '@type': 'Answer', text: `Harga iklan adalah harga yang diminta, bukan harga jualan sebenar. Mileage dan keadaan fizikal boleh mengubah nilai dengan ketara. ${historyAddOnLimitLine()} Pemeriksaan fizikal masih perlu sebelum bayar deposit.` },
         },
       ],
     },
@@ -359,7 +360,7 @@ export default async function HomePage() {
               'Harga iklan adalah harga yang diminta, bukan harga jualan sebenar.',
               'Model, varian dan tahun perlu disahkan sebelum harga bermakna.',
               'Mileage dan keadaan fizikal boleh mengubah nilai dengan ketara.',
-              'Paqar tidak menjual rekod tuntutan, dan tidak mengesahkan bacaan odometer sebenar.',
+              historyAddOnLimitLine(),
               'Pemeriksaan fizikal masih perlu sebelum anda bayar deposit.',
             ].map((limit) => (
               <div key={limit} className="flex gap-3 items-start">
