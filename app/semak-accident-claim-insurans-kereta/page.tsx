@@ -298,7 +298,18 @@ export default function SemakAccidentClaimInsuransPage() {
           {/* CTA */}
           <div className="space-y-3">
             <p className="font-heading font-bold text-[14px] text-[#111827]">
-              Masukkan nombor plat untuk semak:
+              {/* The form below is ListingIntakeForm, and it asks for a
+                  LISTING LINK. Labelling it "masukkan nombor plat" described a
+                  field that is not there — and on this page in particular a
+                  reader is primed to expect a plate box, because the claim
+                  check really is keyed on the registration number. The plate
+                  is asked for later, as an optional field, which is also the
+                  order the purchase now follows. */}
+              Mula dengan iklan kereta itu:
+            </p>
+            <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mb-3">
+              Hantar link iklan kereta yang anda pertimbang. Nombor plat pilihan pada
+              mulanya — kami sahkan dan tawarkan semakan claim di dalam laporan anda.
             </p>
             <DualCheckForm />
           </div>
