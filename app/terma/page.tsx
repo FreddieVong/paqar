@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { whatsappUrl } from '@/lib/site'
+import { BASE_REPORT_LABEL, JOMCHECK_UPGRADE_CENTS, ringgit } from '@/lib/pricing'
+import { historyAddOnSellable } from '@/lib/history-addon-copy'
 
 export const metadata: Metadata = {
   title: 'Terma & Syarat | Paqar',
@@ -37,14 +39,20 @@ export default function TermaPage() {
               Terma &amp; Syarat
             </h1>
             <p className="font-body text-[13px] text-[#9CA3AF]">
-              Dikemaskini: Mei 2026
+              Dikemaskini: Ogos 2026
             </p>
           </div>
 
           {[
             {
               title: 'Perkhidmatan Pihak Ketiga',
-              body: 'Paqar adalah perkhidmatan semakan status kenderaan pihak ketiga yang tidak berafiliasi dengan mana-mana agensi kerajaan Malaysia. Maklumat yang dipaparkan bersumber daripada pangkalan data yang boleh diakses awam dan mungkin tidak mencerminkan status terkini pada setiap masa.',
+              // "pangkalan data yang boleh diakses awam" was not true and had
+              // not been for a long time. Comparable ADVERTS are public, but
+              // the registration record comes from a licensed commercial data
+              // provider and the claim records come from JomCheck — neither is
+              // a public database, and describing them as one both overstates
+              // how verifiable the data is and understates who holds it.
+              body: 'Paqar adalah perkhidmatan pihak ketiga yang tidak berafiliasi dengan mana-mana agensi kerajaan Malaysia. Maklumat dalam laporan anda datang daripada tiga jenis sumber: iklan kereta terpakai yang tersiar secara awam, pembekal data komersial berlesen untuk maklumat pendaftaran kenderaan, dan — jika anda membelinya — rekod tuntutan insurans daripada JomCheck (eAuto Asia). Kami bukan sumber asal mana-mana data itu, dan ia mungkin tidak mencerminkan status terkini pada setiap masa.',
             },
             {
               title: 'Ketepatan Maklumat',
@@ -56,7 +64,7 @@ export default function TermaPage() {
             },
             {
               title: 'Pembayaran dan Bayaran Balik',
-              body: 'Laporan Pembeli (RM29) dikembalikan sepenuhnya jika Paqar tidak dapat menyiapkan laporan untuk kenderaan anda — contohnya apabila tiada cukup iklan setanding untuk membuat keputusan. Setelah laporan disemak dan dilepaskan kepada anda, bayaran adalah muktamad. Jika anda menghadapi masalah teknikal yang menghalang akses kepada laporan anda, hubungi kami dalam masa 7 hari.',
+              body: `Laporan Pembeli (${BASE_REPORT_LABEL}) dikembalikan sepenuhnya jika Paqar tidak dapat menyiapkan laporan untuk kenderaan anda — contohnya apabila tiada cukup iklan setanding untuk membuat keputusan. Setelah laporan disemak dan dilepaskan kepada anda, bayaran adalah muktamad. ${historyAddOnSellable() ? `Semakan Accident/Claim Insurans (+RM${ringgit(JOMCHECK_UPGRADE_CENTS)}) adalah pembelian berasingan yang hanya boleh dibuat dari dalam laporan anda selepas nombor plat disahkan; ia dikembalikan sepenuhnya jika kami tidak dapat menyiapkan semakan itu. Rekod tuntutan yang kosong bukan kegagalan semakan — tidak semua kemalangan meninggalkan rekod tuntutan — jadi ia tidak layak untuk bayaran balik. ` : ''}Bayaran dikutip oleh TENTEC SDN BHD melalui Billplz. Jika anda menghadapi masalah teknikal yang menghalang akses kepada laporan anda, hubungi kami dalam masa 7 hari.`,
             },
             {
               title: 'Had Liabiliti',

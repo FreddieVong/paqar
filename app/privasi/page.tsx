@@ -54,11 +54,16 @@ export default function PrivasiPage() {
             },
             {
               title: 'Cara Kami Menggunakan Data Anda',
-              body: 'Data yang dikumpul digunakan semata-mata untuk menjalankan semakan status kenderaan, menghantar notifikasi tamat tempoh dokumen, menghantar resit pembayaran, dan menghubungi anda berkaitan perkhidmatan kami.',
+              // "menghantar notifikasi tamat tempoh dokumen" described the
+              // roadtax/insurance reminder product, which Paqar no longer
+              // sells. A privacy notice naming a purpose the service does not
+              // have is not a harmless leftover: it is the document that says
+              // what the data may be used for.
+              body: 'Data yang dikumpul digunakan semata-mata untuk menyiapkan laporan yang anda beli, menghantar laporan dan resit pembayaran kepada anda, dan menghubungi anda berkaitan laporan itu. Kami tidak menggunakan data anda untuk tujuan lain tanpa memberitahu anda terlebih dahulu.',
             },
             {
               title: 'Siapa Menerima Data Anda',
-              body: 'Kami tidak menjual atau menyewakan data peribadi anda. Pembekal yang memproses data bagi pihak kami: Supabase (pangkalan data dan storan screenshot), Vercel (pengehosan), Resend (e-mel), Billplz (pembayaran — mereka mengendalikan butiran kad atau bank anda, bukan kami), Anthropic (membaca screenshot iklan secara automatik untuk mengeluarkan butiran kereta), dan pembekal data pihak ketiga untuk maklumat pendaftaran kenderaan apabila anda beri nombor plat. Nombor telefon, jika anda beri, digunakan hanya supaya kami boleh hubungi anda tentang laporan anda apabila perlu — laporan itu sendiri dihantar melalui e-mel dan pautan laporan anda.',
+              body: 'Kami tidak menjual atau menyewakan data peribadi anda. Pembekal yang memproses data bagi pihak kami: Supabase (pangkalan data dan storan screenshot), Vercel (pengehosan), Resend (e-mel), Billplz (pembayaran — mereka mengendalikan butiran kad atau bank anda, bukan kami), Anthropic (membaca screenshot iklan secara automatik untuk mengeluarkan butiran kereta), pembekal data pihak ketiga untuk maklumat pendaftaran kenderaan apabila anda beri nombor plat, dan — hanya jika anda membeli Semakan Accident/Claim Insurans — JomCheck (eAuto Asia), yang mencari rekod tuntutan insurans mengikut nombor pendaftaran kenderaan itu. Nombor plat dihantar kepada pembekal berkenaan hanya untuk membuat semakan tersebut. Nombor telefon, jika anda beri, digunakan hanya supaya kami boleh hubungi anda tentang laporan anda apabila perlu — laporan itu sendiri dihantar melalui e-mel dan pautan laporan anda.',
             },
             {
               title: 'Pengukuran & Pengiklanan',

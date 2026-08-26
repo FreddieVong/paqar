@@ -67,6 +67,27 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
   const [price,        setPrice]        = useState(defaultAskingPrice ? String(defaultAskingPrice) : '')
   const [mileage,      setMileage]      = useState(defaultMileageKm ? String(defaultMileageKm) : '')
   const [error,        setError]        = useState<string | null>(null)
+
+  /**
+   * A mistyped mileage buys a plausibility check against the wrong number.
+   *
+   * The field promises "kami semak sama ada ia munasabah untuk umur kereta"
+   * and then accepted 700,000 km without a word — a figure no private
+   * Malaysian car reaches, and almost always 70,000 with one extra keystroke.
+   * The buyer pays RM29 for a check on a number they did not mean, and the
+   * reviewer has no way to tell a typo from an ex-taxi.
+   *
+   * A WARNING, never a block. Genuine high-mileage cars exist — a 400,000 km
+   * ex-fleet Hiace is a real thing someone may be buying — and refusing the
+   * number would be Paqar telling a buyer their own car is impossible. Naming
+   * the likely typo is enough: someone who meant it types on.
+   */
+  const mileageKm = mileage ? parseInt(mileage, 10) : null
+  const IMPLAUSIBLE_KM = 400_000
+  const mileageWarning =
+    mileageKm != null && Number.isFinite(mileageKm) && mileageKm > IMPLAUSIBLE_KM
+      ? `${mileageKm.toLocaleString('en-MY')} km sangat tinggi untuk kereta persendirian. Anda maksudkan ${Math.round(mileageKm / 10).toLocaleString('en-MY')} km? Kalau betul, teruskan sahaja.`
+      : null
   const [isPending,    startTransition] = useTransition()
 
   const focusTrackedRef = useRef(false)
@@ -257,9 +278,15 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
                        focus:outline-none focus:border-[#3D472F] focus:ring-[3px] focus:ring-[#3D472F]/10
                        transition-all"
           />
-          <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
-            Mileage yang penjual bagi — kami semak sama ada ia munasabah untuk umur kereta.
-          </p>
+          {mileageWarning ? (
+            <p role="status" className="font-body text-[11px] text-[#92400E] bg-[#FFFBEB] border border-[#FDE68A] rounded-[10px] px-3 py-2 mt-1.5 leading-relaxed">
+              {mileageWarning}
+            </p>
+          ) : (
+            <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
+              Mileage yang penjual bagi — kami semak sama ada ia munasabah untuk umur kereta.
+            </p>
+          )}
         </div>
 
         {/* Divider */}

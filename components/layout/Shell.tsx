@@ -24,9 +24,14 @@ export function Shell({
   const contactHref = whatsappUrl('Hai Paqar, saya perlukan bantuan.')
   return (
     <>
-      <main className={`${maxWidth} mx-auto px-4 py-8`}>
+      {/* A DIV, not a second <main> — app/layout.tsx owns the landmark.
+          Carries the skip-link target because the content starts here, after
+          the page's navigation. tabIndex -1 so focus actually lands on it:
+          without it some browsers scroll to the anchor but leave focus on the
+          body, and the next Tab returns to the top of the page. */}
+      <div id="main-content" tabIndex={-1} className={`${maxWidth} mx-auto px-4 py-8 outline-none`}>
         {children}
-      </main>
+      </div>
       <footer className="border-t border-[#F3F4F6] mt-4">
         <div className="max-w-lg mx-auto px-4 py-6 space-y-4 text-center">
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">

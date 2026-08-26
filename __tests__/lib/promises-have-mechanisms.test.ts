@@ -187,11 +187,46 @@ describe('every control can be hit and every word can be read', () => {
 })
 
 describe('the page has a landmark to skip to', () => {
-  it('renders one main landmark and a focusable skip link', () => {
+  /**
+   * The landmark and the skip TARGET are deliberately different elements.
+   *
+   * This asserted `<main id="main-content">` in the root layout, which pinned
+   * two defects at once. Shell rendered a second <main> inside that one, so
+   * every public page shipped nested main landmarks — invalid, and it makes
+   * the landmark useless for navigating by region. And the root <main> wraps
+   * the page's <Nav />, so "Terus ke kandungan" jumped to a point ABOVE the
+   * navigation: the one thing a skip link exists not to do.
+   *
+   * The landmark stays in the layout; the id moved to where content actually
+   * begins.
+   */
+  it('the layout owns the one main landmark', () => {
     const layout = read('app/layout.tsx')
-    expect(layout).toContain('<main id="main-content">')
+    expect(layout).toMatch(/<main>/)
+    expect(layout, 'the skip target is back on the landmark, above the nav')
+      .not.toContain('<main id="main-content">')
     expect(layout).toContain('href="#main-content"')
     expect(layout).toMatch(/focus:not-sr-only/)
+  })
+
+  it('and nothing else renders a second one', () => {
+    // Admin pages are excluded: they are behind ADMIN_SECRET, render no Nav
+    // and no Shell, and own their own landmark.
+    // Comments stripped: the comment explaining why this is a div says the
+    // word <main>, and a naive match finds the tag in the note about its own
+    // removal. Fourth time this exact trap has bitten in this codebase.
+    const shell = read('components/layout/Shell.tsx')
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1')
+    expect(shell, 'Shell renders a nested <main> again').not.toMatch(/<main[\s>]/)
+    expect(shell).toContain('id="main-content"')
+  })
+
+  it('the homepage has its own target, since it does not use Shell', () => {
+    // It lays out full-bleed sections itself. Without this the skip link lands
+    // nowhere on the page most people arrive at.
+    expect(read('app/page.tsx')).toContain('id="main-content"')
   })
 })
 

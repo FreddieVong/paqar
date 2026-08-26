@@ -9,10 +9,25 @@ import { HistoryRiskBanner } from './HistoryRiskBanner'
 import type { JomCheckResult } from '@/lib/jomcheck/core'
 import { SampleVerdictCard } from './SampleVerdictCard'
 
-// The real cohort, trimmed to ten for width. Production held 15 comparables
-// for Perodua Myvi 2019 spanning RM25,000-RM44,700; these are the ten inside
-// the typical band, which is what the report shows.
+/**
+ * The real cohort, trimmed to ten for width. Production held 15 comparables
+ * for Perodua Myvi 2019 spanning RM25,000-RM44,700; these are the ten inside
+ * the typical band, which is what the report shows.
+ *
+ * ── SAY THE TWO NUMBERS ARE DIFFERENT, BECAUSE THEY LOOK LIKE AN ERROR ─────
+ *
+ * The caption read "Berdasarkan 15 iklan setanding" above ten chips, and the
+ * band opened at RM29,900 while the lowest chip was RM30,000. Both are
+ * correct — ten of fifteen are shown, and a band edge is a computed
+ * percentile rather than any single advert — and both read as arithmetic
+ * Paqar got wrong, on the page whose only job is to make the report look
+ * trustworthy before anyone pays for one.
+ *
+ * A reader who spots a RM100 discrepancy in the sample has no way to know it
+ * is deliberate. So the counts are reconciled out loud instead.
+ */
 const MARKET_PRICES = ['RM30,000', 'RM31,000', 'RM33,000', 'RM34,000', 'RM35,000', 'RM35,500', 'RM36,000', 'RM37,000', 'RM37,500', 'RM37,800']
+const SAMPLE_COHORT_SIZE = 15
 
 const SAMPLE_SCRIPT = `Salam, saya berminat dengan Perodua Myvi 2019 (1.3 X) yang tuan/puan jual.
 
@@ -211,7 +226,8 @@ export function SampleReportPreview(
               </span>
             </div>
             <p className="font-body text-[12px] text-[#6B7280] mb-2 italic">
-              Data contoh — bukan kereta sebenar. Perlu nombor plat untuk semakan ini.
+              Data contoh — bukan kereta sebenar. Tambahan berbayar, dibeli dari dalam
+              laporan anda selepas nombor plat disahkan.
             </p>
             <JomCheckSection data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
           </div>
@@ -282,7 +298,9 @@ export function SampleReportPreview(
             ))}
           </div>
           <p className="font-body text-[11px] text-[#6B7280] mb-1">
-            Berdasarkan 15 iklan setanding yang kami jumpa
+            {MARKET_PRICES.length} daripada {SAMPLE_COHORT_SIZE} iklan setanding yang kami jumpa —
+            julat di bawah dikira daripada kesemua {SAMPLE_COHORT_SIZE}, jadi hujungnya
+            tidak semestinya sama dengan harga yang dipaparkan di atas.
           </p>
           {/* Same qualifier as the real report, in the same place — the sample
               must not promise a provenance the report then walks back. */}

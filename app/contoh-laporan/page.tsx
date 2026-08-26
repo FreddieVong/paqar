@@ -2,7 +2,7 @@ import Link                   from 'next/link'
 import { Nav }                 from '@/components/layout/Nav'
 import { Shell }               from '@/components/layout/Shell'
 import { SampleReportPreview } from '@/components/report/SampleReportPreview'
-import { historyUpgradeAvailable } from '@/lib/pricing'
+import { historyUpgradeAvailable, BASE_REPORT_LABEL } from '@/lib/pricing'
 
 export const metadata = {
   title: 'Contoh Laporan Pembeli Kereta Terpakai — Paqar',
@@ -48,7 +48,15 @@ export default function ContohLaporanPage() {
               exists. One tier means there is nothing to choose, and an
               instruction to choose is a small lie the reader has to resolve. */}
           <p className="font-body text-[13px] text-[#6B7280] mb-5">
-            Satu laporan, RM29. Ini contoh penuh &mdash; setiap bahagian yang anda dapat.
+            {/* "Satu laporan, RM29 — setiap bahagian yang anda dapat" sat
+                directly above a preview that includes the +RM88 accident/claim
+                section. The sentence promised the whole page for RM29 and the
+                page then showed something RM29 does not buy. The section
+                itself is labelled and priced, but a reader takes the framing
+                from the line above it. */}
+            Contoh penuh Laporan Pembeli {BASE_REPORT_LABEL} &mdash; setiap bahagian yang
+            anda dapat. Satu bahagian di bawah ditanda sebagai tambahan berbayar; ia
+            bukan sebahagian daripada {BASE_REPORT_LABEL}.
           </p>
           <SampleReportPreview showHistoryAddOn={historyUpgradeAvailable()} />
           <div className="mt-5">

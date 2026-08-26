@@ -117,7 +117,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Terus ke kandungan
         </a>
-        <main id="main-content">
+        {/* THE LANDMARK IS HERE; THE SKIP TARGET IS NOT.
+            Shell also rendered a <main>, so every public page had two nested
+            main landmarks — invalid, and it makes the landmark useless for
+            navigating by region.
+            The id moved to Shell rather than the landmark moving here, because
+            this element wraps the page's <Nav /> too: "Terus ke kandungan"
+            jumped to a point ABOVE the navigation, which is the one thing a
+            skip link exists not to do. Shell's content region begins after the
+            nav, which is what the link should reach. */}
+        <main>
           <AnalyticsProvider>{children}</AnalyticsProvider>
         </main>
       </body>

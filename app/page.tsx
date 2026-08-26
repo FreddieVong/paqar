@@ -126,6 +126,12 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema) }} />
       <Nav />
 
+      {/* The skip-link target. The homepage does not use Shell — it lays out
+          its own full-bleed sections — so it needs its own anchor, or "Terus
+          ke kandungan" lands nowhere on the one page most people arrive at.
+          Zero-height: it marks the point after the nav, nothing more. */}
+      <div id="main-content" tabIndex={-1} className="outline-none" />
+
       {/* ── HERO ──
           ONE JOB: the buyer has already found a car. Everything here serves
           the decision about THAT car, which is the ground no competitor
