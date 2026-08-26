@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { analytics } from '@/lib/analytics'
 import { trackValuationCompleted, getTrafficContext } from '@/lib/ga4-events'
 import { trackAdEvent } from '@/lib/meta-events'
+import { whatsappUrl } from '@/lib/site'
 import type { PollCheckResponse, VehiclePreview, PlateLookupStatus } from '@/types/api'
 
 const POLL_INTERVAL_MS = 1_500
@@ -53,8 +54,8 @@ type TeaserState =
 const CARD = 'rounded-[14px] p-4 border'
 
 export function VehiclePreviewTeaser(
-  { checkId, claimToken, lookupDeferred = false }:
-  { checkId: string; claimToken: string; lookupDeferred?: boolean },
+  { checkId, claimToken, lookupDeferred = false, plate = null }:
+  { checkId: string; claimToken: string; lookupDeferred?: boolean; plate?: string | null },
 ) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -62,6 +63,10 @@ export function VehiclePreviewTeaser(
   const [state, setState]     = useState<TeaserState>('searching')
   // Guards button spam: one retry at a time, and the label says so.
   const [retrying, setRetrying] = useState(false)
+  // Carries the CHECK id, never the claim token — the same rule the payment
+  // form's support link follows. A token in a WhatsApp message is a token in
+  // someone's chat history.
+  const correctionUrl = whatsappUrl(`Hi Paqar, nombor plat untuk semakan ${checkId} salah.`)
   const trackedRef = useRef(false)
 
   useEffect(() => {
@@ -187,6 +192,40 @@ export function VehiclePreviewTeaser(
           dan nombor rangka — dan bandingkan dengan apa yang penjual iklankan.
           Kalau tak sepadan, ia ada dalam laporan anda.
         </p>
+
+        {/* ── CONFIRM THE PLATE WHILE IT IS STILL FREE TO FIX ───────────────
+            The lookup runs after payment, so a typo is only discovered once
+            the money has moved — and the buyer then loses the registration
+            cross-check they paid for, recoverable only by refund.
+
+            Naming the plate back is the whole intervention. A buyer who
+            mistypes rarely re-reads a field they have already filled; they do
+            read their own registration number set apart in large mono type.
+            There is no self-serve edit here — same constraint as the "Bukan
+            kereta ini?" line below, the intake token that would authorise one
+            does not travel to this page — so it points at the channel that
+            can actually fix it. */}
+        {plate && correctionUrl && (
+          /* Deliberately does NOT repeat the plate.
+             It is already the page's <h1>, set in 38px directly above this
+             card. Printing it a second time here put "WXY1234" on screen
+             three times in one viewport and stacked a second correction link
+             beside the coverage card's "Bukan kereta ini?" — two ways to say
+             the same thing, on the screen that most needs to be scannable.
+             Pointing at the heading keeps the confirmation and drops the
+             duplication. */
+          <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mt-2.5 pt-2.5 border-t border-[#CBD4BB]">
+            Semakan dibuat untuk plat di atas — pastikan ia betul.{' '}
+            <a
+              href={correctionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-heading font-bold text-[#3D472F] underline underline-offset-2"
+            >
+              Salah taip?
+            </a>
+          </p>
+        )}
       </div>
     )
   }

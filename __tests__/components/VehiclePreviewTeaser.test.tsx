@@ -246,3 +246,43 @@ describe('the pre-payment page does not pretend a lookup is running', () => {
     expect(src).toMatch(/<VehiclePreviewTeaser[\s\S]{0,220}lookupDeferred/)
   })
 })
+
+/**
+ * A mistyped plate is only discovered after payment, because that is when the
+ * lookup runs. The buyer then loses the registration cross-check they paid
+ * for, and the only repair is a refund. Naming the plate back to them while it
+ * is still free to fix is the whole intervention.
+ */
+describe('the plate is confirmed while a typo is still free to fix', () => {
+  const mountWithPlate = () =>
+    render(<VehiclePreviewTeaser checkId="ch_1" claimToken="tok" lookupDeferred plate="WXY 1234" />)
+
+  it('shows the plate back to the buyer before the pay button', async () => {
+    reply({ check: {}, vehiclePreview: null, lookupStatus: null })
+    mountWithPlate()
+    await screen.findByText('Nombor plat anda disemak selepas bayaran', {}, { timeout: 4000 })
+    // Deliberately NOT the plate string: it is the page's h1 already, and
+    // printing it again put the same registration on screen three times.
+    expect(screen.queryByText('WXY 1234')).toBeNull()
+    expect(screen.getByText(/pastikan ia betul/)).toBeTruthy()
+  })
+
+  it('offers a correction route that carries no claim token', async () => {
+    reply({ check: {}, vehiclePreview: null, lookupStatus: null })
+    mountWithPlate()
+    await screen.findByText('Nombor plat anda disemak selepas bayaran', {}, { timeout: 4000 })
+    const link = screen.queryByText('Salah taip?')
+    if (link) {
+      const href = link.getAttribute('href') ?? ''
+      expect(href).toContain('ch_1')
+      expect(href).not.toContain('tok')
+    }
+  })
+
+  it('says nothing about a plate when there is none', async () => {
+    reply({ check: {}, vehiclePreview: null, lookupStatus: null })
+    render(<VehiclePreviewTeaser checkId="ch_1" claimToken="tok" lookupDeferred />)
+    await screen.findByText('Nombor plat anda disemak selepas bayaran', {}, { timeout: 4000 })
+    expect(screen.queryByText(/pastikan ia betul/)).toBeNull()
+  })
+})

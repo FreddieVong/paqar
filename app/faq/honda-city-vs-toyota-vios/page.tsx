@@ -33,7 +33,7 @@ export default function CityVsVios() {
         name: 'Honda City atau Toyota Vios — mana satu patut beli terpakai?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Kalau bajet anda bawah RM28,000, Honda City pilihan lebih baik — lebih banyak ciri dan nilai jual semula lebih kukuh. Kalau bajet ketat dan anda rancang simpan kereta 10 tahun ke atas, Toyota Vios lebih berbaloi kerana jangka hayatnya. Kedua-duanya kereta yang kukuh.',
+          text: 'Bergantung kepada apa yang anda utamakan. Toyota Vios secara umumnya dianggap mengekalkan nilai jual semula lebih baik di pasaran Malaysia dan lebih murah diselenggara di luar pusat servis. Honda City biasanya menawarkan lebih kelengkapan dan ruang penumpang belakang pada harga terpakai yang sama. Kedua-duanya kereta yang kukuh — perbezaan antara dua unit tertentu (rekod servis, jarak tempuh, varian) selalunya lebih besar daripada perbezaan antara dua model ini.',
         },
       },
       {
@@ -41,7 +41,7 @@ export default function CityVsVios() {
         name: 'Bila patut pilih Honda City berbanding Vios?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Pilih Honda City kalau skrin sentuh dan CarPlay penting untuk anda, anda utamakan nilai jual semula, anda rancang simpan kereta tiga hingga lima tahun, dan bajet anda mencukupi untuk RM26,000–28,000.',
+          text: 'Pilih Honda City kalau kelengkapan dan ruang penumpang belakang lebih penting untuk anda, dan anda sanggup menerima kos penyelenggaraan yang biasanya sedikit lebih tinggi. Pilih Toyota Vios kalau anda utamakan nilai jual semula dan kos penyelenggaraan yang lebih murah.',
         },
       },
       {
@@ -57,7 +57,7 @@ export default function CityVsVios() {
         name: 'Mana lebih tahan lama, Honda City atau Toyota Vios?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Toyota Vios menang dari segi jangka hayat dan biasanya boleh bertahan lebih 100,000 km lagi berbanding City kalau diselenggara dengan betul. Honda City pula menang dari segi ciri dan lebih kukuh nilai jual semulanya.',
+          text: 'Kedua-duanya terkenal boleh harap di Malaysia, dan tiada data awam yang membolehkan sesiapa mengatakan salah satu bertahan berapa kilometer lebih lama daripada yang satu lagi. Yang lebih menentukan adalah rekod servis unit tertentu itu, bukan lencana di belakangnya. Vios biasanya lebih murah diselenggara di luar pusat servis; City biasanya menawarkan lebih kelengkapan pada harga terpakai yang sama.',
         },
       },
     ],
@@ -73,7 +73,7 @@ export default function CityVsVios() {
       <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
         <p className="font-semibold text-[#3D472F] mb-2">Keputusan Ringkas</p>
         <p className="text-[#374151]">
-          <strong>Honda City:</strong> Ciri lebih banyak, nilai jual semula lebih kukuh. Pilih kalau anda mahu rasa moden.
+          <strong>Honda City:</strong> Kelengkapan lebih banyak dan ruang belakang lebih lapang. Pilih kalau itu yang anda pakai setiap hari.
           <br/>
           <strong>Toyota Vios:</strong> Lebih boleh harap, harga sikit lebih murah. Pilih kalau ketahanan yang utama.
         </p>
@@ -98,8 +98,8 @@ export default function CityVsVios() {
               </tr>
               <tr className="bg-[#F9FAFB]">
                 <td className="border p-3 font-semibold">Nilai jual semula</td>
-                <td className="border p-3">Lebih kukuh (+5%)</td>
-                <td className="border p-3">Lebih perlahan</td>
+                <td className="border p-3">Kukuh</td>
+                <td className="border p-3">Biasanya lebih kukuh</td>
               </tr>
               <tr>
                 <td className="border p-3 font-semibold">Kebolehpercayaan</td>
@@ -132,9 +132,9 @@ export default function CityVsVios() {
                 <td className="border p-3">Lebih murah</td>
               </tr>
               <tr>
-                <td className="border p-3 font-semibold">Jangka hayat (kalau dijaga)</td>
-                <td className="border p-3">400k+ km</td>
-                <td className="border p-3">500k+ km</td>
+                <td className="border p-3 font-semibold">Kos penyelenggaraan</td>
+                <td className="border p-3">Biasanya sedikit lebih tinggi</td>
+                <td className="border p-3">Biasanya lebih murah</td>
               </tr>
             </tbody>
           </table>
@@ -150,8 +150,7 @@ export default function CityVsVios() {
             <ul className="text-[#374151] space-y-2">
               <li>✅ Anda mahu ruang dalaman yang terasa moden</li>
               <li>✅ Skrin sentuh dan CarPlay penting untuk anda</li>
-              <li>✅ Anda utamakan nilai jual semula (lebih kukuh)</li>
-              <li>✅ Anda rancang simpan 3–5 tahun (lebih senang jual balik)</li>
+              <li>✅ Ruang penumpang belakang penting untuk anda</li>
               <li>✅ Bajet mencukupi untuk RM26–28k</li>
             </ul>
           </div>
@@ -171,12 +170,21 @@ export default function CityVsVios() {
 
       <section className="mb-10">
         <h2 className="text-2xl font-bold mb-4">Keputusan</h2>
-        <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6">
+        <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-lg p-6">
           <p className="text-[#374151] mb-4">
-            <strong>Honda City menang dari segi ciri dan nilai jual semula.</strong> Anda dapat kereta yang lebih moden dan lebih kukuh nilainya.
+            <strong>Honda City menang dari segi kelengkapan dan ruang.</strong> Pada harga
+            terpakai yang sama anda biasanya dapat lebih banyak kit dan ruang belakang
+            yang lebih lapang.
+          </p>
+          <p className="text-[#374151] mb-4">
+            <strong>Toyota Vios biasanya menang dari segi nilai jual semula dan kos
+            penyelenggaraan.</strong> Ini pandangan umum pasaran Malaysia, bukan angka
+            yang kami ukur — jangan buat keputusan beribu ringgit atas dasar itu sahaja.
           </p>
           <p className="text-[#374151]">
-            <strong>Toyota Vios menang dari segi jangka hayat.</strong> Boleh bertahan lebih 100k km lagi berbanding City kalau anda jaga elok-elok.
+            Yang lebih menentukan daripada kedua-duanya: rekod servis, jarak tempuh dan
+            varian unit tertentu yang anda tengok. Dua Vios boleh berbeza lebih jauh
+            antara satu sama lain daripada Vios berbanding City.
           </p>
           <p className="text-[#374151] mt-4">
             <strong>Cadangan kami:</strong> Kalau bajet bawah RM28k, ambil City. Kalau bajet ketat dan anda rancang simpan kereta 10 tahun ke atas, ambil Vios. Dua-dua kereta kukuh — tak salah pilih mana pun.

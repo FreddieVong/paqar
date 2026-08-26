@@ -1,17 +1,28 @@
 /* eslint-disable react/no-unescaped-entities */
 import { Metadata } from 'next'
+import Link from 'next/link'
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
+import { VARIANT_GUIDES, VERDICT_LABELS } from '@/lib/variant-guides'
+
+/**
+ * The SAME data /varian/honda-city renders. Never a second hand-written copy.
+ *
+ * Non-null asserted deliberately: this page is ABOUT the Honda City, so a
+ * missing guide is a build-time contradiction, not a runtime branch to render
+ * an empty section for. The test in guide-truthfulness pins the key.
+ */
+const CITY = VARIANT_GUIDES['honda-city']!
 
 export const metadata: Metadata = {
   title: 'Panduan Beli Honda City Terpakai 2026 — Tahun & Varian Mana | Paqar',
-  description: 'Panduan penuh Honda City terpakai: tahun mana paling berbaloi, varian 1.5 S atau 1.5 H, harga iklan setanding, susut nilai, dan apa perlu disemak sebelum beli.',
+  description: 'Panduan penuh Honda City terpakai: tahun mana paling berbaloi, varian S, E atau V, harga iklan setanding, susut nilai, dan apa perlu disemak sebelum beli.',
   alternates: { canonical: 'https://paqar.my/faq/honda-city-buying-guide' },
   // These guides previously declared no openGraph at all, so they inherited
   // the ROOT layout's — which named the homepage as og:url, og:title and
   // og:description. Every share of this guide advertised the homepage.
   openGraph: {
     title: 'Panduan Beli Honda City Terpakai 2026 — Tahun & Varian Mana | Paqar',
-    description: 'Panduan penuh Honda City terpakai: tahun mana paling berbaloi, varian 1.5 S atau 1.5 H, harga iklan setanding, susut nilai, dan apa perlu disemak sebelum beli.',
+    description: 'Panduan penuh Honda City terpakai: tahun mana paling berbaloi, varian S, E atau V, harga iklan setanding, susut nilai, dan apa perlu disemak sebelum beli.',
     url: 'https://paqar.my/faq/honda-city-buying-guide',
     siteName: 'Paqar',
     locale: 'ms_MY',
@@ -30,15 +41,15 @@ export default function HondaCityGuide() {
         name: 'Honda City tahun mana paling berbaloi dibeli terpakai?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Honda City 1.5 S atau H tahun 2016–2020 adalah pilihan terbaik: boleh harap, ciri cukup moden, dan nilai jual semula kukuh. Elak model sebelum 2014 kerana teknologi lama dan susut nilai cepat. Elak model 2021 ke atas kerana harganya masih premium dan data pasaran belum cukup.',
+          text: 'Honda City generasi GM6 (2014–2019), varian E, adalah pilihan yang paling kerap berbaloi: kelengkapan harian cukup tanpa premium varian V, dan data iklan setanding untuk tahun-tahun itu paling tebal. Model sebelum 2014 (GM2) lebih murah tetapi lebih lama. Model 2020 ke atas (GN2) masih mahal dan iklan setandingnya masih sedikit, jadi harga pasaran lebih sukar dianggarkan dengan yakin.',
         },
       },
       {
         '@type': 'Question',
-        name: 'Patut beli Honda City 1.5 S atau 1.5 H?',
+        name: 'Patut beli Honda City S, E atau V?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Varian S (asas) lebih murah, jimat minyak dan memadai untuk pemanduan harian. Varian H (pertengahan) ada ciri lebih baik seperti skrin sentuh dan sensor, berbaloi dengan premium RM1–2k kalau bajet mencukupi. Beza harga terpakai antara kedua-duanya sekitar RM2–3k.',
+          text: 'Honda Malaysia menjual City sebagai S, E dan V — tiada varian bernama H. Untuk kebanyakan pembeli, E adalah nilai terbaik: sports rim, skrin sentuh dan kunci pintar tanpa harga varian V. S berbaloi hanya jika harganya jelas lebih murah. V berbaloi jika bezanya dengan E kurang daripada RM4k. Sahkan varian yang diiklankan dengan rekod pendaftaran rasmi — varian yang tersilap label adalah perkara biasa dalam iklan.',
         },
       },
     ],
@@ -51,90 +62,76 @@ export default function HondaCityGuide() {
         <h1 className="text-4xl font-bold mb-6">Panduan Beli Honda City Terpakai: Tahun &amp; Varian Terbaik</h1>
         <p className="text-lg text-[#6B7280] mb-6">Panduan penuh beli Honda City terpakai: generasi mana, varian mana, harga iklan setanding, dan apa perlu disemak.</p>
 
-        <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-          <p className="font-semibold text-[#3D472F] mb-2">Jawapan Ringkas</p>
+        <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-lg p-6 mb-8">
+          <p className="font-semibold text-[#3D472F] mb-2">Jawapan ringkas</p>
           <p className="text-[#374151]">
-            Beli <strong>Honda City 1.5 S atau H tahun 2016–2020</strong> dengan jarak tempuh <strong>80–100k km</strong> pada harga <strong>RM25–30k</strong>.
-            Ia boleh harap, nilainya kukuh, dan cirinya cukup moden. Elak model sebelum 2014 (lama) dan 2021 ke atas (masih mahal).
+            Untuk kebanyakan pembeli: <strong>City GM6 (2014–2019), varian E</strong>. Kelengkapan
+            harian cukup tanpa premium varian V, dan iklan setanding untuk tahun-tahun itu
+            paling banyak — jadi harga pasarannya paling boleh dipercayai. Angka di bawah
+            adalah titik permulaan, bukan harga untuk unit tertentu.
           </p>
         </div>
 
+        {/*
+            ── GENERATIONS AND VARIANTS COME FROM lib/variant-guides.ts ───────
+            This section used to be written by hand, and it disagreed with
+            Paqar's own variant guide about the same cars. It called the
+            2008–2014 City "Generasi 1", the 2014–2020 City "Generasi 2" and
+            the 2020+ City "Generasi 3"; /varian/honda-city correctly calls
+            them Generasi 5 (GM2), 6 (GM6) and 7 (GN2). Two Paqar pages, one
+            car, different answers — on a site that sells knowing which car
+            you are actually looking at.
+
+            It also compared variants "1.5 S vs 1.5 H". Honda Malaysia never
+            sold a City H; the line is S, E and V. And it claimed the base
+            2008–2014 variant had no power steering, which no Malaysian City
+            ever lacked.
+
+            Rendering from VARIANT_GUIDES makes the two pages agree by
+            construction rather than by anyone remembering to sync them. */}
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">Generasi Honda City: Mana Patut Beli?</h2>
+          <h2 className="text-2xl font-bold mb-4">Generasi dan varian Honda City</h2>
+          <p className="text-[#374151] mb-6">
+            Kod generasi (GM2, GM6, GN2) adalah cara paling tepat untuk tahu kereta mana
+            yang anda tengok — nama "City" sahaja merangkumi lebih 15 tahun kereta yang
+            sangat berbeza.
+          </p>
 
-          <div className="space-y-6">
-            <div className="border-l-4 border-blue-500 pl-4">
-              <h3 className="text-lg font-semibold mb-2">Generasi 1: 2008–2014 (Elakkan)</h3>
-              <p className="text-[#374151]"><strong>Harga: RM12–18k</strong></p>
-              <p className="text-[#374151] mt-2">Ruang dalaman lama, varian asas tiada power steering, dan susut nilai teruk. Ambil hanya kalau bajet bawah RM15k dan anda tak kisah teknologi lama.</p>
-            </div>
-
-            <div className="border-l-4 border-green-500 pl-4">
-              <h3 className="text-lg font-semibold mb-2">Generasi 2: 2014–2020 (PALING BERBALOI) ⭐</h3>
-              <p className="text-[#374151]"><strong>Harga: RM22–32k</strong></p>
-              <ul className="text-[#374151] space-y-2 mt-2">
-                <li>✅ Reka bentuk moden, jimat minyak (7–8 L/100km)</li>
-                <li>✅ Skrin sentuh dan power steering standard</li>
-                <li>✅ Nilai jual semula kukuh</li>
-                <li>✅ Alat ganti senang didapati</li>
-                <li>⚠️ Sesetengah unit awal (2014–2015) ada masalah elektrik kecil</li>
-              </ul>
-              <p className="text-[#374151] mt-2"><strong>Sasaran: model 2016–2019 dengan 80–100k km. RM25–28k.</strong></p>
-            </div>
-
-            <div className="border-l-4 border-amber-500 pl-4">
-              <h3 className="text-lg font-semibold mb-2">Generasi 3: 2020 ke atas (Elak Buat Masa Ini)</h3>
-              <p className="text-[#374151]"><strong>Harga: RM35–42k</strong></p>
-              <p className="text-[#374151] mt-2">Lebih baharu, tapi masih mahal. Tunggu 2–3 tahun untuk harga pasaran stabil. Listing masih terlalu sedikit untuk kira harga yang adil.</p>
-            </div>
+          <div className="space-y-8">
+            {CITY.generations.map(gen => (
+              <div key={gen.label} className="border-l-4 border-[#3D472F] pl-4">
+                <h3 className="text-lg font-semibold mb-1">{gen.label}</h3>
+                <p className="text-sm text-[#6B7280] mb-3">{gen.years}</p>
+                <div className="space-y-4">
+                  {gen.variants.map(v => (
+                    <div key={v.name}>
+                      <p className="font-semibold text-[#111827]">
+                        {v.name}
+                        <span className="ml-2 text-xs font-normal text-[#6B7280]">
+                          {VERDICT_LABELS[v.verdict]}
+                        </span>
+                      </p>
+                      <p className="text-[#374151] text-sm mt-1">{v.verdictNote}</p>
+                      {v.usedPriceBand && (
+                        <p className="text-sm text-[#6B7280] mt-1">Harga terpakai: {v.usedPriceBand}</p>
+                      )}
+                      {v.spotChecks?.length > 0 && (
+                        <p className="text-sm text-[#6B7280] mt-1">
+                          Cara kenal: {v.spotChecks.join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        </section>
 
-        <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">Perbandingan Varian: S vs H</h2>
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-[#F3F4F6]">
-                <th className="border p-3 text-left">Ciri</th>
-                <th className="border p-3 text-left">1.5 S (Asas)</th>
-                <th className="border p-3 text-left">1.5 H (Pertengahan)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="border p-3 font-semibold">Harga (model 2017)</td>
-                <td className="border p-3">RM24–26k</td>
-                <td className="border p-3">RM26–28k</td>
-              </tr>
-              <tr className="bg-[#F9FAFB]">
-                <td className="border p-3">Skrin sentuh</td>
-                <td className="border p-3">4&quot; asas</td>
-                <td className="border p-3">6.5&quot; Android/Apple CarPlay</td>
-              </tr>
-              <tr>
-                <td className="border p-3">Sensor parkir</td>
-                <td className="border p-3">❌ Tiada</td>
-                <td className="border p-3">✅ Belakang sahaja</td>
-              </tr>
-              <tr className="bg-[#F9FAFB]">
-                <td className="border p-3">Aircond</td>
-                <td className="border p-3">Manual</td>
-                <td className="border p-3">Auto climate</td>
-              </tr>
-              <tr>
-                <td className="border p-3">Cermin tingkap elektrik</td>
-                <td className="border p-3">Depan sahaja</td>
-                <td className="border p-3">Kesemua 4</td>
-              </tr>
-              <tr className="bg-[#F9FAFB]">
-                <td className="border p-3">Penggunaan minyak</td>
-                <td className="border p-3">7.5–8 L/100km</td>
-                <td className="border p-3">7–7.5 L/100km</td>
-              </tr>
-            </tbody>
-          </table>
-          <p className="text-sm text-[#6B7280] mt-4">
-            💡 <strong>Keputusan:</strong> Kalau bajet mencukupi, ambil H (premium RM2–3k untuk ciri lebih baik). Kalau bajet bawah RM27k, S pun masih kukuh.
+          <p className="text-sm text-[#6B7280] mt-6">
+            Panduan varian penuh, dengan setiap perbezaan kelengkapan:{' '}
+            <Link href="/varian/honda-city" className="text-[#3D472F] underline underline-offset-2">
+              /varian/honda-city →
+            </Link>
           </p>
         </section>
 
@@ -162,7 +159,7 @@ export default function HondaCityGuide() {
                 <td className="border p-3">RM24–26k</td>
               </tr>
               <tr className="bg-[#F9FAFB]">
-                <td className="border p-3">City 1.5 H</td>
+                <td className="border p-3">City 1.5 E</td>
                 <td className="border p-3">2017</td>
                 <td className="border p-3">90k km</td>
                 <td className="border p-3">RM26–28k</td>

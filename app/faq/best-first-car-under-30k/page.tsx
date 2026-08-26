@@ -137,9 +137,9 @@ export default function FirstCarUnder30k() {
                 </p>
                 <ul className="text-[#374151] space-y-2 mb-3">
                   <li>✅ Reputasi kebolehpercayaan Toyota</li>
-                  <li>✅ Sangat tahan lama (jangka hayat 500k+ km)</li>
+                  <li>✅ Kos penyelenggaraan biasanya murah, bengkel di mana-mana</li>
                   <li>✅ Alat ganti senang didapati</li>
-                  <li>⚠️ Susut nilai lebih cepat daripada Myvi atau City</li>
+                  <li>⚠️ Myvi biasanya paling mudah dijual semula kerana pasarannya paling luas</li>
                   <li>⚠️ Generasi lama terasa ketinggalan di dalam</li>
                 </ul>
                 <p className="text-sm text-[#6B7280]">
@@ -157,7 +157,7 @@ export default function FirstCarUnder30k() {
                 <li><strong>❌ Proton Saga / Persona (sebelum 2015):</strong> Kebolehpercayaan kurang, kos baiki tinggi, nilai jual semula jatuh mendadak</li>
                 <li><strong>❌ Jenama kurang dikenali:</strong> Alat ganti susah didapati, pasaran jual semula terhad</li>
                 <li><strong>❌ Nissan Almera / Datsun:</strong> Susut nilai lebih cepat berbanding jenama Jepun lain</li>
-                <li><strong>❌ Kereta jarak tempuh tinggi (&gt;150k km):</strong> Kos penyelenggaraan melonjak; risiko masalah tersembunyi</li>
+                <li><strong>⚠️ Kereta jarak tempuh tinggi (&gt;150k km):</strong> Bukan automatik "jangan" — tapi perlukan rekod servis, dan harganya mesti mencerminkan kerja yang bakal datang</li>
                 <li><strong>❌ Kereta tanpa semakan rekod:</strong> Boleh jadi pernah banjir, accident atau ada masalah tersembunyi</li>
               </ul>
             </div>
@@ -277,14 +277,30 @@ export default function FirstCarUnder30k() {
               <div className="border-b pb-6">
                 <h3 className="text-lg font-semibold text-[#111827] mb-2">Macam mana kalau kereta yang saya suka jarak tempuhnya tinggi (150k+ km)?</h3>
                 <p className="text-[#374151]">
-                  <strong>Berundur.</strong> Pada 150k+ km, anda sebenarnya membeli bil pembaikan orang lain. Brake pad, minyak transmisi dan suspensi semuanya haus sekitar jarak ini. Simpan RM2k lagi, cari kereta dengan jarak tempuh lebih rendah.
+                  Jangan terus tolak — tapi tanya lebih banyak soalan, dan harga mesti
+                  mencerminkannya. Sekitar jarak ini beberapa item memang menghampiri
+                  penggantian: brek, minyak transmisi, suspensi, dan pada sesetengah model
+                  belt atau rantai timing. Sebuah kereta 160k km dengan rekod servis penuh
+                  daripada satu pemilik selalunya pilihan yang lebih selamat daripada
+                  kereta 90k km tanpa rekod langsung.
+                  <br /><br />
+                  Yang patut anda buat: minta rekod servis, tanya bila item di atas terakhir
+                  diganti, dan tolak kos yang akan datang daripada tawaran anda. Kalau
+                  penjual tidak dapat tunjuk rekod, itu barulah sebab untuk berundur.
                 </p>
               </div>
 
               <div className="border-b pb-6">
                 <h3 className="text-lg font-semibold text-[#111827] mb-2">Boleh dapat loan untuk kereta berumur 5–10 tahun?</h3>
                 <p className="text-[#374151]">
-                  Boleh, kebanyakan bank biayai kereta terpakai sehingga 9–10 tahun. Kadar faedah sekitar 3–5% setahun. Semak dengan bank anda. Anda perlukan sekurang-kurangnya 40% bayaran pendahuluan.
+                  Boleh. Bank di Malaysia biasanya membiayai kereta terpakai, dengan tempoh
+                  dan margin yang bergantung kepada umur kereta dan penilaian kredit anda —
+                  sesetengah bank mengiklankan pembiayaan sehingga 85–90% untuk kereta
+                  terpakai, tertakluk kepada kelulusan. Bayaran pendahuluan yang anda perlukan
+                  bukan angka tetap: ia ditentukan oleh bank, umur kereta dan nilai
+                  penilaiannya. Dapatkan sebut harga daripada dua atau tiga bank sebelum
+                  bersetuju dengan pembiayaan yang ditawarkan oleh penjual — kadar dealer
+                  bukan semestinya yang terbaik.
                 </p>
               </div>
 

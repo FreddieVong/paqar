@@ -9,6 +9,7 @@ import { lookupJomCheck, normalisePlate, isJomCheckManual, type JomCheckResult, 
 import { setJomCheckStatus, setJomCheckSuccess, setJomCheckFailed } from '@/lib/jomcheck/db'
 import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
 import { PaymentForm }          from '@/components/report/PaymentForm'
+import { isExtractable } from '@/lib/listing-fetch'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
 import { FreeResultGate }      from '@/components/report/FreeResultGate'
@@ -392,6 +393,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               checkId={params.checkId}
               claimToken={claimToken}
               lookupDeferred
+              plate={plate}
             />
           )}
 
@@ -440,7 +442,26 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                     there is no record to check, and promising one on the page
                     that asks for money is the claim this product can least
                     afford to get wrong. */}
-                <LockedReportPreview hasPlate={plate != null} />
+                {/* ── PROMISE ONLY WHAT PAQAR ACTUALLY HOLDS ──────────────
+                    The preview used to say "Orang kami baca iklan anda
+                    sendiri" no matter what was submitted, so a URL that is
+                    not a listing at all — https://example.com/car/123 — bought
+                    that promise for RM29.
+
+                    Derivable with no extra query, because the convert route
+                    already refuses a check with neither a link nor a
+                    screenshot (422 no_listing). So: no link means screenshots
+                    exist; a link Paqar can fetch means the advert was read;
+                    anything else is a link a PERSON opens, which is a weaker
+                    and different promise. */}
+                <LockedReportPreview
+                  hasPlate={plate != null}
+                  evidence={
+                    !row.check.listing_url          ? 'screenshot'
+                    : isExtractable(row.check.listing_url) ? 'listing_read'
+                    : 'link_only'
+                  }
+                />
                 <PaymentForm
                   checkId={params.checkId}
                   claimToken={claimToken}

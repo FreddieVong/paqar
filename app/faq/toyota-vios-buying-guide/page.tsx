@@ -70,39 +70,60 @@ export default function ViosBuyingGuide() {
       <h1 className="text-4xl font-bold mb-6">Panduan Beli Toyota Vios Terpakai: Tahun &amp; Harga Terbaik</h1>
       <p className="text-lg text-[#6B7280] mb-6">Panduan penuh: Vios tahun mana patut beli, harga pasaran, kebolehpercayaan dan susut nilai.</p>
 
-      <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
-        <p className="font-semibold text-[#3D472F] mb-2">Jawapan Ringkas</p>
+      <div className="bg-[#F4F6F0] border border-[#CBD4BB] rounded-lg p-6 mb-8">
+        <p className="font-semibold text-[#3D472F] mb-2">Jawapan ringkas</p>
         <p className="text-[#374151]">
-          Beli <strong>Toyota Vios 1.5 tahun 2014–2018</strong> dengan jarak tempuh <strong>100–120k km</strong> pada harga <strong>RM22–28k</strong>.
-          Kebolehpercayaan Toyota memang susah dilawan. Boleh bertahan 500k+ km kalau diselenggara. Susut nilainya sederhana.
+          Julat yang paling kerap berbaloi: <strong>Vios 1.5 tahun 2014–2018</strong>,
+          sekitar <strong>100–120k km</strong>. Toyota mempunyai reputasi kebolehpercayaan
+          yang kukuh di Malaysia dan bengkelnya ada di mana-mana. Angka di atas adalah
+          titik permulaan — harga sebenar bergantung kepada varian, rekod servis dan
+          keadaan unit tertentu.
         </p>
       </div>
 
       <section className="mb-10">
         <h2 className="text-2xl font-bold mb-4">Generasi Vios</h2>
 
+        {/*
+            Labelled by YEAR RANGE, not by generation number.
+            These blocks used to read "Gen 1: 2007–2013 / Gen 2: 2013–2018 /
+            Gen 3: 2018 ke atas". That numbering is wrong — the 2007–2013 Vios
+            is the SECOND generation, not the first — and it disagreed with
+            Paqar's own Honda City guide, which numbers the same era's cars 5,
+            6 and 7. A buyer comparing the two pages would find Paqar counting
+            generations two different ways.
+            Year ranges are what a Malaysian buyer searches and what the geran
+            actually shows, and they cannot be off by one. */}
         <div className="space-y-6">
-          <div className="border-l-4 border-red-500 pl-4">
-            <h3 className="text-lg font-semibold mb-2">Gen 1: 2007–2013 (Elakkan)</h3>
-            <p className="text-[#374151]">Reka bentuk lama, teknologi ketinggalan. Ambil hanya kalau bajet bawah RM12k.</p>
+          <div className="border-l-4 border-[#9CA3AF] pl-4">
+            <h3 className="text-lg font-semibold mb-2">2007–2013 (paling murah)</h3>
+            <p className="text-[#374151]">
+              Reka bentuk dan kelengkapan zaman itu. Masih boleh harap secara mekanikal,
+              tetapi umurnya bermakna rekod servis dan keadaan bodi jauh lebih penting
+              daripada tahun pada geran. Ambil kalau bajet ketat dan rekod servisnya ada.
+            </p>
           </div>
 
           <div className="border-l-4 border-green-500 pl-4">
-            <h3 className="text-lg font-semibold mb-2">Gen 2: 2013–2018 (PALING BERBALOI) ⭐</h3>
+            <h3 className="text-lg font-semibold mb-2">2013–2019 (paling kerap berbaloi) ⭐</h3>
             <p className="text-[#374151] mb-2"><strong>Harga: RM20–28k | Sasaran: 2015–2017, 110k km, RM24k</strong></p>
             <ul className="text-[#374151] space-y-2">
-              <li>✅ Kebolehpercayaan Toyota (jangka hayat 500k+ km)</li>
+              <li>✅ Reputasi kebolehpercayaan Toyota, dan bengkel di mana-mana</li>
               <li>✅ Ruang dalaman moden, aircond sejuk</li>
               <li>✅ Jimat minyak (7–8 L/100km)</li>
               <li>✅ Alat ganti murah dan senang dapat</li>
-              <li>⚠️ Susut nilai lebih cepat berbanding Myvi/City</li>
+              <li>⚠️ Myvi biasanya lebih mudah dijual semula kerana pasarannya lebih luas</li>
               <li>⚠️ Transmisi boleh jadi bising (perkara biasa)</li>
             </ul>
           </div>
 
           <div className="border-l-4 border-amber-500 pl-4">
-            <h3 className="text-lg font-semibold mb-2">Gen 3: 2018 ke atas (Masih Mahal)</h3>
-            <p className="text-[#374151]">Reka bentuk lebih baharu, tapi harga masih tinggi. Tunggu 2 tahun lagi untuk harga turun.</p>
+            <h3 className="text-lg font-semibold mb-2">2019 ke atas (masih mahal)</h3>
+            <p className="text-[#374151]">
+              Lebih baharu dan lebih lengkap, tetapi harga terpakainya masih tinggi dan
+              iklan setandingnya lebih sedikit — jadi harga pasaran lebih sukar
+              dianggarkan dengan yakin.
+            </p>
           </div>
         </div>
       </section>
