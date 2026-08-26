@@ -162,7 +162,17 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // The link was a results page. Told to the buyer as a redirection to the
     // right input, never as an error — they did nothing wrong, they pasted
     // the page they were looking at.
-    searchPage,
+    // ── TERMINAL ONLY WHEN NOTHING CAN RESCUE IT ───────────────────────
+    //
+    // Reported to the UI as a BLOCKING state, so it must mean the same thing
+    // the convert boundary means. That boundary lets screenshots rescue a
+    // results-page URL — the reviewer has the advert, and the stale link
+    // beside it costs nothing — but this field ignored them, so the form told
+    // a buyer who had done exactly what it asked ("atau screenshot iklan itu")
+    // that the link was still wrong, and then walked them to a green
+    // "Paqar boleh semak" anyway. Warning and success on one screen, and the
+    // real refusal three steps later.
+    searchPage: searchPage && shots.length === 0,
     // Facebook, Instagram and the like carry no car in the URL by
     // construction. Told apart from a READ FAILURE so the buyer is not shown
     // an amber warning for something that is simply how those links are.

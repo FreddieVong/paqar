@@ -811,7 +811,12 @@ export function ListingIntakeForm({
           </div>
         )}
 
-        {needShots && !opaqueSource && phase === 'summary' && (
+        {/* `!searchPage`: a results page is not a READ failure, it is the
+            wrong kind of link. Both fired together, so the buyer saw "Kami tak
+            dapat baca link itu — isi butiran kereta di bawah" stacked above
+            "Ini halaman carian — betulkan link itu". One told them to type the
+            car in; the other told them not to bother. */}
+        {needShots && !opaqueSource && !searchPage && phase === 'summary' && (
           <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[12px] p-4">
             {/* NAME WHAT ACTUALLY FAILED. This said "screenshot" whatever the
                 buyer had given us, so someone who pasted a link was told their
@@ -845,8 +850,12 @@ export function ListingIntakeForm({
           </div>
         )}
 
-        {/* FALLBACK: only the fields extraction could not settle. */}
-        {(editing || (phase === 'summary' && (missing('brand') || missing('model') || missing('year') || missing('askingPriceRm')))) && (
+        {/* FALLBACK: only the fields extraction could not settle.
+            Withheld for a results page: those four fields describe a MODEL,
+            and offering them here is what let a search link reach a payable
+            checkout in the first place. There is nothing to type that would
+            make this link a car. */}
+        {!searchPage && (editing || (phase === 'summary' && (missing('brand') || missing('model') || missing('year') || missing('askingPriceRm')))) && (
           <div className="space-y-3">
             {/* EACH FIELD ON ITS OWN. Brand and year were rendered whenever
                 the MODEL was missing, so a buyer whose advert gave up only its
@@ -892,14 +901,29 @@ export function ListingIntakeForm({
           </div>
         )}
 
+        {/* ── A RESULTS PAGE IS A TERMINAL STATE, NOT A WARNING ─────────────
+            This used to render beside everything else: the buyer saw "Ini
+            halaman carian", filled the four fields in by hand anyway, pressed
+            on, and was shown a green "✓ Paqar boleh semak Honda City 2019"
+            with an RM29 button. The convert boundary refused it three steps
+            later — correctly — so the only thing the earlier screens achieved
+            was to contradict themselves and waste the buyer's time.
+            Success and failure must not be legible at once. While this is
+            true the primary action and the coverage result are both withheld,
+            and the two things that actually resolve it are named here. */}
         {searchPage && (
           <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[12px] p-4">
             <p className="font-heading font-bold text-[13px] text-[#92400E] mb-1">
               Ini halaman carian, bukan satu iklan kereta.
             </p>
-            <p className="font-body text-[13px] text-[#78350F] leading-relaxed">
-              Hantar link satu unit tertentu, atau screenshot iklan itu.
+            <p className="font-body text-[13px] text-[#78350F] leading-relaxed mb-3">
+              Paqar menyemak satu unit tertentu, jadi kami perlukan iklan kereta
+              itu sendiri — bukan senarai hasil carian.
             </p>
+            <ul className="font-body text-[13px] text-[#78350F] leading-relaxed list-disc pl-5 space-y-1">
+              <li>Buka iklan kereta yang anda minat, kemudian salin link itu ke atas, atau</li>
+              <li>Hantar screenshot iklan itu — itu sudah memadai.</li>
+            </ul>
           </div>
         )}
 
@@ -911,7 +935,7 @@ export function ListingIntakeForm({
             and a save step that does nothing they asked for. The primary
             action now saves anything typed and continues; a buyer who filled
             nothing in skips the save entirely. */}
-        {phase === 'summary' && summary && (
+        {phase === 'summary' && summary && !searchPage && (
           <button type="button" onClick={() => void saveThenCheck()} disabled={busy}
                   className="w-full min-h-[44px] bg-[#3D472F] hover:bg-[#2E3523] text-white font-heading font-extrabold text-[15px] rounded-[14px] py-4 transition-colors disabled:opacity-60">
             {busy ? 'Menyemak…' : 'Semak kereta ini →'}
@@ -919,7 +943,7 @@ export function ListingIntakeForm({
         )}
 
         {/* COVERAGE — capability only. No verdict, no median, no range. */}
-        {phase === 'coverage' && coverage && (
+        {phase === 'coverage' && coverage && !searchPage && (
           coverage.eligible ? (
             <div className="space-y-4">
               <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-[12px] p-4">
