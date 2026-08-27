@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { ApiError } from '@/lib/api/errors'
 import { comparableConfidence } from '@/lib/comparables'
 import { RateLimiter } from '@/lib/api/rate-limit'
@@ -23,6 +25,9 @@ const mockVehicleData = {
 }
 
 const mockValuation = {
+  // 'nvic' — this mock represents an exact match. The fallback shape is
+  // 'make_year_model', and the two must never be indistinguishable again.
+  matchedBy: 'nvic' as const,
   wmNewPrice: 82500,
   sumInsured: null,
   make: 'Honda',
@@ -454,5 +459,59 @@ describe('Valuation Endpoint', () => {
       expect(response.marketMax).toBeNull()
       expect(typeof response.marketCount).toBe('number')
     })
+  })
+})
+
+/**
+ * ── THE FALLBACK MUST SAY IT IS A FALLBACK ─────────────────────────────────
+ *
+ * Verified against production on 2026-08-27:
+ *
+ *   ?nvic=RTA12345&make=Honda&year=2020&model=City      → 200, variant "S"
+ *   ?nvic=TOTALLY_FAKE&make=Honda&year=2020&model=City  → byte-identical
+ *
+ * RTA12345 — the NVIC this repo's own docs and the mock above both use — matches
+ * no row. getValuationByNvic falls through to make + year + model, ordered
+ * `wm_new_pr` ascending limit 1, so the answer is the CHEAPEST variant of that
+ * model-year. Both paths returned HTTP 200 with nothing to tell them apart.
+ *
+ * For an endpoint whose stated audience is AI assistants, that is an entry-trim
+ * price handed over as the price of a specific car. `matchedBy` is the fix, and
+ * it is the same move `marketCohort` already makes for the price cohort: return
+ * the figure, and say what it describes. 404-ing instead would break callers and
+ * discard a genuinely useful answer.
+ *
+ * Source-level, matching this file's existing note about server-only imports.
+ */
+describe('the valuation response says which vehicle answered', () => {
+  const lib   = readFileSync(join(__dirname, '..', '..', 'lib/db/vehicle-valuations.ts'), 'utf8')
+  const route = readFileSync(join(__dirname, '..', '..', 'app/api/v1/valuation/route.ts'), 'utf8')
+
+  it('labels an exact NVIC match and a fallback differently', () => {
+    expect(lib, 'the exact-NVIC branch lost its label').toContain("'nvic')")
+    expect(lib, 'the make+year+model fallback lost its label').toContain("'make_year_model')")
+  })
+
+  it('carries the label all the way out to the API consumer', () => {
+    // A field the route never returns protects nobody.
+    expect(route).toMatch(/matchedBy:\s*valuation\.matchedBy/)
+    expect(route).toMatch(/matchedBy: 'nvic' \| 'make_year_model'/)
+  })
+
+  it('coerces wmNewPrice instead of casting it', () => {
+    /**
+     * `data.wm_new_pr as number` was a lie TypeScript cannot catch: numeric
+     * Postgres columns arrive as strings, so /api/v1/valuation published
+     * `"wmNewPrice":"74191"` while its own docs promised a number. Five call
+     * sites already wrapped this value in Number() before comparing it — the
+     * codebase knew, and had patched the consumers instead of the source.
+     */
+    expect(lib).toContain('wmNewPrice: Number(data.wm_new_pr)')
+    expect(lib, 'the cast that hid a string is back').not.toMatch(/wm_new_pr as number/)
+  })
+
+  it('keeps this file’s mock shaped like the real thing', () => {
+    // A mock missing the field cannot catch its removal.
+    expect(Object.keys(mockValuation)).toContain('matchedBy')
   })
 })

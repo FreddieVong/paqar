@@ -3,6 +3,8 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { VARIANT_GUIDES, VERDICT_LABELS } from '@/lib/variant-guides'
+import { guideSchema } from '@/lib/seo/guide-schema'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 /**
  * The SAME data /varian/honda-city renders. Never a second hand-written copy.
@@ -32,9 +34,12 @@ export const metadata: Metadata = {
 }
 
 export default function HondaCityGuide() {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+  const jsonLd = guideSchema({
+    path:          '/faq/honda-city-buying-guide',
+    name:          'Panduan beli Honda City terpakai',
+    headline:      'Panduan Beli Honda City Terpakai: Tahun & Varian Terbaik',
+    description:   'Honda City terpakai: generasi mana paling berbaloi, varian S, E atau V, harga iklan setanding, dan apa perlu disemak sebelum bayar deposit.',
+    datePublished: '2026-07-20',
     mainEntity: [
       {
         '@type': 'Question',
@@ -53,7 +58,7 @@ export default function HondaCityGuide() {
         },
       },
     ],
-  }
+  })
 
   return (
     <>
@@ -214,6 +219,9 @@ export default function HondaCityGuide() {
             </div>
           </div>
         </section>
+
+        <GuideRelated slug="honda-city-buying-guide" />
+
 
         <FaqGetValuationCta faqSlug="honda-city-buying-guide" />
       </div>

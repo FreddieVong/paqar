@@ -1,4 +1,9 @@
 import type { Metadata } from 'next'
+// cfg.description is rendered twice: as body copy, where its full length is
+// right, and as the meta description, where Google shows ~155 characters and
+// discards the rest. Four of the seven comparisons ran 161-185. Clamped here
+// rather than shortened at source, so the page keeps its prose.
+import { clampMetaDescription } from '@/lib/meta-description'
 import { notFound }      from 'next/navigation'
 import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
@@ -240,13 +245,13 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     // Model names stay first because that is what the query matches
     // ("saga vs bezza", "alza vs x50").
     title: `${cfg.titleA} vs ${cfg.titleB} — Harga Terpakai | Paqar`,
-    description: cfg.description,
+    description: clampMetaDescription(cfg.description),
     alternates: { canonical: `https://paqar.my/bandingkan/${params.slug}` },
     openGraph: {
       images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
       locale: 'ms_MY',
       title: `${cfg.titleA} vs ${cfg.titleB} Terpakai`,
-      description: cfg.description,
+      description: clampMetaDescription(cfg.description),
       url: `https://paqar.my/bandingkan/${params.slug}`,
     },
   }

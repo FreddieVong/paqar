@@ -13,6 +13,23 @@ export interface VehicleValuation {
   // model-level market listings are NOT valid comparables (a JCW GP must
   // not be verdict'd against base Cooper listings).
   familyFloorNewPrice: number | null
+  /**
+   * Which lookup actually produced this row.
+   *
+   * `nvic` — the NVIC matched a vehicle exactly.
+   * `make_year_model` — it did not, and this is the CHEAPEST variant of that
+   *   make/year/model instead. A real answer, but about a different car than
+   *   the caller named.
+   *
+   * The distinction was invisible: `?nvic=RTA12345&make=Honda&year=2020&model=City`
+   * and `?nvic=TOTALLY_FAKE&...` return byte-identical output, both HTTP 200.
+   * For the public API — written for AI assistants — that is an entry-trim
+   * price presented as the price of the car someone asked about.
+   *
+   * Same reasoning as `marketCohort` on the API response: the figure is only
+   * safe to quote when the consumer can see what it describes.
+   */
+  matchedBy: 'nvic' | 'make_year_model'
 }
 
 export async function getValuationByNvic(
@@ -38,7 +55,7 @@ export async function getValuationByNvic(
       .maybeSingle()
     if (data) {
       const floor = await familyFloor(supabase, data.make as string, data.year as string, data.family as string)
-      return map(data, floor)
+      return map(data, floor, 'nvic')
     }
   }
 
@@ -63,7 +80,7 @@ export async function getValuationByNvic(
         .limit(1)
         .maybeSingle()
       // Fallback already picks the cheapest variant — it IS the floor
-      if (data) return map(data, Number(data.wm_new_pr))
+      if (data) return map(data, Number(data.wm_new_pr), 'make_year_model')
     }
   }
 
@@ -89,15 +106,30 @@ async function familyFloor(
   return data?.wm_new_pr != null ? Number(data.wm_new_pr) : null
 }
 
-function map(data: Record<string, unknown>, floor: number | null): VehicleValuation {
+function map(
+  data: Record<string, unknown>,
+  floor: number | null,
+  matchedBy: VehicleValuation['matchedBy'],
+): VehicleValuation {
   return {
-    wmNewPrice: data.wm_new_pr as number,
+    // Numeric Postgres columns arrive as STRINGS through the driver, and the
+    // `as number` cast that used to sit here was a lie TypeScript cannot catch.
+    // The whole codebase already knew: five call sites wrap this value in
+    // Number() before comparing it — two of them in this file — and
+    // lib/variant-ladder.ts types the raw column `number | string` outright.
+    // Everything held only because every arithmetic use happens to be `*` or
+    // `>=`, which coerce; the first `+` would have silently concatenated.
+    //
+    // It also leaked: /api/v1/valuation published `"wmNewPrice":"74191"` while
+    // its own documentation promised a number.
+    wmNewPrice: Number(data.wm_new_pr),
     sumInsured: data.sum_insured as number | null,
     make:       data.make as string,
     family:     data.family as string,
     variant:    data.variant as string,
     year:       data.year as number,
     familyFloorNewPrice: floor,
+    matchedBy,
   }
 }
 

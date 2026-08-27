@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { organizationRef } from '@/lib/site'
+import { articleDates } from '@/lib/seo/editorial-dates'
 
 const YEAR = new Date().getFullYear()
 
@@ -35,9 +37,9 @@ export default function PanduanSemakSamanPage() {
         '@type': 'Article',
         headline: 'Cara Semak Saman Kereta Secara Rasmi di Malaysia',
         description: 'Panduan lengkap cara semak saman PDRM dan JPJ secara rasmi. Step by step, percuma, tanpa daftar akaun.',
-        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        datePublished: '2025-05-01',
+        author: organizationRef(),
+        publisher: organizationRef(),
+        ...articleDates('/panduan-semak-saman', '2025-05-01'),
         url: 'https://paqar.my/panduan-semak-saman',
       },
       {

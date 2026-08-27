@@ -1,6 +1,8 @@
 /* eslint-disable react/no-unescaped-entities */
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
+import { guideSchema } from '@/lib/seo/guide-schema'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 export const metadata: Metadata = {
   title: 'Cara Rundingkan Harga Kereta Terpakai | Panduan Paqar',
@@ -23,9 +25,12 @@ export const metadata: Metadata = {
 export default function HowToNegotiate() {
   // Grounded in the 5-step framework, the discount table, and the red-flags
   // box rendered below.
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+  const jsonLd = guideSchema({
+    path:          '/faq/how-to-negotiate-used-car',
+    name:          'Cara rundingkan harga kereta terpakai',
+    headline:      'Cara Rundingkan Harga Kereta Terpakai',
+    description:   'Teknik rundingan harga kereta terpakai: guna harga pasaran sebagai asas, berapa peratus diskaun realistik ikut kondisi, dan bila patut berundur.',
+    datePublished: '2026-07-20',
     mainEntity: [
       {
         '@type': 'Question',
@@ -60,7 +65,7 @@ export default function HowToNegotiate() {
         },
       },
     ],
-  }
+  })
 
   return (
     <>
@@ -181,6 +186,9 @@ export default function HowToNegotiate() {
           <li>❌ Harga RM5k+ bawah harga tengah iklan setanding ("kalau bunyi terlalu bagus, memang ada sebabnya")</li>
         </ul>
       </div>
+
+        <GuideRelated slug="how-to-negotiate-used-car" />
+
 
         <FaqGetValuationCta faqSlug="how-to-negotiate-used-car" />
     </div>

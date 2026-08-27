@@ -5,17 +5,19 @@ import { Shell }               from '@/components/layout/Shell'
 import { BASE_REPORT_CENTS, BASE_REPORT_LABEL, ringgit, REVIEW_SLA_HOURS, REFUND_GUARANTEE_LONG } from '@/lib/pricing'
 import { TYPICAL_MINUTES } from '@/lib/review-capacity'
 import { ListingIntakeForm }   from '@/components/check/ListingIntakeForm'
+import { organizationRef } from '@/lib/site'
+import { articleDates } from '@/lib/seo/editorial-dates'
 
 export const metadata: Metadata = {
-  title: 'Laporan Pembeli Kereta Terpakai Malaysia RM29 | Paqar',
-  description: 'Laporan Pembeli Paqar RM29 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
+  title: `Laporan Pembeli Kereta Terpakai Malaysia ${BASE_REPORT_LABEL} | Paqar`,
+  description: `Hantar link iklan kereta itu. Orang kami baca dan beritahu sama ada patut diteruskan, berapa patut ditawar, dan apa perlu disahkan — ${BASE_REPORT_LABEL}.`,
   alternates: { canonical: 'https://paqar.my/laporan-pembeli-kereta-terpakai' },
   openGraph: {
     locale: 'ms_MY',
-    title: 'Laporan Pembeli Kereta Terpakai Malaysia RM29',
-    description: 'Laporan Pembeli Paqar RM29 — keputusan harga pasaran, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit. Satu bayaran, tanpa akaun.',
+    title: `Laporan Pembeli Kereta Terpakai Malaysia ${BASE_REPORT_LABEL}`,
+    description: `Hantar link iklan kereta itu. Orang kami baca dan beritahu sama ada patut diteruskan, berapa patut ditawar, dan apa perlu disahkan — ${BASE_REPORT_LABEL}.`,
     url: 'https://paqar.my/laporan-pembeli-kereta-terpakai',
-    images: [{ url: '/api/og?title=Laporan%20Pembeli%20Kereta%20Terpakai&subtitle=RM29%20%C2%B7%20Satu%20bayaran%20%C2%B7%20Tanpa%20akaun', width: 1200, height: 630 }],
+    images: [{ url: `/api/og?title=Laporan%20Pembeli%20Kereta%20Terpakai&subtitle=${encodeURIComponent(`${BASE_REPORT_LABEL} · Disemak oleh manusia · Tanpa akaun`)}`, width: 1200, height: 630 }],
   },
 }
 
@@ -34,16 +36,16 @@ export default function LaporanPembelihPage() {
         '@type': 'Article',
         headline: 'Laporan Pembeli Kereta Terpakai Malaysia RM29',
         description: 'Apa yang ada dalam Laporan Pembeli Paqar RM29 — keputusan harga, trade-in estimate, maklumat kenderaan, skrip rundingan dan checklist deposit.',
-        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        datePublished: '2026-06-23',
+        author: organizationRef(),
+        publisher: organizationRef(),
+        ...articleDates('/laporan-pembeli-kereta-terpakai', '2026-06-23'),
         url: 'https://paqar.my/laporan-pembeli-kereta-terpakai',
       },
       {
         '@type': 'Service',
         name: 'Laporan Pembeli Kereta Terpakai',
         description: 'Laporan Pembeli RM29 merangkumi keputusan harga pasaran, harga tengah dan julat harga, anggaran trade-in, maklumat kenderaan, skrip rundingan, soalan untuk penjual, dan checklist deposit.',
-        provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        provider: organizationRef(),
         areaServed: { '@type': 'Country', name: 'Malaysia' },
         offers: { '@type': 'Offer', price: String(ringgit(BASE_REPORT_CENTS)), priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
       },

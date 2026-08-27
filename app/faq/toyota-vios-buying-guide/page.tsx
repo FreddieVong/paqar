@@ -1,17 +1,19 @@
 /* eslint-disable react/no-unescaped-entities */
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
+import { guideSchema } from '@/lib/seo/guide-schema'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 export const metadata: Metadata = {
   title: 'Panduan Beli Toyota Vios Terpakai 2026 — Tahun & Harga Terbaik | Paqar',
-  description: 'Panduan penuh Toyota Vios terpakai: generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, kebolehpercayaan, dan tanda bahaya sebelum beli.',
+  description: 'Panduan Toyota Vios terpakai: tahun mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, kebolehpercayaan, dan tanda bahaya sebelum beli.',
   alternates: { canonical: 'https://paqar.my/faq/toyota-vios-buying-guide' },
   // These guides previously declared no openGraph at all, so they inherited
   // the ROOT layout's — which named the homepage as og:url, og:title and
   // og:description. Every share of this guide advertised the homepage.
   openGraph: {
     title: 'Panduan Beli Toyota Vios Terpakai 2026 — Tahun & Harga Terbaik | Paqar',
-    description: 'Panduan penuh Toyota Vios terpakai: generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, kebolehpercayaan, dan tanda bahaya sebelum beli.',
+    description: 'Panduan Toyota Vios terpakai: tahun mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, kebolehpercayaan, dan tanda bahaya sebelum beli.',
     url: 'https://paqar.my/faq/toyota-vios-buying-guide',
     siteName: 'Paqar',
     locale: 'ms_MY',
@@ -24,16 +26,19 @@ export default function ViosBuyingGuide() {
   // Every Q&A below must correspond to content visible on this page —
   // structured data that answers something the page does not is a policy
   // violation, not a shortcut.
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+  const jsonLd = guideSchema({
+    path:          '/faq/toyota-vios-buying-guide',
+    name:          'Panduan beli Toyota Vios terpakai',
+    headline:      'Panduan Beli Toyota Vios Terpakai: Tahun & Harga Terbaik',
+    description:   'Toyota Vios terpakai: tahun mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, kebolehpercayaan, dan tanda bahaya sebelum beli.',
+    datePublished: '2026-07-20',
     mainEntity: [
       {
         '@type': 'Question',
         name: 'Toyota Vios tahun mana patut beli terpakai?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Generasi 2 (2013–2018) paling berbaloi — sasarkan Vios 1.5 tahun 2015–2017 dengan jarak tempuh sekitar 110,000 km pada harga lebih kurang RM24,000. Generasi 1 (2007–2013) elok dielak kecuali bajet anda bawah RM12,000. Generasi 3 (2018 ke atas) masih mahal buat masa ini.',
+          text: 'Vios 2013–2019 paling kerap berbaloi — sasarkan Vios 1.5 tahun 2015–2017 dengan jarak tempuh sekitar 110,000 km pada harga lebih kurang RM24,000. Vios 2007–2013 paling murah dan masih boleh harap secara mekanikal, tetapi rekod servis dan keadaan bodi lebih penting daripada tahun pada geran. Vios 2019 ke atas masih mahal dan iklan setandingnya lebih sedikit, jadi harga pasarannya lebih sukar dianggarkan dengan yakin.',
         },
       },
       {
@@ -61,7 +66,7 @@ export default function ViosBuyingGuide() {
         },
       },
     ],
-  }
+  })
 
   return (
     <>
@@ -186,6 +191,9 @@ export default function ViosBuyingGuide() {
           <li>❌ Harga terlalu murah (selalunya sejarah teksi atau masalah tersembunyi)</li>
         </ul>
       </div>
+
+        <GuideRelated slug="toyota-vios-buying-guide" />
+
 
         <FaqGetValuationCta faqSlug="toyota-vios-buying-guide" />
     </div>

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: `Cara Semak Roadtax Kereta Malaysia ${YEAR}`,
     description: 'Cara semak status roadtax kereta Malaysia — sama ada masih sah, dah tamat, atau perlu diperbaharui. Penting sebelum beli kereta terpakai.',
     url: 'https://paqar.my/cara-semak-roadtax-kereta',
-    images: [{ url: '/api/og?title=Cara%20Semak%20Roadtax%20Kereta&subtitle=Semak%20status%20roadtax%20percuma', width: 1200, height: 630 }],
+    images: [{ url: '/api/og?title=Cara%20Semak%20Roadtax%20Kereta&subtitle=Panduan%20rasmi%20JPJ%20%E2%80%94%20percuma', width: 1200, height: 630 }],
   },
 }
 
@@ -186,6 +186,12 @@ export default function CaraSemakRoadtaxPage() {
 
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Panduan berkaitan</p>
+            {/* The other half of the same question, and it had no link in
+                either direction. This page answers "is THIS car's roadtax
+                still valid"; /faq/roadtax-by-state answers "what does roadtax
+                cost, and does it change by state" — which is the query with
+                the volume, and now the one Paqar answers correctly. */}
+            <Link href="/faq/roadtax-by-state" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Berapa kadar roadtax sebenar (dan kenapa ia sama di semua negeri Semenanjung) →</Link>
             <Link href="/cara-semak-insurans-kereta" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara semak insurans kereta →</Link>
             <Link href="/cara-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
             <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>

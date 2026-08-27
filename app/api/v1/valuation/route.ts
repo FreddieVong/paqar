@@ -23,6 +23,19 @@ interface ValuationResponse {
   // the market figures span multiple variants of the model — never read them as
   // this exact variant's price.
   marketCohort: CohortMode
+  /**
+   * Which VEHICLE answered, as opposed to which cohort priced it.
+   *
+   * 'make_year_model' means the nvic matched nothing and this is the cheapest
+   * variant of that make/year/model. Still HTTP 200, still a real row — about a
+   * different car than the caller asked for. Undocumented, that is a trap set
+   * for exactly the automated consumers this endpoint exists to serve.
+   *
+   * Additive on purpose: 404-ing instead would break existing callers and throw
+   * away a genuinely useful answer. marketCohort already established the right
+   * move — return the figure, and say what it describes.
+   */
+  matchedBy: 'nvic' | 'make_year_model'
 }
 
 /**
@@ -44,8 +57,13 @@ interface ValuationResponse {
  *   "marketMax": 41000,
  *   "marketCount": 127,
  *   "confidence": "medium",
- *   "isSpecialVariant": false
+ *   "isSpecialVariant": false,
+ *   "marketCohort": "normal",
+ *   "matchedBy": "nvic"
  * }
+ *
+ * `matchedBy: "make_year_model"` means the nvic matched nothing and the figures
+ * describe the CHEAPEST variant of that make/year/model instead.
  */
 export async function GET(
   request: NextRequest
@@ -146,6 +164,7 @@ export async function GET(
       confidence,
       isSpecialVariant,
       marketCohort: marketStats.mode,
+      matchedBy:    valuation.matchedBy,
     }
 
     return createJsonResponse(response, 200)

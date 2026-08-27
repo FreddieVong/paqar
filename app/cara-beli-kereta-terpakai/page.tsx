@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { organizationRef } from '@/lib/site'
+import { articleDates } from '@/lib/seo/editorial-dates'
 
 const YEAR = new Date().getFullYear()
 
@@ -35,9 +37,9 @@ export default function CaraBelihKeretaTerpakaiPage() {
         '@type': 'Article',
         headline: 'Cara Beli Kereta Terpakai Malaysia dengan Selamat',
         description: 'Panduan lengkap cara beli kereta terpakai Malaysia. Dari semak saman, geran, pinjaman, hingga bayar deposit dengan selamat.',
-        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        datePublished: '2025-05-01',
+        author: organizationRef(),
+        publisher: organizationRef(),
+        ...articleDates('/cara-beli-kereta-terpakai', '2025-05-01'),
         url: 'https://paqar.my/cara-beli-kereta-terpakai',
       },
       {

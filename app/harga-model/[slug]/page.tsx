@@ -16,6 +16,10 @@ import { modelYearBreadcrumbs } from '@/lib/breadcrumbs'
 import { isTierAYearPage, adjacentYears } from '@/lib/year-page-tiers'
 import { buildYearPriceContext, yearPriceContextLines, confidenceLabel, type YearCohortPoint } from '@/lib/year-price-context'
 import { buildMarketTeaser, formatTeaserBand } from '@/lib/market-teaser'
+// The report's price is typed nowhere. It was a literal "RM29" here — once in
+// visible copy and once inside a FAQPage answer, where Google can surface it —
+// which is exactly the shape of the RM12 drift lib/pricing.ts exists to end.
+import { BASE_REPORT_LABEL } from '@/lib/pricing'
 
 export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
 
@@ -436,7 +440,7 @@ export default async function YearModelPage({ params }: Props) {
             name:    `Macam mana nak tahu harga ${displayModel} ${year} yang diminta berpatutan?`,
             acceptedAnswer: {
               '@type': 'Answer',
-              text:    `Masukkan harga yang diminta penjual dan Paqar akan semak sama ada ada cukup iklan setanding untuk buat keputusan tentang unit itu. Semakan liputan ini percuma; keputusan penuh RM29, disemak oleh manusia.`,
+              text:    `Masukkan harga yang diminta penjual dan Paqar akan semak sama ada ada cukup iklan setanding untuk buat keputusan tentang unit itu. Semakan liputan ini percuma; keputusan penuh ${BASE_REPORT_LABEL}, disemak oleh manusia.`,
             },
           },
         ],
@@ -599,7 +603,7 @@ export default async function YearModelPage({ params }: Props) {
                   iklan setanding untuk buat keputusan tentang unit itu &mdash; percuma.
                 </p>
                 <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-2">
-                  Laporan RM29 pula memberi keputusan untuk unit anda: orang kami baca iklan
+                  Laporan {BASE_REPORT_LABEL} pula memberi keputusan untuk unit anda: orang kami baca iklan
                   yang anda hantar, banding dengan harga iklan setanding, dan beritahu berapa
                   patut anda tawarkan serta apa yang perlu ditanya sebelum bayar deposit.
                 </p>

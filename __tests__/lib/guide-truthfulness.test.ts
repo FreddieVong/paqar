@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { VARIANT_GUIDES } from '@/lib/variant-guides'
+import { PAGE_REVISED } from '@/lib/seo/editorial-dates'
 
 const ROOT = join(__dirname, '..', '..')
 const FAQ  = join(ROOT, 'app', 'faq')
@@ -86,7 +87,50 @@ describe('the guides do not contradict Paqar itself', () => {
   it('no guide numbers generations in a scheme that disagrees with another', () => {
     // The Vios guide counted 1/2/3 for cars the City guide counts 5/6/7. Year
     // ranges cannot be off by one, so that is what the Vios guide uses now.
-    expect(read('toyota-vios-buying-guide')).not.toMatch(/Gen [123]:/)
+    const vios = read('toyota-vios-buying-guide')
+    expect(vios).not.toMatch(/Gen [123]:/)
+    /**
+     * ── AND NOT IN THE STRUCTURED DATA EITHER ──────────────────────────────
+     *
+     * The assertion above only ever looked at the heading form, `Gen 1:`. The
+     * page body was duly rewritten to year ranges — and the FAQPage answer
+     * went on saying "Generasi 2 (2013–2018) paling berbaloi … Generasi 1
+     * (2007–2013) elok dielak", which is the discarded numbering, on the
+     * discarded boundaries (the body says 2013–2019), inside the one part of
+     * the page Google can lift and attribute to Paqar as an answer.
+     *
+     * A guard that checks the visible copy and not the schema checks the half
+     * a reader can already see is wrong.
+     */
+    expect(vios, 'generation numbering is back, in the schema').not.toMatch(/Generasi [123]\b/)
+  })
+
+  it('the Vios schema does not price advice the page never gives', () => {
+    // The same answer told buyers to avoid the oldest Vios "unless your budget
+    // is under RM12,000" — a threshold, and a recommendation, that appear
+    // nowhere on the page. The body says take it if the budget is tight and
+    // the service record is there.
+    expect(read('toyota-vios-buying-guide')).not.toMatch(/elok dielak kecuali bajet/)
+  })
+})
+
+describe('the guides declare that they were revised', () => {
+  /**
+   * All eight were fact-corrected on 2026-08-27. Each emitted a bare FAQPage
+   * and nothing else — no Article, so no `dateModified`, so nothing anywhere
+   * said the correction had happened. That is both a ranking signal thrown
+   * away and, here, simply true.
+   */
+  it('every guide builds its schema from the shared builder', () => {
+    for (const slug of GUIDES) {
+      expect(read(slug), `${slug} hand-rolls its own schema again`).toContain('guideSchema(')
+    }
+  })
+
+  it('and the builder emits a revision date for each of them', () => {
+    for (const slug of GUIDES) {
+      expect(PAGE_REVISED[`/faq/${slug}`], `${slug} has no revision date`).toBeTruthy()
+    }
   })
 })
 

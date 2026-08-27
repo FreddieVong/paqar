@@ -1,6 +1,8 @@
 /* eslint-disable react/no-unescaped-entities */
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
+import { guideSchema } from '@/lib/seo/guide-schema'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 export const metadata: Metadata = {
   title: 'Senarai Semak Penuh: Apa Nak Periksa Sebelum Beli Kereta Terpakai | Paqar',
@@ -23,9 +25,12 @@ export const metadata: Metadata = {
 export default function ChecklistBuyingUsedCar() {
   // Grounded in the pre-viewing, at-the-viewing, red-flags and after-viewing
   // sections rendered below.
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+  const jsonLd = guideSchema({
+    path:          '/faq/what-to-check-buying-used-car',
+    name:          'Apa nak periksa sebelum beli',
+    headline:      'Senarai Semak Penuh: Apa Nak Periksa Bila Beli Kereta Terpakai',
+    description:   'Panduan pemeriksaan langkah demi langkah: luaran, dalaman, enjin, elektrik, test drive dan bawah kereta. Apa nak cari, dan bila patut berundur.',
+    datePublished: '2026-07-20',
     mainEntity: [
       {
         '@type': 'Question',
@@ -60,7 +65,7 @@ export default function ChecklistBuyingUsedCar() {
         },
       },
     ],
-  }
+  })
 
   return (
     <>
@@ -189,6 +194,9 @@ export default function ChecklistBuyingUsedCar() {
           <p>☐ Jangan putuskan ikut perasaan. Fikir semalaman. Berundur kalau ragu-ragu.</p>
         </div>
       </section>
+
+        <GuideRelated slug="what-to-check-buying-used-car" />
+
 
         <FaqGetValuationCta faqSlug="what-to-check-buying-used-car" />
     </div>

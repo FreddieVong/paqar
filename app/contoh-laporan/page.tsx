@@ -3,16 +3,25 @@ import { Nav }                 from '@/components/layout/Nav'
 import { Shell }               from '@/components/layout/Shell'
 import { SampleReportPreview } from '@/components/report/SampleReportPreview'
 import { historyUpgradeAvailable, BASE_REPORT_LABEL } from '@/lib/pricing'
+import { organizationRef } from '@/lib/site'
+import { articleDates } from '@/lib/seo/editorial-dates'
+
+const TITLE = 'Contoh Laporan Pembeli Kereta Terpakai — Paqar'
+// Derived, like every other price on the site. This page hardcoded "RM29"
+// twice — in the description and the og:description — which is the literal
+// lib/pricing.ts exists to prevent, on the one page whose whole job is to show
+// what that amount buys.
+const DESC  = `Lihat contoh Laporan Pembeli ${BASE_REPORT_LABEL} — keputusan, skrip rundingan, soalan untuk penjual dan checklist deposit, disemak oleh manusia sebelum dihantar.`
 
 export const metadata = {
-  title: 'Contoh Laporan Pembeli Kereta Terpakai — Paqar',
-  description: 'Lihat contoh Laporan Pembeli RM29 — keputusan, skrip rundingan, soalan untuk penjual dan checklist deposit, disemak oleh manusia sebelum dihantar.',
+  title: TITLE,
+  description: DESC,
   alternates: { canonical: 'https://paqar.my/contoh-laporan' },
   openGraph: {
       images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
       locale: 'ms_MY',
-    title: 'Contoh Laporan Pembeli Kereta Terpakai — Paqar',
-    description: 'Lihat contoh Laporan Pembeli RM29 — keputusan, skrip rundingan, soalan untuk penjual dan checklist deposit, disemak oleh manusia sebelum dihantar.',
+    title: TITLE,
+    description: DESC,
     url: 'https://paqar.my/contoh-laporan',
   },
 }
@@ -26,6 +35,22 @@ const schema = {
         { '@type': 'ListItem', position: 1, name: 'Laman Utama', item: 'https://paqar.my' },
         { '@type': 'ListItem', position: 2, name: 'Contoh Laporan', item: 'https://paqar.my/contoh-laporan' },
       ],
+    },
+    {
+      '@type':     'Article',
+      headline:    TITLE,
+      description: DESC,
+      author:      organizationRef(),
+      publisher:   organizationRef(),
+      ...articleDates('/contoh-laporan', '2026-05-21'),
+      inLanguage:  'ms-MY',
+      url:         'https://paqar.my/contoh-laporan',
+      mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://paqar.my/contoh-laporan' },
+      about: {
+        '@type': 'Service',
+        name:    'Laporan Pembeli Kereta Terpakai',
+        url:     'https://paqar.my/laporan-pembeli-kereta-terpakai',
+      },
     },
   ],
 }

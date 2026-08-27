@@ -1,6 +1,8 @@
 /* eslint-disable react/no-unescaped-entities */
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
+import { guideSchema } from '@/lib/seo/guide-schema'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 /**
  * ── WHAT THIS PAGE USED TO SAY, AND WHY IT WAS REPLACED ────────────────────
@@ -73,9 +75,12 @@ const PENINSULAR_SALOON: ReadonlyArray<{ cc: string; rate: string; eg?: string }
 ]
 
 export default function RoadtaxByState() {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+  const jsonLd = guideSchema({
+    path:          '/faq/roadtax-by-state',
+    name:          'Roadtax ikut negeri',
+    headline:      'Harga Roadtax Ikut Negeri: Sebenarnya Ia Sama di Seluruh Semenanjung',
+    description:   'Roadtax kereta tidak berbeza ikut negeri di Semenanjung — ia ditetapkan JPJ mengikut kapasiti enjin. Kadar sebenar, dan kenapa ramai ingat ia ikut negeri.',
+    datePublished: '2026-07-20',
     mainEntity: [
       {
         '@type': 'Question',
@@ -95,6 +100,30 @@ export default function RoadtaxByState() {
       },
       {
         '@type': 'Question',
+        name: 'Berapa roadtax Perodua Axia di Semenanjung?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'RM20 setahun. Axia berenjin 998cc, yang jatuh dalam band 1000cc dan ke bawah bagi saloon persendirian di Semenanjung Malaysia. Kadar ini sama di setiap negeri Semenanjung.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Adakah kadar roadtax di Sabah dan Sarawak sama dengan Semenanjung?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Tidak. Sabah dan Sarawak menggunakan jadual berasingan yang lebih rendah daripada Semenanjung. Itulah satu-satunya pembahagian kawasan dalam jadual roadtax JPJ — dua kawasan, bukan tiga belas negeri. Semak angka rasmi untuk nombor plat anda sendiri di portal JPJ atau aplikasi MyJPJ.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Apa jadi kalau roadtax kereta sudah tamat tempoh?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Memandu tanpa roadtax yang sah adalah kesalahan di bawah Akta Pengangkutan Jalan 1987, dan kenderaan boleh ditahan. Jumlah dendanya ditetapkan JPJ atau PDRM dan berbeza mengikut kes. Pembaharuan boleh dibuat melalui MyJPJ, kaunter JPJ, pejabat pos terpilih, atau kebanyakan syarikat insurans. Bila membeli kereta terpakai, semak tarikh luput roadtax dan insurans sebelum bayar deposit — kedua-duanya menjadi tanggungjawab anda selepas pindah milik.',
+        },
+      },
+      {
+        '@type': 'Question',
         name: 'Kenapa ramai ingat roadtax ikut negeri?',
         acceptedAnswer: {
           '@type': 'Answer',
@@ -102,7 +131,7 @@ export default function RoadtaxByState() {
         },
       },
     ],
-  }
+  })
 
   return (
     <>
@@ -227,6 +256,9 @@ export default function RoadtaxByState() {
             <li>Bila membeli kereta terpakai: semak tarikh luput roadtax DAN insurans sebelum bayar deposit. Kedua-duanya menjadi tanggungjawab anda selepas pindah milik.</li>
           </ul>
         </section>
+
+        <GuideRelated slug="roadtax-by-state" />
+
 
         <FaqGetValuationCta faqSlug="roadtax-by-state" />
       </div>

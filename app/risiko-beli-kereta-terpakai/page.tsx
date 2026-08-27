@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
+import { organizationRef } from '@/lib/site'
+import { articleDates } from '@/lib/seo/editorial-dates'
 
 export const metadata: Metadata = {
   title: 'Risiko Beli Kereta Terpakai Malaysia — Cara Elak Tertipu | Paqar',
@@ -84,9 +86,9 @@ export default function RisikoBelihKeretaTerpakaiPage() {
         '@type': 'Article',
         headline: 'Risiko Beli Kereta Terpakai Malaysia — dan Cara Elaknya',
         description: 'Risiko utama beli kereta terpakai di Malaysia — saman tersembunyi, odometer diputar, banjir, kemalangan, dan pinjaman aktif. Cara lindungi diri anda.',
-        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        datePublished: '2025-05-01',
+        author: organizationRef(),
+        publisher: organizationRef(),
+        ...articleDates('/risiko-beli-kereta-terpakai', '2025-05-01'),
         url: 'https://paqar.my/risiko-beli-kereta-terpakai',
       },
       {

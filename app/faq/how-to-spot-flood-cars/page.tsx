@@ -1,6 +1,8 @@
 /* eslint-disable react/no-unescaped-entities */
 import { Metadata } from 'next'
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
+import { guideSchema } from '@/lib/seo/guide-schema'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 export const metadata: Metadata = {
   title: 'Cara Kesan Kereta Banjir Sebelum Beli | Panduan Paqar',
@@ -21,9 +23,12 @@ export const metadata: Metadata = {
 }
 
 export default function HowToSpotFloodedCars() {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+  const jsonLd = guideSchema({
+    path:          '/faq/how-to-spot-flood-cars',
+    name:          'Cara kesan kereta banjir',
+    headline:      'Cara Kesan Kereta Banjir Sebelum Beli',
+    description:   'Tanda kereta banjir: bau hapak, karat bawah kereta, masalah elektrik, minyak enjin berbuih. Apa perlu disemak sebelum bayar deposit.',
+    datePublished: '2026-07-20',
     mainEntity: [
       {
         '@type': 'Question',
@@ -42,7 +47,7 @@ export default function HowToSpotFloodedCars() {
         },
       },
     ],
-  }
+  })
 
   return (
     <>
@@ -103,6 +108,9 @@ export default function HowToSpotFloodedCars() {
           <h3 className="font-semibold text-[#3D472F] mb-2">💡 Tip Pembeli Bijak</h3>
           <p className="text-[#374151]">Semak harga pasaran kereta itu — hantar link iklannya kepada Paqar. Kalau harganya RM3–5k bawah harga tengah iklan setanding, tanya diri anda kenapa. Kerosakan banjir selalunya jadi sebabnya.</p>
         </section>
+
+        <GuideRelated slug="how-to-spot-flood-cars" />
+
 
         <FaqGetValuationCta faqSlug="how-to-spot-flood-cars" />
       </div>

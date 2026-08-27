@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { organizationRef } from '@/lib/site'
+import { articleDates } from '@/lib/seo/editorial-dates'
 
 /**
  * The add-on is behind a deploy flag. When it is off, nothing in the app can
@@ -43,8 +45,11 @@ const DESCRIPTION_BASE =
 export const metadata: Metadata = {
   title: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia | Paqar',
   description: JOMCHECK_ON
-    ? `${DESCRIPTION_BASE} Paqar Semakan Accident/Claim Insurans RM${ringgit(COMBINED_CENTS)} sebelum bayar deposit.`
-    : `${DESCRIPTION_BASE} Ketahui apa yang boleh dan tidak boleh disemak sebelum bayar deposit.`,
+    ? `${DESCRIPTION_BASE} RM${ringgit(COMBINED_CENTS)} keseluruhan, dalam dua bayaran.`
+    // Both branches must fit the snippet budget, not just the one this build
+    // happens to take: scripts/seo-check.mjs can only measure the branch that
+    // was rendered, so the gate-off form is kept short by hand. On = 146, off = 147.
+    : `${DESCRIPTION_BASE} Apa yang boleh dan tidak boleh disemak.`,
   alternates: { canonical: 'https://paqar.my/semak-accident-claim-insurans-kereta' },
   openGraph: {
       locale: 'ms_MY',
@@ -72,16 +77,16 @@ export default function SemakAccidentClaimInsuransPage() {
         '@type': 'Article',
         headline: 'Semak Rekod Claim Insurans Kereta Terpakai Malaysia',
         description: 'Apa itu Semakan Accident/Claim Insurans, apa yang disemak, had data, dan kenapa ia penting sebelum bayar deposit.',
-        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        datePublished: '2026-06-23',
+        author: organizationRef(),
+        publisher: organizationRef(),
+        ...articleDates('/semak-accident-claim-insurans-kereta', '2026-06-23'),
         url: 'https://paqar.my/semak-accident-claim-insurans-kereta',
       },
       {
         '@type': 'Service',
         name: 'Semakan Accident/Claim Insurans Kereta',
         description: 'Semak rekod claim insurans kereta terpakai seperti own damage, banjir, windscreen atau total loss jika direkodkan — sebelum bayar deposit.',
-        provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+        provider: organizationRef(),
         areaServed: { '@type': 'Country', name: 'Malaysia' },
         // No Offer node when the add-on cannot be bought: an InStock price in
         // structured data is a promise Google may surface in a result.

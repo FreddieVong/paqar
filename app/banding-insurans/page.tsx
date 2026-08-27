@@ -1,14 +1,20 @@
 import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo/page-metadata'
 import { Nav } from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { InsuranceCTA } from '@/components/report/InsuranceCTA'
 
-export const metadata: Metadata = {
-  title: 'Bandingkan Insurans Kereta — Paqar',
-  description:
-    'Bandingkan harga insurans kereta dari semua syarikat dalam satu tempat. Disediakan oleh Bjak; Paqar menerima komisen rujukan.',
-  alternates: { canonical: 'https://paqar.my/banding-insurans' },
-}
+// Built by the shared helper, which is the only way to get a complete and
+// self-consistent openGraph. These three pages declared none at all, so they
+// inherited the root layout's — and the root deliberately sets no url, title or
+// description, because a url there became og:url on every page that forgot.
+// The result was pages with NO og:url whatsoever: scripts/seo-check.mjs has
+// been reporting all three since that root change landed.
+export const metadata: Metadata = pageMetadata({
+  path:        '/banding-insurans',
+  title:       'Bandingkan Insurans Kereta — Paqar',
+  description: 'Bandingkan harga insurans kereta dari semua syarikat dalam satu tempat. Disediakan oleh Bjak; Paqar menerima komisen rujukan.',
+})
 
 /**
  * Insurance comparison, on its own page.

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import dynamic from 'next/dynamic'
 import { Archivo, IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
+import { BASE_REPORT_LABEL } from '@/lib/pricing'
 import { AnalyticsProvider } from '@/components/layout/AnalyticsProvider'
 import { MetaPixelScript } from '@/components/layout/MetaPixelScript'
 import { AdLandingTracker } from '@/components/layout/AdLandingTracker'
@@ -62,7 +63,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
-  description: 'Semak dulu, jangan tersalah beli kereta. Hantar iklan kereta terpakai yang anda nak beli — dalam 24 jam kami beritahu apa patut anda buat. Disemak oleh manusia, RM29.',
+  description: `Hantar iklan kereta terpakai yang anda nak beli. Kami beritahu apa patut anda buat sebelum bayar deposit — disemak oleh manusia, ${BASE_REPORT_LABEL}.`,
   metadataBase: new URL('https://paqar.my'),
   // NO title, description or url here — same reasoning as the canonical note
   // below, which was written for `alternates` and never applied to openGraph.

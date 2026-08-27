@@ -12,6 +12,21 @@
 
 export const SITE_URL = 'https://paqar.my'
 
+/**
+ * The company behind the brand.
+ *
+ * Paqar is a trading name; TENTEC SDN BHD is the entity that operates it,
+ * controls the data and collects the money — the footer, the terms, the
+ * privacy policy and the Billplz page all say so. Structured data did not:
+ * seventeen Organization nodes named "Paqar" and none named the company, so
+ * the one question a cautious buyer asks before paying a stranger RM29 —
+ * "who actually is this?" — had no machine-readable answer.
+ *
+ * NAME ONLY. The registration number and registered address are pending legal
+ * review and must not be published anywhere until they have had it.
+ */
+export const LEGAL_NAME = 'TENTEC SDN BHD'
+
 export const SOCIAL = {
   facebook:  'https://www.facebook.com/paqar.my',
   instagram: 'https://www.instagram.com/paqar.my',
@@ -113,6 +128,7 @@ export function organizationSchema(): Record<string, unknown> {
   return {
     '@type':     'Organization',
     name:        'Paqar',
+    legalName:   LEGAL_NAME,
     url:         SITE_URL,
     logo:        `${SITE_URL}/paqar-logo.png`,
     description: ORG_DESCRIPTION,
@@ -128,4 +144,24 @@ export function organizationSchema(): Record<string, unknown> {
         }
       : {}),
   }
+}
+
+/**
+ * A lightweight Organization reference, for `author`, `publisher` and
+ * `provider` slots.
+ *
+ * Fourteen of those slots were the literal
+ * `{ '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' }`,
+ * retyped per page. They are references to an entity, not declarations of it,
+ * so they do not need the logo, description, sameAs and contactPoint that
+ * organizationSchema() carries — repeating all of that on every Article node
+ * would bloat the graph without telling a consumer anything the homepage's
+ * full node does not already say.
+ *
+ * What they DO need is the identity, which is why this exists rather than the
+ * literal: `legalName` reaches all fourteen from one place, and a future
+ * identity field cannot land on some of them and not others.
+ */
+export function organizationRef(): Record<string, string> {
+  return { '@type': 'Organization', name: 'Paqar', legalName: LEGAL_NAME, url: SITE_URL }
 }

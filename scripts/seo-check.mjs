@@ -346,8 +346,46 @@ const BOUNDARY_TEMPLATES = [
   { name: 'variant',     test: r => r.startsWith('/varian/') },
 ]
 
-/** Paqar's own prices. A page may always state what it charges. */
-const PRODUCT_PRICE = /^(12|88|100)(\.00)?$/
+/**
+ * Paqar's own prices. A page may always state what it charges.
+ *
+ * ── WHY THIS IS READ OUT OF lib/pricing.ts ─────────────────────────────────
+ *
+ * It was the literal `/^(12|88|100)(\.00)?$/` — the RM12 report and the RM100
+ * bundle, both retired. When the base became RM29 this guard did not follow,
+ * so every year page that names what Paqar charges was reported as leaking a
+ * market figure: 45 failures, none of them real, on a guard whose whole value
+ * is that a failure means something. A red guard nobody can act on is a guard
+ * nobody reads, and the next genuine leak would have arrived as failure 46.
+ *
+ * This is a .mjs script and cannot import a .ts module, so it reads the
+ * constants out of the source instead. Regex rather than a build step because
+ * the alternative — retyping the prices here — is precisely the defect.
+ */
+const META_DESCRIPTION_MAX = (() => {
+  const src = readFileSync(join(ROOT, 'lib/meta-description.ts'), 'utf8')
+  const m = src.match(/export const META_DESCRIPTION_MAX = (\d+)/)
+  if (!m) { console.error('✗ Cannot read META_DESCRIPTION_MAX from lib/meta-description.ts'); process.exit(2) }
+  return Number(m[1])
+})()
+
+const PRODUCT_PRICE = (() => {
+  const src = readFileSync(join(ROOT, 'lib/pricing.ts'), 'utf8')
+  const cents = name => {
+    const m = src.match(new RegExp(`export const ${name} = (\\d+)`))
+    if (!m) {
+      console.error(`✗ Cannot read ${name} from lib/pricing.ts — this guard would silently pass everything.`)
+      process.exit(2)
+    }
+    return Number(m[1])
+  }
+  const base = cents('BASE_REPORT_CENTS')
+  const addOn = cents('JOMCHECK_UPGRADE_CENTS')
+  // COMBINED_CENTS is derived in the source, so derive it here too.
+  const ringgit = [base, addOn, base + addOn].map(c => c / 100)
+  notes.push(`Paqar's own prices, from lib/pricing.ts: ${ringgit.map(r => `RM${r}`).join(', ')}`)
+  return new RegExp(`^(${ringgit.join('|')})(\\.00)?$`)
+})()
 
 /**
  * The public market teaser, allowed on Tier A YEAR PAGES only.
@@ -474,6 +512,37 @@ for (const { file, route } of pages) {
   // The median used to travel to the loan calculator in a query string.
   if (/kira-ansuran-kereta\?harga=/.test(visible)) {
     fail('free/paid boundary', `${route} (${template.name}) passes a market price in a query string`)
+  }
+}
+
+// ── Meta descriptions fit the snippet Google renders ────────────────────────
+//
+// lib/meta-description.ts exists because /varian/* descriptions measured
+// 238-284 characters in production: between a third and a half of every one was
+// never displayed. The helper was written, applied to /varian/*, and to nothing
+// else. Ten pages were still over — including the HOMEPAGE at 166, where the
+// invisible tail was "RM29", and both product pages.
+//
+// Checked against build output rather than source because a description can be
+// assembled from a template, a constant and a price, and only the rendered
+// length is the one Google measures.
+{
+  const OVER = []
+  for (const { file, route } of pages) {
+    const m = readFileSync(file, 'utf8').match(/<meta name="description" content="([^"]*)"/)
+    if (!m) continue
+    const text = m[1]
+      .replace(/&#x27;/g, "'").replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    if (text.length > META_DESCRIPTION_MAX) OVER.push([route, text.length])
+  }
+  if (OVER.length) {
+    for (const [route, n] of OVER.slice(0, 12)) {
+      fail('meta description', `${route} is ${n} chars — Google renders ~${META_DESCRIPTION_MAX}, the rest is spent for nothing`)
+    }
+    if (OVER.length > 12) fail('meta description', `…and ${OVER.length - 12} more`)
+  } else {
+    notes.push(`${pages.length} pages: every meta description fits in ${META_DESCRIPTION_MAX} characters`)
   }
 }
 

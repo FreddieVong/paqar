@@ -1,16 +1,19 @@
 import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo/page-metadata'
 import Link from 'next/link'
 import { Nav } from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { whatsappUrl } from '@/lib/site'
 import { REVIEW_SLA_HOURS } from '@/lib/pricing'
 
-export const metadata: Metadata = {
-  title: 'Laporan Saya — Paqar',
+export const metadata: Metadata = pageMetadata({
+  path:        '/laporan-saya',
+  title:       'Laporan Saya — Paqar',
   description: 'Cari semula laporan pembeli Paqar anda.',
-  robots: { index: false, follow: true },
-  alternates: { canonical: 'https://paqar.my/laporan-saya' },
-}
+  // noindex, but still shared in WhatsApp by buyers looking for their report,
+  // so it still needs a card that is about this page.
+  robots:      { index: false, follow: true },
+})
 
 /**
  * Where a buyer goes when they cannot find their report.

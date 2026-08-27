@@ -1,15 +1,15 @@
 import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo/page-metadata'
 import Link from 'next/link'
 import { Nav } from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { InspectionCTA } from '@/components/report/InspectionCTA'
 
-export const metadata: Metadata = {
-  title: 'Pemeriksaan Fizikal Kereta Terpakai — Paqar',
-  description:
-    'Bengkel bebas periksa kereta sebelum anda bayar deposit. Dari RM336. Disediakan oleh rakan bengkel; Paqar menerima komisen rujukan.',
-  alternates: { canonical: 'https://paqar.my/pemeriksaan-fizikal' },
-}
+export const metadata: Metadata = pageMetadata({
+  path:        '/pemeriksaan-fizikal',
+  title:       'Pemeriksaan Fizikal Kereta Terpakai — Paqar',
+  description: 'Bengkel bebas periksa kereta sebelum anda bayar deposit. Dari RM336. Disediakan oleh rakan bengkel; Paqar menerima komisen rujukan.',
+})
 
 /**
  * The inspection service, on its own page.

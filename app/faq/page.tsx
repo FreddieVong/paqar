@@ -4,7 +4,7 @@ import Link    from 'next/link'
 // /faq/* guide — rendering them here too would double the chrome.
 
 const TITLE = 'Soalan Lazim & Panduan Pembeli Kereta Terpakai | Paqar'
-const DESC  = 'Panduan lengkap pembeli kereta terpakai Malaysia — cara pilih model, cara rundingan harga, cara kesan kereta banjir, checklist sebelum beli, dan kadar roadtax sebenar JPJ.'
+const DESC  = 'Panduan pembeli kereta terpakai Malaysia — cara pilih model, cara rundingan, cara kesan kereta banjir, checklist deposit, dan kadar roadtax JPJ sebenar.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -25,8 +25,8 @@ const GROUPS = [
     items: [
       { slug: 'best-first-car-under-30k',   title: 'Kereta pertama terbaik bawah RM30k',            desc: 'Pilihan kereta pertama bawah RM30,000 — banding Myvi, City dan Vios dengan harga iklan setanding.' },
       { slug: 'honda-city-buying-guide',    title: 'Panduan beli Honda City terpakai',              desc: 'Generasi mana patut beli, varian S/E/V, harga iklan setanding, dan apa perlu disemak.' },
-      { slug: 'toyota-vios-buying-guide',   title: 'Panduan beli Toyota Vios terpakai',             desc: 'Generasi mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, serta tanda bahaya Vios.' },
-      { slug: 'honda-city-vs-toyota-vios',  title: 'Honda City vs Toyota Vios — mana satu?',        desc: 'Perbandingan terus: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penggunaan minyak.' },
+      { slug: 'toyota-vios-buying-guide',   title: 'Panduan beli Toyota Vios terpakai',             desc: 'Tahun mana paling berbaloi, julat harga ikut tahun dan jarak tempuh, serta tanda bahaya Vios.' },
+      { slug: 'honda-city-vs-toyota-vios',  title: 'Honda City vs Toyota Vios — mana satu?',        desc: 'City menang kelengkapan dan ruang belakang; Vios menang nilai jual semula dan kos penyelenggaraan.' },
     ],
   },
   {

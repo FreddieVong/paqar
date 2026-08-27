@@ -25,10 +25,10 @@ const ENDPOINTS = [
     summary: 'Market valuation for a specific car — new price, current market range, and how much to trust it.',
     params: [
       ['plate',  'Malaysian plate number, e.g. WPH925. Use this or the NVIC set below.'],
-      ['nvic',   'Vehicle code, used together with make + year + model.'],
+      ['nvic',   'Vehicle code. Matched exactly when it is known; when it is not, the lookup falls back to make + year + model — see the caveat below.'],
       ['make',   'Manufacturer, e.g. Honda. Required with nvic.'],
       ['year',   'Registration year, e.g. 2020. Required with nvic.'],
-      ['model',  'Model name, e.g. City. Required with nvic.'],
+      ['model',  'Model name, e.g. City. Required with nvic in practice — validation does not enforce it, but the fallback cannot run without it and the request returns 404.'],
     ],
     examples: [
       'https://paqar.my/api/v1/valuation?plate=WPH925',
@@ -44,6 +44,7 @@ const ENDPOINTS = [
       ['confidence',       'string',  'low | medium | high — how much listing evidence backs the figures.'],
       ['isSpecialVariant', 'boolean', 'True for a top/rare trim whose value generic model listings do not represent.'],
       ['marketCohort',     'string',  'Which listing cohort the market figures describe.'],
+      ['matchedBy',        'string',  'nvic | make_year_model — whether the nvic matched a vehicle exactly, or these figures describe the cheapest variant of that make/year/model instead.'],
     ],
   },
   {
@@ -188,6 +189,29 @@ export default function ApiDocsPage() {
               <li>
                 <code className="font-mono text-[11px]">wmNewPrice</code> is the original new price, not the
                 current value.
+              </li>
+              {/*
+                  Verified against production on 2026-08-27, and the reason this
+                  box exists at all. `?nvic=RTA12345&make=Honda&year=2020&model=City`
+                  — the example this page publishes — returns HTTP 200 with a
+                  complete, confident-looking valuation. It is NOT answering from
+                  that NVIC: RTA12345 matches no row, and `nvic=TOTALLY_FAKE`
+                  returns byte-identical output. The make+year+model fallback
+                  answers, and it is ordered by ascending wm_new_pr limit 1 — so
+                  what comes back is the CHEAPEST variant of that model-year.
+
+                  Undocumented, that is a trap specifically for the automated
+                  consumers this page is written for: an assistant gets an
+                  entry-trim price and presents it as "the" price for the model.
+                  The `variant` field is what disambiguates it, so it is named.
+              */}
+              <li>
+                A result is not proof the <code className="font-mono text-[11px]">nvic</code> matched. When it
+                does not, the lookup falls back to make + year + model and returns the{' '}
+                <strong>cheapest variant</strong> for that combination — still HTTP 200. Read{' '}
+                <code className="font-mono text-[11px]">matchedBy</code>:{' '}
+                <code className="font-mono text-[11px]">make_year_model</code> means the figures describe the
+                entry-level trim of that model-year, not the car you asked about.
               </li>
               <li>Market figures come from live listings and move over time — they are not fixed or official prices.</li>
               <li>All prices are in Malaysian Ringgit (RM) and reflect the West Malaysia market.</li>

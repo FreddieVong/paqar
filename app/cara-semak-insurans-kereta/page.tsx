@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { DualCheckForm } from '@/components/check/DualCheckForm'
+import { organizationRef } from '@/lib/site'
+import { articleDates } from '@/lib/seo/editorial-dates'
 
 const YEAR = new Date().getFullYear()
 
@@ -36,9 +38,9 @@ export default function CaraSemakInsuransPage() {
         '@type': 'Article',
         headline: 'Cara Semak Insurans Kereta Malaysia',
         description: 'Cara semak status insurans kereta Malaysia — sama ada masih aktif, tamat, atau perlu diperbaharui. Penting sebelum beli atau pandu kereta terpakai.',
-        author: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        publisher: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
-        datePublished: '2025-05-01',
+        author: organizationRef(),
+        publisher: organizationRef(),
+        ...articleDates('/cara-semak-insurans-kereta', '2025-05-01'),
         url: 'https://paqar.my/cara-semak-insurans-kereta',
       },
       {

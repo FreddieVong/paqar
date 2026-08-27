@@ -4,6 +4,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { MODEL_HUB_SLUGS } from '@/lib/model-hubs'
 import { coveredYearSlugs } from '@/lib/market-coverage'
+import { PAGE_REVISED } from '@/lib/seo/editorial-dates'
 
 /**
  * Every URL in the sitemap must resolve to a page that exists.
@@ -141,12 +142,92 @@ describe('lastModified tells the truth about freshness', () => {
     }
   })
 
-  it('leaves the editorial pages on their curated dates', () => {
+  it('leaves an unrevised editorial page on its curated date', () => {
     // Guard the guard: this must not become "everything is always fresh".
-    const guide = ENTRIES.find(e => e.url.endsWith('/cara-beli-kereta-terpakai'))!
-    expect(new Date(guide.lastModified!).getFullYear()).toBeLessThan(2026)
+    //
+    // The exemplar used to be /cara-beli-kereta-terpakai, asserted to predate
+    // 2026. That page was genuinely revised on 2026-08-23, so the assertion
+    // started failing on a date that had become TRUE — the guard was pinning
+    // an example rather than the property. It now names a page with no entry
+    // in PAGE_REVISED, which is what "unrevised" actually means.
+    const untouched = ENTRIES.find(e => e.url.endsWith('/cara-semak-geran-kereta'))!
+    expect(PAGE_REVISED['/cara-semak-geran-kereta'], 'pick a different exemplar').toBeUndefined()
+    expect(new Date(untouched.lastModified!).getFullYear()).toBeLessThan(2026)
+  })
+
+  it('dates a revised page at its real revision, not at the curated default', () => {
+    // Eight /faq/* guides were rewritten on 2026-08-27 — an invented per-state
+    // JPJ fee table removed, a Honda City variant that never existed removed —
+    // and the sitemap went on declaring the curated 2026-06-23 for all of them.
+    // A truthful lastModified is worth most at exactly that moment.
+    for (const [path, date] of Object.entries(PAGE_REVISED)) {
+      const entry = ENTRIES.find(e => e.url === `${ORIGIN}${path}` || (path === '/' && e.url === ORIGIN))
+      if (!entry) continue
+      expect(new Date(entry.lastModified!).toISOString().slice(0, 10), `${path} ignores its revision date`)
+        .toBe(date)
+    }
+  })
+
+  it('never dates an editorial page at build time', () => {
+    const hourAgo = Date.now() - 60 * 60 * 1000
+    for (const e of ENTRIES) {
+      const path = e.url.replace(ORIGIN, '') || '/'
+      if (marketPaths.has(path)) continue
+      expect(new Date(e.lastModified!).getTime(), `${path} is stamped with the build clock`)
+        .toBeLessThan(hourAgo)
+    }
   })
 })
+
+describe('the revision dates are usable as a claim', () => {
+  it('names only paths the sitemap actually advertises', () => {
+    const advertised = new Set(PATHS)
+    const orphans = Object.keys(PAGE_REVISED).filter(p => !advertised.has(p))
+    expect(orphans, `revision dates for URLs not in the sitemap: ${orphans.join(', ')}`).toEqual([])
+  })
+
+  it('claims no revision in the future', () => {
+    const today = new Date().toISOString().slice(0, 10)
+    const ahead = Object.entries(PAGE_REVISED).filter(([, d]) => d > today).map(([p]) => p)
+    expect(ahead, `revised "in the future": ${ahead.join(', ')}`).toEqual([])
+  })
+
+  it('is a real ISO date, since it is emitted verbatim as dateModified', () => {
+    for (const [path, date] of Object.entries(PAGE_REVISED)) {
+      expect(date, path).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      expect(Number.isNaN(new Date(date).getTime()), path).toBe(false)
+    }
+  })
+
+  it('never dates a revision before the page was published', () => {
+    // dateModified < datePublished is incoherent, and Google treats the pair
+    // as one signal.
+    for (const [path, published] of Object.entries(PUBLISHED)) {
+      const revised = PAGE_REVISED[path]
+      if (!revised) continue
+      expect(revised >= published, `${path}: revised ${revised} predates published ${published}`).toBe(true)
+    }
+  })
+})
+
+/** datePublished as each page's Article node declares it. */
+const PUBLISHED: Record<string, string> = {
+  '/cara-beli-kereta-terpakai':            '2025-05-01',
+  '/checklist-beli-kereta-terpakai':       '2025-05-01',
+  '/risiko-beli-kereta-terpakai':          '2025-05-01',
+  '/panduan-semak-saman':                  '2025-05-01',
+  '/cara-semak-insurans-kereta':           '2025-05-01',
+  '/laporan-pembeli-kereta-terpakai':      '2026-06-23',
+  '/semak-accident-claim-insurans-kereta': '2026-06-23',
+  '/faq/best-first-car-under-30k':         '2026-07-20',
+  '/faq/honda-city-buying-guide':          '2026-07-20',
+  '/faq/honda-city-vs-toyota-vios':        '2026-07-20',
+  '/faq/how-to-negotiate-used-car':        '2026-07-20',
+  '/faq/how-to-spot-flood-cars':           '2026-07-20',
+  '/faq/roadtax-by-state':                 '2026-07-20',
+  '/faq/toyota-vios-buying-guide':         '2026-07-20',
+  '/faq/what-to-check-buying-used-car':    '2026-07-20',
+}
 
 describe('every generated page is advertised', () => {
   it('lists every comparison page', () => {

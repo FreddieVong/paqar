@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { MODEL_HUB_SLUGS } from '@/lib/model-hubs'
+import { buildLlmsTxt } from '@/lib/seo/llms-txt'
+import { GUIDE_LINKS } from '@/lib/seo/guide-links'
 
 // Source-level guards. The defects these cover are properties of the source
 // itself — a literal dead mailto, an empty href, a hub slug with no route —
@@ -170,7 +172,11 @@ describe('robots rules', () => {
 })
 
 describe('llms.txt', () => {
-  const llms = readFileSync(join(ROOT, 'public', 'llms.txt'), 'utf8')
+  // Was public/llms.txt, read off disk. It is now generated from the same
+  // constants the checkout bills from — see lib/seo/llms-txt.ts for why — so
+  // the guard reads the generator's output rather than a file that no longer
+  // exists.
+  const llms = buildLlmsTxt()
 
   it('lists all three social profiles and the GBP profile', () => {
     expect(llms).toContain('https://www.facebook.com/paqar.my')
@@ -191,5 +197,70 @@ describe('llms.txt', () => {
 
   it('no longer advertises the unreachable inbox', () => {
     expect(llms).not.toContain('hello@paqar.my')
+  })
+})
+
+/**
+ * The guides' cross-links.
+ *
+ * lib/seo/guide-links.ts is a hand-typed map of destinations, which is exactly
+ * the shape that rots: rename a page and the recommendation stays, pointing at
+ * a 404 from eight pages that a crawler is now being told to follow. Checked
+ * against the routes that actually exist, the same way the hub slugs are.
+ */
+describe('guide cross-links', () => {
+  const APP = join(ROOT, 'app')
+
+  /** Static routes: an app/ directory holding a page.tsx, ignoring dynamic segments. */
+  const staticRoutes = (): Set<string> => {
+    const routes = new Set<string>(['/'])
+    const walk = (dir: string, prefix: string) => {
+      for (const entry of readdirSync(dir)) {
+        const full = join(dir, entry)
+        if (!statSync(full).isDirectory()) continue
+        if (entry.startsWith('[')) continue
+        const path = entry.startsWith('(') ? prefix : `${prefix}/${entry}`
+        if (existsSync(join(full, 'page.tsx'))) routes.add(path || '/')
+        walk(full, path)
+      }
+    }
+    walk(APP, '')
+    return routes
+  }
+
+  const STATIC = staticRoutes()
+  const targets = Object.values(GUIDE_LINKS).flat()
+
+  it('points every link at a route that exists', () => {
+    const dead = targets
+      .map(l => l.href)
+      .filter(h => !STATIC.has(h))
+      // Dynamic segments: /harga-kereta-terpakai/{hub}, /varian/{model}, /bandingkan/{slug}
+      .filter(h => !MODEL_HUB_SLUGS.some(s => h === `/harga-kereta-terpakai/${s}`))
+      .filter(h => !h.startsWith('/varian/') && !h.startsWith('/bandingkan/'))
+    expect([...new Set(dead)], `guide links with no page behind them: ${dead.join(', ')}`).toEqual([])
+  })
+
+  it('never links a guide to itself', () => {
+    for (const [slug, links] of Object.entries(GUIDE_LINKS)) {
+      expect(links.map(l => l.href), slug).not.toContain(`/faq/${slug}`)
+    }
+  })
+
+  it('gives every link a reason a reader can act on', () => {
+    // A related block that lists everything is furniture, and readers skip it.
+    for (const link of targets) {
+      expect(link.why.length, `${link.href} has a stub reason`).toBeGreaterThan(40)
+      expect(link.title.length, `${link.href} has no title`).toBeGreaterThan(5)
+    }
+  })
+
+  it('covers every guide, so none is a dead end again', () => {
+    // Five of the eight had no outbound internal link at all beyond the CTA.
+    const guides = readdirSync(join(APP, 'faq'), { withFileTypes: true })
+      .filter(e => e.isDirectory()).map(e => e.name)
+    for (const slug of guides) {
+      expect(GUIDE_LINKS[slug]?.length, `${slug} has no cross-links`).toBeGreaterThan(0)
+    }
   })
 })

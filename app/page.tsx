@@ -9,7 +9,7 @@ import { ListingIntakeForm } from '@/components/check/ListingIntakeForm'
 import { ServiceShortcuts } from '@/components/home/ServiceShortcuts'
 import { SocialLinks }    from '@/components/layout/SocialLinks'
 import { getCheckCount } from '@/lib/db/checks'
-import { organizationSchema, whatsappUrl } from '@/lib/site'
+import { organizationSchema, whatsappUrl, organizationRef } from '@/lib/site'
 import { BASE_REPORT_LABEL, BASE_REPORT_CENTS, ringgit, REVIEW_SLA_HOURS, REFUND_WORKING_DAYS } from '@/lib/pricing'
 import { TYPICAL_MINUTES, REVIEW_OPENS_HOUR } from '@/lib/review-capacity'
 
@@ -60,7 +60,7 @@ const homeSchema = {
       '@type': 'Service',
       name: 'Semakan Pembeli Paqar',
       description: 'Hantar iklan kereta terpakai yang anda nak beli. Paqar beritahu sama ada patut diteruskan, berapa patut anda tawar, dan apa yang perlu ditanya penjual. Setiap laporan dibaca oleh orang kami — biasanya dalam 30 minit.',
-      provider: { '@type': 'Organization', name: 'Paqar', url: 'https://paqar.my' },
+      provider: organizationRef(),
       areaServed: { '@type': 'Country', name: 'Malaysia' },
       offers: { '@type': 'Offer', price: String(ringgit(BASE_REPORT_CENTS)), priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
     },

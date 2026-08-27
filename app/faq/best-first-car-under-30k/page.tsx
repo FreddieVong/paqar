@@ -2,14 +2,16 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
+import { guideSchema } from '@/lib/seo/guide-schema'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 export const metadata: Metadata = {
   title: 'Kereta Pertama Terbaik Bawah RM30k di Malaysia | Paqar',
-  description: 'Panduan pilih kereta pertama terpakai bawah RM30,000. Banding Perodua Myvi, Honda City dan Toyota Vios — anggaran harga, tip pembeli, dan cara semak harga berbanding iklan setanding.',
+  description: 'Panduan pilih kereta pertama terpakai bawah RM30,000 — Myvi, City dan Vios dibanding: anggaran harga, model mana pegang nilai, dan apa yang patut dielak.',
   alternates: { canonical: 'https://paqar.my/faq/best-first-car-under-30k' },
   openGraph: {
     title: 'Kereta Pertama Terbaik Bawah RM30k di Malaysia',
-    description: 'Panduan jujur pilih kereta pertama: model mana pegang nilai, mana patut elak, dan cara semak harga berbanding iklan setanding.',
+    description: 'Panduan jujur pilih kereta pertama bawah RM30k: model mana pegang nilai, mana patut elak, dan berapa patut anda bayar.',
     url: 'https://paqar.my/faq/best-first-car-under-30k',
     siteName: 'Paqar',
     locale: 'ms_MY',
@@ -19,9 +21,12 @@ export const metadata: Metadata = {
 }
 
 export default function FirstCarUnder30k() {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+  const jsonLd = guideSchema({
+    path:          '/faq/best-first-car-under-30k',
+    name:          'Kereta pertama bawah RM30k',
+    headline:      'Kereta Pertama Terbaik Bawah RM30k di Malaysia',
+    description:   'Panduan pilih kereta pertama terpakai bawah RM30,000 — Myvi, City dan Vios dibanding: anggaran harga, model mana pegang nilai, dan apa yang patut dielak.',
+    datePublished: '2026-07-20',
     mainEntity: [
       {
         '@type': 'Question',
@@ -64,7 +69,7 @@ export default function FirstCarUnder30k() {
         },
       },
     ],
-  }
+  })
 
   return (
     <>
@@ -314,6 +319,8 @@ export default function FirstCarUnder30k() {
           </section>
 
           {/* CTA */}
+          <GuideRelated slug="best-first-car-under-30k" />
+
           <FaqGetValuationCta faqSlug="best-first-car-under-30k" />
 
           {/* Related */}

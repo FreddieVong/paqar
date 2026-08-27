@@ -87,8 +87,28 @@ describe('the search-result snippet does not promise the price either', () => {
     expect(og).toContain('JOMCHECK_ON')
   })
 
+  /** The two `: `…`` lines: the gated-off meta description and og:description. */
+  const offBranches = () =>
+    SRC.split('export const metadata')[1]!.split('\n}')[0]!
+       .split('\n')
+       .filter(l => l.trimStart().startsWith(': `'))
+
   it('still describes what the page is about when the flag is off', () => {
-    expect(SRC).toContain('Ketahui apa yang boleh dan tidak boleh disemak')
+    // Asserted on the CLAIM, not on one phrasing of it. This pinned the exact
+    // opener "Ketahui apa yang boleh..." and failed when the sentence was
+    // shortened to fit Google's 155-character snippet — a change that left the
+    // property being guarded (the page still says what it is for when nothing
+    // can be bought) completely intact.
+    const describes = offBranches().some(l => /boleh dan tidak boleh disemak/i.test(l))
+    expect(describes, 'the gate-off description no longer describes the page').toBe(true)
+  })
+
+  it('and quotes no price in that state', () => {
+    const branches = offBranches()
+    expect(branches.length, 'expected a gated description and og:description').toBe(2)
+    for (const line of branches) {
+      expect(line, 'a price survives the gate being shut').not.toMatch(/RM|COMBINED_CENTS|ringgit\(/)
+    }
   })
 
   it('declares the flag exactly once', () => {

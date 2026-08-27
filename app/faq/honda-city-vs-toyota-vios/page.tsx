@@ -1,17 +1,19 @@
 /* eslint-disable react/no-unescaped-entities */
 import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
+import { guideSchema } from '@/lib/seo/guide-schema'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 export const metadata: Metadata = {
   title: 'Honda City vs Toyota Vios Terpakai — Mana Satu Patut Beli? | Paqar',
-  description: 'Perbandingan penuh Honda City dan Toyota Vios terpakai: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penggunaan minyak. Mana lebih berbaloi?',
+  description: 'Honda City vs Toyota Vios terpakai: City menang kelengkapan dan ruang belakang, Vios menang nilai jual semula dan kos penyelenggaraan. Mana untuk anda?',
   alternates: { canonical: 'https://paqar.my/faq/honda-city-vs-toyota-vios' },
   // These guides previously declared no openGraph at all, so they inherited
   // the ROOT layout's — which named the homepage as og:url, og:title and
   // og:description. Every share of this guide advertised the homepage.
   openGraph: {
     title: 'Honda City vs Toyota Vios Terpakai — Mana Satu Patut Beli? | Paqar',
-    description: 'Perbandingan penuh Honda City dan Toyota Vios terpakai: harga, kebolehpercayaan, nilai jual semula, keselesaan dan penggunaan minyak. Mana lebih berbaloi?',
+    description: 'Honda City vs Toyota Vios terpakai: City menang kelengkapan dan ruang belakang, Vios menang nilai jual semula dan kos penyelenggaraan. Mana untuk anda?',
     url: 'https://paqar.my/faq/honda-city-vs-toyota-vios',
     siteName: 'Paqar',
     locale: 'ms_MY',
@@ -24,9 +26,12 @@ export default function CityVsVios() {
   // Answers are drawn from the Quick Verdict, "Which to Choose?" and
   // "The Verdict" sections rendered below — schema must not answer anything
   // the page itself does not.
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+  const jsonLd = guideSchema({
+    path:          '/faq/honda-city-vs-toyota-vios',
+    name:          'Honda City vs Toyota Vios',
+    headline:      'Honda City vs Toyota Vios: Mana Satu Patut Beli?',
+    description:   'Honda City vs Toyota Vios terpakai: City menang kelengkapan dan ruang belakang, Vios menang nilai jual semula dan kos penyelenggaraan.',
+    datePublished: '2026-07-20',
     mainEntity: [
       {
         '@type': 'Question',
@@ -61,7 +66,7 @@ export default function CityVsVios() {
         },
       },
     ],
-  }
+  })
 
   return (
     <>
@@ -191,6 +196,9 @@ export default function CityVsVios() {
           </p>
         </div>
       </section>
+
+        <GuideRelated slug="honda-city-vs-toyota-vios" />
+
 
         <FaqGetValuationCta faqSlug="honda-city-vs-toyota-vios" />
     </div>
