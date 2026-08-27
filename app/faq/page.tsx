@@ -40,7 +40,7 @@ const GROUPS = [
   {
     heading: 'Kos & cukai',
     items: [
-      { slug: 'roadtax-by-state', title: 'Harga roadtax ikut negeri', desc: 'Ia tidak berbeza ikut negeri di Semenanjung — jadual JPJ sebenar mengikut kapasiti enjin, dan kenapa ramai tersalah sangka.' },
+      { slug: 'roadtax-by-state', title: 'Kadar roadtax Semenanjung, Sabah dan Sarawak', desc: 'Ia tidak berbeza ikut negeri di Semenanjung — jadual JPJ sebenar mengikut kapasiti enjin, dan kenapa ramai tersalah sangka.' },
     ],
   },
 ]

@@ -1,7 +1,7 @@
 import 'server-only'
 import { createHash, randomUUID } from 'node:crypto'
 import { createServiceClient } from '@/lib/supabase/server'
-import { validateImage, mediaTypeFor, type ValidImage } from '@/lib/image-validation'
+import { validateImage, mediaTypeFor, type ValidImage , type ImageRejection } from '@/lib/image-validation'
 
 /**
  * Private storage for listing screenshots.
@@ -59,7 +59,10 @@ export function contentHashOf(bytes: Uint8Array): string {
 export async function storeScreenshot(
   intakeId: string,
   bytes: Uint8Array,
-): Promise<{ ok: true; stored: StoredScreenshot } | { ok: false; reason: string }> {
+  // The reason is TYPED, not a bare string: the route picks the buyer-facing
+  // message from it, and a widened type would silently fall through to the
+  // generic "gambar tidak dapat dibaca" for a cause we have better words for.
+): Promise<{ ok: true; stored: StoredScreenshot } | { ok: false; reason: ImageRejection | 'storage_failed' }> {
   const check = validateImage(bytes)
   if (!check.ok) return { ok: false, reason: check.reason }
 

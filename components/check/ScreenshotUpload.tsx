@@ -51,6 +51,56 @@ const SKIP_COMPRESSION_BELOW = 400 * 1024
  */
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
 
+/**
+ * A hung upload must fail, not spin.
+ *
+ * Without this the fetch has no deadline: a connection that stalls leaves the
+ * button busy forever, which reads as a frozen page rather than as an error
+ * with a way out. Generous, because a 4MB screenshot on Malaysian mobile data
+ * is a slow upload, not a broken one.
+ */
+const UPLOAD_TIMEOUT_MS = 45_000
+
+/**
+ * Why the upload did not happen, in words that decide what the buyer does next.
+ *
+ * Everything used to land on "Muat naik terputus. Cuba lagi" — the outer catch,
+ * fired for any throw at all. That message is advice ("try again") attached to
+ * a diagnosis nobody made, and for the most likely cause it is the WRONG
+ * advice: if an extension is blocking the request, trying again does the same
+ * thing forever.
+ */
+function describeFailure(err: unknown): { reason: string; message: string } {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return {
+      reason:  'offline',
+      message: 'Tiada sambungan internet. Cuba lagi bila ada talian.',
+    }
+  }
+  const e = err as { name?: string; message?: string }
+  if (e?.name === 'AbortError' || e?.name === 'TimeoutError') {
+    return {
+      reason:  'timeout',
+      message: 'Muat naik mengambil masa terlalu lama. Kalau talian anda perlahan, cuba screenshot yang lebih kecil — atau hantar melalui WhatsApp.',
+    }
+  }
+  // A same-origin POST that throws TypeError did not reach the network. In
+  // practice that is an extension or a network filter blocking it — an ad
+  // blocker, a privacy tool, a corporate proxy. The buyer cannot fix that by
+  // retrying, so they are told what it actually is and given a route that
+  // does not depend on the blocked request succeeding.
+  if (e?.name === 'TypeError') {
+    return {
+      reason:  `blocked:${(e.message ?? '').slice(0, 60)}`,
+      message: 'Sesuatu pada pelayar anda menghalang muat naik — selalunya extension penyekat iklan atau privasi. Cuba matikan extension untuk laman ini, guna tetingkap Peribadi, atau hantar screenshot melalui WhatsApp.',
+    }
+  }
+  return {
+    reason:  `unknown:${(e?.name ?? 'Error')}:${(e?.message ?? '').slice(0, 60)}`,
+    message: 'Muat naik terputus. Cuba lagi, atau hantar screenshot melalui WhatsApp.',
+  }
+}
+
 async function compress(file: File): Promise<Blob> {
   if (file.size <= SKIP_COMPRESSION_BELOW) return file
   try {
@@ -115,6 +165,9 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
     setBusy(true); setError(null)
     let uploaded = 0
     let latest   = count
+    // Held outside the loop so the catch below can describe WHICH file failed
+    // and how far it got, without the loop variable being out of scope.
+    let attempt: { id: string; size: number; mime: string; startedAt: number } | null = null
     try {
       for (const file of files.slice(0, room)) {
         const payload = await compress(file)
@@ -134,12 +187,23 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
         body.append('intakeId', owner.id)
         body.append('file', payload, 'screenshot')
 
+        // One id per FILE, minted before the request and carried on it, so a
+        // client-side report and a server-side success can be matched up. A
+        // failure with no matching server line means the request never
+        // arrived, which is the single most useful thing to know here.
+        const attemptId = crypto.randomUUID()
+        attempt = { id: attemptId, size: payload.size, mime: payload.type || file.type, startedAt: Date.now() }
+
         const res = await fetch('/api/listing-screenshots', {
           method:  'POST',
           // The credential goes in a header. A query string would reach access
           // logs, browser history and Referer headers.
-          headers: { 'x-paqar-intake-token': owner.token },
+          headers: {
+            'x-paqar-intake-token':   owner.token,
+            'x-paqar-upload-attempt': attemptId,
+          },
           body,
+          signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
         })
         const json = await res.json().catch(() => ({})) as { error?: string; count?: number }
         if (!res.ok) {
@@ -164,15 +228,38 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
       // may be on one screen and the mileage on another, and a model that sees
       // them together can reconcile them.
       if (uploaded > 0) onUploaded(latest)
-    } catch {
-      // Reached when the request never completes: no signal, a dropped 4G
-      // connection, or a body the platform closed on. Say which of those the
-      // buyer can do something about instead of "cuba lagi".
-      setError(
-        navigator.onLine === false
-          ? 'Tiada sambungan internet. Cuba lagi bila ada talian.'
-          : 'Muat naik terputus. Cuba lagi, atau hantar screenshot melalui WhatsApp.',
-      )
+    } catch (err) {
+      // Reached when the request never completes: blocked before it left the
+      // browser, no signal, a dropped 4G connection, or a body the platform
+      // closed on. Those need DIFFERENT advice, so they are told apart.
+      const { reason, message } = describeFailure(err)
+      const ref = attempt?.id.slice(0, 8)
+      setError(ref ? `${message} (Ruj: ${ref})` : message)
+
+      // Best-effort, never awaited, and it must not be able to throw its own
+      // error into this catch. keepalive so it survives the buyer closing the
+      // tab in frustration, which is exactly when we most want the record.
+      if (attempt) {
+        const owner2 = (intakeId && token) ? { id: intakeId, token } : null
+        void fetch('/api/listing-screenshots/diagnostic', {
+          method:    'POST',
+          keepalive: true,
+          headers:   {
+            'content-type':         'application/json',
+            'x-paqar-intake-token': owner2?.token ?? token ?? '',
+            'x-paqar-intake-id':    owner2?.id ?? intakeId ?? '',
+          },
+          body: JSON.stringify({
+            attemptId: attempt.id,
+            stage:     'request',
+            reason,
+            sizeBytes: attempt.size,
+            mime:      attempt.mime,
+            elapsedMs: Date.now() - attempt.startedAt,
+            online:    typeof navigator !== 'undefined' ? navigator.onLine : undefined,
+          }),
+        }).catch(() => {})
+      }
     } finally {
       setBusy(false)
     }

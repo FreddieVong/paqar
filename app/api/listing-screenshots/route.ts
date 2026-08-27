@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { storeScreenshot, contentHashOf, MAX_SCREENSHOTS_PER_INTAKE } from '@/lib/screenshot-storage'
-import { UPLOAD_REJECTION_COPY, MAX_BYTES } from '@/lib/image-validation'
+import { UPLOAD_REJECTION_COPY, rejectionCopyFor, MAX_BYTES } from '@/lib/image-validation'
 import { recordScreenshot, countScreenshots, hasScreenshotHash } from '@/lib/db/listing-screenshots'
 import { mayIntake } from '@/lib/intake-rate-limit'
 import { authorizeIntake } from '@/lib/intake-auth'
@@ -70,6 +70,13 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Minted by the browser before the request and echoed into every log line
+  // below, so a client-side failure report can be matched against whether the
+  // request arrived at all. A failure with no server line here is a request
+  // that never left the browser — which is the leading hypothesis for the
+  // "Muat naik terputus" reports nobody has been able to reproduce.
+  const attemptId = request.headers.get('x-paqar-upload-attempt') ?? 'none'
+
   const bytes = new Uint8Array(await file.arrayBuffer())
 
   // Deduplicate BEFORE storing: buyers screenshot the same page from two apps
@@ -81,8 +88,15 @@ export async function POST(request: NextRequest) {
 
   const stored = await storeScreenshot(intakeId, bytes)
   if (!stored.ok) {
-    // stored.reason is deliberately not returned. It names our validator.
-    return NextResponse.json({ error: UPLOAD_REJECTION_COPY }, { status: 400 })
+    // stored.reason is deliberately not returned to the browser: it names our
+    // validator and our threat model. It IS logged, because "which check
+    // refused it" is the difference between a buyer who sent a HEIC and an
+    // outage in our storage — and until now that distinction existed nowhere.
+    console.error('[upload-rejected]', JSON.stringify({
+      attemptId, reason: stored.reason, sizeBytes: bytes.length,
+      claimedMime: file.type || null, region: process.env.VERCEL_REGION ?? null,
+    }))
+    return NextResponse.json({ error: rejectionCopyFor(stored.reason) }, { status: 400 })
   }
 
   await recordScreenshot({
@@ -94,6 +108,16 @@ export async function POST(request: NextRequest) {
     height:      stored.stored.image.height,
     contentHash: stored.stored.contentHash,
   })
+
+  // Logged so a completed upload can be matched to the attempt id the browser
+  // minted. Successes are the control group: without them, a report of "it
+  // failed" cannot be told apart from "it worked and the response was lost".
+  console.log('[upload-stored]', JSON.stringify({
+    attemptId, sizeBytes: stored.stored.image.bytes,
+    format: stored.stored.image.format,
+    width:  stored.stored.image.width, height: stored.stored.image.height,
+    region: process.env.VERCEL_REGION ?? null,
+  }))
 
   // No path, no hash, no filename in the response — the client needs a count,
   // not evidence locations.

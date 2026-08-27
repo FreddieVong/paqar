@@ -71,7 +71,7 @@ export default function HowToNegotiate() {
 
       <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6 mb-8">
         <p className="font-semibold text-[#3D472F] mb-2">Peraturan Utama</p>
-        <p className="text-[#374151]"><strong>Semak harga pasaran pada nombor plat sebelum mula berunding.</strong> Tahu harga sebenar. Penjual boleh baca kalau anda teragak-agak. Keyakinan itulah kelebihan anda.</p>
+        <p className="text-[#374151]"><strong>Semak harga pasaran iklan itu sebelum mula berunding.</strong> Tahu harga sebenar. Penjual boleh baca kalau anda teragak-agak. Keyakinan itulah kelebihan anda.</p>
       </div>
 
       <section className="mb-10">
@@ -80,7 +80,7 @@ export default function HowToNegotiate() {
         <div className="space-y-6">
           <div className="border-l-4 border-[#3D472F] pl-4">
             <h3 className="text-lg font-semibold mb-2">Langkah 1: Dapatkan Asas Harga</h3>
-            <p className="text-[#374151] mb-2">Sebelum pergi tengok kereta, semak nombor platnya. Contoh:</p>
+            <p className="text-[#374151] mb-2">Sebelum pergi tengok kereta, hantar link iklannya untuk disemak. Contoh:</p>
             <ul className="bg-[#F9FAFB] p-4 rounded text-[#374151] space-y-1 text-sm">
               <li>Harga listing: RM32,000</li>
               <li><strong>Harga pasaran: RM28,000–30,000</strong></li>

@@ -108,7 +108,11 @@ export default function RoadtaxByState() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div>
-        <h1 className="text-4xl font-bold mb-6">Harga roadtax ikut negeri di Malaysia</h1>
+        {/* The H1 keeps the phrase people SEARCH — "roadtax ikut negeri" —
+            and answers it in the same breath, rather than asserting it. The
+            page used to state the false half as its headline and correct it
+            four paragraphs down. */}
+        <h1 className="text-4xl font-bold mb-6">Harga roadtax ikut negeri: sebenarnya ia sama di seluruh Semenanjung</h1>
         <p className="text-lg text-[#6B7280] mb-6">
           Jawapan pendek: di Semenanjung, ia tidak berbeza ikut negeri langsung.
         </p>

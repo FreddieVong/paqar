@@ -759,6 +759,23 @@ export function ListingIntakeForm({
                 {Number(summary.mileageKm.value).toLocaleString()} km &mdash; seperti yang penjual iklankan
               </p>
             )}
+            {/* ── SHOW THE VARIANT, AND SAY IT IS NOT VERIFIED ────────────────
+                Paqar reads the trim out of the listing URL — a Carlist link
+                spells it, and Carlist is behind Cloudflare so nothing else
+                about that page is readable. It was being extracted and then
+                held silently: the buyer never saw it, could not correct a bad
+                token, and the improvement was invisible from outside.
+                Labelled "belum disahkan" on purpose. It came from a URL slug,
+                not from the registration record, and the report's whole
+                variant check exists to test the seller's label against the
+                official one. Presenting a guess as a fact here would defeat
+                the section it feeds. */}
+            {summary.variant.value != null && (
+              <p className="font-body text-[12px] text-[#6B7280] mt-1">
+                Varian daripada iklan: <span className="font-semibold text-[#374151]">{String(summary.variant.value)}</span>
+                {' '}&mdash; belum disahkan
+              </p>
+            )}
             {askPrice?.conflict && (
               <p className="font-body text-[13px] text-[#B45309] mt-2 leading-relaxed">
                 Kami jumpa lebih daripada satu harga. Sila sahkan harga sebenar.

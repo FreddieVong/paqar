@@ -177,3 +177,32 @@ export function mediaTypeFor(format: ImageFormat): string {
  */
 export const UPLOAD_REJECTION_COPY =
   'Gambar ini tidak dapat dibaca. Guna screenshot PNG, JPG atau WebP daripada telefon anda.'
+
+/**
+ * The same message, EXCEPT where a different one changes what the buyer does.
+ *
+ * The one-message rule above is right for reasons that describe our parser —
+ * "markup_detected" and "dimensions_unreadable" tell someone holding a phone
+ * nothing they can act on. But three of these are ordinary, fixable mistakes,
+ * and answering them with "gambar ini tidak dapat dibaca" sends someone off to
+ * retake a screenshot that was never the problem:
+ *
+ *   unsupported_format  an iPhone HEIC, or a PDF. Nothing wrong with the
+ *                       picture; it is the wrong container, and there is a
+ *                       one-tap fix on the phone.
+ *   too_large           a 12MP photo of a screen instead of a screenshot.
+ *   too_small           a thumbnail, or a cropped fragment. OCR will read
+ *                       nothing from it and a reviewer will not either.
+ */
+export function rejectionCopyFor(reason: ImageRejection | 'storage_failed'): string {
+  switch (reason) {
+    case 'unsupported_format':
+      return 'Format gambar ini tidak disokong — selalunya HEIC dari iPhone, atau fail PDF. Guna PNG, JPG atau WebP. Pada iPhone: Settings › Camera › Formats › Most Compatible, atau hantar melalui WhatsApp yang menukarnya sendiri.'
+    case 'too_large':
+      return 'Fail ini terlalu besar. Ambil screenshot iklan itu, bukan gambar skrin dengan kamera.'
+    case 'too_small':
+      return 'Gambar ini terlalu kecil untuk dibaca. Hantar screenshot penuh skrin iklan itu, bukan bahagian yang dipotong.'
+    default:
+      return UPLOAD_REJECTION_COPY
+  }
+}

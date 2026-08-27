@@ -36,7 +36,7 @@ export default function FirstCarUnder30k() {
         name: 'Berapa harga Perodua Myvi 2018 yang patut saya jangka?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Anggarkan sekitar RM24,000–RM28,000 untuk Perodua Myvi 1.5 H tahun 2018, bergantung pada varian, jarak tempuh dan kondisi. Ini anggaran panduan — semak harga pasaran untuk nombor plat tertentu sebelum buat tawaran.',
+          text: 'Anggarkan sekitar RM24,000–RM28,000 untuk Perodua Myvi 1.5 H tahun 2018, bergantung pada varian, jarak tempuh dan kondisi. Ini anggaran panduan — semak harga pasaran untuk iklan tertentu sebelum buat tawaran.',
         },
       },
       {
@@ -205,7 +205,7 @@ export default function FirstCarUnder30k() {
               </table>
             </div>
             <p className="text-sm text-[#6B7280] mt-4">
-              💡 <strong>Tip:</strong> Semak harga pasaran untuk mana-mana nombor plat sebelum buat tawaran. Ada nombor plat penjual? <Link href="/" className="text-[#3D472F] underline">Semak serta-merta</Link>.
+              💡 <strong>Tip:</strong> Semak harga pasaran kereta itu sebelum buat tawaran. Dah jumpa iklannya? <Link href="/" className="text-[#3D472F] underline">Hantar link iklan itu</Link> &mdash; orang kami baca dan beritahu apa patut anda buat.
             </p>
           </section>
 

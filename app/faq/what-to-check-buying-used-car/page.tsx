@@ -32,7 +32,7 @@ export default function ChecklistBuyingUsedCar() {
         name: 'Apa patut saya tanya sebelum pergi tengok kereta terpakai?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Tanya berapa orang pemilik sebelum ini — satu atau dua orang itu bagus — dan tanya sama ada kereta pernah kemalangan atau kena banjir, perhatikan kalau penjual teragak-agak. Dapatkan nombor plat dan semak harga pasarannya supaya anda tahu harga sebenar, serta minta gambar ruang dalaman, bahagian enjin dan bawah kereta. Kalau gambar nampak mencurigakan, tak payah buang masa pergi tengok.',
+          text: 'Tanya berapa orang pemilik sebelum ini — satu atau dua orang itu bagus — dan tanya sama ada kereta pernah kemalangan atau kena banjir, perhatikan kalau penjual teragak-agak. Semak harga pasaran iklan itu supaya anda tahu harga sebenar, serta minta gambar ruang dalaman, bahagian enjin dan bawah kereta. Kalau gambar nampak mencurigakan, tak payah buang masa pergi tengok.',
         },
       },
       {
@@ -81,7 +81,7 @@ export default function ChecklistBuyingUsedCar() {
           <div className="bg-[#F9FAFB] p-4 rounded space-y-2">
             <p>☐ Tanya penjual: "Berapa orang pemilik sebelum ni?" (1–2 orang = bagus)</p>
             <p>☐ Tanya: "Pernah accident atau kena banjir?" (perhatikan kalau teragak-agak)</p>
-            <p>☐ Dapatkan nombor plat → semak harga pasaran (tahu harga sebenar)</p>
+            <p>☐ Hantar link iklan itu → semak harga pasaran (tahu harga sebenar)</p>
             <p>☐ Minta gambar ruang dalaman, bahagian enjin dan bawah kereta</p>
             <p>☐ Kalau gambar nampak mencurigakan → tak payah buang masa</p>
           </div>
