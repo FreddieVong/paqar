@@ -300,3 +300,34 @@ describe('the wait is quoted honestly in both directions', () => {
       .not.toContain('expectedDeliveryCopy(')
   })
 })
+
+/**
+ * The homepage earns a referral commission on physical inspection and
+ * insurance. Those partners used to be promoted two sections below the hero —
+ * before the page had said what RM29 buys, before it answered "why not just
+ * check Mudah myself", and before it admitted its own limits.
+ *
+ * That is both a worse funnel and a worse look on a page that makes a point of
+ * saying it is not paid by sellers. The proof comes first now.
+ */
+describe('the homepage proves the product before it monetises the reader', () => {
+  const page = read('app/page.tsx')
+  const at = (marker: string) => {
+    const i = page.indexOf(marker)
+    expect(i, `missing homepage section: ${marker}`).toBeGreaterThan(-1)
+    return i
+  }
+
+  it('what RM29 buys comes before the referral partners', () => {
+    expect(at('SATU TEMPAT SEBELUM BELI KERETA')).toBeGreaterThan(at('APA YANG ANDA DAPAT'))
+  })
+
+  it('so does the objection, and so do the limits and the refund', () => {
+    expect(at('SATU TEMPAT SEBELUM BELI KERETA')).toBeGreaterThan(at('KENAPA TAK SEMAK SENDIRI'))
+    expect(at('SATU TEMPAT SEBELUM BELI KERETA')).toBeGreaterThan(at('HAD & JAMINAN'))
+  })
+
+  it('and the intake still comes first', () => {
+    expect(at('APA YANG ANDA DAPAT')).toBeGreaterThan(at('── HERO ──'))
+  })
+})

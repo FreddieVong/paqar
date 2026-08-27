@@ -289,12 +289,52 @@ export function resolveListingMarket(
   return detectListingMarket(listingUrl) ?? 'used'
 }
 
-export function parseListingUrlSlug(rawUrl: string): { brand: string | null; model: string | null; year: string | null } {
+/**
+ * Malaysian trim letters, as they appear in a listing URL slug.
+ *
+ * A WHITELIST, because the alternative produces confident nonsense. Carlist
+ * slugs read `honda-city-1-5-e-i-vtec-sedan-2019`, and a generic
+ * "engine size followed by letters" rule reads the `i` of `i-vtec` as a trim
+ * and reports "Honda City 1.5 I". A variant Paqar invents is worse than one it
+ * leaves blank: the report's variant check exists to catch a seller labelling
+ * the car wrongly, and it cannot do that from a label Paqar made up.
+ *
+ * Ordered longest-first so `av` wins over `a` when both could match.
+ */
+const SLUG_VARIANT_TOKENS = [
+  'premium', 'turbo', 'hybrid', 'av', 'rs', 'se', 'gx', 'vx', 'sv', 'ex', 'sr',
+  's', 'e', 'v', 'x', 'g', 'h',
+] as const
+
+/**
+ * "1.5 E" out of `…-1-5-e-i-vtec-…`, when the slug carries one.
+ *
+ * ── WHY THIS IS WORTH DOING ────────────────────────────────────────────────
+ *
+ * Carlist sits behind Cloudflare and disallows automated access, so Paqar
+ * never fetches it — a reviewer opens the link by hand. That left the variant,
+ * which is printed in the URL, being retyped by a person for every Carlist
+ * listing, and shown as "missing" to the buyer in the meantime.
+ *
+ * The engine size is required before the trim letter. Without it, `city-e-2019`
+ * would yield "E" from any slug containing a stray letter, and a bare letter is
+ * not evidence of anything.
+ */
+function parseVariantFromSlug(words: string): string | null {
+  const m = words.match(/\b(\d)\s(\d)\s([a-z]{1,7})\b/)
+  if (!m) return null
+  const [, major, minor, token] = m
+  const trim = SLUG_VARIANT_TOKENS.find(t => t === token)
+  if (!trim) return null
+  return `${major}.${minor} ${trim.length <= 2 ? trim.toUpperCase() : trim[0]!.toUpperCase() + trim.slice(1)}`
+}
+
+export function parseListingUrlSlug(rawUrl: string): { brand: string | null; model: string | null; year: string | null; variant: string | null } {
   let path: string
   try {
     path = new URL(rawUrl).pathname
   } catch {
-    return { brand: null, model: null, year: null }
+    return { brand: null, model: null, year: null, variant: null }
   }
 
   // Hyphens and slashes to spaces; drop the trailing numeric ad id and any
@@ -306,7 +346,7 @@ export function parseListingUrlSlug(rawUrl: string): { brand: string | null; mod
     .trim()
 
   const { brand, model } = parseVehicle(words)
-  return { brand, model, year: parseYear(words) }
+  return { brand, model, year: parseYear(words), variant: parseVariantFromSlug(words) }
 }
 
 /**

@@ -220,33 +220,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── SATU TEMPAT SEBELUM BELI KERETA ──
-          The three shortcuts, and the sequence they belong to.
-
-          Placed AFTER the hero, never beside it: the RM29 intake is this page's
-          single job, and a row of equally-weighted options next to it would
-          turn one decision into three. Here they answer the question a buyer
-          has once they have seen the form — "what else does this place do?" —
-          rather than competing with it. */}
-      <section className="bg-white px-5 py-12 md:py-16 border-t border-[#F3F4F6]">
-        <div className="max-w-5xl mx-auto">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
-            Satu tempat sebelum beli kereta
-          </p>
-          <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827] mb-3">
-            Semak &rarr; Periksa &rarr; Insurans
-          </h2>
-          <p className="font-body text-[14px] text-[#374151] leading-relaxed mb-6 max-w-2xl">
-            Tiga langkah, ikut urutan. Semak dulu sama ada unit itu berbaloi
-            dikejar &mdash; lebih murah daripada memeriksa kereta yang anda
-            takkan beli. Bila dah pasti, periksa fizikalnya. Bila dah putus,
-            baru bandingkan insurans.
-          </p>
-
-          <ServiceShortcuts />
-        </div>
-      </section>
-
       {/* ── APA YANG ANDA DAPAT ──
           The human review LEADS. Everything under it is machine output a
           competitor could reproduce; the review is what the price buys, and
@@ -389,6 +362,42 @@ export default async function HomePage() {
               oleh manusia, bukan automatik.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* ── SATU TEMPAT SEBELUM BELI KERETA ──
+          The three shortcuts, and the sequence they belong to.
+
+          Placed AFTER the hero, never beside it: the RM29 intake is this
+          page's single job, and a row of equally-weighted options next to it
+          would turn one decision into three.
+
+          MOVED DOWN AGAIN, past the limits and the refund. It used to sit two
+          sections below the hero, which put the referral partners — the one
+          part of this page Paqar earns a commission on — in front of a reader
+          who had not yet been told what RM29 buys or why they should not just
+          check Mudah themselves. Asking someone to consider a physical
+          inspection before they believe in the report is both a worse funnel
+          and a worse look, on a page that makes a point of saying it is not
+          paid by sellers.
+          Here they answer the question a buyer has once the product has been
+          explained and its limits admitted: "what else does this place do?" */}
+      <section className="bg-white px-5 py-12 md:py-16 border-t border-[#F3F4F6]">
+        <div className="max-w-5xl mx-auto">
+          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
+            Satu tempat sebelum beli kereta
+          </p>
+          <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827] mb-3">
+            Semak &rarr; Periksa &rarr; Insurans
+          </h2>
+          <p className="font-body text-[14px] text-[#374151] leading-relaxed mb-6 max-w-2xl">
+            Tiga langkah, ikut urutan. Semak dulu sama ada unit itu berbaloi
+            dikejar &mdash; lebih murah daripada memeriksa kereta yang anda
+            takkan beli. Bila dah pasti, periksa fizikalnya. Bila dah putus,
+            baru bandingkan insurans.
+          </p>
+
+          <ServiceShortcuts />
         </div>
       </section>
 

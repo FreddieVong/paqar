@@ -86,7 +86,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   // never carries a price — that field stays the buyer's.
   if (!searchPage && intake.listing_url) {
     const fromSlug = parseListingUrlSlug(intake.listing_url)
-    if (fromSlug.brand || fromSlug.model || fromSlug.year) {
+    if (fromSlug.brand || fromSlug.model || fromSlug.year || fromSlug.variant) {
       const field = <T,>(v: T | null) => ({
         value:    v,
         status:   v == null ? ('missing' as const) : ('medium' as const),
@@ -98,7 +98,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         year:          fromUrl?.year?.value          != null ? fromUrl.year          : field(fromSlug.year),
         askingPriceRm: fromUrl?.askingPriceRm        ?? field<number>(null),
         mileageKm:     fromUrl?.mileageKm            ?? field<number>(null),
-        variant:       fromUrl?.variant              ?? field<string>(null),
+        // The slug is often the ONLY place the variant is available: Carlist
+        // is behind Cloudflare and disallows automation, so nothing fetches
+        // the page body. Its URL prints the trim, and a reviewer was retyping
+        // it by hand on every Carlist listing.
+        variant:       fromUrl?.variant?.value       != null ? fromUrl.variant       : field(fromSlug.variant),
       }
       fromUrl = merged as typeof fromUrl
     }

@@ -13,7 +13,9 @@ describe('the car is usually in the link', () => {
   it('reads the reported Carlist URL', () => {
     expect(parseListingUrlSlug(
       'https://www.carlist.my/recon-cars/2023-toyota-alphard-2-5-sc-dim-sunroof/18950179',
-    )).toEqual({ brand: 'Toyota', model: 'Alphard', year: '2023' })
+      // variant: the slug reads "2-5-sc"; "sc" is not a Malaysian trim letter
+      // Paqar recognises, so it is left null rather than invented.
+    )).toEqual({ brand: 'Toyota', model: 'Alphard', year: '2023', variant: null })
   })
 
   it('reads a Mudah URL too, so the two paths agree', () => {
@@ -43,11 +45,11 @@ describe('the car is usually in the link', () => {
 
   it('returns nothing rather than guessing on a URL with no car in it', () => {
     expect(parseListingUrlSlug('https://www.carlist.my/used-cars')).toEqual(
-      { brand: null, model: null, year: null })
+      { brand: null, model: null, year: null, variant: null })
   })
 
   it('survives a string that is not a URL at all', () => {
-    expect(parseListingUrlSlug('not a url')).toEqual({ brand: null, model: null, year: null })
+    expect(parseListingUrlSlug('not a url')).toEqual({ brand: null, model: null, year: null, variant: null })
   })
 
   it('needs the brand before it will name a model', () => {
@@ -120,6 +122,6 @@ describe('sources that can never carry the car', () => {
 
   it('a Facebook URL genuinely yields nothing, which is why it needs its own answer', () => {
     const got = parseListingUrlSlug('https://www.facebook.com/marketplace/item/1807893153529117/')
-    expect(got).toEqual({ brand: null, model: null, year: null })
+    expect(got).toEqual({ brand: null, model: null, year: null, variant: null })
   })
 })
