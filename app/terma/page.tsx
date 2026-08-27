@@ -45,6 +45,17 @@ export default function TermaPage() {
 
           {[
             {
+              // Named here, in About and in the footer, because a buyer being
+              // asked for money on a Billplz page headed TENTEC SDN BHD has no
+              // way to know it is the same company — and an unfamiliar name at
+              // the moment money is due reads as a scam. The registration
+              // number and registered address are deliberately NOT here: those
+              // are details counsel should confirm, and a wrong company number
+              // in a legal document is worse than an absent one.
+              title: 'Siapa Mengendalikan Paqar',
+              body: 'Paqar dikendalikan oleh TENTEC SDN BHD. Bayaran dikutip oleh TENTEC SDN BHD melalui Billplz — jadi nama itulah yang anda akan lihat pada halaman pembayaran dan pada penyata bank anda.',
+            },
+            {
               title: 'Perkhidmatan Pihak Ketiga',
               // "pangkalan data yang boleh diakses awam" was not true and had
               // not been for a long time. Comparable ADVERTS are public, but

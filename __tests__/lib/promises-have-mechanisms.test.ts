@@ -331,3 +331,42 @@ describe('the homepage proves the product before it monetises the reader', () =>
     expect(at('APA YANG ANDA DAPAT')).toBeGreaterThan(at('── HERO ──'))
   })
 })
+
+/**
+ * A buyer meets "TENTEC SDN BHD" for the first time on the Billplz page, at
+ * the moment they are asked for bank credentials, with no logo and no
+ * explanation. An unfamiliar company name at that exact moment reads as a
+ * scam. The checkout already named it; nothing else on the site did, so there
+ * was no way to check the name against anything before handing it money.
+ */
+describe('the operating company is named where a buyer can find it', () => {
+  const strip = (src: string) =>
+    src.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
+       .replace(/\/\*[\s\S]*?\*\//g, '')
+       .replace(/(^|[^:])\/\/.*$/gm, '$1')
+
+  it.each([
+    ['the footer, so it is on every page', 'components/layout/Shell.tsx'],
+    ['the terms',                          'app/terma/page.tsx'],
+    ['the About page',                     'app/tentang/page.tsx'],
+    ['the checkout, where the name is met', 'components/report/PaymentForm.tsx'],
+  ])('%s', (_label, file) => {
+    expect(strip(read(file))).toContain('TENTEC SDN BHD')
+  })
+
+  it('the privacy notice names it as the DATA CONTROLLER, not just a payer', () => {
+    // A notice describing processing without saying who is accountable for it
+    // leaves the reader nobody to exercise their PDPA rights against.
+    const privacy = strip(read('app/privasi/page.tsx'))
+    expect(privacy).toContain('TENTEC SDN BHD')
+    expect(privacy).toContain('pengawal data')
+  })
+
+  it('claims no registration number or address, since neither is verified', () => {
+    // Held back deliberately pending counsel. A wrong company number in a
+    // legal document is worse than an absent one.
+    for (const f of ['app/terma/page.tsx', 'app/privasi/page.tsx']) {
+      expect(strip(read(f))).not.toMatch(/\b\d{6,}-[A-Z]\b|\b\d{12}\b/)
+    }
+  })
+})

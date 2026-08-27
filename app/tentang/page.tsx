@@ -47,7 +47,7 @@ export default function TentangPage() {
               Apa itu Paqar?
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar menyemak satu iklan kereta terpakai untuk anda, dan beritahu apa patut anda buat sebelum bayar deposit — harga pasaran, sasaran rundingan, soalan untuk penjual dan apa yang perlu disahkan. Setiap laporan dibaca oleh manusia sebelum dihantar.
+              Paqar dikendalikan oleh TENTEC SDN BHD. Kami menyemak satu iklan kereta terpakai untuk anda, dan beritahu apa patut anda buat sebelum bayar deposit — harga pasaran, sasaran rundingan, soalan untuk penjual dan apa yang perlu disahkan. Setiap laporan dibaca oleh manusia sebelum dihantar.
             </p>
           </div>
 

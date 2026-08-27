@@ -42,7 +42,11 @@ export default function PrivasiPage() {
           {[
             {
               title: 'Siapa Kami',
-              body: 'Paqar adalah perkhidmatan semakan status kenderaan pihak ketiga yang beroperasi di Malaysia. Kami bukan platform rasmi kerajaan dan tidak berafiliasi dengan PDRM, JPJ, AES, atau mana-mana agensi kerajaan.',
+              // "Pengawal data" is the PDPA term, and naming the controller is
+              // the point of this section: a notice describing processing without
+              // saying WHO is accountable for it leaves the reader with nobody to
+              // exercise their rights against.
+              body: 'Paqar dikendalikan oleh TENTEC SDN BHD, dan TENTEC SDN BHD adalah pengawal data bagi maklumat yang anda berikan kepada Paqar. Kami adalah perkhidmatan pihak ketiga yang beroperasi di Malaysia — bukan platform rasmi kerajaan, dan tidak berafiliasi dengan PDRM, JPJ, AES, atau mana-mana agensi kerajaan.',
             },
             {
               title: 'Data Yang Kami Kumpul',
