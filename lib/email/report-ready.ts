@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendEmail } from './send'
 import { env }    from '@/lib/env'
 import { SUPPORT_REPLY_TO, whatsappUrl, SITE_URL } from '@/lib/site'
 
@@ -105,7 +106,7 @@ export async function sendReportReadyEmail(params: ReportReadyParams): Promise<v
     </div>
   `
 
-  await resend.emails.send({
+  await sendEmail(resend, 'report-ready', {
     from:    'Paqar <noreply@paqar.my>',
     to:      params.toEmail,
     replyTo: SUPPORT_REPLY_TO,

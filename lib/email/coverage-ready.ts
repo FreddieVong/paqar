@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendEmail } from './send'
 import { env } from '@/lib/env'
 import { BASE_REPORT_LABEL } from '@/lib/pricing'
 
@@ -57,7 +58,7 @@ export async function sendCoverageReadyEmail(params: {
     </div>
   `
 
-  await resend.emails.send({
+  await sendEmail(resend, 'coverage-ready', {
     from:    'Paqar <hello@paqar.my>',
     to:      params.toEmail,
     subject: `Kami dah boleh semak ${carLabel}`,

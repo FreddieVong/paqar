@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendEmail } from './send'
 import { env }    from '@/lib/env'
 import { buildRetargetEmailHtml } from './retarget-template'
 import type { RetargetEmailInsight } from './retarget-template'
@@ -61,7 +62,7 @@ export async function sendRetargetEmail(params: RetargetParams): Promise<void> {
     unsubscribeUrl: unsubscribeUrl(params.toEmail),
   })
 
-  await resend.emails.send({
+  await sendEmail(resend, 'retarget', {
     from:    'Paqar <noreply@paqar.my>',
     replyTo: SUPPORT_REPLY_TO,
     to:      params.toEmail,

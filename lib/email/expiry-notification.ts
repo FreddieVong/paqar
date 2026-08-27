@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendEmail } from './send'
 import { env }    from '@/lib/env'
 import type { DocType } from '@/types/domain'
 
@@ -72,7 +73,7 @@ export async function sendExpiryNotification(params: {
     </div>
   `
 
-  await resend.emails.send({
+  await sendEmail(resend, 'expiry-notification', {
     from:    'Paqar <noreply@paqar.my>',
     to:      params.toEmail,
     subject,

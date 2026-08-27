@@ -90,16 +90,23 @@ describe('suppression fails CLOSED', () => {
 
 describe('every marketing send path checks it', () => {
   it('the retarget e-mail refuses suppressed addresses before sending', () => {
+    // Matches the send however it is spelled. Every sender now goes through
+    // lib/email/send so a Resend refusal actually throws — the SDK resolves
+    // with { data: null, error } rather than rejecting — and pinning the old
+    // `resend.emails.send(` literal would fail for that reason rather than
+    // for the ordering this test cares about.
     const src = read('lib/email/retarget.ts')
     const guard = src.indexOf('isSuppressed')
-    const send  = src.indexOf('resend.emails.send')
+    const send  = Math.max(src.indexOf('sendEmail('), src.indexOf('resend.emails.send'))
     expect(guard).toBeGreaterThan(-1)
-    expect(guard).toBeLessThan(send)
+    expect(send).toBeGreaterThan(-1)
+    expect(guard, 'the suppression check moved after the send').toBeLessThan(send)
   })
 
   it('the feedback e-mail refuses suppressed addresses before sending', () => {
     const src = read('lib/email/customer-feedback.ts')
-    expect(src.indexOf('isSuppressed')).toBeLessThan(src.indexOf('resend.emails.send'))
+    const send = Math.max(src.indexOf('sendEmail('), src.indexOf('resend.emails.send'))
+    expect(src.indexOf('isSuppressed')).toBeLessThan(send)
   })
 
   it('both carry an opt-out the recipient can act on', () => {

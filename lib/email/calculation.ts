@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendEmail } from './send'
 import { env }    from '@/lib/env'
 import { SUPPORT_REPLY_TO } from '@/lib/site'
 
@@ -67,7 +68,7 @@ export async function sendCalculationEmail(params: {
     </div>
   `
 
-  await resend.emails.send({
+  await sendEmail(resend, 'calculation', {
     from:    'Paqar <noreply@paqar.my>',
     replyTo: SUPPORT_REPLY_TO,
     to:      params.toEmail,

@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendEmail } from './send'
 import { env }    from '@/lib/env'
 import { SUPPORT_REPLY_TO, whatsappUrl, SITE_URL } from '@/lib/site'
 import { BASE_REPORT_LABEL, REFUND_WORKING_DAYS }  from '@/lib/pricing'
@@ -64,7 +65,7 @@ async function send(to: string, subject: string, html: string, tag: string): Pro
     return
   }
   const resend = new Resend(env.RESEND_API_KEY)
-  await resend.emails.send({
+  await sendEmail(resend, 'refund-notice', {
     from: 'Paqar <noreply@paqar.my>', to, replyTo: SUPPORT_REPLY_TO, subject, html,
   })
 }

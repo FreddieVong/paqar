@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendEmail } from './send'
 import { env }    from '@/lib/env'
 import { SUPPORT_REPLY_TO } from '@/lib/site'
 
@@ -52,7 +53,7 @@ export async function sendJomCheckPendingEmail(params: JomCheckPendingParams): P
     </div>
   `
 
-  await resend.emails.send({
+  await sendEmail(resend, 'jomcheck-pending', {
     from:    'Paqar <noreply@paqar.my>',
     replyTo: SUPPORT_REPLY_TO,
     to:      params.toEmail,

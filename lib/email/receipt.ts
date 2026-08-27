@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendEmail } from './send'
 import { env }    from '@/lib/env'
 import { SUPPORT_REPLY_TO, whatsappUrl, SITE_URL } from '@/lib/site'
 import { BASE_REPORT_CENTS, COMBINED_CENTS, JOMCHECK_UPGRADE_CENTS, REVIEW_SLA_HOURS, historyUpgradeAvailable } from '@/lib/pricing'
@@ -142,7 +143,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
     </div>
   `
 
-  await resend.emails.send({
+  await sendEmail(resend, 'receipt', {
     from:    'Paqar <noreply@paqar.my>',
     replyTo: SUPPORT_REPLY_TO,
     to:      params.toEmail,

@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendEmail } from './send'
 import { env }    from '@/lib/env'
 
 interface ModelRetargetParams {
@@ -68,7 +69,7 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
     </div>
   `
 
-  await resend.emails.send({
+  await sendEmail(resend, 'model-retarget', {
     from:    'Paqar <noreply@paqar.my>',
     to:      params.toEmail,
     subject,
