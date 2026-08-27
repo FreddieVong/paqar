@@ -50,9 +50,22 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   const intake = await authorizeIntake(request, request.headers.get('x-paqar-intake-id') ?? '')
-  // Unauthorised reports are DROPPED rather than refused: this endpoint must
-  // not become a way to probe which intake ids exist.
-  if (!intake) return new NextResponse(null, { status: 204 })
+  if (!intake) {
+    // Unauthorised reports are DROPPED rather than refused, so this endpoint
+    // cannot be used to probe which intake ids exist — the caller gets the
+    // same 204 either way.
+    //
+    // But the drop is LOGGED, because the first version of this route dropped
+    // silently and that hid a bug in the beacon itself: the client sent empty
+    // credentials on a first upload, every report was refused here, and a
+    // reviewer's reference id could not be found in the logs at all. Silence
+    // that means two different things is not an instrument.
+    //
+    // No id is logged — a refused caller's id is exactly what must not be
+    // echoed back into anything.
+    console.warn('[upload-diagnostic] refused: no valid intake credential')
+    return new NextResponse(null, { status: 204 })
+  }
 
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return new NextResponse(null, { status: 204 })

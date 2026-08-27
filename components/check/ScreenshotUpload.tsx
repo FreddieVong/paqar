@@ -240,14 +240,29 @@ export function ScreenshotUpload({ intakeId, token, ensureIntake, onUploaded, di
       // error into this catch. keepalive so it survives the buyer closing the
       // tab in frustration, which is exactly when we most want the record.
       if (attempt) {
-        const owner2 = (intakeId && token) ? { id: intakeId, token } : null
+        // ── USE `owner`, NOT THE PROPS ──────────────────────────────────
+        //
+        // This re-derived the credential from intakeId/token — the exact
+        // mistake the comment at the top of send() warns about, four lines
+        // above where it was written. On a FIRST upload the intake is created
+        // inside this call by ensureIntake(), and the parent's state has not
+        // re-rendered, so both props are still null: the beacon went out with
+        // empty credentials, authorizeIntake refused it, and the route dropped
+        // it with a silent 204.
+        //
+        // Which is why a reviewer's reference id could not be found in the
+        // logs at all. The instrument built to explain a failure nobody could
+        // reproduce was itself broken in the case that matters most — a fresh
+        // session, first upload.
+        //
+        // `owner` is already resolved and in scope. Use it.
         void fetch('/api/listing-screenshots/diagnostic', {
           method:    'POST',
           keepalive: true,
           headers:   {
             'content-type':         'application/json',
-            'x-paqar-intake-token': owner2?.token ?? token ?? '',
-            'x-paqar-intake-id':    owner2?.id ?? intakeId ?? '',
+            'x-paqar-intake-token': owner.token,
+            'x-paqar-intake-id':    owner.id,
           },
           body: JSON.stringify({
             attemptId: attempt.id,

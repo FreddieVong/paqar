@@ -42,8 +42,9 @@ describe('a refused send is a failed send', () => {
     const r = fake({ data: null, error: { name: 'x', message: 'nope' } })
     const err = await sendEmail(r, 'receipt', {
       from: 'a@b.c', to: 'buyer@example.com', subject: 's', html: 'h',
-    }).catch(e => e as Error)
-    expect(err.message).not.toContain('buyer@example.com')
+    }).then(() => null, (e: unknown) => e as Error)
+    expect(err).toBeInstanceOf(Error)
+    expect(err!.message).not.toContain('buyer@example.com')
   })
 })
 

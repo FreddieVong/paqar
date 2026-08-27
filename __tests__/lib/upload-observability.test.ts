@@ -58,8 +58,12 @@ describe('a failed upload leaves evidence', () => {
 
   it('the diagnostic route cannot be used to probe which intakes exist', () => {
     const diag = code(read('app/api/listing-screenshots/diagnostic/route.ts'))
-    // Unauthorised reports are dropped with the SAME 204 as accepted ones.
-    expect(diag).toMatch(/if \(!intake\) return new NextResponse\(null, \{ status: 204 \}\)/)
+    // Unauthorised reports get the SAME 204 as accepted ones, so the caller
+    // learns nothing from the status. (The drop is logged server-side — see
+    // the beacon test below — but nothing is echoed to the caller.)
+    const refusal = diag.slice(diag.indexOf('if (!intake)'), diag.indexOf('if (!intake)') + 500)
+    expect(refusal).toContain('status: 204')
+    expect(refusal, 'the refusal echoes the id back').not.toMatch(/intakeId|x-paqar-intake-id/)
   })
 })
 
@@ -107,5 +111,35 @@ describe('a rejected image says which fixable mistake it was', () => {
     for (const r of ['markup_detected', 'dimensions_unreadable', 'empty', 'storage_failed'] as const) {
       expect(rejectionCopyFor(r)).toBe(UPLOAD_REJECTION_COPY)
     }
+  })
+})
+
+/**
+ * The instrument built to explain an unreproducible failure was itself broken
+ * in the case that matters most.
+ *
+ * The beacon re-derived its credential from the intakeId/token PROPS — the
+ * exact mistake the comment at the top of send() warns about, four lines above
+ * where it was written. On a first upload the intake is created inside that
+ * call and the parent has not re-rendered, so both props are null: the report
+ * went out with empty credentials and the route dropped it.
+ *
+ * A reviewer hit precisely that — fresh session, first upload — and their
+ * reference id appeared nowhere in the logs.
+ */
+describe('the beacon can authenticate on a FIRST upload', () => {
+  const client = code(read('components/check/ScreenshotUpload.tsx'))
+
+  it('sends the resolved credential, not the stale props', () => {
+    const beacon = client.slice(client.indexOf("'/api/listing-screenshots/diagnostic'"))
+    expect(beacon).toContain("'x-paqar-intake-token': owner.token")
+    expect(beacon).toContain("'x-paqar-intake-id':    owner.id")
+    expect(beacon, 'the beacon reads the props again').not.toMatch(/token \?\? ''/)
+  })
+
+  it('and a refused beacon is logged rather than vanishing', () => {
+    // Silence that means two different things is not an instrument.
+    const diag = code(read('app/api/listing-screenshots/diagnostic/route.ts'))
+    expect(diag).toContain('[upload-diagnostic] refused')
   })
 })
