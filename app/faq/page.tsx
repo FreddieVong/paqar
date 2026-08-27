@@ -4,7 +4,7 @@ import Link    from 'next/link'
 // /faq/* guide — rendering them here too would double the chrome.
 
 const TITLE = 'Soalan Lazim & Panduan Pembeli Kereta Terpakai | Paqar'
-const DESC  = 'Panduan lengkap pembeli kereta terpakai Malaysia — cara pilih model, cara rundingan harga, cara kesan kereta banjir, checklist sebelum beli, dan kos roadtax mengikut negeri.'
+const DESC  = 'Panduan lengkap pembeli kereta terpakai Malaysia — cara pilih model, cara rundingan harga, cara kesan kereta banjir, checklist sebelum beli, dan kadar roadtax sebenar JPJ.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -40,7 +40,7 @@ const GROUPS = [
   {
     heading: 'Kos & cukai',
     items: [
-      { slug: 'roadtax-by-state', title: 'Harga roadtax ikut negeri', desc: 'Kadar roadtax mengikut negeri dan kapasiti enjin — Selangor, KL, Johor, Pulau Pinang dan lain-lain.' },
+      { slug: 'roadtax-by-state', title: 'Harga roadtax ikut negeri', desc: 'Ia tidak berbeza ikut negeri di Semenanjung — jadual JPJ sebenar mengikut kapasiti enjin, dan kenapa ramai tersalah sangka.' },
     ],
   },
 ]
@@ -125,7 +125,7 @@ export default function FaqHubPage() {
               Dah jumpa kereta yang berkenan?
             </p>
             <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-              Semak harga pasaran dan rekod kereta itu dahulu — percuma untuk semak harga.
+              Hantar link iklan kereta itu kepada Paqar dahulu — kami beritahu apa patut anda buat sebelum bayar deposit.
             </p>
             <Link
               href="/"

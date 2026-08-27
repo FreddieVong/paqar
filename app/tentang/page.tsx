@@ -47,7 +47,7 @@ export default function TentangPage() {
               Apa itu Paqar?
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar adalah alat untuk pembeli kereta terpakai Malaysia — untuk semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.
+              Paqar menyemak satu iklan kereta terpakai untuk anda, dan beritahu apa patut anda buat sebelum bayar deposit — harga pasaran, sasaran rundingan, soalan untuk penjual dan apa yang perlu disahkan. Setiap laporan dibaca oleh manusia sebelum dihantar.
             </p>
           </div>
 
@@ -145,7 +145,7 @@ export default function TentangPage() {
           {/* Links */}
           <div className="space-y-2">
             <p className="font-heading font-bold text-[11px] uppercase tracking-[.07em] text-[#9CA3AF]">Laman utama</p>
-            <Link href="/" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Semak harga kereta terpakai — percuma →</Link>
+            <Link href="/" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Hantar iklan kereta untuk disemak →</Link>
             <Link href="/laporan-pembeli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Laporan Pembeli RM29 →</Link>
                         <Link href="/contoh-laporan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Contoh laporan →</Link>
             <Link href="/privasi" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Dasar privasi →</Link>

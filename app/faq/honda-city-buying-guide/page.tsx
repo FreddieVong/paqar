@@ -187,7 +187,7 @@ export default function HondaCityGuide() {
             <div className="flex gap-4">
               <input type="checkbox" className="flex-shrink-0 mt-1" />
               <div>
-                <p className="font-semibold">Semak harga pasaran guna nombor plat</p>
+                <p className="font-semibold">Semak harga pasaran iklan itu</p>
                 <p className="text-sm text-[#6B7280]">Tahu harga sebenar sebelum mula berunding.</p>
               </div>
             </div>
@@ -195,7 +195,7 @@ export default function HondaCityGuide() {
               <input type="checkbox" className="flex-shrink-0 mt-1" />
               <div>
                 <p className="font-semibold">Sahkan varian sebenar sama dengan apa yang penjual kata</p>
-                <p className="text-sm text-[#6B7280]">S atau H beza harga. Jangan ambil cakap penjual bulat-bulat.</p>
+                <p className="text-sm text-[#6B7280]">S, E dan V beza harga. Jangan ambil cakap penjual bulat-bulat — sahkan varian dengan geran.</p>
               </div>
             </div>
             <div className="flex gap-4">

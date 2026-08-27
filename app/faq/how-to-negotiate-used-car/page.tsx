@@ -48,7 +48,7 @@ export default function HowToNegotiate() {
         name: 'Apa perlu disediakan sebelum berunding harga kereta terpakai?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Semak harga pasaran guna nombor plat sebelum pergi tengok kereta supaya anda tahu julat harga sebenar, kemudian periksa kereta dengan teliti untuk cari isu konkrit — tayar haus, brake pad, penapis, jarak tempuh tak sepadan, atau kerosakan kosmetik. Masalah yang spesifik dan ada kos itulah yang jadi asas anda tawar lebih rendah.',
+          text: 'Semak harga pasaran iklan itu sebelum pergi tengok kereta supaya anda tahu julat harga sebenar, kemudian periksa kereta dengan teliti untuk cari isu konkrit — tayar haus, brake pad, penapis, jarak tempuh tak sepadan, atau kerosakan kosmetik. Masalah yang spesifik dan ada kos itulah yang jadi asas anda tawar lebih rendah.',
         },
       },
       {

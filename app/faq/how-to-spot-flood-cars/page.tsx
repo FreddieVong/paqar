@@ -101,7 +101,7 @@ export default function HowToSpotFloodedCars() {
 
         <section className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-6">
           <h3 className="font-semibold text-[#3D472F] mb-2">💡 Tip Pembeli Bijak</h3>
-          <p className="text-[#374151]">Semak harga pasaran kereta itu guna nombor plat. Kalau harganya RM3–5k bawah harga tengah iklan setanding, tanya diri anda kenapa. Kerosakan banjir selalunya jadi sebabnya.</p>
+          <p className="text-[#374151]">Semak harga pasaran kereta itu — hantar link iklannya kepada Paqar. Kalau harganya RM3–5k bawah harga tengah iklan setanding, tanya diri anda kenapa. Kerosakan banjir selalunya jadi sebabnya.</p>
         </section>
 
         <FaqGetValuationCta faqSlug="how-to-spot-flood-cars" />

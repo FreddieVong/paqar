@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Nav }                 from '@/components/layout/Nav'
 import { Shell }               from '@/components/layout/Shell'
-import { BASE_REPORT_CENTS, ringgit } from '@/lib/pricing'
+import { BASE_REPORT_CENTS, BASE_REPORT_LABEL, ringgit, REVIEW_SLA_HOURS, REFUND_GUARANTEE_LONG } from '@/lib/pricing'
+import { TYPICAL_MINUTES } from '@/lib/review-capacity'
 import { ListingIntakeForm }   from '@/components/check/ListingIntakeForm'
 
 export const metadata: Metadata = {
@@ -76,16 +77,29 @@ export default function LaporanPembelihPage() {
       <Shell>
         <div className="pt-6 pb-12 max-w-xl mx-auto space-y-6">
 
-          {/* Hero */}
+          {/* ── HERO ──
+              This page was the last surface still selling the automated tool.
+              "Alat Pembeli Kereta Terpakai" is what Paqar was before the
+              review gate: something you operate. It is now something a person
+              does for you, and the two claims that carry the product —
+              disemak oleh manusia, and the refund — appeared nowhere on the
+              page whose whole job is to explain what RM29 buys. */}
           <div>
-            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#9CA3AF] mb-2">
-              Alat Pembeli Kereta Terpakai
+            <p className="font-heading font-bold text-[11px] uppercase tracking-[.08em] text-[#3D472F] mb-2">
+              Disemak oleh manusia &middot; Dalam {REVIEW_SLA_HOURS} jam
             </p>
             <h1 className="font-heading font-extrabold text-[26px] text-[#111827] leading-tight mb-3">
-              Laporan Pembeli kereta terpakai — RM29
+              Hantar satu iklan. Kami beritahu apa patut anda buat.
             </h1>
             <p className="font-body text-[14px] text-[#6B7280] leading-relaxed">
-              Paqar membantu pembeli kereta terpakai Malaysia masuk rundingan dengan data — bukan agak-agak. Laporan Pembeli RM29 memberi anda semua yang perlu tahu sebelum bayar deposit.
+              Laporan Pembeli {BASE_REPORT_LABEL} adalah keputusan tentang satu kereta
+              tertentu yang anda sedang pertimbang — bukan carian yang anda buat sendiri.
+              Anda hantar link iklannya; orang kami baca, banding dengan iklan setanding,
+              dan hantar keputusan. Biasanya dalam {TYPICAL_MINUTES} minit, dijamin dalam{' '}
+              {REVIEW_SLA_HOURS} jam.
+            </p>
+            <p className="font-body text-[13px] text-[#6B7280] leading-relaxed mt-3 bg-[#F4F6F0] border border-[#CBD4BB] rounded-[12px] p-3">
+              {REFUND_GUARANTEE_LONG}
             </p>
           </div>
 
@@ -96,14 +110,18 @@ export default function LaporanPembelihPage() {
                 Laporan Pembeli — RM29
               </p>
               <p className="font-heading font-extrabold text-[15px] text-white">
-                Satu laporan. Semua yang perlu anda tahu.
+                Satu laporan. Apa patut anda buat dengan kereta ini.
               </p>
             </div>
             <div className="px-5 py-1">
               {[
                 {
-                  title: 'Keputusan harga',
-                  desc: 'Murah, wajar, atau mahal — berdasarkan listing semasa untuk model dan tahun yang sama.',
+                  title: 'Keputusan: teruskan, atau cari unit lain',
+                  desc: 'Keputusan jelas untuk kereta ini, ditulis oleh orang yang membacanya — bukan hanya satu label harga.',
+                },
+                {
+                  title: 'Berapa patut anda tawar',
+                  desc: 'Sasaran harga untuk mula rundingan, dikira dari harga tengah iklan setanding.',
                 },
                 {
                   title: 'Harga tengah & julat iklan setanding',
@@ -114,8 +132,14 @@ export default function LaporanPembelihPage() {
                   desc: 'Anggaran harga dealer akan bayar untuk kereta ini. Guna sebagai sebahagian rundingan.',
                 },
                 {
-                  title: 'Maklumat kenderaan',
-                  desc: 'Tahun daftar, kapasiti enjin, jenis badan dan nombor rangka.',
+                  // Conditional, and said so. The plate is OPTIONAL at intake
+                  // and the lookup runs after payment, so this section exists
+                  // only when a registration number was given and resolved.
+                  // Promising it unconditionally on the page that explains
+                  // what RM29 buys is the one claim this product can least
+                  // afford to get wrong.
+                  title: 'Maklumat pendaftaran kenderaan — jika anda beri nombor plat',
+                  desc: 'Tahun daftar, kapasiti enjin, jenis badan dan nombor rangka, dibandingkan dengan apa yang penjual iklankan.',
                 },
                 {
                   title: 'Skrip rundingan harga',

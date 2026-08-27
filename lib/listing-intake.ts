@@ -39,6 +39,26 @@ export const CONCERN_MAX = 2000
 const SAFE_SCHEMES = new Set(['http:', 'https:'])
 
 /**
+ * An IPv4 literal, or a bracketed IPv6 one.
+ *
+ * Written as a regex rather than reusing lib/listing-fetch's isIP, because
+ * that module is `server-only` and imports node:dns — and this function runs
+ * inside ListingIntakeForm, a client component. Duplicating one regex is the
+ * cheaper of the two wrongs.
+ */
+const IP_LITERAL_HOST = /^(\d{1,3}\.){3}\d{1,3}$|^\[.*\]$/
+
+/**
+ * Hostnames that cannot be a public car advert, by definition.
+ *
+ * `example.com` is deliberately NOT here: it is a real registrable domain that
+ * resolves, a person can open it and see immediately that it is not a car, and
+ * the checkout already scopes what it promises about a link it could not read.
+ * Blocking it would be blocking a shape of URL rather than an unsafe one.
+ */
+const NEVER_PUBLIC = new Set(['localhost', 'local', 'internal', 'lan', 'home', 'invalid', 'onion'])
+
+/**
  * The listing URL to store, or null when there is nothing safe and usable.
  *
  * Null rather than an empty string: the column means "the buyer gave us a
@@ -65,6 +85,30 @@ export function normaliseListingUrl(raw: string | null | undefined): string | nu
   // A scheme alone is not a link. Requires a host, which also rejects
   // "honda city 2019" once https:// has been prepended to it.
   if (!parsed.hostname || !parsed.hostname.includes('.')) return null
+
+  // ── CREDENTIALS ARE REFUSED, NOT STORED ─────────────────────────────────
+  //
+  // `https://user:pass@example.com/car/1` passed every check above: the host
+  // is example.com and it has a dot. So it was written to listing_url, put in
+  // front of a human reviewer, and carried into anything that later reads that
+  // column. Nothing fetched it — lib/listing-fetch screens credentials and
+  // allowlists mudah.my — so this was never an SSRF, but it is still someone
+  // else's credentials sitting in Paqar's database because a form accepted
+  // them. No car advert has ever needed a username in its URL.
+  if (parsed.username || parsed.password) return null
+
+  // ── A LISTING LIVES ON A DOMAIN NAME, NEVER AT A BARE IP ────────────────
+  //
+  // 127.0.0.1, 10.0.0.5 and 169.254.169.254 all have dots, so all three were
+  // accepted and queued for a person to open. Refusing every IP LITERAL is a
+  // stronger rule than enumerating private ranges and needs no range table
+  // that can go stale: Mudah, Carlist, Facebook and every dealer site a
+  // Malaysian buyer uses are reached by name. A bare IP is either a mistake or
+  // an attempt, and neither is a car for sale.
+  if (IP_LITERAL_HOST.test(parsed.hostname)) return null
+
+  const lastLabel = parsed.hostname.toLowerCase().split('.').pop() ?? ''
+  if (NEVER_PUBLIC.has(lastLabel)) return null
 
   return candidate
 }

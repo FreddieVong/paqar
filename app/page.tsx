@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { historyAddOnLimitLine } from '@/lib/history-addon-copy'
+import { historyAddOnLimitLine, competitorComparisonAnswer } from '@/lib/history-addon-copy'
+
 import Link           from 'next/link'
 import { unstable_cache } from 'next/cache'
 import { Nav }           from '@/components/layout/Nav'
@@ -83,7 +84,7 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Adakah Paqar sama seperti laporan SCRUT atau MyEG?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Tidak. Mereka jual rekod — tuntutan insurans dan sejarah kenderaan. Paqar tidak jual rekod tuntutan. Paqar bantu anda buat keputusan tentang satu unit tertentu: harga, varian, apa yang perlu disahkan dan langkah seterusnya.' },
+          acceptedAnswer: { '@type': 'Answer', text: competitorComparisonAnswer(BASE_REPORT_LABEL) },
         },
         {
           '@type': 'Question',
@@ -409,7 +410,7 @@ export default async function HomePage() {
               },
               {
                 q: 'Adakah Paqar sama seperti laporan SCRUT atau MyEG?',
-                a: 'Tidak. Mereka jual rekod — tuntutan insurans dan sejarah kenderaan. Paqar tidak jual rekod tuntutan. Paqar bantu anda buat keputusan tentang satu unit tertentu: harga, varian, apa yang perlu disahkan dan langkah seterusnya.',
+                a: competitorComparisonAnswer(BASE_REPORT_LABEL),
               },
               {
                 q: 'Berapa lama untuk dapat laporan?',

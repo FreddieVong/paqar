@@ -298,3 +298,71 @@ describe('structured data quotes a price the constants produce', () => {
     expect(ALLOWED.has(String(ringgit(COMBINED_CENTS)))).toBe(true)
   })
 })
+
+/**
+ * Five surfaces once described the add-on and disagreed; lib/history-addon-copy
+ * was created to end that, and every product description was moved onto it.
+ *
+ * One line was missed, because it does not read like a product description: the
+ * homepage's answer to "are you the same as SCRUT or MyEG?" said, flatly,
+ * "Paqar tidak jual rekod tuntutan." It appears TWICE on that page — in the
+ * visible FAQ, and inside the FAQPage JSON-LD, where Google can surface it as
+ * an answer attributed to Paqar — so on the day the add-on went on sale the
+ * homepage both sold the claim records and denied selling them.
+ */
+describe('no surface denies selling what Paqar sells', () => {
+  it('no live copy states the denial as a literal', () => {
+    const offenders: string[] = []
+    for (const f of SOURCES) {
+      // lib/history-addon-copy owns the OFF-state wording, and states it
+      // behind the same gate that decides whether the add-on is sold at all.
+      if (f.replace(/\\/g, '/').endsWith('lib/history-addon-copy.ts')) continue
+      const src = code(readFileSync(join(ROOT, f), 'utf8'))
+      if (/Paqar tidak (men)?jual rekod tuntutan/.test(src)) offenders.push(relative('.', f))
+    }
+    expect(offenders, `hardcoded denial in: ${offenders.join(', ')}`).toEqual([])
+  })
+
+  it('the homepage answer is derived from the sale gate', () => {
+    const page = readFileSync(join(ROOT, 'app/page.tsx'), 'utf8')
+    // BOTH copies — the visible FAQ and the FAQPage JSON-LD. The JSON-LD one
+    // is the reason this matters: Google can surface it as Paqar's answer.
+    const calls = page.match(/competitorComparisonAnswer\(/g) ?? []
+    expect(calls.length, 'the visible FAQ and the JSON-LD must share one source').toBe(2)
+
+    const copy = readFileSync(join(ROOT, 'lib/history-addon-copy.ts'), 'utf8')
+    const fn = copy.slice(copy.indexOf('export function competitorComparisonAnswer'))
+    expect(fn.slice(0, 900)).toContain('historyUpgradeAvailable()')
+  })
+})
+
+/**
+ * The checkout stopped anchoring on RM117 when the add-on left it. The sample
+ * page put the anchor straight back: the +RM88 section rendered third, ahead
+ * of almost all the RM29 evidence, in front of a reader who has not yet seen
+ * what RM29 buys.
+ */
+describe('the sample leads with what RM29 buys', () => {
+  const sample = readFileSync(join(ROOT, 'components/report/SampleReportPreview.tsx'), 'utf8')
+
+  it('puts the paid add-on after the base report sections', () => {
+    const verdict   = sample.indexOf('SampleVerdictCard')
+    const script    = sample.indexOf('Skrip Rundingan')
+    const checklist = sample.indexOf('Checklist Deposit')
+    const addOn     = sample.indexOf('<JomCheckSection')
+    expect(verdict).toBeGreaterThan(-1)
+    expect(addOn, 'the add-on is back above the negotiation script').toBeGreaterThan(script)
+    expect(addOn, 'the add-on is back above the deposit checklist').toBeGreaterThan(checklist)
+  })
+
+  it('and labels it as optional rather than as part of the price', () => {
+    expect(sample).toMatch(/Langkah seterusnya — pilihan, bukan sebahagian/)
+  })
+
+  it('the history banner moves with it', () => {
+    // It leads the REAL report, correctly — a total-loss finding outranks a
+    // price verdict. On the SAMPLE it led with a section most readers are not
+    // buying.
+    expect(sample.indexOf('<HistoryRiskBanner')).toBeGreaterThan(sample.indexOf('SampleVerdictCard'))
+  })
+})

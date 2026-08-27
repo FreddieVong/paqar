@@ -89,13 +89,17 @@ export default function MyReportPage() {
             )}
           </div>
 
+          {/* The reminders product is retired. This line survived because it
+              is scoped and technically true — the accounts still exist — but a
+              page about retrieving your report is not the place to advertise a
+              feature nobody can sign up for any more. Kept as a way back in
+              for people who DO have an account, described as exactly that. */}
           <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed">
-            Ada akaun Paqar?{' '}
+            Pernah daftar akaun Paqar dahulu?{' '}
             <Link href="/dashboard" className="text-[#3D472F] underline underline-offset-2">
-              Buka dashboard
-            </Link>{' '}
-            &mdash; hanya untuk pengguna yang mendaftar untuk peringatan roadtax
-            dan insurans.
+              Buka dashboard lama anda
+            </Link>
+            . Laporan Pembeli tidak memerlukan akaun.
           </p>
         </div>
       </Shell>

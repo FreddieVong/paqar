@@ -59,6 +59,29 @@ export function historyAddOnLimitLine(): string {
     : 'Paqar tidak menjual rekod tuntutan, dan tidak mengesahkan bacaan odometer sebenar.'
 }
 
+/**
+ * How Paqar differentiates itself from the record resellers (SCRUT, MyEG).
+ *
+ * Lives here rather than on the homepage because it makes a claim ABOUT the
+ * add-on, and every such claim on this site is derived from one gate. It was
+ * a hardcoded "Paqar tidak jual rekod tuntutan" in app/page.tsx — true when
+ * written, false the day the add-on went on sale, and present twice: in the
+ * visible FAQ and in the FAQPage JSON-LD, where Google can surface it as an
+ * answer attributed to Paqar.
+ *
+ * The differentiation is unchanged in either state, and it is the honest one:
+ * the records are a commodity several companies resell, and what Paqar sells
+ * is the decision about one advert. When the add-on IS sold it is named last
+ * and named as optional, because it is a convenience on top of the product
+ * rather than the product.
+ */
+export function competitorComparisonAnswer(baseReportLabel: string): string {
+  const base = 'Tidak. Mereka jual rekod — tuntutan insurans dan sejarah kenderaan. Paqar menilai satu iklan dan beritahu anda apa patut dibuat seterusnya: harga, varian, apa yang perlu disahkan dengan penjual, dan langkah seterusnya.'
+  return historyUpgradeAvailable()
+    ? `${base} Rekod tuntutan pula boleh ditambah kemudian: selepas laporan ${baseReportLabel} siap dan nombor plat disahkan, anda boleh tambah Semakan Accident/Claim (${HISTORY_ADDON_LABEL}) jika mahu.`
+    : `${base} Paqar sendiri tidak menjual rekod tuntutan.`
+}
+
 /** A short status line for pages that name the add-on as a product. */
 export function historyAddOnStatusLine(): string {
   return historyUpgradeAvailable()

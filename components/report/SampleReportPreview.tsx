@@ -1,7 +1,7 @@
 'use client'
 
 import { odometerEvidence } from '@/lib/mileage-provenance'
-import { JOMCHECK_UPGRADE_CENTS, ringgit } from '@/lib/pricing'
+import { JOMCHECK_UPGRADE_CENTS, BASE_REPORT_LABEL, ringgit } from '@/lib/pricing'
 import { useRef } from 'react'
 import { CopyButton } from './CopyButton'
 import { JomCheckSection } from './JomCheckSection'
@@ -196,40 +196,11 @@ export function SampleReportPreview(
             tabpanel with no tablist to label it is a dangling aria reference. */}
         <div>
 
-        {/* History risk — leads the premium report, above the price verdict.
-            Renders the REAL HistoryRiskBanner so the sample can't drift. The
-            sample data triggers the odometer-rollback warning. */}
-        {tab === 'premium' && (
-          <div className="px-5 py-4 border-b border-[#F3F4F6]">
-            <HistoryRiskBanner data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
-          </div>
-        )}
-
         {/* 1. Keputusan Paqar — the shared card, so this preview and the
             homepage proof beat can never disagree about the sample figures. */}
         {showVerdictCard && (
           <div className="border-b border-[#F3F4F6]">
             <SampleVerdictCard />
-          </div>
-        )}
-
-        {/* 2. Rekod Accident / Claim Insurans — Premium only. Renders the REAL
-            JomCheckSection so the preview is always identical to a paid report. */}
-        {tab === 'premium' && (
-          <div className="px-5 py-4 border-b border-[#F3F4F6]">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#3D472F]">
-                Tambahan: Semakan Accident/Claim
-              </p>
-              <span className="font-heading font-bold text-[11px] text-[#3D472F] flex-shrink-0">
-                +RM{ringgit(JOMCHECK_UPGRADE_CENTS)}
-              </span>
-            </div>
-            <p className="font-body text-[12px] text-[#6B7280] mb-2 italic">
-              Data contoh — bukan kereta sebenar. Tambahan berbayar, dibeli dari dalam
-              laporan anda selepas nombor plat disahkan.
-            </p>
-            <JomCheckSection data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
           </div>
         )}
 
@@ -267,7 +238,7 @@ export function SampleReportPreview(
           </p>
         </div>
 
-        {/* 3. Perbandingan Harga */}
+        {/* 2. Perbandingan Harga */}
         <div className="px-5 py-4 border-b border-[#F3F4F6]">
           <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#6B7280] mb-3">
             Perbandingan Harga
@@ -464,6 +435,43 @@ export function SampleReportPreview(
             sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.
           </p>
         </div>
+
+        {/* ── THE ADD-ON GOES LAST, AND IS LABELLED AS OPTIONAL ────────────
+            It used to render immediately after the verdict, ahead of almost
+            all the RM29 evidence. The checkout no longer anchors on RM117 —
+            the add-on left it entirely — and putting the +RM88 section third
+            on the sample page put that anchor straight back, in front of a
+            reader who has not yet seen what RM29 actually buys.
+
+            The history-risk banner moves with it. It leads the REAL report
+            when the records exist, which is right: a total-loss finding
+            outranks a price verdict. But on a SAMPLE it led with a section
+            most readers are not buying. */}
+        {tab === 'premium' && (
+          <div className="px-5 py-4 border-t-[6px] border-[#F3F4F6]">
+            <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#9CA3AF] mb-3">
+              Langkah seterusnya — pilihan, bukan sebahagian {BASE_REPORT_LABEL}
+            </p>
+          <div className="px-5 py-4 border-b border-[#F3F4F6]">
+            <HistoryRiskBanner data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
+          </div>
+          <div className="px-5 py-4 border-b border-[#F3F4F6]">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="font-heading font-bold text-[10px] uppercase tracking-[.08em] text-[#3D472F]">
+                Tambahan: Semakan Accident/Claim
+              </p>
+              <span className="font-heading font-bold text-[11px] text-[#3D472F] flex-shrink-0">
+                +RM{ringgit(JOMCHECK_UPGRADE_CENTS)}
+              </span>
+            </div>
+            <p className="font-body text-[12px] text-[#6B7280] mb-2 italic">
+              Data contoh — bukan kereta sebenar. Tambahan berbayar, dibeli dari dalam
+              laporan anda selepas nombor plat disahkan.
+            </p>
+            <JomCheckSection data={SAMPLE_JOMCHECK} currentOdometerKm={SAMPLE_CURRENT_ODOMETER} />
+          </div>
+          </div>
+        )}
 
         </div>
       </div>

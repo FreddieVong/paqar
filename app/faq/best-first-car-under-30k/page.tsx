@@ -223,7 +223,7 @@ export default function FirstCarUnder30k() {
               <div className="flex gap-4">
                 <div className="flex-shrink-0 w-6 h-6 bg-[#3D472F] text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
                 <div>
-                  <p className="font-semibold text-[#111827]">Semak harga pasaran guna nombor plat</p>
+                  <p className="font-semibold text-[#111827]">Semak harga pasaran iklan itu</p>
                   <p className="text-sm text-[#6B7280]">Tahu harga pasaran sebelum berunding. Jangan bayar lebih.</p>
                 </div>
               </div>
