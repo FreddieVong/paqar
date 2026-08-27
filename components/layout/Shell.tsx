@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { FooterLegal } from './FooterLegal'
 import { SocialLinks } from './SocialLinks'
 import { whatsappUrl } from '@/lib/site'
 
@@ -94,15 +95,7 @@ export function Shell({
             )}
           </div>
           <SocialLinks />
-          <p className="font-body text-[11px] text-[#6B7280]">
-            {/* The operating company is named on EVERY page, not only in the
-                terms. A buyer meets "TENTEC SDN BHD" for the first time on the
-                Billplz page, at the moment they are asked for bank credentials,
-                with no logo and no explanation — and an unfamiliar company name
-                at that exact moment reads as a scam. Naming it here turns that
-                surprise into a confirmation. */}
-            © {new Date().getFullYear()} Paqar oleh TENTEC SDN BHD · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
-          </p>
+          <FooterLegal />
         </div>
       </footer>
     </>

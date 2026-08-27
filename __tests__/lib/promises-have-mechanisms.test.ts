@@ -346,7 +346,10 @@ describe('the operating company is named where a buyer can find it', () => {
        .replace(/(^|[^:])\/\/.*$/gm, '$1')
 
   it.each([
-    ['the footer, so it is on every page', 'components/layout/Shell.tsx'],
+    // The footer line lives in ONE component now, rendered by both Shell and
+    // the homepage — see the drift test below. Asserting on Shell's source
+    // would just re-pin the duplication this replaced.
+    ['the footer, so it is on every page', 'components/layout/FooterLegal.tsx'],
     ['the terms',                          'app/terma/page.tsx'],
     ['the About page',                     'app/tentang/page.tsx'],
     ['the checkout, where the name is met', 'components/report/PaymentForm.tsx'],
@@ -368,5 +371,42 @@ describe('the operating company is named where a buyer can find it', () => {
     for (const f of ['app/terma/page.tsx', 'app/privasi/page.tsx']) {
       expect(strip(read(f))).not.toMatch(/\b\d{6,}-[A-Z]\b|\b\d{12}\b/)
     }
+  })
+})
+
+/**
+ * The line naming the operating company drifted the moment it was written,
+ * because it existed twice: Shell's footer, used by every inner page, and the
+ * homepage's own footer. The TENTEC change landed on one of them, so the
+ * operator appeared on every page of the site except the one nearly everybody
+ * lands on first — the exact page a buyer who paused at an unfamiliar name on
+ * the Billplz screen would come looking at.
+ *
+ * The homepage keeps a DIFFERENT footer on purpose: it carries the SEO hub
+ * links inner pages have no reason to repeat. So the fix is not one footer,
+ * it is that the legal line stops being one of the things that can differ.
+ */
+describe('the legal footer line cannot drift between pages', () => {
+  const strip = (src: string) =>
+    src.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
+       .replace(/\/\*[\s\S]*?\*\//g, '')
+       .replace(/(^|[^:])\/\/.*$/gm, '$1')
+
+  it.each([
+    ['the homepage', 'app/page.tsx'],
+    ['every inner page, via Shell', 'components/layout/Shell.tsx'],
+  ])('%s renders the shared component', (_l, f) => {
+    expect(strip(read(f))).toContain('<FooterLegal')
+  })
+
+  it.each([
+    ['app/page.tsx'],
+    ['components/layout/Shell.tsx'],
+  ])('%s does not write the line out by hand', (f) => {
+    expect(strip(read(f))).not.toMatch(/Perkhidmatan pihak\s+ketiga/)
+  })
+
+  it('and the shared component is the only place it is written', () => {
+    expect(strip(read('components/layout/FooterLegal.tsx'))).toContain('TENTEC SDN BHD')
   })
 })

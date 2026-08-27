@@ -3,6 +3,7 @@ import { historyAddOnLimitLine, competitorComparisonAnswer } from '@/lib/history
 
 import Link           from 'next/link'
 import { unstable_cache } from 'next/cache'
+import { FooterLegal } from '@/components/layout/FooterLegal'
 import { Nav }           from '@/components/layout/Nav'
 import { ListingIntakeForm } from '@/components/check/ListingIntakeForm'
 import { ServiceShortcuts } from '@/components/home/ServiceShortcuts'
@@ -566,9 +567,7 @@ export default async function HomePage() {
           <span className="text-[#E5E7EB]">·</span>
           <Link href="/panduan" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Semua Panduan</Link>
         </div>
-        <p className="font-body text-[12px] text-[#6B7280] leading-relaxed mb-2">
-          © {new Date().getFullYear()} Paqar · Perkhidmatan pihak ketiga · Bukan platform rasmi kerajaan
-        </p>
+        <FooterLegal className="mb-2" />
         <SocialLinks className="mb-2" />
         <div className="flex items-center justify-center gap-4">
           <Link href="/tentang" className="inline-block py-1.5 font-body text-[12px] text-[#6B7280] hover:text-[#3D472F] transition-colors">Tentang</Link>
