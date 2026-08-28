@@ -106,7 +106,20 @@ describe('the gate withholds the paid offer until a result exists', () => {
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check" initialAskingPrice={45000}>{paywall}</FreeResultGate>)
 
     await screen.findByText(COVERED_TEXT, undefined, { timeout: 5000 })
-    expect(screen.getByText(PAYWALL)).toBeTruthy()
+    // waitFor, not a bare getByText, and that is the flake this file was known
+    // for. The coverage sentence and the paywall land in DIFFERENT commits —
+    // the gate resolves coverage, then renders the offer — so awaiting the
+    // first and reading the second synchronously is a race. It passed alone
+    // and failed under a full parallel run, where the second commit had not
+    // flushed yet; the reported failure showed the coverage panel on screen
+    // and no paywall, which is exactly that ordering.
+    //
+    // This asserts the same thing the sync form did: the paywall IS rendered.
+    // It drops only the assumption that it arrives in the same tick, which was
+    // never part of the claim. The negative assertions in this file stay
+    // synchronous on purpose — they assert ABSENCE at a moment, and awaiting
+    // those would weaken them into "absent for now".
+    await waitFor(() => expect(screen.getByText(PAYWALL)).toBeTruthy())
   })
 
   it('names the car it matched, so a wrong match is caught before payment', async () => {
