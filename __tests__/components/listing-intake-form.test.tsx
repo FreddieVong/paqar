@@ -486,7 +486,7 @@ describe('one screen when there is nothing to confirm', () => {
     }
     render(<ListingIntakeForm />)
     uploadScreenshot()
-    await waitFor(() => expect(screen.getByLabelText(/Harga yang penjual minta/i)).toBeTruthy(),
+    await waitFor(() => expect(screen.getByLabelText(/Harga yang seller minta/i)).toBeTruthy(),
       { timeout: 5000 })
     expect(screen.queryByText(/Paqar boleh semak/i)).toBeNull()
   })

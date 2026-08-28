@@ -139,7 +139,7 @@ describe('the gate withholds the paid offer until a result exists', () => {
 
     // An input request is not a finding — Paqar has judged nothing yet. The
     // recovery is the price field itself, already on screen.
-    await screen.findByText(/Berapa harga yang penjual minta/i, undefined, { timeout: 5000 })
+    await screen.findByText(/Berapa harga yang seller minta/i, undefined, { timeout: 5000 })
     expect(screen.queryByText(PAYWALL)).toBeNull()
     // Nor the ineligible notice: nothing has failed, we simply have not asked yet.
     expect(screen.queryByText(/belum boleh disediakan/i)).toBeNull()
@@ -155,7 +155,7 @@ describe('the gate withholds the paid offer until a result exists', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     render(<FreeResultGate checkId="ch_1" claimToken="t" valuationPath="plate_check">{paywall}</FreeResultGate>)
-    await screen.findByText(/Berapa harga yang penjual minta/i, undefined, { timeout: 5000 })
+    await screen.findByText(/Berapa harga yang seller minta/i, undefined, { timeout: 5000 })
 
     fireEvent.change(screen.getByPlaceholderText(/contoh/i), { target: { value: '45000' } })
     fireEvent.click(screen.getByRole('button', { name: /Semak/i }))

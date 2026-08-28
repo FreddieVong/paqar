@@ -756,7 +756,7 @@ export function ListingIntakeForm({
             )}
             {summary.mileageKm.value != null && (
               <p className="font-body text-[12px] text-[#6B7280] mt-1">
-                {Number(summary.mileageKm.value).toLocaleString()} km &mdash; seperti yang penjual iklankan
+                {Number(summary.mileageKm.value).toLocaleString()} km &mdash; seperti yang seller iklankan
               </p>
             )}
             {/* ── SHOW THE VARIANT, AND SAY IT IS NOT VERIFIED ────────────────
@@ -910,7 +910,7 @@ export function ListingIntakeForm({
             )}
             {(editing || missing('askingPriceRm')) && (
               <div>
-                <label htmlFor="li-price" className={LABEL_CLS}>Harga yang penjual minta (RM)</label>
+                <label htmlFor="li-price" className={LABEL_CLS}>Harga yang seller minta (RM)</label>
                 <input id="li-price" type="number" value={price} onChange={e => { setPrice(e.target.value); setDirty(true) }}
                        placeholder="cth: 59000" min={1000} max={2000000} inputMode="numeric" className={INPUT_CLS} />
               </div>
@@ -980,7 +980,7 @@ export function ListingIntakeForm({
                     made here is worded the same as the promise made at the
                     top of the page and delivered in the report. */}
                 <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-                  Kami boleh beritahu anda apa patut buat dengan unit ini.
+                  Kami boleh beritahu anda apa patut buat dengan kereta ini.
                 </p>
                               {/* THE CORRECTION GUARD, CARRIED OVER.
                     Skipping the confirmation screen must not skip the CHANCE

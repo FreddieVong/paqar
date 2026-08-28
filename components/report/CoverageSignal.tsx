@@ -133,7 +133,7 @@ export function CoverageSignal({
     return (
       <div className="bg-white border border-[#E5E7EB] rounded-[14px] p-5">
         <p className="font-heading font-bold text-[15px] text-[#111827] mb-1">
-          Berapa harga yang penjual minta?
+          Berapa harga yang seller minta?
         </p>
         <p className="font-body text-[13px] text-[#6B7280] mb-3 leading-relaxed">
           Masukkan harga dan kami semak sama ada Paqar boleh buat laporan untuk
@@ -187,7 +187,7 @@ export function CoverageSignal({
       <p className="font-body text-[14px] text-[#374151] leading-relaxed">
         Kami ada cukup maklumat untuk{' '}
         <strong className="font-heading font-bold text-[#111827]">{data.modelLabel}</strong>{' '}
-        &mdash; kami boleh beritahu anda apa patut buat dengan unit ini.
+        &mdash; kami boleh beritahu anda apa patut buat dengan kereta ini.
       </p>
       {/* THE CORRECTION INVITATION, AND IT MUST BE ACTIONABLE.
           It first read "Betulkan butiran sebelum bayar" with nothing to click:

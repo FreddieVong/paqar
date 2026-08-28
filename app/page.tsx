@@ -59,7 +59,11 @@ const homeSchema = {
     {
       '@type': 'Service',
       name: 'Semakan Pembeli Paqar',
-      description: 'Hantar iklan kereta terpakai yang anda nak beli. Paqar beritahu sama ada patut diteruskan, berapa patut anda tawar, dan apa yang perlu ditanya penjual. Setiap laporan dibaca oleh orang kami — biasanya dalam 30 minit.',
+      // The typical time is DERIVED here, not typed. It was a literal "30
+      // minit" in a description Google can surface, one block above a FAQ
+      // answer that quotes the same figure from TYPICAL_MINUTES — so a change
+      // to the review target would have left this one behind, in public.
+      description: `Hantar iklan kereta terpakai yang anda nak beli. Paqar beritahu sama ada patut diteruskan, berapa patut anda tawar, dan apa yang perlu ditanya seller. Setiap laporan dibaca oleh orang kami — biasanya dalam ${TYPICAL_MINUTES} minit.`,
       provider: organizationRef(),
       areaServed: { '@type': 'Country', name: 'Malaysia' },
       offers: { '@type': 'Offer', price: String(ringgit(BASE_REPORT_CENTS)), priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
@@ -70,17 +74,17 @@ const homeSchema = {
         {
           '@type': 'Question',
           name: 'Kenapa tak semak sendiri di Mudah atau Carlist?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Portal iklan tunjuk kereta yang ada untuk dijual dan harga yang penjual minta. Paqar guna maklumat itu untuk cadangkan langkah seterusnya untuk satu unit tertentu — patut teruskan atau tidak, berapa patut ditawarkan, apa yang perlu disahkan dengan penjual, dan bila lebih baik cari unit lain.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Portal iklan tunjuk kereta yang ada untuk dijual dan harga yang seller minta. Paqar guna maklumat itu untuk cadangkan langkah seterusnya untuk kereta yang anda nak beli — patut teruskan atau tidak, berapa patut ditawarkan, apa yang perlu disahkan dengan seller, dan bila lebih baik cari kereta lain.' },
         },
         {
           '@type': 'Question',
           name: 'Apa yang saya dapat untuk RM29?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Keputusan untuk satu kereta: sama ada patut diteruskan, skrip rundingan siap pakai, soalan penting untuk penjual, semakan varian yang diiklankan supaya harga dibanding dengan varian yang sama, dan checklist sebelum bayar deposit. Setiap laporan dibaca dan disemak oleh manusia sebelum dihantar.' },
+          acceptedAnswer: { '@type': 'Answer', text: 'Keputusan untuk satu kereta: sama ada patut diteruskan, skrip rundingan siap pakai, soalan penting untuk seller, semakan varian yang diiklankan supaya harga dibanding dengan varian yang sama, dan checklist sebelum bayar deposit. Setiap laporan dibaca dan disemak oleh manusia sebelum dihantar.' },
         },
         {
           '@type': 'Question',
           name: 'Berapa lama untuk dapat laporan?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Dalam tempoh 24 jam. Laporan tidak dijana automatik — seorang manusia baca iklan yang anda hantar dan semak keputusan sebelum ia dilepaskan kepada anda.' },
+          acceptedAnswer: { '@type': 'Answer', text: `Biasanya ${TYPICAL_MINUTES} minit, dijamin dalam ${REVIEW_SLA_HOURS} jam. Laporan ini bukan auto — seorang manusia baca iklan anda dan semak keputusan sebelum kami hantar.` },
         },
         {
           '@type': 'Question',
@@ -175,16 +179,23 @@ export default async function HomePage() {
 
           {/* "Disemak oleh manusia" moves up here from the body copy. It is the
               part no assistant and no portal can match, so it belongs beside
-              the price rather than buried in a paragraph. */}
+              the price rather than buried in a paragraph.
+
+              IT IS SAID ONCE NOW, NOT TWICE. This line ended with "Disemak oleh
+              manusia" and the line directly below it opened with "Semakan
+              manusia" — the same claim, in two adjacent lines, on a page a
+              tester had already called full of text. The claim moves to the end
+              here, where it is the last thing read before the form, and the
+              hours line below states only the hours. */}
           <p className="font-body text-[13px] text-[#6B7280] mb-1.5 leading-relaxed text-balance">
-            {BASE_REPORT_LABEL} · Disemak oleh manusia · Tanpa daftar akaun
+            {BASE_REPORT_LABEL} · Tanpa daftar akaun · Disemak oleh manusia
           </p>
 
           {/* The hours, stated plainly. Thirty minutes is the truth during the
               day and a lie at 3am, and a buyer who sends one at 3am and hears
               nothing for seven hours has been misled by an average. */}
           <p className="font-body text-[12px] text-[#6B7280] mb-7 leading-relaxed text-balance">
-            Semakan manusia {REVIEW_OPENS_HOUR} pagi &ndash; 12 malam · dijamin dalam {REVIEW_SLA_HOURS} jam
+            Kami semak {REVIEW_OPENS_HOUR} pagi &ndash; 12 malam. Dijamin dalam {REVIEW_SLA_HOURS} jam.
           </p>
 
           <ListingIntakeForm />
@@ -204,18 +215,26 @@ export default async function HomePage() {
             lines — "Bukan ganti / pemeriksaan / fizikal" — so the row read as
             ragged fragments rather than three plain statements. Wrapping as a
             flow with separators lets each claim break only where it must. */}
+        {/* TWO CLAIMS, NOT THREE.
+            The row ended with "Bukan ganti pemeriksaan fizikal" — three
+            consecutive negatives, the last of them a LIMITATION, in the one
+            strip on the page whose job is to build confidence. The page still
+            says it twice further down, where limits belong: in the Had &
+            jaminan list and in the limitasi answer in the JSON-LD. */}
         <div className="max-w-xl mx-auto flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
           {[
             'Tidak menjual kereta',
-            'Tidak dibayar oleh penjual',
-            'Bukan ganti pemeriksaan fizikal',
-          ].map((claim, i) => (
+            'Tidak dibayar oleh seller',
+          ].map((claim, i, arr) => (
             // Separator AFTER each claim rather than before the next one: a
             // wrapped line that BEGINS with a stray dot reads as a bullet
             // point that lost its list.
+            //
+            // Counted off the array, never a literal: it was `i < 2`, correct
+            // for exactly three claims and a trailing dot for any other number.
             <span key={claim} className="flex items-center gap-2.5">
               <span className="font-body text-[12px] text-[#6B7280] leading-snug">{claim}</span>
-              {i < 2 && <span aria-hidden="true" className="text-[#CBD4BB]">·</span>}
+              {i < arr.length - 1 && <span aria-hidden="true" className="text-[#CBD4BB]">·</span>}
             </span>
           ))}
         </div>
@@ -244,18 +263,22 @@ export default async function HomePage() {
             <p className="font-heading font-extrabold text-[15px] leading-snug text-white mb-1.5">
               Disemak oleh manusia sebelum dihantar.
             </p>
+            {/* PAQAR IS NOT THE SUBJECT OF ITS OWN SENTENCE.
+                "pastikan apa yang Paqar cadangkan betul untuk unit tersebut"
+                made Paqar the hero of a story the buyer is in, and "unit" is
+                the dealer's word for the thing the buyer calls a car. */}
             <p className="font-body text-[12px] text-white/60 leading-relaxed">
-              Bukan laporan auto. Seorang manusia baca iklan yang anda hantar,
-              sahkan varian dan tahun kereta itu, dan pastikan apa yang Paqar
-              cadangkan betul untuk unit tersebut. Sampai dalam {REVIEW_SLA_HOURS} jam.
+              Bukan laporan auto. Seorang manusia baca iklan anda, sahkan varian
+              dan tahun kereta, dan pastikan cadangan itu betul untuk kereta ini.
+              Sampai dalam {REVIEW_SLA_HOURS} jam.
             </p>
           </div>
 
           <div className="bg-white border border-[#E5E7EB] rounded-[14px] px-4 py-1">
             {[
-              { title: 'Patut teruskan atau tidak',   desc: 'Keputusan jelas untuk unit ini, bukan data mentah.' },
+              { title: 'Patut teruskan atau tidak',   desc: 'Keputusan jelas, bukan data mentah.' },
               { title: 'Skrip rundingan harga',       desc: 'Ayat siap pakai berdasarkan iklan setanding.' },
-              { title: 'Soalan penting untuk penjual', desc: 'Soalan yang boleh dedahkan risiko awal-awal.' },
+              { title: 'Soalan penting untuk seller', desc: 'Soalan yang dedahkan masalah awal-awal.' },
               { title: 'Varian disemak',              desc: 'Harga dibanding varian yang sama, bukan campuran.' },
               { title: 'Checklist sebelum deposit',   desc: 'Apa yang perlu disahkan sebelum anda bayar.' },
             ].map((item, i, arr) => (
@@ -287,23 +310,33 @@ export default async function HomePage() {
           anyone. Paqar operates AFTER discovery and ABOVE raw records. */}
       <section className="bg-white px-5 py-12 md:py-16">
         <div className="max-w-xl mx-auto">
-          <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F] mb-2">
-            Soalan yang berbaloi ditanya
-          </p>
+          {/* THE EYEBROW IS GONE. It read "Soalan yang berbaloi ditanya" — a
+              label that says nothing the headline under it does not, on a page
+              that already carries a "Soalan Lazim" eyebrow two sections down. */}
           <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827] mb-3">
             Kenapa tak semak sendiri?
           </h2>
+          {/* THIS PARAGRAPH EXPLAINED THE CARDS DIRECTLY BENEATH IT.
+              It said "Portal iklan tunjuk apa yang ada untuk dijual. Laporan
+              sejarah tunjuk apa yang pernah direkodkan." — and then the three
+              cards below say "Portal iklan" and "Laporan sejarah" again, in
+              almost the same words. One of the two had to go, and the cards are
+              the clearer form: they name the three things side by side, which
+              is the comparison this section exists to make.
+              What survives is the only part the cards do NOT carry: the
+              concession, and the point the whole section turns on. */}
           <p className="font-body text-[14px] text-[#374151] leading-relaxed mb-6">
-            Anda memang boleh. Portal iklan tunjuk apa yang ada untuk dijual.
-            Laporan sejarah tunjuk apa yang pernah direkodkan. Kedua-duanya beri
-            anda maklumat&mdash;tetapi bukan keputusan.
+            Anda memang boleh. Tapi dua-dua ini beri maklumat, bukan keputusan.
           </p>
 
           <div className="flex flex-col gap-2.5">
             {[
-              { label: 'Portal iklan',    desc: 'Tunjuk kereta yang ada dan harga yang penjual minta.' },
+              { label: 'Portal iklan',    desc: 'Tunjuk kereta yang ada dan harga yang seller minta.' },
               { label: 'Laporan sejarah', desc: 'Tunjuk tuntutan atau rekod lain, jika ada.' },
-              { label: 'Paqar',           desc: 'Gabungkan semua itu untuk cadangkan langkah seterusnya bagi satu unit tertentu.', highlight: true },
+              // Deliberately the hero's own promise, word for word. Repeating
+              // one message beats paraphrasing it into a second one the reader
+              // has to match up with the first.
+              { label: 'Paqar',           desc: 'Beritahu apa patut anda buat dengan kereta ini.', highlight: true },
             ].map((item) => (
               <div
                 key={item.label}
@@ -338,7 +371,7 @@ export default async function HomePage() {
 
           <div className="flex flex-col gap-3.5 mb-6">
             {[
-              'Harga iklan adalah harga yang diminta, bukan harga jualan sebenar.',
+              'Harga iklan ialah harga yang seller minta, bukan harga jual sebenar.',
               'Model, varian dan tahun perlu disahkan sebelum harga bermakna.',
               'Mileage dan keadaan fizikal boleh mengubah nilai dengan ketara.',
               historyAddOnLimitLine(),
@@ -355,12 +388,17 @@ export default async function HomePage() {
             <p className="font-heading font-bold text-[13px] text-white mb-1">
               Tidak dapat siapkan? Duit dikembalikan.
             </p>
+            {/* TWO "KALAU KAMI" CLAUSES IN A ROW made the reader parse the
+                same grammar twice to find two different promises. The second
+                one is about the BUYER's money, so it now opens with the buyer.
+                "bukan automatik" and the working-day window stay: the refund is
+                a person moving money by hand, and copy that implies otherwise
+                misleads at the exact moment Paqar has already failed someone. */}
             <p className="font-body text-[12px] text-white/60 leading-relaxed">
-              Kalau kami tidak jumpa cukup iklan setanding untuk kereta anda,
-              kami tidak jual keputusan yang tidak dapat kami sokong. Kalau kami
-              dah ambil bayaran dan tetap tidak dapat siapkan, duit dipulangkan
-              penuh dalam {REFUND_WORKING_DAYS} hari bekerja &mdash; diproses
-              oleh manusia, bukan automatik.
+              Kalau kami tak jumpa cukup iklan setanding, kami tak jual keputusan
+              itu. Kalau anda dah bayar dan kami tetap tak dapat siapkan, duit
+              dipulangkan penuh dalam {REFUND_WORKING_DAYS} hari bekerja &mdash;
+              diproses oleh manusia, bukan automatik.
             </p>
           </div>
         </div>
@@ -391,11 +429,12 @@ export default async function HomePage() {
           <h2 className="font-heading font-extrabold text-[22px] md:text-[26px] tracking-tight text-[#111827] mb-3">
             Semak &rarr; Periksa &rarr; Insurans
           </h2>
+          {/* "Tiga langkah, ikut urutan" is what the headline directly above
+              already shows with two arrows. */}
           <p className="font-body text-[14px] text-[#374151] leading-relaxed mb-6 max-w-2xl">
-            Tiga langkah, ikut urutan. Semak dulu sama ada unit itu berbaloi
-            dikejar &mdash; lebih murah daripada memeriksa kereta yang anda
-            takkan beli. Bila dah pasti, periksa fizikalnya. Bila dah putus,
-            baru bandingkan insurans.
+            Semak dulu &mdash; lebih murah daripada bayar pemeriksaan untuk
+            kereta yang anda takkan beli. Kalau elok, baru periksa fizikal. Bila
+            dah putus nak beli, baru banding insurans.
           </p>
 
           <ServiceShortcuts />
@@ -416,7 +455,7 @@ export default async function HomePage() {
             {[
               {
                 q: 'Kenapa tak semak sendiri di Mudah atau Carlist?',
-                a: 'Portal iklan tunjuk kereta yang ada untuk dijual dan harga yang penjual minta. Paqar guna maklumat itu untuk cadangkan langkah seterusnya untuk satu unit tertentu — patut teruskan atau tidak, berapa patut ditawarkan, apa yang perlu disahkan dengan penjual, dan bila lebih baik cari unit lain.',
+                a: 'Portal iklan tunjuk kereta yang ada untuk dijual dan harga yang seller minta. Paqar guna maklumat itu untuk cadangkan langkah seterusnya untuk kereta yang anda nak beli — patut teruskan atau tidak, berapa patut ditawarkan, apa yang perlu disahkan dengan seller, dan bila lebih baik cari kereta lain.',
               },
               {
                 q: 'Adakah Paqar sama seperti laporan SCRUT atau MyEG?',
@@ -424,7 +463,10 @@ export default async function HomePage() {
               },
               {
                 q: 'Berapa lama untuk dapat laporan?',
-                a: 'Dalam tempoh 24 jam. Laporan tidak dijana automatik — seorang manusia baca iklan yang anda hantar dan semak keputusan sebelum ia dilepaskan kepada anda.',
+                // BOTH NUMBERS, and derived. It quoted the 24-hour ceiling
+                // alone — the pessimistic half of the truth, and a figure the
+                // hero contradicts four screens above with "30 minit".
+                a: `Biasanya ${TYPICAL_MINUTES} minit, dijamin dalam ${REVIEW_SLA_HOURS} jam. Laporan ini bukan auto — seorang manusia baca iklan anda dan semak keputusan sebelum kami hantar.`,
               },
               {
                 q: 'Bagaimana jika Paqar tidak dapat siapkan laporan saya?',
@@ -534,8 +576,8 @@ export default async function HomePage() {
             Ada satu kereta yang<br />anda sedang fikirkan?
           </h2>
           <p className="font-body text-[14px] text-[#6B7280] mb-7">
-            Hantar sekarang. Disemak oleh manusia, sampai dalam {REVIEW_SLA_HOURS} jam,
-            dan duit dikembalikan kalau kami tidak dapat siapkan.
+            Hantar sekarang. Disemak oleh manusia, sampai dalam {REVIEW_SLA_HOURS} jam.
+            Duit dikembalikan kalau kami tak dapat siapkan.
           </p>
           <Link
             href="/#semak"

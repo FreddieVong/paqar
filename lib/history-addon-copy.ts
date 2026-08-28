@@ -52,10 +52,25 @@ export const HISTORY_ADDON_LABEL = `+RM${ringgit(JOMCHECK_UPGRADE_CENTS)}`
 /**
  * One sentence for a limits list. Reads correctly in both states, which is the
  * point: the caller never branches, so a caller cannot forget to.
+ *
+ * ── IT IS A LIMITS LINE, SO IT HAS TO BE READ ──────────────────────────────
+ *
+ * The sellable branch was the longest sentence on the homepage at 30 words,
+ * and it said "tambahan" and "ditambah" four words apart, and "nombor plat"
+ * where every other surface says "plat". A limit nobody finishes reading
+ * protects nobody, which is the whole reason these ship with the offer.
+ *
+ * All four facts survive: the price, that it is bought from inside the report
+ * once the plate has resolved, that a clean claim record is not a clean
+ * history, and that Paqar does not verify the odometer. That last one is a
+ * DENIAL and must stay one — Paqar cannot detect tampering and must never
+ * imply it can.
+ *
+ * The unavailable branch is left exactly as it was: it is already twelve words.
  */
 export function historyAddOnLimitLine(): string {
   return historyUpgradeAvailable()
-    ? `Rekod tuntutan insurans dijual sebagai tambahan (${HISTORY_ADDON_LABEL}), ditambah dari dalam laporan anda selepas nombor plat disahkan. Tidak semua kemalangan ada rekod tuntutan, dan Paqar tidak mengesahkan bacaan odometer sebenar.`
+    ? `Rekod tuntutan insurans boleh ditambah (${HISTORY_ADDON_LABEL}) dari dalam laporan anda, selepas plat disahkan. Tidak semua kemalangan ada rekod tuntutan, dan kami tidak sahkan bacaan odometer sebenar.`
     : 'Paqar tidak menjual rekod tuntutan, dan tidak mengesahkan bacaan odometer sebenar.'
 }
 
@@ -76,7 +91,7 @@ export function historyAddOnLimitLine(): string {
  * rather than the product.
  */
 export function competitorComparisonAnswer(baseReportLabel: string): string {
-  const base = 'Tidak. Mereka jual rekod — tuntutan insurans dan sejarah kenderaan. Paqar menilai satu iklan dan beritahu anda apa patut dibuat seterusnya: harga, varian, apa yang perlu disahkan dengan penjual, dan langkah seterusnya.'
+  const base = 'Tidak. Mereka jual rekod — tuntutan insurans dan sejarah kenderaan. Paqar menilai satu iklan dan beritahu anda apa patut dibuat seterusnya: harga, varian, apa yang perlu disahkan dengan seller, dan langkah seterusnya.'
   return historyUpgradeAvailable()
     ? `${base} Rekod tuntutan pula boleh ditambah kemudian: selepas laporan ${baseReportLabel} siap dan nombor plat disahkan, anda boleh tambah Semakan Accident/Claim (${HISTORY_ADDON_LABEL}) jika mahu.`
     : `${base} Paqar sendiri tidak menjual rekod tuntutan.`

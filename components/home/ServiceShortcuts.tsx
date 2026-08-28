@@ -93,10 +93,13 @@ export function ServiceShortcuts() {
         </a>
       </div>
 
+      {/* Same disclosure, plainer verbs. "disediakan oleh" and "menerima
+          komisen rujukan" are the register of a terms page; this has to be read
+          and understood by someone scanning, or it discloses nothing. */}
       <p className="font-body text-[11px] text-[#9CA3AF] leading-relaxed mt-2.5">
-        Pemeriksaan fizikal dan insurans disediakan oleh syarikat lain. Paqar
-        menerima komisen rujukan daripada mereka &mdash; tetapi tidak menerima
-        bayaran daripada mana-mana penjual kereta.
+        Pemeriksaan fizikal dan insurans dibuat oleh syarikat lain, dan Paqar
+        dapat komisen rujukan daripada mereka. Kami tetap tidak dibayar oleh
+        mana-mana seller kereta.
       </p>
     </div>
   )
