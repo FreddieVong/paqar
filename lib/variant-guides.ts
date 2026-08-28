@@ -158,7 +158,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
             ],
             usedPriceBand: 'Termurah — biasanya RM1–2k bawah Premium',
             spotChecks: [
-              'Tanya penjual sahkan ABS dan bilangan airbag',
+              'Tanya seller sahkan ABS dan bilangan airbag',
               'Rim besi berpenutup = Standard',
             ],
           },
@@ -286,7 +286,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
     redFlags: [
       'Iklan kata "H" atau "AV" tapi kereta ada rim penutup plastik atau kerusi fabrik penuh — kemungkinan varian bawah yang di-badge semula',
       'Emblem varian boleh dibeli dan ditampal — sahkan dengan ciri sebenar, bukan emblem',
-      'Harga AV tapi tiada geran/rekod menunjukkan varian — minta penjual tunjukkan surat asal',
+      'Harga AV tapi tiada geran/rekod menunjukkan varian — minta seller tunjukkan surat asal',
     ],
     faq: [
       {

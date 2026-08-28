@@ -118,7 +118,7 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
           <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-3">
             {isTopOfLadder
               ? 'Rekod ini antara varian paling tinggi dalam barisan — jangan bayar harga varian ini atas emblem sahaja. Sahkan ciri dengan senarai di atas sebelum bayar deposit.'
-              : 'Kalau iklan penjual kata varian lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.'}
+              : 'Kalau iklan seller kata varian lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.'}
           </p>
 
           <Link
@@ -138,7 +138,7 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
         <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
           {isSpecialVariant
             ? 'Ini varian premium atau berprestasi. Nilainya banyak bergantung pada varian tepat, spesifikasi dan kondisi. Maklumat varian dalam iklan mungkin tidak tepat, jadi sahkan nama varian pada geran sebelum membayar deposit.'
-            : 'Pastikan iklan penjual sebutkan varian yang sama. Kalau iklan kata varian lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.'}
+            : 'Pastikan iklan seller sebutkan varian yang sama. Kalau iklan kata varian lebih tinggi dari rekod ini — semak dahulu sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.'}
         </p>
       )}
     </div>

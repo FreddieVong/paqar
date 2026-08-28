@@ -189,7 +189,7 @@ export function VehiclePreviewTeaser(
         </p>
         <p className="font-body text-[13px] text-[#6B7280] leading-relaxed">
           Kami tarik rekod pendaftaran rasmi — tahun daftar, enjin, jenis badan
-          dan nombor rangka — dan bandingkan dengan apa yang penjual iklankan.
+          dan nombor rangka — dan bandingkan dengan apa yang seller iklankan.
           Kalau tak sepadan, ia ada dalam laporan anda.
         </p>
 

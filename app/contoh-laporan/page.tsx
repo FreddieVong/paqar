@@ -11,7 +11,7 @@ const TITLE = 'Contoh Laporan Pembeli Kereta Terpakai — Paqar'
 // twice — in the description and the og:description — which is the literal
 // lib/pricing.ts exists to prevent, on the one page whose whole job is to show
 // what that amount buys.
-const DESC  = `Lihat contoh Laporan Pembeli ${BASE_REPORT_LABEL} — keputusan, skrip rundingan, soalan untuk penjual dan checklist deposit, disemak oleh manusia sebelum dihantar.`
+const DESC  = `Lihat contoh Laporan Pembeli ${BASE_REPORT_LABEL} — keputusan, skrip rundingan, soalan untuk seller dan checklist deposit, disemak oleh manusia sebelum dihantar.`
 
 export const metadata = {
   title: TITLE,

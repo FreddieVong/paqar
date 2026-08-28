@@ -177,7 +177,11 @@ describe('retarget email rendering', () => {
     // described as sellers without overstating the sample.
     it('counts listings, not sellers', () => {
       expect(priced).toContain('iklan')
+      // BOTH WORDS. This forbade "N penjual" only, and the buyer-journey copy
+      // moved to "seller" — which would have left the guard unable to fire at
+      // the moment the phrasing it guards became the phrasing in use.
       expect(priced).not.toMatch(/\d+\s+penjual/)
+      expect(priced).not.toMatch(/\d+\s+seller/i)
     })
 
     it('falls back to the generic opener with no insight', () => {

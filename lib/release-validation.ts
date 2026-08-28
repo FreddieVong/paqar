@@ -94,7 +94,7 @@ export function validateForRelease(c: ReleaseCandidate): ReleaseBlock[] {
     blocks.push({
       code: 'seller_price_changed',
       fatal: false,
-      message: `Harga penjual berubah daripada RM${c.sellerAskingPriceRm.toLocaleString()} kepada RM${c.finalAskingPriceRm.toLocaleString()} tanpa sebab direkodkan.`,
+      message: `Harga seller berubah daripada RM${c.sellerAskingPriceRm.toLocaleString()} kepada RM${c.finalAskingPriceRm.toLocaleString()} tanpa sebab direkodkan.`,
     })
   }
 
@@ -110,7 +110,7 @@ export function validateForRelease(c: ReleaseCandidate): ReleaseBlock[] {
     blocks.push({
       code: 'mileage_provenance',
       fatal: false,
-      message: 'Bacaan mileage tidak sepadan dengan rekod claim, dan sumbernya hanya dakwaan penjual. Sahkan wordingnya "sila sahkan" — bukan tuduhan meter dipusing.',
+      message: 'Bacaan mileage tidak sepadan dengan rekod claim, dan sumbernya hanya dakwaan seller. Sahkan wordingnya "sila sahkan" — bukan tuduhan meter dipusing.',
     })
   }
   if (
@@ -212,9 +212,9 @@ export function mustRefund(c: ReleaseCandidate): boolean {
  */
 export const RELEASE_BLOCK_HELP: Record<ReleaseBlockCode, string> = {
   seller_price_changed:
-    'Anda ubah harga penjual. Tulis sebabnya dalam nota — pembeli mesti tahu kenapa nombor itu berubah.',
+    'Anda ubah harga seller. Tulis sebabnya dalam nota — pembeli mesti tahu kenapa nombor itu berubah.',
   mileage_provenance:
-    'Mileage tidak sepadan dengan rekod claim, tetapi sumbernya hanya dakwaan penjual. Guna wording "sila sahkan", bukan tuduhan meter dipusing.',
+    'Mileage tidak sepadan dengan rekod claim, tetapi sumbernya hanya dakwaan seller. Guna wording "sila sahkan", bukan tuduhan meter dipusing.',
   unsupported_rollback:
     'Amaran meter dipusing tidak boleh dikeluarkan tanpa bacaan rasmi bertarikh. Sekat amaran itu, atau refund.',
   identity_conflict:

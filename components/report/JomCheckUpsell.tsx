@@ -53,7 +53,7 @@ export function JomCheckUpsell({ checkId, claimToken }: Props) {
       </p>
       <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded-lg px-3 py-2 mb-3">
         <p className="font-body text-[12px] text-[#991B1B] leading-relaxed">
-          ⚠️ Kami bandingkan meter ketika claim dengan odometer semasa — kalau tak sepadan, sahkan dengan penjual dan rekod servis.
+          ⚠️ Kami bandingkan meter ketika claim dengan odometer semasa — kalau tak sepadan, sahkan dengan seller dan rekod servis.
         </p>
       </div>
       <div className="flex flex-wrap gap-1.5 mb-3">

@@ -40,7 +40,7 @@ export function AskingPriceForm({ checkId, claimToken }: Props) {
         Keputusan Harga Belum Tersedia
       </p>
       <p className="font-body text-[13px] text-[#374151] mb-4">
-        Masukkan harga yang penjual minta untuk dapatkan keputusan harga dan skrip rundingan.
+        Masukkan harga yang seller minta untuk dapatkan keputusan harga dan skrip rundingan.
       </p>
       <form onSubmit={handleSubmit} className="flex gap-2">
         <div className="relative flex-1">
@@ -52,7 +52,7 @@ export function AskingPriceForm({ checkId, claimToken }: Props) {
             inputMode="numeric"
             autoComplete="off"
             placeholder="59,000"
-            aria-label="Harga yang penjual minta"
+            aria-label="Harga yang seller minta"
             value={formatPriceInput(value)}
             onChange={e => setValue(toDigits(e.target.value))}
             className="w-full pl-9 pr-3 py-2.5 border border-[#E5E7EB] rounded-lg font-heading font-bold text-[13px] text-[#111827] bg-white focus:outline-none focus:ring-2 focus:ring-[#3D472F]"

@@ -55,7 +55,7 @@ export async function sendModelRetargetEmail(params: ModelRetargetParams): Promi
           <li>Maklumat pendaftaran kenderaan</li>
           <li>Harga baru asal model ini</li>
           <li>Keputusan harga berbanding iklan setanding</li>
-          <li>Soalan untuk tanya penjual</li>
+          <li>Soalan untuk tanya seller</li>
           <li>Skrip rundingan harga</li>
           <li>Checklist sebelum bayar deposit</li>
         </ul>

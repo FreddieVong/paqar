@@ -39,7 +39,7 @@ type Row = { title: string; desc: string }
  */
 const REGISTRATION: Row = {
   title: 'Rekod pendaftaran rasmi',
-  desc:  'Tahun, enjin dan varian disemak dengan rekod — bukan dengan apa penjual cakap.',
+  desc:  'Tahun, enjin dan varian disemak dengan rekod — bukan dengan apa seller cakap.',
 }
 
 const LOCKED_SECTIONS: Row[] = [
@@ -50,13 +50,13 @@ const LOCKED_SECTIONS: Row[] = [
     // and claiming sale prices on the page where money changes hands is the
     // one place it cannot be a loose phrase.
     title: 'Harga iklan setanding',
-    desc:  'Harga yang penjual lain minta untuk kereta serupa sekarang — nombor sebenar dari iklan, bukan anggaran.',
+    desc:  'Harga yang seller lain minta untuk kereta serupa sekarang — nombor sebenar dari iklan, bukan anggaran.',
   },
   {
     // The three commodity sections, collapsed into one row on purpose. They are
     // still in the report; they are simply no longer the pitch.
     title: 'Apa nak tawar, apa nak tanya, apa nak semak',
-    desc:  'Sasaran harga, soalan untuk penjual dan senarai semak sebelum bayar deposit.',
+    desc:  'Sasaran harga, soalan untuk seller dan senarai semak sebelum bayar deposit.',
   },
 ]
 

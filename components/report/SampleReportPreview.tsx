@@ -45,13 +45,13 @@ const SELLER_QUESTIONS = [
   'Iklan tulis 1.5 AV — boleh tunjuk geran untuk sahkan varian?',
   'Meter 78,000 km — ada rekod servis untuk tunjuk?',
   'Kereta masih ada loan bank?',
-  'Geran atas nama penjual sendiri?',
+  'Geran atas nama seller sendiri?',
   'Boleh buat inspection sebelum bayar deposit?',
 ]
 
 const DEPOSIT_CHECKLIST = [
   'Nombor rangka sama dengan geran',
-  'Geran atas nama penjual',
+  'Geran atas nama seller',
   'Semak loan / hutang bank',
   'Semak saman tertunggak',
   'Cukai jalan masih sah',
@@ -253,7 +253,7 @@ export function SampleReportPreview(
             <p className="font-body text-[12px] text-[#6B7280]">— banding harga ikut varian ini.</p>
           </div>
           <div className="flex items-center justify-between bg-[#F9FAFB] rounded-lg px-3 py-2.5 mb-3">
-            <p className="font-body text-[12px] text-[#6B7280]">Harga diminta penjual</p>
+            <p className="font-body text-[12px] text-[#6B7280]">Harga diminta seller</p>
             <p className="font-heading font-bold text-[13px] text-[#111827]">RM39,800</p>
           </div>
           <p className="font-heading font-bold text-[11px] text-[#111827] mb-1.5">Bukti daripada Iklan Setanding</p>
@@ -431,7 +431,7 @@ export function SampleReportPreview(
             <p className="font-body text-[12px] text-[#374151] leading-relaxed">✓ Rim sport 14 inci (bukan penutup plastik)</p>
           </div>
           <p className="font-body text-[13px] text-[#374151] leading-relaxed">
-            Kalau iklan penjual kata varian lebih tinggi dari rekod ini — semak dahulu
+            Kalau iklan seller kata varian lebih tinggi dari rekod ini — semak dahulu
             sebelum bayar deposit, dan jangan bayar harga varian lebih tinggi tanpa bukti jelas.
           </p>
         </div>

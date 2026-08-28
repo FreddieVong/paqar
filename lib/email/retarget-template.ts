@@ -258,7 +258,7 @@ export function buildRetargetEmailHtml(content: RetargetEmailContent): string {
           <tr>
             <td class="gutter" style="padding:12px 24px 0;">
               <div class="t-mute" style="font-family:${BODY};font-size:15px;font-weight:400;color:${C.muted};line-height:1.6;">${
-                hero ? hero.note : 'Sebelum bayar deposit, semak sama ada harganya berbaloi dan perkara penting yang mungkin tidak diberitahu oleh penjual.'
+                hero ? hero.note : 'Sebelum bayar deposit, semak sama ada harganya berbaloi dan perkara penting yang mungkin tidak diberitahu oleh seller.'
               }</div>
             </td>
           </tr>

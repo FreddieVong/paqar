@@ -27,7 +27,7 @@ beforeEach(() => {
 })
 afterEach(() => cleanup())
 
-const field  = () => screen.getByLabelText('Harga yang penjual minta') as HTMLInputElement
+const field  = () => screen.getByLabelText('Harga yang seller minta') as HTMLInputElement
 const submit = () => fireEvent.submit(screen.getByRole('button', { name: /Semak/ }).closest('form')!)
 const body   = () => JSON.parse((fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0]![1].body)
 

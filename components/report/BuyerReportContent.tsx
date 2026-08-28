@@ -356,7 +356,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
             Ini mungkin kerana plat tidak wujud, baru didaftarkan, atau belum dalam sistem kami.
           </p>
           <p className="font-body text-[13px] text-[#374151] leading-relaxed mt-2">
-            Soalan penjual di bawah masih berguna — gunakan ia untuk tanya penjual anda.
+            Soalan seller di bawah masih berguna — gunakan ia untuk tanya seller anda.
           </p>
           <ReloadButton className="font-body text-[13px] text-[#B45309] font-semibold underline underline-offset-2 mt-3 inline-block">
             Cuba muat semula →
@@ -512,7 +512,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
         const cadangan = ({
           good_deal: suspiciouslyCheap
-            ? 'Harga macam ni selalunya ada sebab — scam deposit, kereta accident/banjir, atau masalah dokumen. Jangan bayar apa-apa sebelum jumpa kereta, penjual dan geran sendiri.'
+            ? 'Harga macam ni selalunya ada sebab — scam deposit, kereta accident/banjir, atau masalah dokumen. Jangan bayar apa-apa sebelum jumpa kereta, seller dan geran sendiri.'
             : 'Harga nampak berbaloi. Fokus semak condition, dokumen dan inspection sebelum bayar deposit.',
           fair_price:    'Harga nampak wajar. Masih boleh minta sedikit kurang sebelum setuju.',
           slightly_high: hasMarketData
@@ -864,7 +864,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
 
             {askingPriceRm == null && wmNewPrice != null && (
               <p className="font-body text-[11px] text-[#9CA3AF] mt-1">
-                Masukkan harga yang penjual minta untuk perbandingan lebih tepat.
+                Masukkan harga yang seller minta untuk perbandingan lebih tepat.
               </p>
             )}
 
@@ -1237,7 +1237,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         <div className="space-y-3">
           {[
             'Nombor rangka sama dengan geran',
-            'Geran atas nama penjual',
+            'Geran atas nama seller',
             'Semak loan / hutang bank',
             'Semak saman tertunggak',
             'Cukai jalan masih sah',

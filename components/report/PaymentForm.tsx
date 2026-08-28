@@ -255,7 +255,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             {/* Was "…dapat keputusan harga dan skrip rundingan". The price
                 verdict is now shown free above this form, so promising it here
                 would be selling something already on screen. */}
-            Disyorkan — dengan harga ini, laporan anda dapat sasaran harga untuk rundingan dan skrip peribadi untuk penjual.
+            Disyorkan — dengan harga ini, laporan anda dapat sasaran harga untuk rundingan dan skrip peribadi untuk seller.
           </p>
         </div>
 
@@ -284,7 +284,7 @@ export function PaymentForm({ checkId, claimToken, defaultAskingPrice, defaultMi
             </p>
           ) : (
             <p className="font-body text-[11px] text-[#6B7280] mt-1.5 leading-relaxed">
-              Mileage yang penjual bagi — kami semak sama ada ia munasabah untuk umur kereta.
+              Mileage yang seller bagi — kami semak sama ada ia munasabah untuk umur kereta.
             </p>
           )}
         </div>

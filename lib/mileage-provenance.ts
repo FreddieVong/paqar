@@ -156,6 +156,6 @@ export function mileageFindingCopy(finding: MileageFinding): string | null {
  */
 export const MILEAGE_PROVENANCE_LABEL: Record<MileageSource, string> = {
   buyer_claimed:   'Mileage yang anda masukkan — belum disahkan.',
-  listing_claimed: 'Mileage seperti yang penjual iklankan — belum disahkan.',
+  listing_claimed: 'Mileage seperti yang seller iklankan — belum disahkan.',
   official_record: 'Bacaan bertarikh daripada rekod pihak ketiga.',
 }

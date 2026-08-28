@@ -83,7 +83,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
   // Accident-only guidance is carried by the seller-questions block to avoid duplicate text.
   const escalation =
     getCount('total_loss') > 0
-      ? 'Rekod total loss ialah penemuan serius. Jangan teruskan tanpa pemeriksaan profesional dan penjelasan lengkap daripada penjual.'
+      ? 'Rekod total loss ialah penemuan serius. Jangan teruskan tanpa pemeriksaan profesional dan penjelasan lengkap daripada seller.'
       : getCount('flood') > 0
       ? 'Rekod banjir memerlukan pemeriksaan menyeluruh pada sistem elektrik, kabin dan bahagian bawah kenderaan.'
       : null
@@ -132,7 +132,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
                 {totalClaims} Rekod Claim Ditemui
               </p>
               <p className="font-body text-[12px] text-[#B45309] leading-relaxed mt-1">
-                Semak butiran setiap rekod di bawah dan tanya penjual tentang pembaikan yang pernah dibuat.
+                Semak butiran setiap rekod di bawah dan tanya seller tentang pembaikan yang pernah dibuat.
               </p>
               <p className="font-body text-[11px] text-[#B45309]/80 leading-relaxed mt-1">
                 Accident, banjir, windscreen dan total loss telah disemak
@@ -149,7 +149,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
           <p className="font-body text-[12px] text-[#991B1B] leading-relaxed">
             Satu claim direkodkan pada <span className="font-bold">{rollback.claimMileage.toLocaleString()} km</span>
             {currentOdometerKm != null ? ` — tetapi odometer sekarang ${currentOdometerKm.toLocaleString()} km, lebih rendah.` : '.'}{' '}
-            Bacaan tidak sepadan — sila sahkan dengan penjual dan rekod servis, dan pastikan plat tidak pernah ditukar (rekod ikut nombor pendaftaran).
+            Bacaan tidak sepadan — sila sahkan dengan seller dan rekod servis, dan pastikan plat tidak pernah ditukar (rekod ikut nombor pendaftaran).
           </p>
         </div>
       )}
@@ -242,7 +242,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
         ) : windscreenOnly ? (
           <p className="font-body text-[12px] text-[#4B5563] leading-relaxed">
             Rekod yang ditemui hanya melibatkan windscreen. Ini biasanya kurang serius berbanding
-            claim kemalangan, tetapi masih wajar disahkan dengan penjual.
+            claim kemalangan, tetapi masih wajar disahkan dengan seller.
           </p>
         ) : (
           <>
@@ -262,7 +262,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
       {hasClaims && (
         <div className="mt-4">
           <p className="font-heading font-semibold text-[12px] text-[#374151] mb-1">
-            Tanya penjual:
+            Tanya seller:
           </p>
           {windscreenOnly ? (
             <p className="font-body text-[12px] text-[#4B5563] leading-relaxed">
@@ -289,7 +289,7 @@ export function JomCheckSection({ data, currentOdometerKm }: Props) {
       )}
       <p className="font-body text-[12px] text-[#6B7280] mt-2 leading-relaxed">
         {hasClaims
-          ? 'Nilai atau kewujudan claim sahaja tidak menentukan tahap kerosakan sebenar. Sahkan dengan penjual dan pemeriksaan fizikal.'
+          ? 'Nilai atau kewujudan claim sahaja tidak menentukan tahap kerosakan sebenar. Sahkan dengan seller dan pemeriksaan fizikal.'
           : 'Rekod insurans tidak merangkumi semua kemalangan atau pembaikan yang dibuat tanpa tuntutan.'}
       </p>
     </div>
