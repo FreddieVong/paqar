@@ -62,7 +62,22 @@ const plexMono = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Paqar — Semak Harga Kereta Terpakai Malaysia',
+  // THE TITLE NAMES THE MOMENT, NOT JUST THE TOPIC.
+  //
+  // It read "Paqar — Semak Harga Kereta Terpakai Malaysia", which sells PRICE
+  // — what Paqar sold at RM12. The product is now the decision about one
+  // advert, and the homepage says so from the headline down; the one string
+  // Google shows in a result still described the old product.
+  //
+  // The head keyword "Semak Harga Kereta Terpakai" is kept intact and in the
+  // same leading position, so nothing that ranks today loses its term. What
+  // replaces "Malaysia" is the buyer's actual moment. Malaysia is the weaker
+  // half to spend: a .my domain serving ms_MY content about Malaysian listings
+  // signals the country several other ways, and no other page competes for it.
+  //
+  // 57 characters, so Google shows it whole. Matches the OG image alt text,
+  // which already described the page this way.
+  title: 'Paqar — Semak Harga Kereta Terpakai Sebelum Bayar Deposit',
   description: `Hantar iklan kereta terpakai yang anda nak beli. Kami beritahu apa patut anda buat sebelum bayar deposit — disemak oleh manusia, ${BASE_REPORT_LABEL}.`,
   metadataBase: new URL('https://paqar.my'),
   // NO title, description or url here — same reasoning as the canonical note
