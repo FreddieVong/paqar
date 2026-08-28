@@ -324,11 +324,20 @@ describe('no surface denies selling what Paqar sells', () => {
   })
 
   it('the homepage answer is derived from the sale gate', () => {
+    // "the visible FAQ and the JSON-LD must share one source" is what this
+    // always meant. It used to check the call appeared TWICE in app/page.tsx,
+    // because under a duplicated FAQ that was the only way to say it — and
+    // duplication was the defect: the page drifted to eight structured
+    // questions against six rendered ones. Both surfaces now derive from
+    // lib/faq/home.ts, so ONE call is the stronger form of the same property.
+    const faq = readFileSync(join(ROOT, 'lib/faq/home.ts'), 'utf8')
+    const calls = faq.match(/competitorComparisonAnswer\(/g) ?? []
+    expect(calls.length, 'the answer must come from the gate, exactly once').toBe(1)
+
     const page = readFileSync(join(ROOT, 'app/page.tsx'), 'utf8')
-    // BOTH copies — the visible FAQ and the FAQPage JSON-LD. The JSON-LD one
-    // is the reason this matters: Google can surface it as Paqar's answer.
-    const calls = page.match(/competitorComparisonAnswer\(/g) ?? []
-    expect(calls.length, 'the visible FAQ and the JSON-LD must share one source').toBe(2)
+    expect(page, 'the JSON-LD spells the answer out again').not.toContain('competitorComparisonAnswer')
+    expect(page, 'the JSON-LD must derive from the shared source').toContain('faqMainEntity()')
+    expect(page, 'the accordion must derive from the shared source').toContain('homeFaq().map')
 
     const copy = readFileSync(join(ROOT, 'lib/history-addon-copy.ts'), 'utf8')
     const fn = copy.slice(copy.indexOf('export function competitorComparisonAnswer'))

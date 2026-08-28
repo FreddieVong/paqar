@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { historyAddOnLimitLine, competitorComparisonAnswer } from '@/lib/history-addon-copy'
+import { homeFaq, homeLimits, faqMainEntity } from '@/lib/faq/home'
 
 import Link           from 'next/link'
 import { unstable_cache } from 'next/cache'
@@ -68,50 +68,17 @@ const homeSchema = {
       areaServed: { '@type': 'Country', name: 'Malaysia' },
       offers: { '@type': 'Offer', price: String(ringgit(BASE_REPORT_CENTS)), priceCurrency: 'MYR', availability: 'https://schema.org/InStock' },
     },
+    // ONE SOURCE, so a question cannot exist for Google alone.
+    //
+    // This block used to spell out eight questions while the accordion below
+    // rendered six of them. Google's FAQPage guidance requires the answer to be
+    // visible on the page, and two of these were not — including the
+    // limitations answer, which is the most important thing Paqar tells a
+    // buyer. Both surfaces now read lib/faq/home.ts, so adding a question for
+    // Google means adding it to the page.
     {
       '@type': 'FAQPage',
-      mainEntity: [
-        {
-          '@type': 'Question',
-          name: 'Kenapa tak semak sendiri di Mudah atau Carlist?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Portal iklan tunjuk kereta yang ada untuk dijual dan harga yang seller minta. Paqar guna maklumat itu untuk cadangkan langkah seterusnya untuk kereta yang anda nak beli — patut teruskan atau tidak, berapa patut ditawarkan, apa yang perlu disahkan dengan seller, dan bila lebih baik cari kereta lain.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Apa yang saya dapat untuk RM29?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Keputusan untuk satu kereta: sama ada patut diteruskan, skrip rundingan siap pakai, soalan penting untuk seller, semakan varian yang diiklankan supaya harga dibanding dengan varian yang sama, dan checklist sebelum bayar deposit. Setiap laporan dibaca dan disemak oleh manusia sebelum dihantar.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Berapa lama untuk dapat laporan?',
-          acceptedAnswer: { '@type': 'Answer', text: `Biasanya ${TYPICAL_MINUTES} minit, dijamin dalam ${REVIEW_SLA_HOURS} jam. Laporan ini bukan auto — seorang manusia baca iklan anda dan semak keputusan sebelum kami hantar.` },
-        },
-        {
-          '@type': 'Question',
-          name: 'Adakah Paqar sama seperti laporan SCRUT atau MyEG?',
-          acceptedAnswer: { '@type': 'Answer', text: competitorComparisonAnswer(BASE_REPORT_LABEL) },
-        },
-        {
-          '@type': 'Question',
-          name: 'Bagaimana jika Paqar tidak dapat siapkan laporan saya?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Duit anda dikembalikan sepenuhnya. Kalau kami tidak jumpa cukup iklan setanding untuk kereta itu, kami tidak jual keputusan yang tidak dapat kami sokong.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Adakah saya perlu daftar akaun?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Tidak. Tiada akaun diperlukan.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Adakah Paqar dari JPJ atau PDRM?',
-          acceptedAnswer: { '@type': 'Answer', text: 'Paqar adalah perkhidmatan pihak ketiga — bukan afiliasi JPJ atau PDRM.' },
-        },
-        {
-          '@type': 'Question',
-          name: 'Apakah had atau limitasi Paqar?',
-          acceptedAnswer: { '@type': 'Answer', text: `Harga iklan adalah harga yang diminta, bukan harga jualan sebenar. Mileage dan keadaan fizikal boleh mengubah nilai dengan ketara. ${historyAddOnLimitLine()} Pemeriksaan fizikal masih perlu sebelum bayar deposit.` },
-        },
-      ],
+      mainEntity: faqMainEntity(),
     },
   ],
 }
@@ -369,14 +336,13 @@ export default async function HomePage() {
             <span className="text-[#FACC15]">bukti tidak cukup.</span>
           </h2>
 
+          {/* The same five facts the limitasi FAQ answer joins into a
+              paragraph. They were written out in both places and had already
+              drifted — this list said "harga yang seller minta" while the
+              answer still said "harga yang diminta", and the answer had lost
+              the variant caveat entirely. */}
           <div className="flex flex-col gap-3.5 mb-6">
-            {[
-              'Harga iklan ialah harga yang seller minta, bukan harga jual sebenar.',
-              'Model, varian dan tahun perlu disahkan sebelum harga bermakna.',
-              'Mileage dan keadaan fizikal boleh mengubah nilai dengan ketara.',
-              historyAddOnLimitLine(),
-              'Pemeriksaan fizikal masih perlu sebelum anda bayar deposit.',
-            ].map((limit) => (
+            {homeLimits().map((limit) => (
               <div key={limit} className="flex gap-3 items-start">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#FACC15] flex-shrink-0 mt-[7px]" />
                 <p className="font-body text-[13px] text-white/70 leading-relaxed">{limit}</p>
@@ -452,35 +418,7 @@ export default async function HomePage() {
           </h2>
 
           <div className="flex flex-col gap-2">
-            {[
-              {
-                q: 'Kenapa tak semak sendiri di Mudah atau Carlist?',
-                a: 'Portal iklan tunjuk kereta yang ada untuk dijual dan harga yang seller minta. Paqar guna maklumat itu untuk cadangkan langkah seterusnya untuk kereta yang anda nak beli — patut teruskan atau tidak, berapa patut ditawarkan, apa yang perlu disahkan dengan seller, dan bila lebih baik cari kereta lain.',
-              },
-              {
-                q: 'Adakah Paqar sama seperti laporan SCRUT atau MyEG?',
-                a: competitorComparisonAnswer(BASE_REPORT_LABEL),
-              },
-              {
-                q: 'Berapa lama untuk dapat laporan?',
-                // BOTH NUMBERS, and derived. It quoted the 24-hour ceiling
-                // alone — the pessimistic half of the truth, and a figure the
-                // hero contradicts four screens above with "30 minit".
-                a: `Biasanya ${TYPICAL_MINUTES} minit, dijamin dalam ${REVIEW_SLA_HOURS} jam. Laporan ini bukan auto — seorang manusia baca iklan anda dan semak keputusan sebelum kami hantar.`,
-              },
-              {
-                q: 'Bagaimana jika Paqar tidak dapat siapkan laporan saya?',
-                a: 'Duit anda dikembalikan sepenuhnya. Kalau kami tidak jumpa cukup iklan setanding untuk kereta itu, kami tidak jual keputusan yang tidak dapat kami sokong.',
-              },
-              {
-                q: 'Adakah saya perlu daftar akaun?',
-                a: 'Tidak. Tiada akaun diperlukan.',
-              },
-              {
-                q: 'Adakah Paqar dari JPJ atau PDRM?',
-                a: 'Paqar adalah perkhidmatan pihak ketiga — bukan afiliasi JPJ atau PDRM.',
-              },
-            ].map((faq) => (
+            {homeFaq().map((faq) => (
               <details key={faq.q} className="group bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
                 <summary className="flex items-center justify-between p-4 cursor-pointer list-none">
                   <span className="font-heading font-bold text-[14px] text-[#111827] pr-4">{faq.q}</span>

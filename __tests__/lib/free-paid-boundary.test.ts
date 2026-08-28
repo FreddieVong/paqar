@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { homeLimits } from '@/lib/faq/home'
 
 const ROOT = join(__dirname, '..', '..')
 const read = (p: string) => readFileSync(join(ROOT, p), 'utf8')
@@ -159,12 +160,19 @@ describe('CTA copy is true now that figures are paid', () => {
     // feature block did not promise the figures the CTA sold. There is no free
     // block left to check: the free verdict was the product being given away,
     // and removing it is the whole point of the RM29 change.
-    const home = read('app/page.tsx')
-      .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')   // JSX comments
-      .replace(/\/\*[\s\S]*?\*\//g, '')          // block comments
-    expect(home).not.toContain('Semak Harga Percuma')
-    expect(home).not.toContain('percuma')
-    expect(home).not.toContain('Percuma')
+    //
+    // BOTH FILES. The FAQ answers moved to lib/faq/home.ts so the accordion and
+    // the JSON-LD cannot disagree, and a guard that still read only the page
+    // would have stopped covering the copy most likely to resurrect a free
+    // tier — the answer to "what do I get for my money".
+    for (const path of ['app/page.tsx', 'lib/faq/home.ts']) {
+      const src = read(path)
+        .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')   // JSX comments
+        .replace(/\/\*[\s\S]*?\*\//g, '')          // block comments
+      expect(src, path).not.toContain('Semak Harga Percuma')
+      expect(src, path).not.toContain('percuma')
+      expect(src, path).not.toContain('Percuma')
+    }
   })
 
   it('no free surface claims to show the real market price', () => {
@@ -221,27 +229,29 @@ describe('prose describing the free tier promises no paid figure', () => {
     expect(block).toMatch(/tidak jual/i)
   })
 
-  it('EVERY copy of the homepage objection answer stays consistent', () => {
-    // The homepage answers this TWICE: once in the JSON-LD FAQPage graph and
-    // once in the visible "Ada soalan?" accordion. A first-occurrence split
-    // once passed while the accordion still carried a corrected claim, caught
-    // only by grepping the BUILT output — hence iterating every occurrence.
+  it('the objection answer has ONE home, so no copy of it can drift', () => {
+    // This used to assert the answer appeared TWICE in app/page.tsx — once in
+    // the JSON-LD FAQPage graph and once in the visible accordion — because
+    // under duplication that was the only way to say "both surfaces carry it".
+    // Duplication was the DEFECT, not the property: the page drifted to eight
+    // structured questions against six rendered ones, and two answers Google
+    // could attribute to Paqar became unreadable to any visitor.
     //
-    // The question itself changed. "Apakah beza semakan percuma dan laporan
-    // RM12?" described a boundary that no longer exists; the objection worth
-    // answering on the homepage is now the one a tester actually raised.
-    const src = read('app/page.tsx')
-    const answers = src.split('Kenapa tak semak sendiri di Mudah atau Carlist?').slice(1)
-    expect(answers.length, 'expected both the JSON-LD and the visible FAQ').toBe(2)
+    // The property is the same and now asserted directly: one source, both
+    // surfaces derived from it.
+    const page = read('app/page.tsx')
+    expect(page, 'the JSON-LD must not spell questions out').toContain('faqMainEntity()')
+    expect(page, 'the accordion must render the same source').toContain('homeFaq().map')
+    expect(page, 'a question list was inlined again').not.toMatch(/q:\s*['\`]/)
 
-    for (const [i, raw] of answers.entries()) {
-      const answer = raw.split('},')[0]!
-      // The answer must not resurrect a free tier…
-      expect(answer, `answer #${i + 1} implies a free tier`).not.toMatch(/percuma/i)
-      // …and must name what Paqar actually adds over a listings portal.
-      expect(answer, `answer #${i + 1} does not say what Paqar adds`)
-        .toMatch(/langkah seterusnya|keputusan/i)
-    }
+    const faq = read('lib/faq/home.ts')
+    const answer = faq.slice(faq.indexOf('Kenapa tak semak sendiri di Mudah atau Carlist?'))
+      .split('},')[0]!
+    // The answer must not resurrect a free tier…
+    expect(answer, 'the objection answer implies a free tier').not.toMatch(/percuma/i)
+    // …and must name what Paqar actually adds over a listings portal.
+    expect(answer, 'the objection answer does not say what Paqar adds')
+      .toMatch(/langkah seterusnya|keputusan/i)
   })
 })
 
@@ -368,36 +378,77 @@ describe('the free surface carries no confidence signal at all', () => {
  * comparable adverts to decide at all. So these tests assert the new line, not
  * a relaxed version of the old one.
  */
-describe('the homepage FAQ states the paid boundary in both directions', () => {
+describe('the homepage FAQ states what the money buys, and what it does not', () => {
   const faq = readFileSync(join(ROOT, 'lib/faq/home.ts'), 'utf8')
-  const freeSentence = () => faq.slice(faq.indexOf('Semakan percuma'), faq.indexOf('Laporan Pembeli (RM29)'))
 
-  it('gives the free tier coverage only — no verdict and no figures', () => {
-    expect(faq).toContain('Semakan percuma beritahu sama ada Paqar ada cukup iklan setanding')
-    // The VERDICT is now paid, so its words must not appear on the free side
-    // either — they are the answer, not a figure.
-    for (const paid of ['harga tengah', 'julat', 'trade-in', 'skrip', 'murah', 'wajar', 'mahal']) {
-      expect(freeSentence().toLowerCase(), `free tier claims "${paid}"`).not.toContain(paid)
+  /**
+   * WHAT THESE ASSERTIONS USED TO SAY, AND WHY THEY NO LONGER DO.
+   *
+   * They pinned a FREE-vs-PAID boundary: that the free check returned coverage
+   * only, no verdict and no figures. That boundary no longer exists — the free
+   * verdict was the product being given away, and removing it is the whole
+   * point of the RM29 change.
+   *
+   * They went on passing anyway, for a worse reason than being obsolete: they
+   * read a file the homepage had STOPPED IMPORTING. So they guarded a free
+   * tier no surface offered, in copy no visitor could reach, and reported
+   * green while the live FAQ had no guard on it at all.
+   *
+   * What still needs guarding is the half that is still true and still load
+   * bearing: what the money buys, and the exclusions a clean report must not
+   * be read as covering.
+   */
+
+  it('the value answer names the decision, not raw data', () => {
+    const paid = faq.slice(faq.indexOf('Apa yang saya dapat'))
+    for (const promise of ['patut teruskan atau tidak', 'skrip rundingan',
+                           'soalan penting untuk seller', 'bayar deposit']) {
+      expect(paid, `the value answer drops "${promise}"`).toContain(promise)
     }
   })
 
-  it('says plainly that the free answer contains no price', () => {
-    expect(freeSentence()).toMatch(/tiada harga, tiada keputusan/)
+  it('names the human, which is the part no assistant and no portal provides', () => {
+    expect(faq).toMatch(/dibaca oleh manusia sebelum dihantar/)
   })
 
-  it('attributes the decision and the guidance to RM29', () => {
-    const paidSentence = faq.slice(faq.indexOf('Laporan Pembeli (RM29)'))
-    for (const paid of ['iklan setanding', 'patut ditawarkan', 'ditanya penjual', 'bayar deposit']) {
-      expect(paidSentence).toContain(paid)
+  it('keeps claim records and the odometer OUT of the base report', () => {
+    // The exclusion has to be stated rather than implied: a buyer reading this
+    // has a locked claim-history row a few centimetres above it. The limits
+    // answer is DERIVED from the sale gate, so this asserts that it carries the
+    // limits at all rather than a phrasing the gate is free to change.
+    const limits = faq.slice(faq.indexOf('Apakah had atau limitasi'))
+    expect(limits, 'the limits answer stopped deriving from homeLimits').toContain('homeLimits()')
+    expect(homeLimits().join(' ')).toMatch(/odometer/)
+  })
+
+  it('never claims Paqar can verify an odometer — in EITHER gate state', () => {
+    // Paqar cannot detect tampering, so the odometer may only ever be DENIED.
+    // This is the one claim on the site that could put a buyer in a fight with
+    // a seller over an accusation Paqar cannot support.
+    //
+    // READ FROM SOURCE, BOTH BRANCHES, and that is the whole point of this
+    // assertion rather than a convenience.
+    //
+    // historyAddOnLimitLine() branches on historyUpgradeAvailable(), which
+    // reads JOMCHECK_ENABLED. That variable is undefined under vitest, so
+    // calling the function here only ever exercises the UNAVAILABLE branch —
+    // while production runs the other one. An earlier version of this test did
+    // exactly that: deleting the odometer denial from the live sentence left it
+    // green, because it was reading the branch that does not ship.
+    const src = readFileSync(join(ROOT, 'lib/history-addon-copy.ts'), 'utf8')
+    const fn = src.slice(src.indexOf('export function historyAddOnLimitLine'))
+      .split('\n}')[0]!
+    const branches = fn.split('\n').filter(l => /^\s*[?:]\s*[`']/.test(l))
+    expect(branches.length, 'expected both gate branches on their own lines').toBe(2)
+
+    for (const branch of branches) {
+      expect(branch, `a gate branch drops the odometer denial: ${branch.trim().slice(0, 60)}`)
+        .toMatch(/tidak (menge)?sahkan bacaan odometer sebenar/)
+      expect(branch, 'a gate branch claims Paqar verifies the odometer')
+        .not.toMatch(/kami (boleh )?kesan|pengesahan odometer sebenar/)
     }
-  })
 
-  it('names the human, which is the part no free tier and no assistant provides', () => {
-    expect(faq).toMatch(/orang kami baca iklan yang anda hantar/)
-  })
-
-  it('keeps claim and odometer history out of the base report', () => {
-    expect(faq).toMatch(/tidak termasuk rekod tuntutan kemalangan atau bacaan odometer/)
-    expect(faq).toContain('+RM88')
+    // And the limits the homepage actually renders carry it, whichever it is.
+    expect(homeLimits().join(' ')).toMatch(/odometer/)
   })
 })

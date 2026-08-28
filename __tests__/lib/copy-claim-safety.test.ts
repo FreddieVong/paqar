@@ -42,6 +42,11 @@ const CLAIM_SURFACES = [
   'components/report/BuyerReportPitch.tsx',
   // The homepage carries the same feature list.
   'app/page.tsx',
+  // …and its FAQ answers, which state the same provenance and market claims,
+  // now live here so the accordion and the JSON-LD cannot disagree. A guard
+  // left pointing only at the page would have stopped covering the answers
+  // Google is most likely to quote.
+  'lib/faq/home.ts',
 ]
 
 describe('provenance is never attributed to JPJ', () => {

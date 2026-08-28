@@ -31,7 +31,10 @@ describe('refund copy does not promise automation that does not exist', () => {
   })
 
   it('no surface claims a one-click refund', () => {
-    for (const path of ['app/page.tsx', 'components/report/PaymentForm.tsx', 'app/terma/page.tsx']) {
+    // lib/faq/home.ts carries the refund ANSWER now — the one place a buyer
+    // reads the promise before paying, and the one Google can quote.
+    for (const path of ['app/page.tsx', 'lib/faq/home.ts',
+                        'components/report/PaymentForm.tsx', 'app/terma/page.tsx']) {
       expect(read(path), path).not.toMatch(/refund segera|refund automatik|satu klik/i)
     }
   })
