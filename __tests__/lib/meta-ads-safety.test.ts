@@ -22,7 +22,8 @@ import {
   isPromotedObjectAllowed, isDestinationAllowed, isUrlTagsAllowed, authoriseNewSpend,
   MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, MAX_ACTIVE_CAMPAIGNS,
   MAX_EXPERIMENT_ADSETS, MAX_DELIVERABLE_ADS_PER_ADSET, MAX_DELIVERABLE_ADS_PER_CAMPAIGN,
-  MAX_ADSET_LIFETIME_BUDGET_MYR, TEST_DURATION_DAYS, ADVANTAGE_AUDIENCE_REQUIRED,
+  MAX_ADSET_LIFETIME_BUDGET_MYR, MAX_NEW_COMMITMENT_MYR,
+  TEST_DURATION_DAYS, ADVANTAGE_AUDIENCE_REQUIRED,
   ALLOW_BUDGET_INCREASE, ALLOW_NEW_CAMPAIGNS, ALLOW_NEW_ADSETS, ALLOW_NEW_CREATIVES,
   ALLOW_AUTOMATIC_RESTART, ALLOW_PAUSED_CREATION,
   CAMPAIGNS, META_SOURCE_MACRO,
@@ -445,11 +446,18 @@ describe('budget guards', () => {
   })
 
   it('a lifetime budget must satisfy the DAILY ceiling too', () => {
-    // RM90 over 7 days is RM12.86/day. The same RM90 over 2 days is RM45/day,
-    // which blows the RM30 ceiling while looking identical at the total.
-    expect(isLifetimeBudgetAllowed(9000, 7)).toBe(true)
-    expect(isLifetimeBudgetAllowed(9001, 7)).toBe(false)
+    // Derived from the ceiling, not pinned to it: this assertion used the
+    // literal 9000/9001 and so encoded MAX_ADSET_LIFETIME_BUDGET_MYR = 90 in a
+    // test whose actual subject is the DAILY rate. Raising the ad-set ceiling
+    // to 180 then failed it for a reason it was never testing.
+    const cap = MAX_ADSET_LIFETIME_BUDGET_MYR * 100
+    expect(isLifetimeBudgetAllowed(cap, TEST_DURATION_DAYS)).toBe(true)
+    expect(isLifetimeBudgetAllowed(cap + 1, TEST_DURATION_DAYS)).toBe(false)
+    // The daily ceiling, which is the point of this test: RM90 over 2 days is
+    // RM45/day, blowing the RM30 ceiling while looking harmless as a total.
     expect(isLifetimeBudgetAllowed(9000, 2)).toBe(false)
+    // And the same shape at the new ceiling — RM180 over 5 days is RM36/day.
+    expect(isLifetimeBudgetAllowed(18_000, 5)).toBe(false)
     expect(isLifetimeBudgetAllowed(null, 7)).toBe(false)
     expect(isLifetimeBudgetAllowed(0, 7)).toBe(false)
   })
@@ -610,8 +618,15 @@ describe('declared limits match the brief', () => {
     // 265 -> 445 (2026-08-04, RM180 Carlist vs Mudah on top of RM217.86 spent)
     // 445 -> 625 (2026-08-11, RM180 creative-treatment test; RM383.99 spent
     //             + RM1.37 still committed + RM180 = RM565.36 projected)
-    expect(MAX_TOTAL_SPEND_MYR).toBe(625)
-    expect(MAX_ADSET_LIFETIME_BUDGET_MYR).toBe(90)
+    // 625 -> 700 (2026-08-28, RM180 REVIEWED_OFFER test; RM494.15 spent —
+    //             from account insights at maximum, NOT amount_spent, which
+    //             had reset to RM319.85 — + RM180 = RM674.15 projected)
+    expect(MAX_TOTAL_SPEND_MYR).toBe(700)
+    // 90 -> 180 on 2026-08-28: REVIEWED_OFFER is a ONE-arm test, so the whole
+    // commitment sits in a single ad set. MAX_NEW_COMMITMENT_MYR is unchanged
+    // at 180, so this widens the shape of a run, never its total.
+    expect(MAX_ADSET_LIFETIME_BUDGET_MYR).toBe(180)
+    expect(MAX_NEW_COMMITMENT_MYR).toBe(180)
     expect(TEST_DURATION_DAYS).toBe(7)
   })
 

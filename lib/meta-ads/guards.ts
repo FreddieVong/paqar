@@ -47,6 +47,32 @@ export const MAX_DAILY_BUDGET_MYR  = 30
  *           + RM180.00  this test's maximum
  *           = RM565.36  projected, so RM566 is the minimum that fits.
  *         RM625 was authorised, leaving deliberate headroom.
+ *   700 — 2026-08-28, funding the RM180 REVIEWED_OFFER test. Reconciled the
+ *         same way, from account insights at date_preset=maximum — NOT from
+ *         amount_spent, which had reset again and read RM319.85 against a true
+ *         RM494.15:
+ *             RM494.15  lifetime spend across all three existing campaigns
+ *           + RM180.00  this test's maximum (one ad set, MAX_NEW_COMMITMENT)
+ *           = RM674.15  projected, so RM675 is the minimum that fits.
+ *         RM700 authorised, leaving deliberate headroom.
+ *
+ *         WHY THIS ONE IS DIFFERENT FROM THE THREE BEFORE IT. Those bought
+ *         more creative against the same offer. This buys the FIRST traffic
+ *         ever pointed at the offer that is actually for sale: every ad run to
+ *         date sold "masukkan nombor plat — harga pasaran dalam 30 saat" at
+ *         "dari RM12", a free instant lookup, while the live product is a RM29
+ *         report a human writes about one listing. RM494.15 of spend returned
+ *         RM24 of revenue, and a 9.48% CTR on the best of them is the
+ *         signature of an offer with no price on it, not a success. The RM180
+ *         answers one question — does an ad that STATES the price produce a
+ *         checkout — and is expected to cut CTR to 1.5–2.5% by design.
+ *
+ *         The first draft of this test asked for RM300 over 10 days, which
+ *         would have moved MAX_ADSET_LIFETIME_BUDGET_MYR, MAX_NEW_COMMITMENT
+ *         and TEST_DURATION_DAYS together. Three constants loosened at once
+ *         for one experiment is exactly what this file exists to catch, so the
+ *         test was refitted to the envelope instead: RM180 is what a single
+ *         creation run may already commit, and 7 days is already the schedule.
  *
  * Every raise here is an explicit decision to spend new money. None of them is
  * a re-reading of Meta's amount_spent counter, which RESETS when the spending
@@ -60,7 +86,7 @@ export const MAX_DAILY_BUDGET_MYR  = 30
  * cannot pause the Carlist vs Mudah campaign. For that campaign, Meta's
  * account limit is the ONLY backstop.
  */
-export const MAX_TOTAL_SPEND_MYR   = 625
+export const MAX_TOTAL_SPEND_MYR   = 700
 
 /**
  * Object-count limits, each named for the unit it actually counts.
@@ -106,8 +132,21 @@ export const ALLOW_AUTOMATIC_RESTART = false
  */
 export const ALLOW_PAUSED_CREATION = true
 
-/** Lifetime budget ceiling for ONE experiment ad set. */
-export const MAX_ADSET_LIFETIME_BUDGET_MYR = 90
+/**
+ * Lifetime budget ceiling for ONE experiment ad set.
+ *
+ * 90 -> 180 on 2026-08-28. It was 90 because every experiment so far has been
+ * a TWO-ARM creative test: two ad sets at RM90 fill MAX_NEW_COMMITMENT exactly.
+ * The REVIEWED_OFFER test is one arm, because RM180 split two ways cannot
+ * produce a valid winner — a lesson already paid for twice — so the whole
+ * commitment has to fit in a single ad set or the test is starved at RM90
+ * (~180 landing views, which cannot separate a 1% checkout rate from 3%).
+ *
+ * This does NOT widen what a creation run may spend. MAX_NEW_COMMITMENT_MYR is
+ * still 180, so two ad sets at this ceiling are refused by authoriseNewSpend
+ * before either is created. The campaign total is unchanged; only its shape is.
+ */
+export const MAX_ADSET_LIFETIME_BUDGET_MYR = 180
 /** Total new money any single creation run may commit. */
 export const MAX_NEW_COMMITMENT_MYR        = 180
 export const TEST_DURATION_DAYS            = 7
