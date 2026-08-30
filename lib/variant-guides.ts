@@ -70,7 +70,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
   'perodua-myvi': {
     modelSlug: 'perodua-myvi',
     make: 'Perodua', model: 'Myvi', brand: 'Perodua',
-    question: 'Myvi varian mana patut anda beli?',
+    question: 'Beza varian Myvi — mana satu patut anda beli?',
     answerLine: 'Untuk kebanyakan pembeli: 1.5 H — kit hampir penuh tanpa bayar harga AV. Bajet ketat? 1.3 X pun cukup.',
     metaDescription: 'Beza varian Myvi G, X, H dan AV. Untuk kebanyakan pembeli: 1.5 H — kit hampir penuh tanpa bayar harga AV. Cara cam varian sebenar sebelum deposit.',
     bestValue: '1.5 H (2018–kini)',
@@ -315,7 +315,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
   'toyota-alphard': {
     modelSlug: 'toyota-alphard',
     make: 'Toyota', model: 'Alphard', brand: 'Toyota',
-    question: 'Alphard varian mana patut anda beli?',
+    question: 'Beza varian Alphard — mana satu patut anda beli?',
     answerLine: 'Untuk kebanyakan pembeli: 2.5 G — kerusi kapten dan kit cukup. SC berbaloi untuk rupa; Executive Lounge hanya jika bajet bukan isu.',
     metaDescription: 'Beza varian Alphard X, G, SC dan Executive Lounge. Untuk kebanyakan pembeli: 2.5 G — kerusi kapten dan kit cukup. Cara sahkan varian sebenar.',
     bestValue: '2.5 G (AH30) · 240G (AH20)',
@@ -515,7 +515,7 @@ export const VARIANT_GUIDES: Record<string, VariantGuide> = {
 const BEZZA_GUIDE: VariantGuide = {
   modelSlug: 'perodua-bezza',
   make: 'Perodua', model: 'Bezza', brand: 'Perodua',
-  question: 'Bezza varian mana patut anda beli?',
+  question: 'Beza varian Bezza — mana satu patut anda beli?',
   answerLine: 'Untuk kebanyakan pembeli: 1.3 X — enjin 4 silinder yang lebih lancar dengan kit cukup. 1.0 G hanya jika bajet sangat ketat dan guna bandar sahaja.',
   metaDescription: 'Beza varian Bezza G, X dan Advance. Untuk kebanyakan pembeli: 1.3 X — enjin 4 silinder lebih lancar. 1.0 G hanya jika bajet betul-betul ketat.',
   bestValue: '1.3 X',
@@ -606,7 +606,7 @@ const BEZZA_GUIDE: VariantGuide = {
 const CITY_GUIDE: VariantGuide = {
   modelSlug: 'honda-city',
   make: 'Honda', model: 'City', brand: 'Honda',
-  question: 'Honda City varian mana patut anda beli?',
+  question: 'Beza varian Honda City — mana satu patut anda beli?',
   answerLine: 'Untuk kebanyakan pembeli: varian E — kit harian cukup tanpa premium varian V. Hybrid berbaloi hanya dengan rekod servis Honda yang penuh.',
   metaDescription: 'Beza varian Honda City S/E, V dan RS e:HEV. Untuk kebanyakan pembeli: varian E — kit harian cukup tanpa premium V. Hybrid perlu rekod servis penuh.',
   bestValue: 'E',
