@@ -66,3 +66,80 @@ export function variantLabelListFrom(variants: LabelledVariant[], max = 4): stri
 export function variantLabelList(names: string[], max = 4): string {
   return variantLabelListFrom(names.map(name => ({ name })), max)
 }
+
+/**
+ * The engine displacements a generation actually spans, written the way people
+ * search them.
+ *
+ * WHY THIS EXISTS. variantLabel deliberately throws the displacement away,
+ * because using it as the trim collapsed titles into "1.3 vs 1.3 vs 1.5". That
+ * was the right call for the trim list and the wrong one for the whole title:
+ * Search Console shows 80 of the 136 attributed impressions on
+ * /varian/perodua-bezza are engine queries — "beza bezza 1.0 dan 1.3",
+ * "perbezaan bezza 1.0 dan 1.3", "bezza 1.0 vs 1.3" — and the title named
+ * neither number. Trim letters and displacements answer different queries, so
+ * the title carries both.
+ *
+ * Emitted only for a generation spanning EXACTLY two displacements. One means
+ * the fragment says nothing and the characters are better spent on trims.
+ * Three or more cannot be summarised without implying the middle one is absent,
+ * so it is omitted rather than made misleading.
+ */
+export function displacementPair(variants: LabelledVariant[]): string {
+  const seen = new Set<string>()
+  for (const v of variants) {
+    const m = v.name.match(/^(\d+\.\d+)/)
+    if (m) seen.add(m[1]!)
+  }
+  if (seen.size !== 2) return ''
+  return [...seen].sort((a, b) => Number(a) - Number(b)).join(' dan ')
+}
+
+/**
+ * Roughly what Google renders before it truncates. Not a rule Google enforces
+ * — it truncates on pixel width — but a budget tight enough that the terms
+ * that matter stay visible on a phone.
+ */
+const TITLE_BUDGET = 60
+
+/**
+ * The title tag for /varian/[model].
+ *
+ * IT LEADS WITH "BEZA" BECAUSE THAT IS THE QUERY. The previous title was
+ * "{Model} Varian Mana Patut Beli? {trims} | Paqar" — a question no one types.
+ * Every ranking query on these pages is a difference query: "beza bezza 1.0 dan
+ * 1.3" (pos 7.5), "perbezaan bezza 1.0 dan 1.3" (8.4), "beza honda city e dan
+ * v" (9.6), "myvi h vs x" (8.5). Four pages held 110-odd page-one impressions
+ * over 90 days and took zero clicks, because the one word every searcher typed
+ * appeared nowhere in the result. The meta descriptions already opened with
+ * "Beza varian ..."; only the titles had not caught up.
+ *
+ * ASSEMBLY IS BUDGET-AWARE, richest form first, dropping the least valuable
+ * segment each time until it fits: the make goes before the displacements, and
+ * the displacements before a fourth trim. Alphard is why — "Toyota Alphard 2.5
+ * dan 3.5 — X vs G vs SC vs Executive Lounge" is 81 characters, and the trim
+ * that has to go is the one nobody cross-shops.
+ */
+export function variantPageTitle(
+  guide: { make: string; model: string; variants: LabelledVariant[] }
+): string {
+  const { make, model, variants } = guide
+  const engines = displacementPair(variants)
+  // "Honda" + "City" -> "Honda City"; a model already carrying its make is not
+  // given it twice.
+  const named = model.toLowerCase().startsWith(make.toLowerCase()) ? model : `${make} ${model}`
+
+  const build = (name: string, disp: string, max: number) =>
+    ['Beza Varian', name, disp, '—', variantLabelListFrom(variants, max), '| Paqar']
+      .filter(Boolean)
+      .join(' ')
+
+  const candidates = [
+    build(named, engines, 4),
+    build(model, engines, 4),
+    build(model, engines, 3),
+    build(model, '',      3),
+    build(model, '',      2),
+  ]
+  return candidates.find(c => c.length <= TITLE_BUDGET) ?? candidates[candidates.length - 1]!
+}

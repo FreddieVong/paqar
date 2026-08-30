@@ -21,7 +21,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { VARIANT_GUIDES } from '@/lib/variant-guides'
-import { variantLabelListFrom } from '@/lib/variant-label'
+import { variantLabelListFrom, variantPageTitle, displacementPair } from '@/lib/variant-label'
 import { clampMetaDescription } from '@/lib/meta-description'
 
 const ROOT = process.cwd()
@@ -134,9 +134,15 @@ describe('variant guide descriptions', () => {
 })
 
 describe('variant guide titles', () => {
+  // Imported, not mirrored. This block used to re-declare the title template as
+  // a second copy of the string in app/varian/[model]/page.tsx, so the test
+  // could only ever confirm that the duplicate matched itself — a title change
+  // in the page would leave the test green against the old wording.
   const titleFor = (guide: (typeof guides)[number][1]) => {
     const newest = guide.generations[guide.generations.length - 1]
-    return `${guide.model} Varian Mana Patut Beli? ${variantLabelListFrom(newest?.variants ?? [])} | Paqar`
+    return variantPageTitle({
+      make: guide.make, model: guide.model, variants: newest?.variants ?? [],
+    })
   }
 
   it('gives every guide a distinct title', () => {
@@ -146,6 +152,72 @@ describe('variant guide titles', () => {
 
   it.each(guides)('%s lists variants from its newest generation', (_slug, guide) => {
     expect(titleFor(guide)).toContain(' vs ')
+  })
+
+  // THE REGRESSION THIS BLOCK EXISTS TO PREVENT. Every query ranking these
+  // pages is a difference query — "beza bezza 1.0 dan 1.3", "beza honda city e
+  // dan v", "myvi h vs x" — and the old title asked "Varian Mana Patut Beli?",
+  // which nobody types. Four pages sat on page one for 90 days and took zero
+  // clicks. If the lead word goes away again, the traffic goes with it.
+  it.each(guides)('%s leads with the word searchers actually type', (_slug, guide) => {
+    expect(titleFor(guide)).toMatch(/^Beza /)
+  })
+
+  it.each(guides)('%s names the model in the title', (_slug, guide) => {
+    expect(titleFor(guide)).toContain(guide.model)
+  })
+
+  it.each(guides)('%s stays within a sane render budget', (_slug, guide) => {
+    expect(titleFor(guide).length).toBeLessThanOrEqual(TITLE_SANITY_MAX)
+  })
+
+  // Engine queries are the majority on Bezza (80 of 136 attributed impressions)
+  // and the trim list alone answers none of them. Where a generation genuinely
+  // spans two displacements, both numbers belong in the title.
+  it.each(guides)('%s carries both displacements when its generation spans two', (_slug, guide) => {
+    const newest = guide.generations[guide.generations.length - 1]!
+    const pair   = displacementPair(newest.variants)
+    if (!pair) return
+    for (const cc of pair.split(' dan ')) expect(titleFor(guide)).toContain(cc)
+  })
+})
+
+// ── The H1, because Google rewrites titles from it ──────────────────────────
+//
+// A title tag is a suggestion. When Google decides it matches the query poorly
+// it substitutes its own, and the H1 is the most common source. So an H1 still
+// asking "Myvi varian mana patut anda beli?" — a question nobody types — can
+// quietly undo the title above by being promoted over it. The two now open on
+// the same word, and this keeps them that way.
+describe('variant guide H1s', () => {
+  it.each(guides)('%s opens on the same word as its title', (_slug, guide) => {
+    expect(guide.question).toMatch(/^Beza /)
+  })
+
+  it.each(guides)('%s still promises the recommendation, not just the difference', (_slug, guide) => {
+    expect(guide.question).toMatch(/patut anda beli/)
+  })
+})
+
+describe('displacementPair', () => {
+  it('summarises a generation spanning exactly two engines', () => {
+    expect(displacementPair([{ name: '1.0 G' }, { name: '1.3 X' }, { name: '1.3 Advance' }]))
+      .toBe('1.0 dan 1.3')
+  })
+
+  it('orders numerically rather than by first appearance', () => {
+    expect(displacementPair([{ name: '3.5 EL' }, { name: '2.5 X' }])).toBe('2.5 dan 3.5')
+  })
+
+  it('says nothing when every variant shares an engine', () => {
+    expect(displacementPair([{ name: 'S / E' }, { name: 'V' }])).toBe('')
+    expect(displacementPair([{ name: '1.5 G' }, { name: '1.5 X' }])).toBe('')
+  })
+
+  // Three or more cannot be summarised as a pair without implying the middle
+  // displacement is not sold, so the fragment is dropped instead.
+  it('declines to summarise three or more', () => {
+    expect(displacementPair([{ name: '1.0 G' }, { name: '1.3 X' }, { name: '1.5 H' }])).toBe('')
   })
 })
 

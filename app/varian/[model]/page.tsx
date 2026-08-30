@@ -7,7 +7,7 @@ import { ListingIntakeForm } from '@/components/check/ListingIntakeForm'
 import { DirectAnswerBlock } from '@/components/seo/DirectAnswer'
 import { directAnswerFor } from '@/lib/direct-answers'
 import { VARIANT_GUIDES, type VariantVerdict } from '@/lib/variant-guides'
-import { variantLabelListFrom } from '@/lib/variant-label'
+import { variantPageTitle } from '@/lib/variant-label'
 import { clampMetaDescription } from '@/lib/meta-description'
 import { buildVariantLadder } from '@/lib/variant-ladder'
 import { getVariantLadderRows } from '@/lib/db/variant-ladder-query'
@@ -21,13 +21,14 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: Props): Metadata {
   const guide = VARIANT_GUIDES[params.model]
   if (!guide) return {}
-  // Newest generation — that's what most searchers are cross-shopping.
-  // Labels are the trim identifiers (G, X, H, AV), not the engine size: most
-  // variants in a generation share a displacement, so the old first-token
-  // extraction rendered "1.3 vs 1.3 vs 1.5 vs 1.5". See lib/variant-label.ts.
-  const newestGen    = guide.generations[guide.generations.length - 1]
-  const variantNames = variantLabelListFrom(newestGen?.variants ?? [])
-  const title = `${guide.model} Varian Mana Patut Beli? ${variantNames} | Paqar`
+  // Newest generation — that's what most searchers are cross-shopping. The
+  // title itself is assembled in lib/variant-label.ts, which owns both the
+  // wording (it leads with "Beza", the word every ranking query uses) and the
+  // render budget. The test imports the same builder rather than mirroring it.
+  const newestGen = guide.generations[guide.generations.length - 1]
+  const title = variantPageTitle({
+    make: guide.make, model: guide.model, variants: newestGen?.variants ?? [],
+  })
   // Purpose-written, not composed — see VariantGuide.metaDescription for why
   // truncating the on-page answer line produced worse copy than writing a
   // description outright. Still passed through the clamp: that is a backstop
