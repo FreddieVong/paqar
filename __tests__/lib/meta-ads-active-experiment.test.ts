@@ -57,17 +57,23 @@ import {
 import { resolveActiveExperiment } from '@/lib/meta-ads/active-experiment'
 import { VALUATION_PATHS } from '@/lib/funnel-stages'
 
-const LIVE_UTM       = 'creative_test_aug26'
-const LIVE_CAMPAIGN  = '120248441368300438'
-const OLD_UTM        = 'carlist_vs_mudah_aug26'
-const OLD_CAMPAIGN   = '120248230297470438'
+// DERIVED, never pinned. These were the literals 'creative_test_aug26' and
+// '120248441368300438'. When ACTIVE_CAMPAIGN was repointed to reviewedOffer on
+// 2026-08-31 the whole suite failed — not because coherence broke, but because
+// the test named a campaign that was no longer live. The property under test is
+// "reporting follows the active campaign and excludes a finished one", which is
+// true of whichever campaign that is.
+const LIVE_UTM       = ACTIVE_CAMPAIGN.utm
+const LIVE_CAMPAIGN  = ACTIVE_CAMPAIGN.metaCampaignId
+const OLD_UTM        = CAMPAIGNS.carlistVsMudah.utm
+const OLD_CAMPAIGN   = CAMPAIGNS.carlistVsMudah.metaCampaignId
 
 const ev = (o: Partial<Record<string, unknown>> = {}) => ({
   id: `r${Math.random()}`, event_name: 'valuation_started', amount_cents: null,
   check_id: null, journey_id: null, session_id: null,
   valuation_path: VALUATION_PATHS.plateReport,
   utm_source: 'fb', utm_medium: 'paid_social', utm_campaign: LIVE_UTM,
-  utm_content: 'creative_b_aug26', occurred_at: '2026-08-12T04:30:00.000Z', ...o,
+  utm_content: ACTIVE_CAMPAIGN.creatives[0], occurred_at: '2026-08-12T04:30:00.000Z', ...o,
 })
 
 beforeEach(() => { rows.data = []; applied.eq = {}; applied.inn = {} })
@@ -76,7 +82,7 @@ beforeEach(() => { rows.data = []; applied.eq = {}; applied.inn = {} })
 // 1. Default reporting resolves the live experiment
 // ---------------------------------------------------------------------------
 describe('default reporting resolves the live experiment', () => {
-  it('names creative_test_aug26 as the active campaign, not the finished Carlist test', () => {
+  it('names the live campaign as active, not the finished Carlist test', () => {
     expect(ACTIVE_CAMPAIGN.utm).toBe(LIVE_UTM)
     expect(ACTIVE_CAMPAIGN.utm).not.toBe(OLD_UTM)
   })
@@ -92,7 +98,7 @@ describe('default reporting resolves the live experiment', () => {
   it('counts live-campaign events and excludes the finished campaign by default', async () => {
     rows.data = [
       ev({ journey_id: 'live1' }),
-      ev({ journey_id: 'live2', utm_content: 'mudah_carousel_aug26' }),
+      ev({ journey_id: 'live2', utm_content: ACTIVE_CAMPAIGN.creatives[1] }),
       ev({ journey_id: 'old1', utm_campaign: OLD_UTM, utm_content: 'carlist_carousel' }),
     ]
     const f = await getFunnelCounts({ valuationPath: VALUATION_PATHS.plateReport })
@@ -115,7 +121,7 @@ describe('default reporting resolves the live experiment', () => {
 // ---------------------------------------------------------------------------
 describe('the creative breakdown carries both live arms', () => {
   it('exposes exactly the two live tags', () => {
-    expect(ACTIVE_CREATIVE_TAGS).toEqual(['creative_b_aug26', 'mudah_carousel_aug26'])
+    expect(ACTIVE_CREATIVE_TAGS).toEqual([...ACTIVE_CAMPAIGN.creatives])
   })
 
   it('derives the breakdown tags from the active campaign, never independently', () => {
@@ -125,9 +131,9 @@ describe('the creative breakdown carries both live arms', () => {
 
   it('counts each live arm separately and never merges them', async () => {
     rows.data = [
-      ev({ journey_id: 'b1', utm_content: 'creative_b_aug26' }),
-      ev({ journey_id: 'm1', utm_content: 'mudah_carousel_aug26' }),
-      ev({ journey_id: 'm2', utm_content: 'mudah_carousel_aug26' }),
+      ev({ journey_id: 'b1', utm_content: ACTIVE_CAMPAIGN.creatives[0] }),
+      ev({ journey_id: 'm1', utm_content: ACTIVE_CAMPAIGN.creatives[1] }),
+      ev({ journey_id: 'm2', utm_content: ACTIVE_CAMPAIGN.creatives[1] }),
     ]
     const counts: Record<string, number> = {}
     for (const tag of ACTIVE_CREATIVE_TAGS) {
@@ -136,7 +142,7 @@ describe('the creative breakdown carries both live arms', () => {
         utmContent: tag, valuationPath: VALUATION_PATHS.plateReport,
       })).valuationStarted
     }
-    expect(counts).toEqual({ creative_b_aug26: 1, mudah_carousel_aug26: 2 })
+    expect(counts).toEqual({ [ACTIVE_CAMPAIGN.creatives[0]]: 1, [ACTIVE_CAMPAIGN.creatives[1]]: 2 })
   })
 
   it('does not blend the _aug26 tags into the identically-shaped retired tags', async () => {
@@ -159,7 +165,7 @@ describe('the creative breakdown carries both live arms', () => {
     expect(campaignForCreative('mudah_carousel')).toBe(OLD_UTM)
     expect(campaignForCreative('creative_c')).toBe(CAMPAIGNS.firstPaidTest.utm)
     expect(campaignForCreative('creative_a')).toBe(CAMPAIGNS.firstPaidTest.utm)
-    expect(campaignForCreative('creative_b_aug26')).toBe(LIVE_UTM)
+    expect(campaignForCreative('creative_b_aug26')).toBe(CAMPAIGNS.creativeTestAug26.utm)
   })
 })
 
@@ -236,6 +242,6 @@ describe('coherence between the code config and the experiment row', () => {
     if (!res.coherent) throw new Error('unreachable')
     expect(res.metaCampaignId).toBe(LIVE_CAMPAIGN)
     expect(res.utmCampaign).toBe(LIVE_UTM)
-    expect(res.creativeTags).toEqual(['creative_b_aug26', 'mudah_carousel_aug26'])
+    expect(res.creativeTags).toEqual([...ACTIVE_CAMPAIGN.creatives])
   })
 })

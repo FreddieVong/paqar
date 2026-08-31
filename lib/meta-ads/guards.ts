@@ -301,6 +301,21 @@ export const CAMPAIGNS = {
      */
     metaCampaignId: '120248441368300438',
   },
+  /**
+   * The first campaign that advertises the offer that actually exists: a RM29
+   * report a human writes about one listing. Created 2026-08-31, one ad set and
+   * ONE ad — RM180 split two ways cannot produce a valid winner.
+   *
+   * `price_stated_b` is reserved, not live. CampaignConfig requires a pair
+   * because every previous experiment was two-armed; naming the empty slot is
+   * honest about there being one ad, and keeps a future second creative from
+   * reusing `price_stated` and blending two cohorts into one number.
+   */
+  reviewedOffer: {
+    utm:       'reviewed_offer_aug26',
+    creatives: ['price_stated', 'price_stated_b'],
+    metaCampaignId: '120248859746480438',
+  },
 } as const satisfies Record<string, CampaignConfig>
 
 /**
@@ -311,7 +326,28 @@ export const CAMPAIGNS = {
  * both agree, resolveActiveExperiment() reports the configuration incoherent
  * and the operator does nothing at all.
  */
-export const ACTIVE_CAMPAIGN: CampaignConfig = CAMPAIGNS.creativeTestAug26
+/**
+ * Repointed to reviewedOffer on 2026-08-31, the day it went live.
+ *
+ * WHY THIS HALF AND NOT THE OTHER. active-experiment.ts splits campaign
+ * identity deliberately: reporting reads this constant directly and is correct
+ * the moment the code deploys, while anything that can MUTATE Meta must also
+ * match meta_ads_experiment.meta_campaign_id and gets nothing while the two
+ * disagree.
+ *
+ * That row still names the Carlist campaign, so it already disagreed with the
+ * old value here and the operator was already inert. This changes reporting
+ * only: dashboards, the daily email and every funnel read now describe the
+ * campaign that is actually spending, instead of reporting zero for it while
+ * describing one that stopped — the exact defect of 2026-08-12.
+ *
+ * ARMING THE OPERATOR IS A SEPARATE, DELIBERATE STEP. It would need the row
+ * repointed AND daily_budget_cents / spend_cap_cents / opening_spend_cents set
+ * for this experiment; they still hold RM30, RM210 and RM174.30 from July. Half
+ * of an auto-pauser is worse than none — it would pause on evidence that cannot
+ * be true. Meta's RM700 account limit is the primary protection and is correct.
+ */
+export const ACTIVE_CAMPAIGN: CampaignConfig = CAMPAIGNS.reviewedOffer
 
 /**
  * Resolves a caller-supplied campaign to an exact utm_campaign value.
@@ -358,6 +394,7 @@ export const RETIRED_CREATIVE_TAGS = [
   'creative_a', 'creative_b',                 // videos
   ...CAMPAIGNS.firstPaidTest.creatives,       // creative_c, creative_d — graphics
   ...CAMPAIGNS.carlistVsMudah.creatives,      // carlist_carousel, mudah_carousel
+  ...CAMPAIGNS.creativeTestAug26.creatives,   // creative_b_aug26, mudah_carousel_aug26
 ] as const
 
 /**

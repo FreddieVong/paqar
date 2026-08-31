@@ -18,10 +18,12 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
+import { ACTIVE_CAMPAIGN } from '@/lib/meta-ads/guards'
 
 const SECRET = 'a'.repeat(32)
 
-const LIVE_CAMPAIGN = '120248441368300438'
+// Derived, not pinned — see meta-ads-active-experiment.test.ts for why.
+const LIVE_CAMPAIGN = ACTIVE_CAMPAIGN.metaCampaignId
 
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/env', () => ({
@@ -191,7 +193,7 @@ describe('Meta and Paqar are measured over the same window', () => {
   it('scopes the Paqar count to the campaign under test, not the default', async () => {
     seedExperiment()
     await call()
-    expect(store.paqarLandingCalls.at(-1)!.campaign).toBe('creative_test_aug26')
+    expect(store.paqarLandingCalls.at(-1)!.campaign).toBe(ACTIVE_CAMPAIGN.utm)
   })
 
   it('names the window in the evidence it records', async () => {

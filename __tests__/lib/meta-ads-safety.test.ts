@@ -26,7 +26,7 @@ import {
   TEST_DURATION_DAYS, ADVANTAGE_AUDIENCE_REQUIRED,
   ALLOW_BUDGET_INCREASE, ALLOW_NEW_CAMPAIGNS, ALLOW_NEW_ADSETS, ALLOW_NEW_CREATIVES,
   ALLOW_AUTOMATIC_RESTART, ALLOW_PAUSED_CREATION,
-  CAMPAIGNS, META_SOURCE_MACRO,
+  CAMPAIGNS, ACTIVE_CAMPAIGN, META_SOURCE_MACRO, isRetiredCreativeTag,
   type SpendAuthorisation,
 } from '@/lib/meta-ads/guards'
 
@@ -376,11 +376,11 @@ describe('createAdSetPaused is the money gate', () => {
 
 describe('createAdCreative validates every link before it POSTs', () => {
   const good = {
-    name: 'creative_b_aug26',
+    name: ACTIVE_CAMPAIGN.creatives[0],
     urlTags: `utm_source=${META_SOURCE_MACRO}&utm_medium=paid_social`
-      + `&utm_campaign=creative_test_aug26&utm_content=creative_b_aug26`,
-    expectedCampaign: 'creative_test_aug26',
-    expectedContent:  'creative_b_aug26',
+      + `&utm_campaign=${ACTIVE_CAMPAIGN.utm}&utm_content=${ACTIVE_CAMPAIGN.creatives[0]}`,
+    expectedCampaign: ACTIVE_CAMPAIGN.utm,
+    expectedContent:  ACTIVE_CAMPAIGN.creatives[0],
   }
 
   it('accepts a clean spec', async () => {
@@ -404,8 +404,8 @@ describe('createAdCreative validates every link before it POSTs', () => {
   it('checks EVERY carousel child, not just the first', async () => {
     await expect(client.createAdCreative({
       ...good,
-      expectedContent: 'mudah_carousel_aug26',
-      urlTags: good.urlTags.replace('creative_b_aug26', 'mudah_carousel_aug26'),
+      expectedContent: ACTIVE_CAMPAIGN.creatives[1],
+      urlTags: good.urlTags.replace(ACTIVE_CAMPAIGN.creatives[0], ACTIVE_CAMPAIGN.creatives[1]),
       objectStorySpec: { link_data: { link: 'https://paqar.my/', child_attachments: [
         { link: 'https://paqar.my/' },
         { link: 'https://paqar.my/?utm_source=meta' },
@@ -418,7 +418,7 @@ describe('createAdCreative validates every link before it POSTs', () => {
     await expect(client.createAdCreative({
       ...good,
       expectedContent: 'creative_b',
-      urlTags: good.urlTags.replace('creative_b_aug26', 'creative_b'),
+      urlTags: good.urlTags.replace(ACTIVE_CAMPAIGN.creatives[0], 'creative_b'),
       objectStorySpec: { video_data: { call_to_action: { value: { link: 'https://paqar.my/' } } } },
     })).rejects.toThrow(/url_tags/)
     expect(fetchMock).not.toHaveBeenCalled()
@@ -565,8 +565,8 @@ describe('destination and UTM guards', () => {
 
   it('requires every UTM the funnel reads', () => {
     const ok = `utm_source=${META_SOURCE_MACRO}&utm_medium=paid_social`
-      + `&utm_campaign=creative_test_aug26&utm_content=creative_b_aug26`
-    const expected = { campaign: 'creative_test_aug26', content: 'creative_b_aug26' }
+      + `&utm_campaign=${ACTIVE_CAMPAIGN.utm}&utm_content=${ACTIVE_CAMPAIGN.creatives[0]}`
+    const expected = { campaign: ACTIVE_CAMPAIGN.utm, content: ACTIVE_CAMPAIGN.creatives[0] }
     expect(isUrlTagsAllowed(ok, expected)).toBe(true)
     expect(isUrlTagsAllowed(ok.replace('paid_social', 'cpc'), expected)).toBe(false)
     expect(isUrlTagsAllowed(ok.replace(META_SOURCE_MACRO, 'meta'), expected)).toBe(false)
@@ -576,8 +576,8 @@ describe('destination and UTM guards', () => {
 
   it('refuses a retired creative tag, which would merge cohorts', () => {
     const tags = `utm_source=${META_SOURCE_MACRO}&utm_medium=paid_social`
-      + `&utm_campaign=creative_test_aug26&utm_content=creative_b`
-    expect(isUrlTagsAllowed(tags, { campaign: 'creative_test_aug26', content: 'creative_b' })).toBe(false)
+      + `&utm_campaign=${ACTIVE_CAMPAIGN.utm}&utm_content=creative_b`
+    expect(isUrlTagsAllowed(tags, { campaign: ACTIVE_CAMPAIGN.utm, content: 'creative_b' })).toBe(false)
   })
 
   it('fails closed when no custom conversion is configured', () => {
@@ -662,11 +662,22 @@ describe('declared limits match the brief', () => {
     expect(ALLOW_PAUSED_CREATION).toBe(true)
   })
 
-  it('the test campaign does not reuse a retired creative tag', () => {
-    // creative_b is retired; reusing it would hard-fail preflight and merge this
-    // cohort into 192 historical video events.
-    expect(CAMPAIGNS.creativeTestAug26.creatives)
-      .toEqual(['creative_b_aug26', 'mudah_carousel_aug26'])
+  it('the live campaign does not reuse a retired creative tag', () => {
+    // Asserts the PROPERTY, not a pair of literals. It used to compare
+    // CAMPAIGNS.creativeTestAug26.creatives against two hard-coded strings,
+    // which stopped meaning anything the moment ACTIVE_CAMPAIGN moved to
+    // reviewedOffer and those tags were retired — it then failed for a reason
+    // it was never testing. Reusing a retired tag would hard-fail preflight and
+    // merge a live cohort into historical events, and that is true of whichever
+    // campaign is active.
+    for (const tag of ACTIVE_CAMPAIGN.creatives) {
+      expect(isRetiredCreativeTag(tag), `${tag} is retired`).toBe(false)
+    }
+    // And every retired campaign's tags really are marked retired, so the
+    // check above cannot pass by the list being empty.
+    for (const c of [CAMPAIGNS.firstPaidTest, CAMPAIGNS.carlistVsMudah, CAMPAIGNS.creativeTestAug26]) {
+      for (const tag of c.creatives) expect(isRetiredCreativeTag(tag)).toBe(true)
+    }
   })
 })
 

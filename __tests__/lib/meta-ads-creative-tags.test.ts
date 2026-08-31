@@ -7,13 +7,16 @@ vi.mock('@/lib/env', () => ({ env: { META_GRAPH_API_VERSION: 'v25.0' } }))
 import {
   RETIRED_CREATIVE_TAGS, ACTIVE_CREATIVE_TAGS,
   isRetiredCreativeTag, isActiveCreativeTag, activeSlots, CARLIST_INTEREST,
+  ACTIVE_CAMPAIGN, CAMPAIGNS,
 } from '@/lib/meta-ads/guards'
 
 describe('retired video tags never become active graphic tags', () => {
-  it('active tags are the Aug26 creative-treatment pair', () => {
+  it('active tags are the live campaign\'s pair', () => {
     // The active pair follows ACTIVE_CAMPAIGN; it is never hard-coded apart
-    // from it, so switching campaigns cannot leave the two out of step.
-    expect(ACTIVE_CREATIVE_TAGS).toEqual(['creative_b_aug26', 'mudah_carousel_aug26'])
+    // from it, so switching campaigns cannot leave the two out of step. The
+    // literal pair that used to sit here contradicted that comment the moment
+    // ACTIVE_CAMPAIGN moved to reviewedOffer on 2026-08-31.
+    expect(ACTIVE_CREATIVE_TAGS).toEqual([...ACTIVE_CAMPAIGN.creatives])
   })
 
   it('retires every creative from earlier campaigns, in launch order', () => {
@@ -23,6 +26,7 @@ describe('retired video tags never become active graphic tags', () => {
     expect(RETIRED_CREATIVE_TAGS).toEqual([
       'creative_a', 'creative_b', 'creative_c', 'creative_d',
       'carlist_carousel', 'mudah_carousel',
+      'creative_b_aug26', 'mudah_carousel_aug26',
     ])
   })
 
@@ -32,8 +36,12 @@ describe('retired video tags never become active graphic tags', () => {
     // blending defect the _aug26 suffix exists to prevent.
     expect(isRetiredCreativeTag('mudah_carousel')).toBe(true)
     expect(isActiveCreativeTag('mudah_carousel')).toBe(false)
-    expect(isActiveCreativeTag('mudah_carousel_aug26')).toBe(true)
-    expect(isRetiredCreativeTag('mudah_carousel_aug26')).toBe(false)
+    // mudah_carousel_aug26 has since been retired too, so the live pair is a
+    // third cohort. The invariant is that each stays separate, not which one
+    // happens to be live.
+    expect(isRetiredCreativeTag('mudah_carousel_aug26')).toBe(true)
+    expect(isActiveCreativeTag('mudah_carousel_aug26')).toBe(false)
+    expect(isActiveCreativeTag(ACTIVE_CAMPAIGN.creatives[0])).toBe(true)
   })
 
   it('the two sets never overlap', () => {
@@ -60,15 +68,15 @@ describe('slots are positions, tags are identities', () => {
     // whichever ads are live. Conflating the column name with the tag is the
     // mistake this accessor exists to prevent.
     const [s1, s2] = activeSlots({ creative_a_ad_id: 'ad_1', creative_b_ad_id: 'ad_2' })
-    expect(s1).toEqual({ slot: 1, tag: 'creative_b_aug26', adId: 'ad_1' })
-    expect(s2).toEqual({ slot: 2, tag: 'mudah_carousel_aug26', adId: 'ad_2' })
+    expect(s1).toEqual({ slot: 1, tag: ACTIVE_CAMPAIGN.creatives[0], adId: 'ad_1' })
+    expect(s2).toEqual({ slot: 2, tag: ACTIVE_CAMPAIGN.creatives[1], adId: 'ad_2' })
   })
 
   it('survives an unconfigured slot without inventing a tag', () => {
     const [s1, s2] = activeSlots({ creative_a_ad_id: null, creative_b_ad_id: null })
     expect(s1.adId).toBeNull()
     expect(s2.adId).toBeNull()
-    expect(s1.tag).toBe('creative_b_aug26')
+    expect(s1.tag).toBe(ACTIVE_CAMPAIGN.creatives[0])
   })
 })
 
