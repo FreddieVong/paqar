@@ -66,3 +66,6 @@ node_modules/
 # from being committed. These patterns are the second line of defence.
 gsc-service-account*.json
 *service-account*.json
+
+# Generated ad creative — regenerate with scripts/make-ad-image.tsx
+paqar-reviewed-offer-*.png

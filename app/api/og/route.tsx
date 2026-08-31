@@ -1,5 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { NextRequest }   from 'next/server'
+import { SAMPLE_VERDICT, SAMPLE_DISCLAIMER } from '@/components/report/SampleVerdictCard'
+import { BASE_REPORT_LABEL } from '@/lib/pricing'
 
 export const runtime = 'edge'
 
@@ -50,14 +52,21 @@ export async function GET(request: NextRequest) {
     (
       <div style={{ width: '1200px', height: '630px', display: 'flex', fontFamily: 'sans-serif' }}>
 
-        {/* Left panel — mock verdict card */}
+        {/* Left panel — the verdict card.
+            EVERY FIGURE IS IMPORTED. This panel used to hardcode RM43,000,
+            RM51,400, "RM8,400" and "23 iklan setanding" — none of which matched
+            SAMPLE_VERDICT any more, and one of which (a RM51,400 asking price
+            against a RM43,000 market) described a car the sample was rebuilt in
+            2026-08-24 specifically to stop inventing. A social preview is the
+            one surface nobody re-reads before it ships, so it now reads the same
+            constant the homepage and /contoh-laporan render. */}
         <div style={{
           width: '480px', height: '630px',
           background: '#111827',
           display: 'flex', flexDirection: 'column',
           padding: '56px 48px',
           justifyContent: 'center',
-          gap: '20px',
+          gap: '18px',
         }}>
           <div style={{ display: 'flex' }}>
             <div style={{
@@ -65,30 +74,36 @@ export async function GET(request: NextRequest) {
               fontWeight: 900, fontSize: '18px', letterSpacing: '0.08em',
               padding: '6px 16px', borderRadius: '6px',
             }}>
-              MAHAL
+              {SAMPLE_VERDICT.badge}
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ color: 'white', fontWeight: 800, fontSize: '28px', lineHeight: 1.1 }}>
-              Lebih RM8,400 dari harga tengah iklan setanding
-            </span>
-            <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '16px' }}>
-              Berdasarkan 23 iklan setanding yang kami jumpa
-            </span>
-          </div>
+          <span style={{ color: 'white', fontWeight: 800, fontSize: '28px', lineHeight: 1.15 }}>
+            {SAMPLE_VERDICT.action}
+          </span>
           <div style={{
             background: 'rgba(255,255,255,0.06)', borderRadius: '12px',
-            padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '8px',
+            padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', letterSpacing: '0.06em' }}>HARGA PASARAN</span>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', letterSpacing: '0.06em' }}>DIMINTA</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#22C55E', fontWeight: 800, fontSize: '20px' }}>RM 43,000</span>
-              <span style={{ color: '#DC2626', fontWeight: 800, fontSize: '20px' }}>RM 51,400</span>
-            </div>
+            {/* Stacked, not side by side: "Lebih tinggi dari harga tengah" does
+                not fit beside a value in a 480px column. */}
+            {([
+              ['Seller minta',              SAMPLE_VERDICT.askingPrice, false],
+              [SAMPLE_VERDICT.rangeLabel,   SAMPLE_VERDICT.range,       false],
+              [SAMPLE_VERDICT.gapLabel,     SAMPLE_VERDICT.gap,         true ],
+            ] as const).map(([label, value, strong]) => (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', letterSpacing: '0.05em' }}>
+                  {label}
+                </span>
+                <span style={{ color: strong ? '#F87171' : 'white', fontWeight: 800, fontSize: '22px' }}>
+                  {value}
+                </span>
+              </div>
+            ))}
           </div>
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '13px' }}>
+            {SAMPLE_DISCLAIMER}
+          </span>
         </div>
 
         {/* Right panel — brand & headline */}
@@ -108,7 +123,7 @@ export async function GET(request: NextRequest) {
               Semak dulu, jangan tersalah beli kereta
             </span>
             <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '22px', lineHeight: 1.4 }}>
-              Disemak oleh manusia · Laporan Pembeli RM29
+              Disemak oleh manusia &middot; Laporan Pembeli {BASE_REPORT_LABEL}
             </span>
           </div>
           <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '14px', letterSpacing: '0.05em' }}>
