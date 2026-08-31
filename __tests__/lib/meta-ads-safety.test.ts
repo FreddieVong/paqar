@@ -23,7 +23,7 @@ import {
   MAX_DAILY_BUDGET_MYR, MAX_TOTAL_SPEND_MYR, MAX_ACTIVE_CAMPAIGNS,
   MAX_EXPERIMENT_ADSETS, MAX_DELIVERABLE_ADS_PER_ADSET, MAX_DELIVERABLE_ADS_PER_CAMPAIGN,
   MAX_ADSET_LIFETIME_BUDGET_MYR, MAX_NEW_COMMITMENT_MYR,
-  TEST_DURATION_DAYS, ADVANTAGE_AUDIENCE_REQUIRED,
+  TEST_DURATION_DAYS, ADVANTAGE_AUDIENCE_REQUIRED, APPROVED_PUBLISHER_PLATFORMS,
   ALLOW_BUDGET_INCREASE, ALLOW_NEW_CAMPAIGNS, ALLOW_NEW_ADSETS, ALLOW_NEW_CREATIVES,
   ALLOW_AUTOMATIC_RESTART, ALLOW_PAUSED_CREATION,
   CAMPAIGNS, ACTIVE_CAMPAIGN, META_SOURCE_MACRO, isRetiredCreativeTag,
@@ -507,9 +507,28 @@ describe('targeting guard', () => {
     expect(isTargetingAllowed(TARGETING_OK)).toBe(true)
     expect(isTargetingAllowed({ ...TARGETING_OK, age_min: 18 })).toBe(false)
     expect(isTargetingAllowed({ ...TARGETING_OK, genders: [1] })).toBe(false)
-    // Automatic placements means the field is ABSENT, not empty.
-    expect(isTargetingAllowed({ ...TARGETING_OK, publisher_platforms: ['facebook'] })).toBe(false)
     expect(isTargetingAllowed(null)).toBe(false)
+  })
+
+  it('permits the approved placement pair, and nothing else', () => {
+    // The rule moved from "publisher_platforms must be ABSENT" to "absent, or
+    // exactly this pair" on 2026-08-31. Automatic placements had put RM28 of
+    // RM63 into Reels, Threads and Stories on the REVIEWED_OFFER campaign's
+    // first day — 44% of spend on placements where a text-dense static image
+    // is scrolled past. Restricting delivery in Ads Manager then made the live
+    // ad set fail this guard, so code and reality disagreed about a running
+    // campaign. Pinned, not bounded: a partial or padded set is still refused.
+    const withPlatforms = (p: string[]) => ({ ...TARGETING_OK, publisher_platforms: p })
+    expect(isTargetingAllowed(TARGETING_OK)).toBe(true)                              // absent = automatic
+    expect(isTargetingAllowed(withPlatforms(['facebook', 'instagram']))).toBe(true)
+    expect(isTargetingAllowed(withPlatforms(['instagram', 'facebook']))).toBe(true)   // order is not identity
+    expect(isTargetingAllowed(withPlatforms(['facebook']))).toBe(false)               // partial
+    expect(isTargetingAllowed(withPlatforms([]))).toBe(false)                         // empty is not absent
+    expect(isTargetingAllowed(withPlatforms(['facebook', 'instagram', 'audience_network']))).toBe(false)
+    expect(isTargetingAllowed(withPlatforms(['facebook', 'messenger']))).toBe(false)
+    // The money-relevant property, stated directly.
+    expect(APPROVED_PUBLISHER_PLATFORMS).not.toContain('audience_network')
+    expect(APPROVED_PUBLISHER_PLATFORMS).not.toContain('messenger')
   })
 
   it('requires Advantage+ Audience ON, and is not merely unrestricted', () => {

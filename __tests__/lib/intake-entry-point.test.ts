@@ -71,10 +71,28 @@ describe('pasting a link starts something the buyer can see', () => {
   it('names the input that actually failed', () => {
     // The failure notice said "screenshot" whatever the buyer had given us, so
     // someone who pasted a link was told their screenshot could not be read.
-    const notice = FORM.slice(FORM.indexOf('Kami tak dapat baca')).slice(0, 900)
-    expect(notice).toContain('Kami tak dapat baca link itu')
-    expect(notice).toContain('Kami tak dapat baca screenshot itu')
-    expect(notice).toContain('shotCount')
+    // ANCHORED ON THE THREE BRANCHES, not on the first occurrence of a prefix.
+    // It used to slice 900 characters from the first 'Kami tak dapat baca' in
+    // the file. That is positional, not semantic: adding any earlier string
+    // starting with those words — as the extract-failure message briefly did on
+    // 2026-08-31 — moved the window off the notice entirely and failed the test
+    // for a reason it was never checking.
+    const idx = (s: string) => {
+      const i = FORM.indexOf(s)
+      expect(i, `source does not contain ${s}`).toBeGreaterThan(-1)
+      return i
+    }
+    const link   = idx('Kami tak dapat baca link itu')
+    const shot   = idx('Kami tak dapat baca screenshot itu')
+    // Same branch of the same ternary: they must sit together, whatever else
+    // the file grows above them.
+    expect(Math.max(link, shot) - Math.min(link, shot)).toBeLessThan(400)
+    // Searched FROM the notice, not from the top of the file: shotCount is also
+    // a state declaration ~19k characters earlier, and matching that one proves
+    // nothing about the notice showing a count.
+    const countd = FORM.indexOf('shotCount', Math.min(link, shot))
+    expect(countd, 'shotCount does not appear in the failure notice').toBeGreaterThan(-1)
+    expect(countd - Math.min(link, shot)).toBeLessThan(900)
   })
 
   it('promises only what the link path actually delivers', () => {

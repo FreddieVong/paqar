@@ -577,9 +577,33 @@ export interface TargetingSpec {
   age_max?:                number
   genders?:                unknown
   excluded_geo_locations?: unknown
-  publisher_platforms?:    unknown
+  publisher_platforms?:    string[] | null
   targeting_automation?:   { advantage_audience?: number }
 }
+
+/**
+ * The only manual placement set this account may run, and it is PINNED.
+ *
+ * WHY THIS EXISTS AS OF 2026-08-31. publisher_platforms had to be ABSENT, on
+ * the reasoning that two arms must be indistinguishable to Meta apart from the
+ * creative and automatic placements leaves the field unset. That reasoning was
+ * written for a two-arm creative test. REVIEWED_OFFER is one arm, and its first
+ * day of delivery showed automatic placements putting RM28 of RM63 — 44% — into
+ * Facebook Reels, Threads and Stories, where a text-dense static image is being
+ * scrolled past in a full-screen video feed. Feed took RM31.87 at 1.65% CTR;
+ * Threads took RM3.04 at 0.31%.
+ *
+ * So the field is now permitted, but only as this exact pair — pinned, not
+ * bounded. 'audience_network' and 'messenger' can never appear, and neither can
+ * a partial set, so preflight still rejects a hand-edited ad set that quietly
+ * differs from the one that was authorised.
+ *
+ * The per-platform POSITION lists are deliberately NOT pinned. Meta rewrites
+ * them: selecting "Facebook Feed" in the UI stored six positions including
+ * marketplace and notification, and that expansion is Meta's to change. Pinning
+ * a list Meta authors would fail on Meta's schedule, not on ours.
+ */
+export const APPROVED_PUBLISHER_PLATFORMS = ['facebook', 'instagram'] as const
 
 /**
  * The arms must be indistinguishable to Meta apart from the creative, so
@@ -593,7 +617,15 @@ export function isTargetingAllowed(t: TargetingSpec | null | undefined): boolean
   if (t.age_min !== APPROVED_AGE_MIN || t.age_max !== APPROVED_AGE_MAX) return false
   if ('genders' in t && t.genders != null) return false
   if ('excluded_geo_locations' in t && t.excluded_geo_locations != null) return false
-  if ('publisher_platforms' in t && t.publisher_platforms != null) return false
+  // Absent means automatic placements, which stays valid. Present means the
+  // approved pair EXACTLY — see APPROVED_PUBLISHER_PLATFORMS for why the rule
+  // moved from "must be absent" to "must be absent or exactly this".
+  if (t.publisher_platforms != null) {
+    const got = [...t.publisher_platforms].sort()
+    const want = [...APPROVED_PUBLISHER_PLATFORMS].sort()
+    if (got.length !== want.length) return false
+    if (got.some((p, i) => p !== want[i])) return false
+  }
   // Advantage+ Audience must be ON, and identically on both arms.
   //
   // The experiment requires identical audience CONFIGURATION, not identical

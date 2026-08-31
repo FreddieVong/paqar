@@ -154,7 +154,30 @@ export function ListingIntakeForm({
       const res = await fetch(`/api/listing-intake/${id}/extract`, {
         method: 'POST', headers: authHeaders(),
       })
-      if (!res.ok) { setPhase('start'); setStatus(null); return }
+      // ── A FAILED READ MUST SAY SO ────────────────────────────────────
+      // This reset to 'start' and returned, setting no error. The spinner
+      // stopped, the form emptied, and the buyer was told nothing — which is
+      // the same "paste link, nothing happens" this component was already
+      // fixed for once, arriving by a different route. On 2026-08-31 the ad
+      // campaign put 38 people on this page and none reached a check; a
+      // failure that leaves no trace is indistinguishable from a dead button,
+      // to the buyer and to us.
+      //
+      // 403 is separated because it has a different remedy: the intake token
+      // has expired and pasting again genuinely works, whereas asking someone
+      // to retry a server error usually wastes their time.
+      if (!res.ok) {
+        setPhase('start'); setStatus(null)
+        setError(res.status === 403
+          ? 'Sesi tamat tempoh. Tampal link itu sekali lagi.'
+          // Deliberately NOT worded "Kami tak dapat baca …". That phrase opens
+          // the amber notice below, which distinguishes link / iklan /
+          // screenshot; reusing it here says the same thing twice in different
+          // words, and intake-entry-point.test.ts locates that notice by its
+          // first occurrence in the source.
+          : 'Gagal membaca iklan itu. Cuba sekali lagi, atau muat naik screenshot.')
+        return
+      }
       const j = await res.json() as {
         summary: MergedListing; ready: boolean; needScreenshots: boolean
         ocrUnavailable: boolean; ocrOurFault?: boolean; searchPage?: boolean
@@ -204,7 +227,12 @@ export function ListingIntakeForm({
       if (j.ready) setAutoCover(true)
       setStatus(null)
     } catch {
+      // Same reasoning as the !res.ok branch above: silence here reads as a
+      // dead button. This one is a network or parse failure, so it names the
+      // connection rather than the advert — telling someone their link cannot
+      // be read when their signal dropped sends them to fix the wrong thing.
       setPhase('start'); setStatus(null)
+      setError('Talian terputus. Cuba sekali lagi.')
     }
   }, [])
 
