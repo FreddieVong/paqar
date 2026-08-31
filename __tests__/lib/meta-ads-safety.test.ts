@@ -69,20 +69,27 @@ const mutatingExports = () => Object.keys(client)
   .sort()
 
 describe('Meta client export surface', () => {
-  it('exports exactly the five approved mutating verbs, and no others', () => {
+  it('exports exactly the six approved mutating verbs, and no others', () => {
+    // uploadAdImage was added 2026-08-31, deliberately and with the guarantee
+    // restated rather than relaxed. An image in the media library has no status,
+    // budget, schedule or audience: it cannot deliver, cannot be activated, and
+    // reaches an ad only through createAdCreative and createAdPaused, both of
+    // which are already here and both strictly more powerful. A capability
+    // smaller than one already permitted cannot widen the surface that matters.
     expect(mutatingExports()).toEqual([
       'createAdCreative',
       'createAdPaused',
       'createAdSetPaused',
       'createCampaignPaused',
       'pauseCampaign',
+      'uploadAdImage',
     ])
   })
 
   it('every mutating export matches the approved whitelist', () => {
     // Strictly stronger than a word blacklist: this is what fails when someone
     // adds updateAdSet, resumeCampaign or setBudget under any spelling.
-    const ALLOWED = /^(pauseCampaign|createCampaignPaused|createAdSetPaused|createAdCreative|createAdPaused)$/
+    const ALLOWED = /^(pauseCampaign|createCampaignPaused|createAdSetPaused|createAdCreative|createAdPaused|uploadAdImage)$/
     for (const name of mutatingExports()) {
       expect(ALLOWED.test(name), `"${name}" is not an approved mutating verb`).toBe(true)
     }

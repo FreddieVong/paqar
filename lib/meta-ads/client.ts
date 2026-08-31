@@ -371,6 +371,59 @@ export async function createAdSetPaused(
   return { id: res.id }
 }
 
+/**
+ * Uploads an image to the ad account's media library and returns its hash.
+ *
+ * ── WHY THIS DOES NOT WEAKEN THE INVARIANT ─────────────────────────────────
+ *
+ * The guarantee this module holds is "cannot START OR INCREASE SPEND". An image
+ * in the media library has no status, no budget, no schedule and no audience.
+ * It cannot deliver, cannot be activated, and cannot be attached to anything
+ * without going through createAdCreative and createAdPaused — both of which are
+ * already here and both of which are strictly more powerful than this. Adding a
+ * capability smaller than one already permitted cannot widen the surface that
+ * matters.
+ *
+ * It is nonetheless a new mutating verb, so it is named in the whitelist in
+ * __tests__/lib/meta-ads-safety.test.ts. That test exists to force this to be a
+ * decision someone made and wrote down, rather than a line that slipped in.
+ *
+ * ── WHY IT EXISTS AT ALL ───────────────────────────────────────────────────
+ *
+ * Creative iteration is the loop this account is actually in — every ad it has
+ * run sold a retired product, and fixing that means trying images. Uploading by
+ * hand in Ads Manager between every attempt is the slowest step in that loop.
+ *
+ * Meta accepts the file as base64 on the `bytes` field, so this reuses metaPost
+ * rather than introducing a second transport. The response is keyed by an
+ * arbitrary filename, so the hash is read from the single entry rather than by
+ * guessing the key.
+ */
+const MAX_AD_IMAGE_BYTES = 30 * 1024 * 1024
+
+export async function uploadAdImage(
+  bytes: Buffer | Uint8Array,
+): Promise<{ hash: string; url?: string }> {
+  if (!ALLOW_PAUSED_CREATION) {
+    throw new MetaApiError('Paused creation is disabled (ALLOW_PAUSED_CREATION)', 0)
+  }
+  if (bytes.byteLength === 0) throw new MetaApiError('Image is empty', 0)
+  if (bytes.byteLength > MAX_AD_IMAGE_BYTES) {
+    throw new MetaApiError(
+      `Image is ${(bytes.byteLength / 1_048_576).toFixed(1)}MB; Meta's limit is 30MB`, 0)
+  }
+
+  const res = await metaPost<{ images?: Record<string, { hash?: string; url?: string }> }>(
+    `${accountPath()}/adimages`,
+    { bytes: Buffer.from(bytes).toString('base64') },
+  )
+
+  const entries = Object.values(res.images ?? {})
+  const hash = entries[0]?.hash
+  if (!hash) throw new MetaApiError('Upload returned no image hash', 0)
+  return { hash, url: entries[0]?.url }
+}
+
 export interface AdCreativeDraft {
   name:            string
   /** Same assets as an existing creative; a fresh spec, never the old object. */
