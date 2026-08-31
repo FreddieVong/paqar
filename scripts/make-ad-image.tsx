@@ -2,6 +2,7 @@ import React from 'react'
 import { writeFileSync } from 'node:fs'
 import { ImageResponse } from 'next/og'
 import { SAMPLE_VERDICT, SAMPLE_DISCLAIMER } from '../components/report/SampleVerdictCard'
+import { SELLER_QUESTIONS } from '../components/report/SampleReportPreview'
 import { BASE_REPORT_LABEL } from '../lib/pricing'
 import { TYPICAL_MINUTES } from '../lib/review-capacity'
 
@@ -13,39 +14,94 @@ import { TYPICAL_MINUTES } from '../lib/review-capacity'
  *
  * ── WHY THIS EXISTS ────────────────────────────────────────────────────────
  *
- * The ad needs to show the verdict card, because that card IS the product and
- * no competitor can show one. The two alternatives were both bad: a screen
- * recording (the report now waits on a human review, so it cannot be filmed in
- * one take) and a generated image (which would be a drawing of a product rather
- * than the product).
+ * The ad must show the report, because the report IS the product and no
+ * competitor can show one. A screen recording cannot be filmed in one take any
+ * more — lib/report-release.ts makes an unreviewed report unreachable, so
+ * paste-to-result is a wait, not a moment. A generated image would be a drawing
+ * of a product rather than the product.
  *
- * ── EVERY FIGURE IS IMPORTED ───────────────────────────────────────────────
+ * ── WHAT THE FIRST VERSION GOT WRONG ───────────────────────────────────────
  *
- * SAMPLE_VERDICT, BASE_REPORT_LABEL and TYPICAL_MINUTES come from the modules
- * the site itself renders from. An ad is the one surface nobody re-reads before
- * it runs, and a price or a claim typed here could drift from the checkout
- * silently and in public. app/api/og/route.tsx already shows what that costs —
- * it has RM43,000 / RM51,400 / "23 iklan" hardcoded, none of which match
- * SAMPLE_VERDICT any more.
+ * It rendered SampleVerdictCard and stopped: a price band on a white card, with
+ * no logo, no car, and nothing a buyer recognises. That is PRODUCT PROOF, which
+ * is a different job from an ad. Proof is read by someone already deciding; an
+ * ad has about one second to earn the second one. It failed the 5-second test
+ * this project holds every surface to, on the surface with the least time.
+ *
+ * What it now leads with is the thing a buyer can act on: the specific car, the
+ * ringgit gap, and the questions to put to the seller. The seller questions are
+ * the strongest content Paqar has — SampleReportPreview's own comment says two
+ * of them are specific to THIS advert, and that specificity "is exactly the
+ * comparison a buyer makes when deciding whether RM29 is worth it".
+ *
+ * ── EVERY FIGURE AND CLAIM IS IMPORTED ─────────────────────────────────────
+ *
+ * SAMPLE_VERDICT, SELLER_QUESTIONS, BASE_REPORT_LABEL and TYPICAL_MINUTES come
+ * from the modules the site renders from. An ad is the one surface nobody
+ * re-reads before it runs — app/api/og/route.tsx drifted to four wrong numbers
+ * exactly that way.
  *
  * ── WHAT IT MAY NOT SAY ────────────────────────────────────────────────────
  *
- * No instant result: the report waits on a human, so the wait is stated rather
- * than hidden — it is also the only thing here a competitor cannot copy. The
- * sample disclaimer travels with the figures, exactly as it does on the site.
+ * No instant result: the report waits on a human, and that wait is the one
+ * claim no competitor can copy, so it is stated rather than hidden. No JPJ or
+ * registry badge: the provider names no Malaysian source. No variant ASSERTION
+ * — variant matching is title-based, so the advert-mismatch line stays a
+ * question to ask the seller, which is how the sample words it too.
+ * SAMPLE_DISCLAIMER travels with the figures, as it does on the site.
  */
 
-const OLIVE = '#3D472F'
-const INK   = '#111827'
-const MUTED = '#6B7280'
-const RED   = '#DC2626'
-const REDBG = '#FEF2F2'
-const RULE  = '#FECACA'
-const YELLOW = '#FACC15'
+const OLIVE  = '#3D472F'
+const INK    = '#111827'
+const MUTED  = '#6B7280'
+const RED    = '#DC2626'
+const REDBG  = '#FEF2F2'
 
-const row = (label: string, value: string, strong = false) => (
+/** The car the whole sample is built on — named in SampleVerdictCard's header. */
+const SAMPLE_CAR = 'Perodua Myvi 2019 · 1.3 X'
+
+/**
+ * The logo, fetched from the live site and cropped by layout.
+ *
+ * TWO THINGS HERE ARE NOT PREFERENCES.
+ *
+ * The URL is remote because Satori does not decode a base64 data: URI in this
+ * Node context — it renders nothing at all, silently, and the first version of
+ * this ad shipped with an empty strip where the logo should have been. It does
+ * fetch http(s) images. So the source of truth is the deployed
+ * /paqar-logo.png, which is the same file as public/paqar-logo.png.
+ *
+ * The crop is by layout because there is no image library installed.
+ * paqar-logo.png is 1024x1024 with the wordmark in the middle third, so drawing
+ * it directly gives a mostly-empty square. The wordmark occupies x 120-910,
+ * y 398-616; scaling that window to `width` and offsetting inside an
+ * overflow-hidden box shows the mark alone.
+ */
+const LOGO_URL = 'https://paqar.my/paqar-logo.png'
+
+function Logo({ width = 300 }: { width?: number }) {
+  const SRC_W = 1024, BOX_X = 120, BOX_Y = 398, BOX_W = 790, BOX_H = 218
+  const scale = width / BOX_W
+  return (
+    <div style={{
+      display: 'flex', overflow: 'hidden',
+      width: `${width}px`, height: `${BOX_H * scale}px`,
+    }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={LOGO_URL}
+        width={SRC_W * scale}
+        height={SRC_W * scale}
+        style={{ marginLeft: `${-BOX_X * scale}px`, marginTop: `${-BOX_Y * scale}px` }}
+        alt=""
+      />
+    </div>
+  )
+}
+
+const Row = ({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', width: '100%' }}>
-    <span style={{ fontSize: '30px', color: MUTED }}>{label}</span>
+    <span style={{ fontSize: '28px', color: MUTED }}>{label}</span>
     <span style={{ fontSize: '32px', fontWeight: 700, color: strong ? RED : INK }}>{value}</span>
   </div>
 )
@@ -60,73 +116,68 @@ async function main() {
         background: '#FFFFFF', fontFamily: 'sans-serif',
       }}>
 
-        {/* Brand strip */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '56px 64px 0' }}>
-          <div style={{ background: YELLOW, width: '24px', height: '24px', borderRadius: '6px' }} />
-          <span style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '0.16em', color: MUTED }}>PAQAR</span>
+        <div style={{ display: 'flex', padding: '52px 64px 0' }}>
+          <Logo width={280} />
         </div>
 
-        {/* The hook — the buyer's question, not Paqar's process */}
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '36px 64px 0' }}>
-          <span style={{ fontSize: '66px', fontWeight: 800, lineHeight: 1.06, color: INK, letterSpacing: '-0.02em' }}>
-            Berbaloi ke
-          </span>
-          <span style={{ fontSize: '66px', fontWeight: 800, lineHeight: 1.06, color: OLIVE, letterSpacing: '-0.02em' }}>
-            harga tu?
-          </span>
-        </div>
-
-        {/* THE PRODUCT. Not a description of it. */}
-        <div style={{
-          margin: '44px 64px 0', background: REDBG, borderRadius: '20px',
-          padding: '40px 44px', display: 'flex', flexDirection: 'column',
-        }}>
-          <span style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '0.10em', color: OLIVE, marginBottom: '14px' }}>
-            KEPUTUSAN PAQAR
-          </span>
-          <span style={{ fontSize: '76px', fontWeight: 800, color: RED, lineHeight: 1 }}>
-            {SAMPLE_VERDICT.badge}
-          </span>
-          <span style={{ fontSize: '36px', fontWeight: 700, color: INK, marginTop: '10px', marginBottom: '30px' }}>
-            {SAMPLE_VERDICT.action}
-          </span>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-            {row('Seller minta', SAMPLE_VERDICT.askingPrice)}
-            {row(SAMPLE_VERDICT.rangeLabel, SAMPLE_VERDICT.range)}
-            {row(SAMPLE_VERDICT.gapLabel, SAMPLE_VERDICT.gap, true)}
-          </div>
-
-          <div style={{
-            display: 'flex', flexDirection: 'column', marginTop: '26px',
-            paddingTop: '24px', borderTop: `2px solid ${RULE}`,
-          }}>
-            <span style={{ fontSize: '24px', color: MUTED, marginBottom: '8px' }}>Cadangan</span>
-            <span style={{ fontSize: '32px', fontWeight: 700, color: INK, lineHeight: 1.3 }}>
-              {SAMPLE_VERDICT.suggestion}
+        {/* THE CAR. A used-car ad with no car in it is why the first version
+            failed — nothing on it told a scrolling buyer what they were looking at. */}
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '38px 64px 0' }}>
+          <span style={{ fontSize: '34px', fontWeight: 700, color: MUTED }}>{SAMPLE_CAR}</span>
+          <div style={{ display: 'flex', marginTop: '18px' }}>
+            <span style={{
+              background: RED, color: '#FFFFFF', fontSize: '30px', fontWeight: 800,
+              letterSpacing: '0.08em', padding: '8px 22px', borderRadius: '10px',
+            }}>
+              {SAMPLE_VERDICT.badge}
             </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', padding: '16px 64px 0' }}>
-          <span style={{ fontSize: '20px', color: MUTED }}>{SAMPLE_DISCLAIMER}</span>
+        {/* The money, at the size the money deserves. */}
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '30px 64px 0' }}>
+          <span style={{ fontSize: '118px', fontWeight: 800, color: RED, lineHeight: 1, letterSpacing: '-0.03em' }}>
+            {SAMPLE_VERDICT.gap}
+          </span>
+          <span style={{ fontSize: '36px', fontWeight: 700, color: INK, marginTop: '6px' }}>
+            {SAMPLE_VERDICT.gapLabel.toLowerCase()}
+          </span>
+        </div>
+
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: '14px',
+          margin: '34px 64px 0', padding: '30px 30px',
+          background: REDBG, borderRadius: '16px',
+        }}>
+          <Row label="Seller minta" value={SAMPLE_VERDICT.askingPrice} />
+          <Row label={SAMPLE_VERDICT.rangeLabel} value={SAMPLE_VERDICT.range} />
+        </div>
+
+        {/* The part a buyer can actually use tomorrow morning. */}
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '42px 64px 0' }}>
+          <span style={{ fontSize: '26px', fontWeight: 700, letterSpacing: '0.06em', color: OLIVE, marginBottom: '16px' }}>
+            KAMI BERITAHU APA NAK TANYA SELLER
+          </span>
+          {SELLER_QUESTIONS.slice(0, 4).map((q) => (
+            <div key={q} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '18px' }}>
+              <span style={{ fontSize: '30px', color: OLIVE, fontWeight: 800, lineHeight: 1.35 }}>·</span>
+              <span style={{ fontSize: '29px', color: INK, lineHeight: 1.35 }}>{q}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', padding: '10px 64px 0' }}>
+          <span style={{ fontSize: '20px', color: '#9CA3AF' }}>{SAMPLE_DISCLAIMER}</span>
         </div>
 
         <div style={{ flex: 1, display: 'flex' }} />
 
-        {/* The offer, and the wait stated honestly */}
-        <div style={{
-          background: OLIVE, padding: '44px 64px 52px',
-          display: 'flex', flexDirection: 'column',
-        }}>
-          <span style={{ fontSize: '44px', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.15 }}>
+        <div style={{ background: OLIVE, padding: '40px 64px 46px', display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '46px', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.15 }}>
             {BASE_REPORT_LABEL} &middot; Disemak oleh manusia
           </span>
-          <span style={{ fontSize: '30px', color: 'rgba(255,255,255,0.72)', marginTop: '14px' }}>
+          <span style={{ fontSize: '29px', color: 'rgba(255,255,255,0.72)', marginTop: '12px' }}>
             Hantar link iklan &middot; biasanya siap dalam {TYPICAL_MINUTES} minit
-          </span>
-          <span style={{ fontSize: '24px', color: 'rgba(255,255,255,0.4)', marginTop: '26px', letterSpacing: '0.05em' }}>
-            paqar.my
           </span>
         </div>
       </div>
@@ -137,13 +188,16 @@ async function main() {
   const buf = Buffer.from(await img.arrayBuffer())
   writeFileSync(out, buf)
   console.log(`wrote ${out}  (${(buf.length / 1024).toFixed(0)} KB, 1080x1350)`)
-  console.log('\nfigures used — all imported, none typed:')
-  console.log(`  verdict     ${SAMPLE_VERDICT.badge} / ${SAMPLE_VERDICT.action}`)
+  console.log('\nimported, none typed:')
+  console.log(`  car         ${SAMPLE_CAR}`)
+  console.log(`  verdict     ${SAMPLE_VERDICT.badge}`)
+  console.log(`  gap         ${SAMPLE_VERDICT.gap} ${SAMPLE_VERDICT.gapLabel}`)
   console.log(`  asking      ${SAMPLE_VERDICT.askingPrice}`)
   console.log(`  range       ${SAMPLE_VERDICT.range}`)
-  console.log(`  gap         ${SAMPLE_VERDICT.gap}`)
   console.log(`  price       ${BASE_REPORT_LABEL}`)
-  console.log(`  review time ${TYPICAL_MINUTES} minit`)
+  console.log(`  review      ${TYPICAL_MINUTES} minit`)
+  console.log('  questions:')
+  for (const q of SELLER_QUESTIONS.slice(0, 4)) console.log(`    - ${q}`)
 }
 
 main().catch((e) => { console.error(e); process.exit(1) })

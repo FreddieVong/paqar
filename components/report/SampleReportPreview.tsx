@@ -41,7 +41,7 @@ Harga RM39,800 sedikit di atas julat itu. Kalau condition cantik dan dokumen len
  * car would give you for free — which is exactly the comparison a buyer makes
  * when deciding whether RM29 is worth it.
  */
-const SELLER_QUESTIONS = [
+export const SELLER_QUESTIONS = [
   'Iklan tulis 1.5 AV — boleh tunjuk geran untuk sahkan varian?',
   'Meter 78,000 km — ada rekod servis untuk tunjuk?',
   'Kereta masih ada loan bank?',
