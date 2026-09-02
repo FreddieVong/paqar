@@ -60,6 +60,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/cara-semak-geran-kereta`,              lastModified: at('/cara-semak-geran-kereta', new Date('2025-05-01')),        changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/cara-semak-roadtax-kereta`,            lastModified: at('/cara-semak-roadtax-kereta', new Date('2025-05-01')),      changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/cara-semak-insurans-kereta`,           lastModified: at('/cara-semak-insurans-kereta', new Date('2025-05-01')),     changeFrequency: 'monthly', priority: 0.8 },
+    /**
+     * Referral services. Free to the buyer; Paqar earns a fee, and both pages
+     * say so in as many words.
+     *
+     * They were public, indexable and reachable by internal link, but named
+     * nowhere in this file — so Google found them without any of the signals
+     * every other page here gets. Neither promoted nor hidden, which is the
+     * one state with no argument for it.
+     *
+     * Listed at 0.6 rather than the 0.9 of the core product pages: they are
+     * real content worth ranking, but Paqar should not out-rank its own
+     * product with pages that send the buyer somewhere else.
+     */
+    { url: `${base}/pemeriksaan-fizikal`,                  lastModified: at('/pemeriksaan-fizikal', new Date('2026-08-27')),            changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${base}/banding-insurans`,                     lastModified: at('/banding-insurans', new Date('2026-08-27')),               changeFrequency: 'monthly', priority: 0.6 },
     // About / trust
     { url: `${base}/tentang`,                              lastModified: at('/tentang'),                                                changeFrequency: 'yearly',  priority: 0.6 },
     // Public API documentation (citable surface for AI assistants)
