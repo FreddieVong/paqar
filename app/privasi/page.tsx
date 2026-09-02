@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { whatsappUrl } from '@/lib/site'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 export const metadata: Metadata = {
   title: 'Dasar Privasi | Paqar',
   description: 'Dasar privasi Paqar — bagaimana kami mengumpul, menggunakan, dan melindungi data anda di bawah PDPA Malaysia.',
   alternates: { canonical: 'https://paqar.my/privasi' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY',
     title: 'Dasar Privasi | Paqar',
     description: 'Dasar privasi Paqar — bagaimana kami mengumpul, menggunakan, dan melindungi data anda di bawah PDPA Malaysia.',

@@ -106,4 +106,77 @@ export const GUIDE_LINKS: Readonly<Record<string, readonly GuideLink[]>> = {
     { href: '/bandingkan/vios-vs-city', title: 'Vios vs City — harga pasaran berdampingan',
       why:  'Julat harga iklan setanding untuk kedua-duanya, sebelah-menyebelah.' },
   ],
+  // ── HUB → GUIDE ───────────────────────────────────────────────────────────
+  //
+  // The link graph ran one way. GUIDE_LINKS wired guide→guide and guide→hub,
+  // so the guides finally had inbound links — but the market-price hubs, which
+  // are the highest-priority pages in app/sitemap.ts (0.85–0.9) and the ones
+  // that actually rank, passed nothing back into the guides. The strongest
+  // pages on the site were a dead end.
+  //
+  // That matters for one page in particular. /faq/roadtax-by-state holds the
+  // correct answer to "roadtax ikut negeri" — a query where, checked live on
+  // 2026-09-02, eight competing pages and the AI summarising them all give the
+  // WRONG answer (that it varies by state; it is federal, two schedules). Being
+  // right earns nothing without links, and it had none from anything strong.
+  //
+  // Each pairing below is the question the source page LEAVES the reader with,
+  // per the rule above — not a directory of everything Paqar has written.
+  'harga-kereta-terpakai': [
+    { href: '/faq/how-to-negotiate-used-car', title: 'Cara rundingkan harga kereta terpakai',
+      why:  'Anda dah tahu harga pasaran. Ini cara menukarnya jadi tawaran yang penjual boleh terima.' },
+    { href: '/faq/what-to-check-buying-used-car', title: 'Apa nak periksa sebelum beli',
+      why:  'Harga yang betul untuk kereta yang bermasalah tetap harga yang salah.' },
+    { href: '/faq/roadtax-by-state', title: 'Berapa roadtax kereta ini',
+      why:  'Harga beli bukan kos sebenar. Roadtax ikut kapasiti enjin, bukan ikut negeri.' },
+  ],
+  'bandingkan': [
+    { href: '/faq/honda-city-vs-toyota-vios', title: 'Honda City vs Toyota Vios',
+      why:  'Perbandingan penuh dua sedan yang paling kerap dibanding — bukan sekadar julat harga.' },
+    { href: '/faq/best-first-car-under-30k', title: 'Kereta pertama terbaik bawah RM30k',
+      why:  'Kalau ini kereta pertama anda, mula dari senarai pendek ini dahulu.' },
+  ],
+  'harga-perodua-terpakai': [
+    { href: '/faq/best-first-car-under-30k', title: 'Kereta pertama terbaik bawah RM30k',
+      why:  'Myvi ada dalam hampir setiap senarai pendek kereta pertama. Ini sebabnya, dan bila ia bukan pilihan terbaik.' },
+    { href: '/faq/how-to-negotiate-used-car', title: 'Cara rundingkan harga kereta terpakai',
+      why:  'Anda dah tahu julat harga Perodua. Ini cara guna angka itu.' },
+  ],
+  'harga-honda-terpakai': [
+    { href: '/faq/honda-city-buying-guide', title: 'Panduan beli Honda City terpakai',
+      why:  'Generasi mana, varian S/E/V yang mana, dan apa perlu disemak pada unit tertentu.' },
+    { href: '/faq/how-to-negotiate-used-car', title: 'Cara rundingkan harga kereta terpakai',
+      why:  'Anda dah tahu julat harga Honda. Ini cara guna angka itu.' },
+  ],
+  'harga-toyota-terpakai': [
+    { href: '/faq/toyota-vios-buying-guide', title: 'Panduan beli Toyota Vios terpakai',
+      why:  'Tahun mana paling berbaloi, dan tanda bahaya yang khusus untuk Vios.' },
+    { href: '/faq/how-to-negotiate-used-car', title: 'Cara rundingkan harga kereta terpakai',
+      why:  'Anda dah tahu julat harga Toyota. Ini cara guna angka itu.' },
+  ],
+  'harga-proton-terpakai': [
+    { href: '/faq/how-to-negotiate-used-car', title: 'Cara rundingkan harga kereta terpakai',
+      why:  'Anda dah tahu julat harga Proton. Ini cara guna angka itu.' },
+    { href: '/faq/what-to-check-buying-used-car', title: 'Apa nak periksa sebelum beli',
+      why:  'Senarai semak penuh untuk dibawa masa pergi tengok kereta.' },
+  ],
+  'harga-nissan-terpakai': [
+    { href: '/faq/how-to-negotiate-used-car', title: 'Cara rundingkan harga kereta terpakai',
+      why:  'Anda dah tahu julat harga Nissan. Ini cara guna angka itu.' },
+    { href: '/faq/what-to-check-buying-used-car', title: 'Apa nak periksa sebelum beli',
+      why:  'Senarai semak penuh untuk dibawa masa pergi tengok kereta.' },
+  ],
+  // /panduan is priority 0.9 in app/sitemap.ts and lists NINE guides — every
+  // one of them a /panduan-* or /cara-* page. It links to none of the eight
+  // /faq/* guides, while /faq links out to /panduan. Two guide hubs for the
+  // same buyer, pointing one way, which is why sitemap.ts could accurately
+  // call /faq "the only internal path into the /faq/* guides".
+  'panduan': [
+    { href: '/faq', title: 'Soalan lazim & panduan model',
+      why:  'Panduan khusus mengikut model — Myvi, City, Vios — dan soalan yang pembeli paling kerap tanya.' },
+    { href: '/faq/what-to-check-buying-used-car', title: 'Apa nak periksa sebelum beli',
+      why:  'Senarai semak penuh: luaran, dalaman, enjin, test drive, dan bila patut berundur.' },
+    { href: '/faq/roadtax-by-state', title: 'Roadtax ikut negeri? Sebenarnya tidak',
+      why:  'Kadar JPJ sebenar mengikut kapasiti enjin, dan kenapa ramai tersalah sangka ia ikut negeri.' },
+  ],
 }

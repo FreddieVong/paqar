@@ -1,3 +1,5 @@
+import { historyUpgradeAvailable } from '@/lib/pricing'
+
 // Single source of truth for Paqar's public identity: the profiles that
 // represent the same real-world entity, and the channels a customer can
 // actually reach us on.
@@ -110,8 +112,49 @@ export function telephoneE164(): string | null {
   return `+${number}`
 }
 
-const ORG_DESCRIPTION =
-  'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan Laporan Pembeli, dan semak rekod claim insurans sebelum bayar deposit.'
+/**
+ * What Paqar IS, for a machine deciding what category it belongs to.
+ *
+ * ── WHY THE OLD ONE COST PAQAR THE RECOMMENDATION ──────────────────────────
+ *
+ * It read: "Paqar membantu pembeli kereta terpakai Malaysia semak harga
+ * pasaran, dapatkan Laporan Pembeli, dan semak rekod claim insurans sebelum
+ * bayar deposit." — it led with SEMAK HARGA PASARAN, and this string is the
+ * description on all eighteen Organization nodes across the site.
+ *
+ * Checked against a live web-grounded model on 2026-09-02, asked how a
+ * Malaysian buyer should check a used-car price before paying a deposit.
+ * paqar.my ranked third and WAS retrieved — then the answer filed it under
+ * "Alat Bantu Penilaian Harga", a price-valuation tool listed beside Mudah and
+ * Carlist, while the actual recommendation went to PUSPAKOM, MyEG and CTOS.
+ *
+ * That is the correct conclusion from what Paqar published about itself. A
+ * price checker competing with free price checkers loses on price, and no
+ * amount of schema fixes a description that volunteers the wrong category.
+ * public/llms.txt already said the true thing — "not a car search engine, not
+ * an instant valuation... a PERSON reads that advert" — but structured data
+ * carries entity categorisation, and no major answer engine has confirmed it
+ * reads llms.txt at all. The two surfaces disagreed and the weaker one was the
+ * honest one.
+ *
+ * So this leads with the thing nothing else in the market sells: a person's
+ * verdict on ONE advert the buyer has already chosen.
+ *
+ * ── AND IT SOLD THE ADD-ON BY HAND ─────────────────────────────────────────
+ *
+ * "semak rekod claim insurans" was unconditional, while the add-on is gated on
+ * historyUpgradeAvailable(). Switch the gate off and all eighteen nodes would
+ * have advertised a product with no route to purchase — the exact failure this
+ * repo built lib/history-addon-copy.ts to end, sitting undetected in the entity
+ * description because nobody thought of schema as copy. It is derived now.
+ */
+function orgDescription(): string {
+  const base =
+    'Paqar menyemak satu iklan kereta terpakai untuk pembeli di Malaysia. Seorang manusia membaca iklan itu, membandingkannya dengan iklan setanding yang sedang dijual, dan memberi keputusan untuk kereta itu — teruskan, runding, atau lepaskan — berserta sasaran harga dan apa yang perlu disahkan sebelum anda bayar deposit.'
+  return historyUpgradeAvailable()
+    ? `${base} Rekod tuntutan insurans boleh ditambah kemudian dari dalam laporan, selepas nombor plat disahkan.`
+    : base
+}
 
 /**
  * The shared Organization node. Spread it and add page-specific fields
@@ -131,7 +174,7 @@ export function organizationSchema(): Record<string, unknown> {
     legalName:   LEGAL_NAME,
     url:         SITE_URL,
     logo:        `${SITE_URL}/paqar-logo.png`,
-    description: ORG_DESCRIPTION,
+    description: orgDescription(),
     sameAs:      [...SAME_AS],
     ...(telephone
       ? {

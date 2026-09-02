@@ -5,6 +5,8 @@ import { Shell }         from '@/components/layout/Shell'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
 import type { ModelHubSlug } from '@/lib/model-hubs'
 import { MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 const YEAR = new Date().getFullYear()
 
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
   description: 'Harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Julat harga iklan setanding sebelum anda bayar deposit.',
   alternates: { canonical: 'https://paqar.my/harga-kereta-terpakai' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY',
     title: `Harga Kereta Terpakai Malaysia ${YEAR} — Semak Harga Pasaran`,
     description: 'Harga pasaran kereta terpakai Malaysia mengikut model — Myvi, Axia, Vios, City, Saga dan lebih. Julat harga iklan setanding sebelum anda bayar deposit.',
@@ -109,6 +111,8 @@ export default async function HargaKeretaTerpakaiPage() {
             <Link href="/cara-beli-kereta-terpakai"      className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Cara beli kereta terpakai Malaysia →</Link>
             <Link href="/checklist-beli-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Checklist sebelum bayar deposit →</Link>
           </div>
+
+          <GuideRelated slug="harga-kereta-terpakai" />
         </div>
       </Shell>
     </>

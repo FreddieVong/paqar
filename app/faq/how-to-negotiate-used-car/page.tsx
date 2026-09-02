@@ -3,6 +3,7 @@ import { FaqGetValuationCta } from '@/components/faq/FaqGetValuationCta'
 import { Metadata } from 'next'
 import { guideSchema } from '@/lib/seo/guide-schema'
 import { GuideRelated } from '@/components/faq/GuideRelated'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 export const metadata: Metadata = {
   title: 'Cara Rundingkan Harga Kereta Terpakai | Panduan Paqar',
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
     siteName: 'Paqar',
     locale: 'ms_MY',
     type: 'article',
-    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
   },
 }
 

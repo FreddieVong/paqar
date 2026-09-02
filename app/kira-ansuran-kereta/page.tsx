@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { LoanCalculator } from '@/components/calculator/LoanCalculator'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 export const metadata: Metadata = {
   title: 'Kira Ansuran Kereta — Kalkulator Loan Kereta Malaysia | Paqar',
   description: 'Kalkulator ansuran kereta percuma — kira bayaran bulanan loan kereta, jumlah faedah, roadtax dan anggaran insurans. Tahu kos sebenar sebulan sebelum beli.',
   alternates: { canonical: 'https://paqar.my/kira-ansuran-kereta' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY',
     title: 'Kira Ansuran Kereta — Kalkulator Loan Kereta Malaysia',
     description: 'Kira bayaran bulanan loan kereta, jumlah faedah, roadtax dan anggaran insurans. Tahu kos sebenar sebulan sebelum beli.',

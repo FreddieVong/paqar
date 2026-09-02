@@ -2,13 +2,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 export const metadata: Metadata = {
   title: 'Panduan Beli Kereta Terpakai Malaysia | Paqar',
   description: 'Koleksi panduan lengkap untuk pembeli kereta terpakai Malaysia — semak saman, baca geran, kenal risiko, dan buat keputusan dengan yakin.',
   alternates: { canonical: 'https://paqar.my/panduan' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY',
     title: 'Panduan Beli Kereta Terpakai Malaysia',
     description: 'Koleksi panduan lengkap untuk pembeli kereta terpakai Malaysia — semak saman, baca geran, kenal risiko, dan buat keputusan dengan yakin.',
@@ -197,6 +199,9 @@ export default function PanduanPage() {
               Semak Kereta Sekarang →
             </Link>
           </div>
+
+
+          <GuideRelated slug="panduan" />
 
         </div>
       </Shell>

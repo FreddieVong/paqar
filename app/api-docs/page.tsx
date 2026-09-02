@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { organizationSchema, whatsappUrl } from '@/lib/site'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 const TITLE = 'Paqar Public API — Malaysian Used Car Valuation Data'
 const DESC  = 'Free JSON API for Malaysian used-car market valuations, price ranges, and variant guides. No API key required. Rate limited to 10 requests per minute.'
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   description: DESC,
   alternates: { canonical: 'https://paqar.my/api-docs' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY', title: TITLE, description: DESC, url: 'https://paqar.my/api-docs' },
 }
 

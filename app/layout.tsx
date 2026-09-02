@@ -6,6 +6,7 @@ import { BASE_REPORT_LABEL } from '@/lib/pricing'
 import { AnalyticsProvider } from '@/components/layout/AnalyticsProvider'
 import { MetaPixelScript } from '@/components/layout/MetaPixelScript'
 import { AdLandingTracker } from '@/components/layout/AdLandingTracker'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 const GoogleTagScript = dynamic(() => import('@/components/layout/GoogleTagScript').then(mod => ({ default: mod.GoogleTagScript })), { ssr: false })
 
@@ -95,7 +96,7 @@ export const metadata: Metadata = {
     siteName: 'Paqar',
     locale: 'ms_MY',
     type: 'website',
-    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
   },
   // Twitter title/description/images intentionally omitted — Next.js falls back
   // to each page's resolved openGraph values, keeping cards page-specific.
