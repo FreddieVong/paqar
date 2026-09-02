@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { Nav }   from '@/components/layout/Nav'
 import { Shell } from '@/components/layout/Shell'
 import { organizationSchema, whatsappUrl } from '@/lib/site'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 export const metadata: Metadata = {
   title: 'Tentang Paqar — Semak Harga Kereta Terpakai Malaysia',
   description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',
   alternates: { canonical: 'https://paqar.my/tentang' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY',
     title: 'Tentang Paqar — Semak Harga Kereta Terpakai Malaysia',
     description: 'Paqar membantu pembeli kereta terpakai Malaysia semak harga pasaran, dapatkan laporan pembeli, dan semak rekod claim insurans sebelum bayar deposit.',

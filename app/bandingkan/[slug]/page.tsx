@@ -16,6 +16,7 @@ import { getModelYearCohorts } from '@/lib/db/market-prices'
 import { formatFetchedAt, oldestFetchedAt, MARKET_PAGE_REVALIDATE_SECONDS } from '@/lib/market-price-format'
 import type { ModelHubSlug } from '@/lib/model-hubs'
 import { guidesForComparison } from '@/lib/related-guides'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 export const revalidate = MARKET_PAGE_REVALIDATE_SECONDS
 
@@ -248,7 +249,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     description: clampMetaDescription(cfg.description),
     alternates: { canonical: `https://paqar.my/bandingkan/${params.slug}` },
     openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY',
       title: `${cfg.titleA} vs ${cfg.titleB} Terpakai`,
       description: clampMetaDescription(cfg.description),

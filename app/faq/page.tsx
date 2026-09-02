@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link    from 'next/link'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 // Nav and Shell come from app/faq/layout.tsx, which wraps this page and every
 // /faq/* guide — rendering them here too would double the chrome.
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   description: DESC,
   alternates: { canonical: 'https://paqar.my/faq' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY', title: TITLE, description: DESC, url: 'https://paqar.my/faq' },
 }
 

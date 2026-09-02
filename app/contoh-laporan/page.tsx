@@ -5,6 +5,7 @@ import { SampleReportPreview } from '@/components/report/SampleReportPreview'
 import { historyUpgradeAvailable, BASE_REPORT_LABEL } from '@/lib/pricing'
 import { organizationRef } from '@/lib/site'
 import { articleDates } from '@/lib/seo/editorial-dates'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 const TITLE = 'Contoh Laporan Pembeli Kereta Terpakai — Paqar'
 // Derived, like every other price on the site. This page hardcoded "RM29"
@@ -18,7 +19,7 @@ export const metadata = {
   description: DESC,
   alternates: { canonical: 'https://paqar.my/contoh-laporan' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY',
     title: TITLE,
     description: DESC,

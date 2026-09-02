@@ -4,13 +4,14 @@ import { Shell } from '@/components/layout/Shell'
 import { whatsappUrl } from '@/lib/site'
 import { BASE_REPORT_LABEL, JOMCHECK_UPGRADE_CENTS, ringgit } from '@/lib/pricing'
 import { historyAddOnSellable } from '@/lib/history-addon-copy'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 export const metadata: Metadata = {
   title: 'Terma & Syarat | Paqar',
   description: 'Terma dan syarat penggunaan perkhidmatan Paqar — semakan status kenderaan pihak ketiga di Malaysia.',
   alternates: { canonical: 'https://paqar.my/terma' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY',
     title: 'Terma & Syarat | Paqar',
     description: 'Terma dan syarat penggunaan perkhidmatan Paqar — semakan status kenderaan pihak ketiga di Malaysia.',

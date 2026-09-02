@@ -50,11 +50,31 @@ export const SITE_ORIGIN = 'https://paqar.my'
  * card on brand. Deliberately not a stock car photograph — the product visual
  * is the result a buyer gets, and a generic car says nothing Paqar means.
  */
+/**
+ * The brand's one-line self-description, as alt text on the social card.
+ *
+ * It read "Paqar — semak harga kereta terpakai sebelum bayar deposit", and was
+ * hand-typed into 27 more pages beside this file that already owned it —
+ * including /privasi and /terma, which are not about checking a price at all.
+ *
+ * Same defect as ORG_DESCRIPTION in lib/site.ts, and corrected the same way:
+ * it led with SEMAK HARGA, which is the crowded commodity category Paqar loses
+ * on price inside, rather than the human verdict nothing else in the market
+ * sells. Exported so the 27 copies became references and the next page gets it
+ * right by default.
+ *
+ * Low individual weight — it is alt text on a share image, not a ranking
+ * signal. It is here because 27 copies of the wrong positioning is how the
+ * wrong positioning survives a correction.
+ */
+export const BRAND_OG_ALT =
+  'Paqar — keputusan disemak manusia untuk satu iklan kereta terpakai, sebelum bayar deposit'
+
 const DEFAULT_OG_IMAGE = {
   url:    '/api/og',
   width:  1200,
   height: 630,
-  alt:    'Paqar — semak harga kereta terpakai sebelum bayar deposit',
+  alt:    BRAND_OG_ALT,
 } as const
 
 export interface OgImage {

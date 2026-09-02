@@ -11,6 +11,7 @@ import { variantPageTitle } from '@/lib/variant-label'
 import { clampMetaDescription } from '@/lib/meta-description'
 import { buildVariantLadder } from '@/lib/variant-ladder'
 import { getVariantLadderRows } from '@/lib/db/variant-ladder-query'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 type Props = { params: { model: string } }
 
@@ -40,7 +41,7 @@ export function generateMetadata({ params }: Props): Metadata {
     description,
     alternates: { canonical: `https://paqar.my/varian/${params.model}` },
     openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY', title, description, url: `https://paqar.my/varian/${params.model}` },
   }
 }

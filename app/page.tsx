@@ -12,6 +12,7 @@ import { getCheckCount } from '@/lib/db/checks'
 import { organizationSchema, whatsappUrl, organizationRef } from '@/lib/site'
 import { BASE_REPORT_LABEL, BASE_REPORT_CENTS, ringgit, REVIEW_SLA_HOURS, REFUND_WORKING_DAYS } from '@/lib/pricing'
 import { TYPICAL_MINUTES, REVIEW_OPENS_HOUR } from '@/lib/review-capacity'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
 
 // Title, description and the social image are inherited from the root layout,
 // which describes the homepage anyway. og:url is declared HERE because the root
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
     siteName: 'Paqar',
     locale: 'ms_MY',
     type: 'website',
-    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
   },
 }
 

@@ -3,13 +3,15 @@ import Link              from 'next/link'
 import { Nav }           from '@/components/layout/Nav'
 import { Shell }         from '@/components/layout/Shell'
 import { CollectionSchema } from '@/components/layout/CollectionSchema'
+import { BRAND_OG_ALT } from '@/lib/seo/page-metadata'
+import { GuideRelated } from '@/components/faq/GuideRelated'
 
 export const metadata: Metadata = {
   title: 'Bandingkan Kereta Terpakai Malaysia — Myvi vs Axia, Vios vs City | Paqar',
   description: 'Bandingkan harga kereta terpakai Malaysia side-by-side. Myvi vs Axia, Vios vs City, Bezza vs Saga, Alza vs X50.',
   alternates: { canonical: 'https://paqar.my/bandingkan' },
   openGraph: {
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Paqar — semak harga kereta terpakai sebelum bayar deposit' }],
+      images: [{ url: '/api/og', width: 1200, height: 630, alt: BRAND_OG_ALT }],
       locale: 'ms_MY',
     title: 'Bandingkan Kereta Terpakai Malaysia — Myvi vs Axia, Vios vs City',
     description: 'Bandingkan harga kereta terpakai Malaysia side-by-side. Myvi vs Axia, Vios vs City, Bezza vs Saga, Alza vs X50.',
@@ -73,6 +75,8 @@ export default function BandingkanHub() {
             <Link href="/harga-kereta-terpakai" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Harga semua model →</Link>
             <Link href="/panduan" className="block font-body text-[13px] text-[#3D472F] underline underline-offset-2">Panduan beli kereta terpakai →</Link>
           </div>
+
+          <GuideRelated slug="bandingkan" />
         </div>
       </Shell>
     </>
