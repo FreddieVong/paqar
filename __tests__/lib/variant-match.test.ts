@@ -29,6 +29,16 @@ describe('missingTrimWords', () => {
     expect(missingTrimWords('SE', 'SEDAN 1.6')).toEqual(['SE'])
   })
 
+  it('accepts a hyphenated advert trim the record writes as one word, and vice versa', () => {
+    // Found in review: whole-word matching split "GR-S" into GR and S and
+    // reported GR missing from a record that says GRS.
+    expect(missingTrimWords('1.5 GR-S', 'YARIS 1.5 GRS')).toEqual([])
+    expect(missingTrimWords('2.5 X-Line', 'CX-5 2.5 XLINE')).toEqual([])
+    expect(missingTrimWords('1.5 GRS', 'YARIS 1.5 GR-S')).toEqual([])
+    // But a hyphenated trim the record really lacks is still reported, as written.
+    expect(missingTrimWords('1.5 GR-S', 'YARIS 1.5 G')).toEqual(['GR-S'])
+  })
+
   it('is empty when there is nothing to compare', () => {
     expect(missingTrimWords(null, 'EXORA PREMIUM')).toEqual([])
     expect(missingTrimWords('Premium', '')).toEqual([])

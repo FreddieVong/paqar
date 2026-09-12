@@ -13,9 +13,13 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { checkId: string } },
 ) {
-  const { claimToken, phone } = await request.json().catch(() => ({})) as {
-    claimToken?: string
-    phone?:      string
+  // request.json() RESOLVES to null for a body of "null", so the catch alone
+  // did not protect the destructuring. Anything that is not an object is
+  // treated as an empty body.
+  const raw = await request.json().catch(() => null) as unknown
+  const { claimToken, phone } = (raw && typeof raw === 'object' ? raw : {}) as {
+    claimToken?: unknown
+    phone?:      unknown
   }
 
   const mobile = typeof phone === 'string' ? normaliseMyMobile(phone) : null

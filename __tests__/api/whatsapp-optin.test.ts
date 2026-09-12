@@ -62,6 +62,16 @@ describe('POST /api/laporan-pembeli/[checkId]/whatsapp', () => {
     expect(setBuyerPhone).not.toHaveBeenCalled()
   })
 
+  it('answers 400 for a body that is JSON null or not JSON at all', async () => {
+    const raw = (body: string) => new NextRequest('http://localhost/api/laporan-pembeli/ch_1/whatsapp', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body,
+    })
+    expect((await POST(raw('null'), params)).status).toBe(400)
+    expect((await POST(raw('"just a string"'), params)).status).toBe(400)
+    expect((await POST(raw('{not json'), params)).status).toBe(400)
+    expect(setBuyerPhone).not.toHaveBeenCalled()
+  })
+
   it('refuses without a valid claim token', async () => {
     getCheck.mockResolvedValue(null)
     const res = await POST(req('ch_1', { claimToken: 'wrong', phone: '0123456789' }), params)
