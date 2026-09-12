@@ -93,6 +93,27 @@ Rows with status `untracked (pre-026)` predate delivery tracking (before
 2026-08-05). They are not evidence of a failure — leave them unless a buyer
 reports a problem.
 
+## Draf Paqar — the review boxes, pre-filled
+
+When you open an order in `/admin/review`, the four boxes (Nota untuk
+pembeli, Keputusan akhir, Langkah seterusnya, Soalan khas) are already filled
+in, and a **Draf Paqar** panel above them lists what the numbers show — e.g.
+*"Iklan kata 2020, tapi rekod JPJ kata didaftar 2019"*. If a fix is obvious
+(the year), the correction box is pre-filled too.
+
+- **Read every word before sending.** It is a draft. It only knows the ad,
+  the JPJ record and the price data; it has not seen the photos or the
+  screenshots. Fix what is wrong, add what you saw.
+- **The issues list is from code, not the AI** — the same thresholds the
+  buyer's report uses. The AI only writes the sentences, and a checker
+  rejects any draft that names a figure or year the order does not carry, or
+  uses words we never use ("penjual", "booking", "diputar", "dijamin").
+- **"Jana semula"** makes a fresh draft (~15 s). **"Tiada draf — …"** shows
+  why there is none (`no_api_key`, `model_failed`, `rejected: …`): write it
+  yourself, or fix the cause and regenerate.
+- Generated once, in the background, right after payment. Needs
+  `ANTHROPIC_API_KEY` in Vercel (already required for "Baca dari gambar").
+
 ## The second email — "laporan anda dah siap"
 
 The receipt is only proof of payment. The report itself is announced by a

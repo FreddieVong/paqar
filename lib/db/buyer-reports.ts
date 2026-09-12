@@ -404,6 +404,27 @@ export async function markReadyEmailFailed(
   }, 'ready_failed')
 }
 
+// ── Draf Paqar (migration 036) ───────────────────────────────────────────────
+//
+// The pre-filled reviewer boxes. Stored on the row so the queue renders it
+// without a model call on every page load, and so "Jana semula" replaces it
+// deliberately. A failed generation stores its reason in place of a draft:
+// the card shows why the boxes are empty instead of just leaving them empty.
+
+export async function saveReviewDraft(buyerReportId: string, draft: unknown): Promise<boolean> {
+  return updateReceiptState(buyerReportId, {
+    review_draft:              draft,
+    review_draft_generated_at: new Date().toISOString(),
+    review_draft_error:        null,
+  }, 'review_draft')
+}
+
+export async function saveReviewDraftError(buyerReportId: string, reason: string): Promise<boolean> {
+  return updateReceiptState(buyerReportId, {
+    review_draft_error: reason.slice(0, 300),
+  }, 'review_draft_error')
+}
+
 export async function getUndeliveredReceipts(limit = 50): Promise<BuyerReport[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase

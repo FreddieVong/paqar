@@ -68,6 +68,19 @@ export interface DocumentExpiry {
   updated_at: string
 }
 
+/** Mirrors lib/review-draft/generate ReviewDraft — kept structural so this file imports nothing from lib. */
+export interface ReviewDraftRecord {
+  version:         number
+  generatedAt:     string
+  model:           string
+  issues:          { code: string; text: string; correction?: { field: 'year'; value: string } }[]
+  corrections:     { year?: string }
+  note:            string
+  finalDecision:   string
+  nextAction:      string
+  sellerQuestions: string[]
+}
+
 export interface BuyerReport {
   id:              string
   check_id:        string
@@ -153,6 +166,10 @@ export interface BuyerReport {
   ready_email_provider_id?: string | null
   ready_email_last_error?:  string | null
   ready_email_sent_at?:     string | null
+  /** Draf Paqar (migration 036): the pre-filled reviewer boxes, or the reason there are none. */
+  review_draft?:              ReviewDraftRecord | null
+  review_draft_generated_at?: string | null
+  review_draft_error?:        string | null
   created_at:         string
   updated_at:         string
 }
