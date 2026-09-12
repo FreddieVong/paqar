@@ -15,6 +15,7 @@ import { JomCheckUpsell }  from './JomCheckUpsell'
 import { HistoryRiskBanner } from './HistoryRiskBanner'
 import { ReloadButton }     from './ReloadButton'
 import { VariantCheckCard } from './VariantCheckCard'
+import { YearCheckCard }    from './YearCheckCard'
 import { findGuideByMakeModel, findVariantPosition, VERDICT_LABELS } from '@/lib/variant-guides'
 import { assessDepreciation } from '@/lib/depreciation'
 
@@ -68,6 +69,12 @@ interface Props {
   vehicleData?:      Record<string, unknown> | null
   marketPrices?:     CachedMarketPrices | null
   addJomCheck?:      boolean
+  /**
+   * The year the advert (or the buyer) gave — check.year, untouched by any
+   * reviewer correction. Compared with the registration year by YearCheckCard;
+   * the identity the report is priced on already prefers the registry.
+   */
+  adYear?:           string | null
   jomcheckData?:     JomCheckResult | null
   jomcheckStatus?:   JomCheckStatus
   jomcheckManualPending?: boolean
@@ -128,7 +135,7 @@ interface Props {
   cohortBrand?:   string | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null, cohortBrand = null, cohortMarket = 'used', cohortVariantToken = null }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null, cohortBrand = null, cohortMarket = 'used', cohortVariantToken = null, adYear = null }: Props) {
   // The reading that may support a TAMPERING claim — null unless a human
   // confirmed it. Distinct from claimedMileageKm, which is still displayed as
   // context. Conflating the two is what published a false rollback warning
@@ -621,6 +628,11 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       {!addJomCheck && upsellJomCheck && (
         <JomCheckUpsell checkId={upsellJomCheck.checkId} claimToken={upsellJomCheck.claimToken} />
       )}
+
+      {/* 1b. Semakan Tahun — only when the advert and the registry disagree.
+          Before the price comparison: a year is roughly a year of
+          depreciation, and the figures below are for the registered year. */}
+      <YearCheckCard adYear={adYear} registrationYear={vehicleData?.registrationYear} />
 
       {/* 2. Perbandingan Harga */}
       {!vehicleNotFound && (vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {

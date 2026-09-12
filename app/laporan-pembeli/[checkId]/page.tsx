@@ -165,9 +165,10 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       askingPriceRm: report.asking_price_rm ?? null,
       mileageKm:     report.claimed_mileage_km ?? null,
     })
-    const reviewedLabel = correctedCarLabel(overrides, {
-      brand: row.check.brand, model: row.check.model, year: row.check.year,
-    })
+    // The headline's year is decided AFTER identity is resolved (below), so
+    // it is the year the report is priced on — registry over advert — and
+    // not the advert's. A report headed "Exora 2020" over "Didaftar 2019" was
+    // contradicting itself in its first two lines.
     // Lazy fetch: call VehicleAPI once, store in DB, serve from cache on subsequent views
     let vehicleData = report.vehicleapi_data as Record<string, unknown> | null ?? null
     if (!vehicleData) {
@@ -255,6 +256,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
     // from 2019 to 2018, the comparables must be 2018 cars; pulling the
     // uncorrected cohort would quietly undo the correction the buyer paid for.
     const identity = resolveCarIdentity({ check: row.check, vehicleData, overrides })
+    const reviewedLabel = correctedCarLabel(overrides, {
+      brand: row.check.brand, model: row.check.model, year: identity?.year ?? row.check.year,
+    })
 
     let marketPrices: CachedMarketPrices | null = null
     // Whether a background scrape is genuinely in flight. The spinner and the
@@ -333,6 +337,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               cohortVariantToken={identity?.variantToken ?? null}
               askingPriceRm={reviewed.askingPriceRm}
               vehicleData={vehicleData}
+              adYear={row.check.year ?? null}
               marketPrices={marketPrices}
               addJomCheck={report.add_jomcheck}
               jomcheckData={jomcheckData}
