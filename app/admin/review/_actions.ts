@@ -15,6 +15,7 @@ import { parseOverrides as parseOverrideJson } from '@/lib/reviewed-overrides'
 import { decrypt } from '@/lib/crypto'
 import { sendUndeliverableEmail, sendRefundCompletedEmail } from '@/lib/email/refund-notice'
 import { deliverReportReadyEmail } from '@/lib/report-ready-delivery'
+import { prepareReviewDraft } from '@/lib/review-draft/prepare'
 
 const PATH = '/admin/review'
 
@@ -395,4 +396,20 @@ async function notifyBuyer(
     buyerReportId: report.id, checkId: report.check_id, toEmail: report.buyer_email,
     reviewerNote, kind,
   })
+}
+
+/**
+ * "Jana semula" / "Jana draf": (re)build Draf Paqar for one report.
+ *
+ * Synchronous on purpose — the reviewer pressed the button and is waiting
+ * for the boxes to fill, so a ~10 s round-trip with the page refreshing at
+ * the end is the honest experience. The outcome lands on the row either way
+ * (a draft, or the reason there is none), and the card reads it back.
+ */
+export async function regenerateDraftAction(formData: FormData): Promise<void> {
+  if (!isAdminAuthenticated()) throw new Error('Unauthorized')
+  const reportId = String(formData.get('reportId') ?? '')
+  if (!reportId) { revalidatePath(PATH); return }
+  await prepareReviewDraft(reportId)
+  revalidatePath(PATH)
 }

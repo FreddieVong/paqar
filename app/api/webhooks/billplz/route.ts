@@ -6,6 +6,7 @@ import { markReportPaid, getBuyerReportByBillId,
          markUpgradePaid, getBuyerReportByUpgradeBillId,
          setVehicleApiData } from '@/lib/db/buyer-reports'
 import { deliverBuyerReportReceipt }              from '@/lib/receipt-delivery'
+import { prepareReviewDraft }                     from '@/lib/review-draft/prepare'
 import { triggerVehicleLookup } from '@/lib/vehicle-lookup-trigger'
 import { purchaserId, PURCHASER_ID_VERSION } from '@/lib/purchaser-identity'
 import { hash as hashPlate } from '@/lib/crypto'
@@ -126,6 +127,12 @@ async function reconcileOrphanedUpgrade(billId: string, paidAt: string): Promise
  * here, and it is the stricter of the two anyway.
  */
 const BILLPLZ_WEBHOOK_IP = 'billplz-webhook'
+
+// The post-payment work held by waitUntil — vehicle lookup, market cache and
+// now Draf Paqar (~15 s of model time) — runs past the response. waitUntil
+// only extends the invocation up to this limit; at the 10 s default the draft
+// would be cut off on most orders.
+export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
@@ -373,7 +380,16 @@ export async function POST(request: NextRequest) {
               checkId: buyerReport.check_id, error: String(err),
             })
           }
+          // ── Best-effort: Draf Paqar ─────────────────────────────────────
+          // AFTER the warm-up, not beside it: the draft compares the advert's
+          // year with the registration record and quotes the market band, and
+          // both are what the lines above just wrote. Never throws; a failure
+          // leaves a reason on the row and the reviewer writes the note as
+          // before.
+          await prepareReviewDraft(buyerReport.id)
         })())
+      } else {
+        waitUntil(prepareReviewDraft(buyerReport.id))
       }
     }
 

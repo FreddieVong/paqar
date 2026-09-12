@@ -17,10 +17,14 @@ import { decrypt } from '@/lib/crypto'
 import { ReviewerScreenshots } from '@/components/admin/ReviewerScreenshots'
 import {
   adminLogin, startReviewAction, releaseReportAction, releaseHistoryAction, markUnableAction,
-  startRefundAction, completeRefundAction, failRefundAction,
+  startRefundAction, completeRefundAction, failRefundAction, regenerateDraftAction,
 } from './_actions'
 
 export const dynamic = 'force-dynamic'
+// "Jana semula" runs a ~15 s model call inside this route's Server Action.
+// Vercel's default limit is 10 s, which would cut the draft off every time
+// and leave the row with neither a draft nor a reason.
+export const maxDuration = 60
 
 export const metadata = {
   title:  'Admin — Semakan Laporan',
@@ -125,13 +129,16 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 /** One correctable field. Blank means "no correction" — the draft value stands. */
-function Override({ name, label, draft }: { name: string; label: string; draft?: string | number | null }) {
+function Override(
+  { name, label, draft, value }:
+  { name: string; label: string; draft?: string | number | null; value?: string | null },
+) {
   return (
     <label className="block">
       <span className="font-heading font-bold text-[11px] text-[#6B7280]">{label}</span>
       <input
         name={`override_${name}`}
-        defaultValue=""
+        defaultValue={value ?? ''}
         placeholder={draft != null && draft !== '' ? String(draft) : '—'}
         className="w-full border border-[#D1D5DB] rounded-[8px] px-2.5 py-2 text-[14px] font-body mt-1"
       />
@@ -208,6 +215,58 @@ function VariantOverride(
   )
 }
 
+/**
+ * Draf Paqar — the issues code found, and the state of the draft.
+ *
+ * Sits directly above the release form so the reviewer reads the issues
+ * before the boxes they pre-fill. Three states: a draft (with when, and a
+ * button to make a fresh one), a recorded failure (with the reason, so the
+ * reviewer knows to write rather than wait), or nothing yet (a button).
+ */
+function DraftPanel({ report }: { report: BuyerReport }) {
+  const draft = report.review_draft ?? null
+  const issues = draft?.issues ?? []
+  return (
+    <div className="bg-[#F8FAF7] border border-[#E5E7EB] rounded-[12px] p-3.5 mb-3">
+      <div className="flex items-center justify-between gap-3 mb-1.5">
+        <p className="font-heading font-bold text-[11px] uppercase tracking-[.1em] text-[#3D472F]">
+          Draf Paqar
+        </p>
+        <form action={regenerateDraftAction}>
+          <input type="hidden" name="reportId" value={report.id} />
+          <button type="submit" className="font-heading font-bold text-[11px] text-[#3D472F] underline underline-offset-2">
+            {draft ? 'Jana semula' : 'Jana draf'}
+          </button>
+        </form>
+      </div>
+      {draft ? (
+        <>
+          <p className="font-body text-[11px] text-[#9CA3AF] mb-2">
+            Dijana {formatDateTime(report.review_draft_generated_at)} · kotak di bawah sudah diisi — baca, ubah, hantar.
+          </p>
+          {issues.length === 0 ? (
+            <p className="font-body text-[13px] text-[#15803D]">Tiada isu dikesan.</p>
+          ) : (
+            <ul className="space-y-1">
+              {issues.map(i => (
+                <li key={i.code} className="font-body text-[13px] text-[#B45309] leading-relaxed">⚠ {i.text}</li>
+              ))}
+            </ul>
+          )}
+        </>
+      ) : report.review_draft_error ? (
+        <p className="font-body text-[12px] text-[#B91C1C] break-words">
+          Tiada draf — {report.review_draft_error}. Tulis sendiri, atau cuba jana semula.
+        </p>
+      ) : (
+        <p className="font-body text-[12px] text-[#6B7280]">
+          Belum ada draf. Tekan &ldquo;Jana draf&rdquo; (≈15 saat) atau tulis sendiri.
+        </p>
+      )}
+    </div>
+  )
+}
+
 async function QueueCard(
   { row, historyReview = false, blockedCodes = [] }:
   { row: ReviewQueueRow; historyReview?: boolean; blockedCodes?: ReleaseBlockCode[] },
@@ -230,6 +289,9 @@ async function QueueCard(
   const refund      = report.refund_status ?? 'not_required'
   const inReview    = status === 'in_review'
   const unable      = status === 'unable_to_complete'
+  // Draf Paqar pre-fills the release form. It is a starting point the reviewer
+  // edits, never a value that bypasses them — every box stays a form field.
+  const draft       = report.review_draft ?? null
 
   return (
     <div className={`bg-white border rounded-[16px] p-5 ${unable ? 'border-[#FECACA]' : 'border-[#E5E7EB]'}`}>
@@ -438,6 +500,7 @@ async function QueueCard(
           )}
           {/* Corrections rebuild the actual report. A note explaining a wrong
               report is not a fix — the reviewer changes the output itself. */}
+          <DraftPanel report={report} />
           <form action={releaseReportAction} className="space-y-3">
             <input type="hidden" name="reportId" value={report.id} />
 
@@ -447,7 +510,7 @@ async function QueueCard(
             <div className="grid grid-cols-2 gap-2">
               <Override name="brand"  label="Jenama"  draft={check?.brand} />
               <Override name="model"  label="Model"   draft={check?.model} />
-              <Override name="year"   label="Tahun"   draft={check?.year} />
+              <Override name="year"   label="Tahun"   draft={check?.year} value={draft?.corrections?.year ?? null} />
               <VariantOverride options={prices?.variantOptions ?? []} applied={prices?.variantApplied ?? null} />
               <Override name="askingPriceRm"    label="Seller minta (RM)" draft={report.asking_price_rm} />
               <Override name="currentMileageKm" label="Mileage iklan (km)" draft={report.claimed_mileage_km} />
@@ -458,7 +521,7 @@ async function QueueCard(
                 output; whatever is typed here replaces it, so a reviewer who
                 disagrees with the draft can say so and the buyer reads the
                 human's decision instead of two contradictory ones. */}
-            <Override name="finalDecision" label="Keputusan akhir — ganti verdict auto" draft="" />
+            <Override name="finalDecision" label="Keputusan akhir — ganti verdict auto" draft="" value={draft?.finalDecision ?? null} />
 
             {/* THE EVIDENCE, WHERE THE DECISION IS TYPED.
                 Nothing stops a reviewer naming a target the market does not
@@ -478,7 +541,7 @@ async function QueueCard(
                 )}
               </p>
             )}
-            <Override name="nextAction"    label="Langkah seterusnya" draft="" />
+            <Override name="nextAction"    label="Langkah seterusnya" draft="" value={draft?.nextAction ?? null} />
 
             <label className="block">
               <span className="font-heading font-bold text-[11px] text-[#6B7280]">
@@ -487,6 +550,7 @@ async function QueueCard(
               <textarea
                 name="override_sellerQuestions"
                 rows={3}
+                defaultValue={draft?.sellerQuestions?.join('\n') ?? ''}
                 placeholder="Kosongkan kalau soalan standard dah cukup"
                 className="w-full border border-[#D1D5DB] rounded-[8px] px-2.5 py-2 text-[14px] font-body mt-1"
               />
@@ -508,6 +572,7 @@ async function QueueCard(
               </label>
               <textarea
                 name="reviewerNote" rows={5} required
+                defaultValue={draft?.note ?? ''}
                 placeholder={'Contoh: Saya dah tengok iklan ini. Seller tulis "V spec" tapi gambar tunjuk rim E spec — beza harga lebih kurang RM4,000.'}
                 className="w-full border border-[#D1D5DB] rounded-[10px] px-3 py-2.5 text-[14px] font-body leading-relaxed"
               />
