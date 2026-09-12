@@ -123,7 +123,11 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
                 reason={report.reviewer_note ?? null}
                 refundStatus={report.refund_status ?? null}
               />
-            : <UnderReviewNotice checkId={params.checkId} />}
+            : <UnderReviewNotice
+                checkId={params.checkId}
+                claimToken={claimToken ?? null}
+                buyerPhone={report.buyer_phone ?? null}
+              />}
         </Shell>
       </>
     )

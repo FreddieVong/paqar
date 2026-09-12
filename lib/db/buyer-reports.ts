@@ -425,6 +425,18 @@ export async function saveReviewDraftError(buyerReportId: string, reason: string
   }, 'review_draft_error')
 }
 
+// ── WhatsApp hand-off (migration 037) ────────────────────────────────────────
+
+/** The buyer's post-payment opt-in. Normalised (60XXXXXXXXX) before it gets here. */
+export async function setBuyerPhone(buyerReportId: string, phone: string): Promise<boolean> {
+  return updateReceiptState(buyerReportId, { buyer_phone: phone }, 'buyer_phone')
+}
+
+/** The operator tapped "WhatsApp pembeli". Records the moment; the send is theirs. */
+export async function markWhatsappSent(buyerReportId: string): Promise<boolean> {
+  return updateReceiptState(buyerReportId, { whatsapp_sent_at: new Date().toISOString() }, 'whatsapp_sent')
+}
+
 export async function getUndeliveredReceipts(limit = 50): Promise<BuyerReport[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase

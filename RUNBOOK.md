@@ -114,6 +114,24 @@ in, and a **Draf Paqar** panel above them lists what the numbers show — e.g.
 - Generated once, in the background, right after payment. Needs
   `ANTHROPIC_API_KEY` in Vercel (already required for "Baca dari gambar").
 
+## WhatsApp the buyer when the report is released
+
+E-mail from paqar.my lands in Junk more often than we'd like (Hotmail
+especially). So the waiting screen now asks the buyer for a WhatsApp number
+after they pay — optional, and most who skipped it at checkout give it here.
+
+On `/admin/review`, in **"Dilepaskan 7 hari lepas"**, every released row shows:
+
+- **green button "WhatsApp pembeli (012-345 6789) →"** — tap it. WhatsApp
+  opens on your phone with the message already written (plate + report
+  link). Press send. That's the whole job. The row then shows
+  **✓ WhatsApp dihantar 09:41** so you don't message twice.
+- **"WhatsApp: tiada nombor"** — the buyer never gave one. E-mail is the only
+  route; nothing more to do unless they contact us.
+
+Do this right after **Lepaskan laporan & hantar** — the same minute. It is
+the message that actually gets read.
+
 ## The second email — "laporan anda dah siap"
 
 The receipt is only proof of payment. The report itself is announced by a

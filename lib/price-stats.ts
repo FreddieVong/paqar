@@ -52,6 +52,14 @@ export function filterListingsByYear<T extends PricedListing>(
 // generation/trim of the same model name, or a dealer typo. Observed: one
 // RM115,999 listing among RM17k-39k cars stretched the raw max so far that
 // an asking price 41% above median was verdicted WAJAR instead of MAHAL.
+//
+// The floor is HALF the median, not the 35% it used to be. On 12 Sep 2026 a
+// buyer's report listed a RM11,900 Exora (49% of a RM24,400 median) as
+// evidence; it was a direct-owner ad deleted from Mudah within hours, so the
+// chip linked to nothing. Every cached cohort was checked before moving the
+// line: 52 of 6,365 ads sat between 35% and 50% of their median, and all of
+// them were wrong-year cars, wrong models or wholesale lots — not one was a
+// genuine same-year comparable. A real rough unit sits nearer 60%.
 export function filterOutlierPrices(prices: number[]): number[] {
   if (prices.length < 4) return prices
   const sorted = [...prices].sort((a, b) => a - b)
@@ -59,6 +67,6 @@ export function filterOutlierPrices(prices: number[]): number[] {
   const median = sorted.length % 2 === 0
     ? (sorted[mid - 1]! + sorted[mid]!) / 2
     : sorted[mid]!
-  const kept = prices.filter(p => p >= median * 0.35 && p <= median * 2.2)
+  const kept = prices.filter(p => p >= median * 0.5 && p <= median * 2.2)
   return kept.length >= 3 ? kept : prices
 }
