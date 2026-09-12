@@ -12,9 +12,9 @@ import { analytics } from '@/lib/analytics'
  * until the route answers and only when there is something to show, so the
  * homepage's one job — the check form — is untouched for everyone else.
  *
- * Shows the most recent paid report first; an unpaid free result is shown
- * only when there is no paid one, as the way back to what they were looking
- * at. One line, one tap.
+ * Paid reports only — released, under review, or undeliverable. A free
+ * result stays on "Laporan Saya"; it does not earn a bar on every page.
+ * One line, one tap.
  */
 const CACHE_KEY = 'paqar_laporan_banner'
 const CACHE_MS  = 10 * 60 * 1000
@@ -42,9 +42,12 @@ export function RememberedReportBanner() {
     if (suppressed) return
     let cancelled = false
     const show = (reports: ResolvedReport[]) => {
-      if (cancelled || reports.length === 0) return
-      const paid = reports.find(r => r.state !== 'free_result')
-      const chosen = paid ?? reports[0]!
+      if (cancelled) return
+      // Buyers only. A free result is still listed on "Laporan Saya", but a
+      // bar on every page for sixty days is noise for someone who checked
+      // one car and moved on.
+      const chosen = reports.find(r => r.state !== 'free_result')
+      if (!chosen) return
       setReport(chosen)
       analytics.rememberedReportShown({ surface: 'nav', state: chosen.state })
     }
@@ -71,7 +74,8 @@ export function RememberedReportBanner() {
     report.state === 'released'      ? { text: `Laporan ${report.label} dah siap.`,           cta: 'Buka laporan →',   cls: 'bg-[#F0FDF4] border-[#BBF7D0] text-[#15803D]' }
     : report.state === 'under_review' ? { text: `Laporan ${report.label} sedang disemak.`,     cta: 'Lihat status →',   cls: 'bg-[#FFFBEB] border-[#FDE68A] text-[#B45309]' }
     : report.state === 'undeliverable' ? { text: `Laporan ${report.label} tidak dapat disiapkan.`, cta: 'Lihat butiran →', cls: 'bg-[#FEF2F2] border-[#FECACA] text-[#B91C1C]' }
-    : { text: `Semakan ${report.label} anda masih ada.`, cta: 'Sambung →', cls: 'bg-[#F3F4F6] border-[#E5E7EB] text-[#374151]' }
+    : null
+  if (!copy) return null
 
   return (
     <a href={report.url}

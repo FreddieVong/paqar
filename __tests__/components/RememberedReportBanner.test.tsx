@@ -43,11 +43,19 @@ describe('RememberedReportBanner', () => {
     expect(link.textContent).toContain('PPD769')
   })
 
-  it('offers the way back to a free result when that is all there is', async () => {
+  it('stays quiet for a free result — the bar follows buyers, not every visitor who ever checked', async () => {
     fetchMock.mockResolvedValue(reply([free]))
+    const { container } = render(<RememberedReportBanner />)
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    await new Promise(r => setTimeout(r, 10))
+    expect(container.innerHTML).toBe('')
+  })
+
+  it('shows a paid report that is still under review', async () => {
+    fetchMock.mockResolvedValue(reply([{ ...released, state: 'under_review' }]))
     render(<RememberedReportBanner />)
     const link = await screen.findByRole('link')
-    expect(link.textContent).toContain('Semakan Perodua Myvi 2019 anda masih ada.')
+    expect(link.textContent).toContain('sedang disemak')
   })
 
   it('stays off the report page itself and off Laporan Saya, without even asking', async () => {
