@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import type { ResolvedReport } from '@/lib/server/remembered-reports'
+import { analytics } from '@/lib/analytics'
 
 /**
  * "Laporan PPD1234 dah siap — Buka →", for the phone that paid.
@@ -24,7 +25,9 @@ export function RememberedReportBanner() {
       .then((body: { reports?: ResolvedReport[] } | null) => {
         if (cancelled || !body?.reports?.length) return
         const paid = body.reports.find(r => r.state !== 'free_result')
-        setReport(paid ?? body.reports[0]!)
+        const chosen = paid ?? body.reports[0]!
+        setReport(chosen)
+        analytics.rememberedReportShown({ surface: 'home', state: chosen.state })
       })
       .catch(() => {})
     return () => { cancelled = true }
@@ -40,6 +43,7 @@ export function RememberedReportBanner() {
 
   return (
     <a href={report.url}
+       onClick={() => analytics.rememberedReportOpened({ surface: 'home', state: report.state })}
        className={`block border-b px-5 py-3 ${copy.cls}`}>
       <span className="font-body text-[14px]">{copy.text}</span>{' '}
       <span className="font-heading font-bold text-[14px]">{copy.cta}</span>

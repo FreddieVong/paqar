@@ -10,6 +10,7 @@ import { REMEMBERED_COOKIE } from '@/lib/remembered-reports'
 import { SESSION_COOKIE } from '@/lib/attribution'
 import { gatherRemembered, resolveRememberedReports, type RememberedState } from '@/lib/server/remembered-reports'
 import { formatMalayDate } from '@/lib/format-date-my'
+import { AnalyticsEvent } from '@/components/layout/AnalyticsEvent'
 
 // Reads the buyer's cookie, so it renders per request. It is noindex anyway.
 export const dynamic = 'force-dynamic'
@@ -77,6 +78,7 @@ export default async function MyReportPage() {
       <Nav />
       <Shell>
         <div className="py-6 space-y-5">
+          <AnalyticsEvent event="laporan_saya_viewed" properties={{ remembered_count: remembered.length }} />
           <h1 className="font-heading font-extrabold text-[26px] leading-tight tracking-tight text-[#111827]">
             Laporan saya
           </h1>

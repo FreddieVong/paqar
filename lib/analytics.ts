@@ -253,4 +253,24 @@ export const analytics = {
 
   calculatorUsed: (props: { price: number }) =>
     posthog.capture('calculator_used', props),
+
+  // ── Getting a paid report into the buyer's hands (12–13 Sep 2026) ──────
+  //
+  // E-mail alone lost a buyer; these are the three routes around it. None
+  // carries a URL or a number — the state and the surface are the question.
+
+  /** The buyer left a WhatsApp number on the waiting screen. */
+  whatsappOptinSaved: (props: { surface: 'under_review' }) =>
+    posthog.capture('whatsapp_optin_saved', props),
+
+  /** The phone that paid was shown its report on a page it did not ask for it. */
+  rememberedReportShown: (props: {
+    surface: 'home'
+    state:   'released' | 'under_review' | 'undeliverable' | 'free_result'
+  }) => posthog.capture('remembered_report_shown', props),
+
+  rememberedReportOpened: (props: {
+    surface: 'home'
+    state:   'released' | 'under_review' | 'undeliverable' | 'free_result'
+  }) => posthog.capture('remembered_report_opened', props),
 }

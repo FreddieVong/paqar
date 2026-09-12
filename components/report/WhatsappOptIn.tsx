@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { analytics } from '@/lib/analytics'
 
 interface Props {
   checkId:    string
@@ -40,6 +41,7 @@ export function WhatsappOptIn({ checkId, claimToken, initialPhone }: Props) {
     if (res?.ok && body?.phone) {
       setSaved(body.phone)
       setEditing(false)
+      analytics.whatsappOptinSaved({ surface: 'under_review' })
     } else {
       setError(body?.error ?? 'Gagal menyimpan — sila cuba semula.')
     }
