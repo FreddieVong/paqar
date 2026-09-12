@@ -93,6 +93,31 @@ Rows with status `untracked (pre-026)` predate delivery tracking (before
 2026-08-05). They are not evidence of a failure — leave them unless a buyer
 reports a problem.
 
+## The second email — "laporan anda dah siap"
+
+The receipt is only proof of payment. The report itself is announced by a
+second email when you press **Lepaskan laporan & hantar**, and that email is
+tracked separately (migration 035). Where to look: `/admin/review`, the
+**"Dilepaskan 7 hari lepas"** list at the bottom. Every released row shows one
+of:
+
+- **✓ E-mel laporan siap dihantar 08:41 · Resend <id>** — handed to Resend.
+  The id is the message in the Resend dashboard (Emails → search the id) if
+  you need to confirm it was *delivered*, not just sent.
+- **✗ E-mel laporan siap GAGAL — <reason>** — the buyer was NOT told their
+  report is ready. WhatsApp them the report link (+60 12-442 4221 is ours;
+  the link is in their receipt too). Reasons you will see:
+  - `resend_api_key_missing` — `RESEND_API_KEY` is not set in Vercel. Nothing
+    is being sent to anyone; fix the env var first.
+  - `missing_claim_token` — the check was claimed into an account; the buyer
+    can sign in to see it.
+  - `send_failed: …` — Resend refused. Read the reason; a domain or
+    suppression problem needs fixing in Resend before anything will send.
+- **tidak direkod** — released before 2026-09-12. Not evidence either way.
+
+If a receipt row shows `resend_api_key_missing` in `/admin/receipts`, the same
+applies: that row was never sent, and neither was anything else.
+
 Full reconciliation, including which paid reports still have a route back:
 
 ```bash

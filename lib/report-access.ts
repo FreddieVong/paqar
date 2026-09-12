@@ -53,3 +53,18 @@ export function describeAccessFailure(params: {
   if (!token || token === 'null' || token === 'undefined') return 'missing_claim_token'
   return null
 }
+
+/**
+ * Strip the access credential from provider text before it is stored.
+ *
+ * A send failure records the provider's message beside the row. Providers echo
+ * what they were given, and what they were given includes the report URL — so
+ * without this, a long enough error would write the token into a column that
+ * the admin queue prints. The query-string form covers an echoed URL; the raw
+ * value covers a token quoted on its own.
+ */
+export function redactClaimToken(text: string, token: string | null | undefined): string {
+  let out = text.replace(/claim_token=[^&\s"'<>]+/g, 'claim_token=[redacted]')
+  if (token) out = out.split(token).join('[redacted]')
+  return out
+}

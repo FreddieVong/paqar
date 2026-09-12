@@ -1,7 +1,7 @@
 import { getCheck }                    from '@/lib/db/checks'
 import { decrypt }                     from '@/lib/crypto'
 import { sendReceiptEmail }            from '@/lib/email/receipt'
-import { buildBuyerReportAccessUrl, describeAccessFailure } from '@/lib/report-access'
+import { buildBuyerReportAccessUrl, describeAccessFailure, redactClaimToken } from '@/lib/report-access'
 import {
   claimReceiptSend, markReceiptSent, markReceiptFailed,
 }                                      from '@/lib/db/buyer-reports'
@@ -77,7 +77,7 @@ export async function deliverBuyerReportReceipt(
   }
 
   try {
-    await sendReceiptEmail({
+    const providerId = await sendReceiptEmail({
       product:     'buyer_report',
       toEmail:     report.buyer_email,
       amountCents: report.amount_cents,
@@ -86,6 +86,15 @@ export async function deliverBuyerReportReceipt(
       reportUrl,
       checkId,
     })
+    // A skipped send is not a send. sendReceiptEmail returns null when Resend
+    // is not configured, and this path used to mark that `sent` — a row an
+    // operator reads as delivered while the provider dashboard shows nothing.
+    if (providerId === null) {
+      const reason = 'resend_api_key_missing'
+      await markReceiptFailed(buyerReportId, reason)
+      reportMoneyPathFailure('receipt_not_configured', { buyerReportId, checkId, reason })
+      return { ok: false, status: 'failed', reason }
+    }
     // The email went out. If the state write fails the customer still has
     // their receipt, but delivery is now UNTRACKED — say so rather than
     // reporting a cleanly tracked send.
@@ -97,9 +106,10 @@ export async function deliverBuyerReportReceipt(
     }
     return { ok: true, status: 'sent', tracked }
   } catch (err) {
-    // Provider errors can echo the payload; keep only the class and a short
-    // prefix so no token or address reaches the column.
-    const reason = `send_failed: ${String(err).slice(0, 160)}`
+    // Provider errors can echo the payload — including the URL, and so the
+    // token. Redact before the prefix is cut so the credential cannot reach
+    // the column.
+    const reason = `send_failed: ${redactClaimToken(String(err), claimToken).slice(0, 160)}`
     await markReceiptFailed(buyerReportId, reason)
     // The buyer has paid and has no link to what they bought. Whatever else is
     // noisy, this one is worth an alert.

@@ -1,5 +1,6 @@
 import type { JomCheckResult, JomCheckClaim, JomCheckIncident, Severity } from '@/lib/jomcheck/core'
 import { detectMileageRollback } from '@/lib/jomcheck/core'
+import { formatMalayDate } from '@/lib/format-date-my'
 
 const CLAIM_LABELS: Record<JomCheckClaim['type'], string> = {
   accident:   'Kemalangan / Own Damage',
@@ -21,17 +22,8 @@ const SEVERITY_BADGE: Record<Severity, { label: string; cls: string }> = {
 
 function formatIncidentDate(iso: string | null): string {
   if (!iso) return 'Tarikh tidak pasti'
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return iso
-  return `${d.getDate()} ${MALAY_MONTHS[d.getMonth()]} ${d.getFullYear()}`
-}
-
-const MALAY_MONTHS = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogos', 'Sep', 'Okt', 'Nov', 'Dis']
-
-function formatMalayDate(isoString: string): string {
-  const d = new Date(isoString)
-  if (isNaN(d.getTime())) return ''
-  return `${d.getDate()} ${MALAY_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+  // An unparseable value is shown as-is: the insurer's own string beats nothing.
+  return formatMalayDate(iso) || iso
 }
 
 function ShieldCheck({ className }: { className?: string }) {

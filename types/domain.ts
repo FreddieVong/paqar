@@ -146,6 +146,13 @@ export interface BuyerReport {
   receipt_attempts?:   number | null
   receipt_last_error?: string | null
   receipt_sent_at?:    string | null
+  // Release ("laporan anda dah siap") email delivery (migration 035). NULL on
+  // rows released before 2026-09-12 — unknown, never sent.
+  ready_email_status?:      'sent' | 'failed' | null
+  ready_email_kind?:        'first' | 'history' | null
+  ready_email_provider_id?: string | null
+  ready_email_last_error?:  string | null
+  ready_email_sent_at?:     string | null
   created_at:         string
   updated_at:         string
 }

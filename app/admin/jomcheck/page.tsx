@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
+import { formatMalayDateTime } from '@/lib/format-date-my'
 import { listManualPendingReports, listRecentlyFulfilledReports } from '@/lib/jomcheck/db'
 import { decrypt } from '@/lib/crypto'
 import type { JomCheckResult } from '@/lib/jomcheck'
@@ -21,12 +22,7 @@ const CLAIM_FIELDS = [
   { name: 'total_loss', label: 'Total Loss' },
 ] as const
 
-function formatDateTime(iso: string | null): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('ms-MY', {
-    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-  })
-}
+const formatDateTime = formatMalayDateTime
 
 function safePlate(plateEncrypted: string | null): string {
   if (!plateEncrypted) return '(tiada plat)'

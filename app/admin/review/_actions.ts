@@ -13,9 +13,8 @@ import { getCheck } from '@/lib/db/checks'
 import { validateForRelease } from '@/lib/release-validation'
 import { parseOverrides as parseOverrideJson } from '@/lib/reviewed-overrides'
 import { decrypt } from '@/lib/crypto'
-import { buildBuyerReportAccessUrl } from '@/lib/report-access'
 import { sendUndeliverableEmail, sendRefundCompletedEmail } from '@/lib/email/refund-notice'
-import { sendReportReadyEmail } from '@/lib/email/report-ready'
+import { deliverReportReadyEmail } from '@/lib/report-ready-delivery'
 
 const PATH = '/admin/review'
 
@@ -167,7 +166,7 @@ export async function releaseReportAction(formData: FormData): Promise<void> {
   // can reach it from the link they already hold either way — the gate is
   // released_at, not the email.
   notifyInBackground(
-    notifyBuyer(report.check_id, report.buyer_email, note),
+    notifyBuyer(report, note),
     'release notification',
   )
 
@@ -214,7 +213,7 @@ export async function releaseHistoryAction(formData: FormData): Promise<void> {
   // already visible at the link the buyer holds, so a mail outage must not
   // make this look failed and invite a second attempt.
   notifyInBackground(
-    notifyBuyer(report.check_id, report.buyer_email, note, 'history'),
+    notifyBuyer(report, note, 'history'),
     'history notification',
   )
 
@@ -380,24 +379,20 @@ function notifyInBackground(work: Promise<unknown>, label: string): void {
   try { waitUntil(guarded) } catch { /* not on Vercel — the promise still runs */ }
 }
 
+/**
+ * The URL resolution, the send and the bookkeeping live in
+ * lib/report-ready-delivery so they can be tested and so the outcome is a row
+ * an operator can read, not a console line. This wrapper exists because the
+ * mechanism test asserts by name that the notification goes through
+ * notifyInBackground.
+ */
 async function notifyBuyer(
-  checkId: string, toEmail: string, reviewerNote: string,
+  report: { id: string; check_id: string; buyer_email: string },
+  reviewerNote: string,
   kind: 'first' | 'history' = 'first',
 ): Promise<void> {
-  const row = await getCheck(checkId)
-  const claimToken = row?.check.claim_token ?? null
-
-  const reportUrl = buildBuyerReportAccessUrl({ checkId, claimToken })
-  // No token, no honest link — and a "your report is ready" email with no way
-  // to open it is worse than none. The queue still shows the row as released,
-  // so an operator can follow up by WhatsApp.
-  if (!reportUrl) {
-    console.error('[admin/review] no access url — buyer not notified', { checkId })
-    return
-  }
-
-  let plate: string | null = null
-  try { plate = decrypt(row!.check.plate_encrypted as string).toUpperCase() } catch { /* cosmetic */ }
-
-  await sendReportReadyEmail({ toEmail, plate, reportUrl, reviewerNote, checkId, kind })
+  await deliverReportReadyEmail({
+    buyerReportId: report.id, checkId: report.check_id, toEmail: report.buyer_email,
+    reviewerNote, kind,
+  })
 }

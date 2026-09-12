@@ -52,6 +52,7 @@ describe('receipt delivery failures are reported', () => {
     ['receipt_claim_failed',         'the send was withheld'],
     ['receipt_send_failed',          'the provider rejected the send'],
     ['receipt_check_lookup_failed',  'the check could not be read'],
+    ['receipt_not_configured',       'the send was skipped for want of an API key'],
   ])('reports %s (%s)', (op) => {
     expect(src).toContain(`reportMoneyPathFailure('${op}'`)
   })
@@ -69,6 +70,37 @@ describe('receipt delivery failures are reported', () => {
     // Sentry is for noticing. buyer_reports.receipt_status is what the admin
     // retry queue reads, and it must not regress into an alert-only path.
     expect(src).toContain('markReceiptFailed')
+  })
+})
+
+describe('release-email delivery failures are reported', () => {
+  /**
+   * The release email delivers the product. It went through waitUntil with
+   * nothing but a console.error on failure — the one path where "a customer
+   * paid and got nothing" had no alert and no row.
+   */
+  const src = read('lib/report-ready-delivery.ts')
+
+  it.each([
+    ['ready_email_no_access_url',        'no usable link exists for a released report'],
+    ['ready_email_send_failed',          'the provider rejected the send'],
+    ['ready_email_check_lookup_failed',  'the check could not be read'],
+    ['ready_email_not_configured',       'the send was skipped for want of an API key'],
+  ])('reports %s (%s)', (op) => {
+    expect(src).toContain(`reportMoneyPathFailure('${op}'`)
+  })
+
+  it('never passes the claim token or the buyer email', () => {
+    for (const call of src.split('reportMoneyPathFailure(').slice(1)) {
+      const args = call.split(')')[0]!
+      expect(args).not.toContain('claimToken')
+      expect(args).not.toContain('toEmail')
+      expect(args).not.toContain('reportUrl')
+    }
+  })
+
+  it('still records the failure in the database, not only in Sentry', () => {
+    expect(src).toContain('markReadyEmailFailed')
   })
 })
 

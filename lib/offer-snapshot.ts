@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { ComparableCohort } from '@/lib/comparables'
 import type { OfferAvailability } from '@/lib/offer'
+import { formatMalayDate } from '@/lib/format-date-my'
 
 /**
  * The evidence a buyer was sold on, frozen at the moment of the promise.
@@ -126,7 +127,5 @@ export function parseOfferSnapshot(raw: unknown): OfferSnapshot | null {
  * saying so is how two periods get mixed in a buyer's head.
  */
 export function evidencePeriodLabel(snapshot: OfferSnapshot): string {
-  const d = new Date(snapshot.sourceFetchedAt)
-  const MONTHS = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogos', 'Sep', 'Okt', 'Nov', 'Dis']
-  return `Iklan setanding pada ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} — iklan mungkin sudah berubah sejak itu.`
+  return `Iklan setanding pada ${formatMalayDate(snapshot.sourceFetchedAt)} — iklan mungkin sudah berubah sejak itu.`
 }

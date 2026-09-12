@@ -28,7 +28,7 @@ const withoutToken = { check: { claim_token: null,      plate_encrypted: 'x' } }
 beforeEach(() => {
   vi.clearAllMocks()
   claimReceiptSend.mockResolvedValue('granted')
-  sendReceiptEmail.mockResolvedValue(undefined)
+  sendReceiptEmail.mockResolvedValue('msg_123')
   markReceiptSent.mockResolvedValue(true)
   markReceiptFailed.mockResolvedValue(true)
 })
@@ -99,6 +99,24 @@ describe('idempotency', () => {
   })
 })
 
+describe('Resend not configured', () => {
+  /**
+   * sendReceiptEmail returns early — without throwing — when RESEND_API_KEY
+   * is unset. This path then recorded `sent`. A row that says "sent" while
+   * the provider dashboard shows nothing is precisely what an operator
+   * cannot act on; a `failed` row with this reason is.
+   */
+  it('records a failure, never a send', async () => {
+    getCheck.mockResolvedValue(withToken)
+    sendReceiptEmail.mockResolvedValue(null)
+
+    const r = await deliverBuyerReportReceipt(report)
+    expect(r).toEqual({ ok: false, status: 'failed', reason: 'resend_api_key_missing' })
+    expect(markReceiptFailed).toHaveBeenCalledWith('br_1', 'resend_api_key_missing')
+    expect(markReceiptSent).not.toHaveBeenCalled()
+  })
+})
+
 describe('provider failure', () => {
   it('records failed and stays retryable', async () => {
     getCheck.mockResolvedValue(withToken)
@@ -114,12 +132,15 @@ describe('provider failure', () => {
 
   it('never writes the claim token into the stored error', async () => {
     getCheck.mockResolvedValue(withToken)
-    sendReceiptEmail.mockRejectedValue(new Error('failed for tok-abc'))
+    sendReceiptEmail.mockRejectedValue(
+      new Error('bad request for https://paqar.my/laporan-pembeli/ch_1?claim_token=tok-abc (tok-abc)'),
+    )
     await deliverBuyerReportReceipt(report)
-    // The reason is derived from the provider error; assert the caller cannot
-    // smuggle the token in through our own construction.
+    // The provider may echo the URL it was given. The stored reason must not
+    // carry the credential in either form.
     const [, reason] = markReceiptFailed.mock.calls[0]! as [string, string]
     expect(reason.startsWith('send_failed:')).toBe(true)
+    expect(reason).not.toContain('tok-abc')
   })
 })
 

@@ -34,10 +34,16 @@ type ReceiptParams = {
   checkId?:    string
 }
 
-export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
+/**
+ * Resolves to the provider's message id, or NULL when nothing was sent because
+ * Resend is not configured. It returned void on both paths, and
+ * deliverBuyerReportReceipt could not tell a skip from a send — so a row
+ * could read receipt_status = 'sent' with no email behind it.
+ */
+export async function sendReceiptEmail(params: ReceiptParams): Promise<string | null> {
   if (!env.RESEND_API_KEY) {
     console.warn('[receipt] RESEND_API_KEY not set — skipping')
-    return
+    return null
   }
 
   const resend     = new Resend(env.RESEND_API_KEY)
@@ -143,7 +149,7 @@ export async function sendReceiptEmail(params: ReceiptParams): Promise<void> {
     </div>
   `
 
-  await sendEmail(resend, 'receipt', {
+  return sendEmail(resend, 'receipt', {
     from:    'Paqar <noreply@paqar.my>',
     replyTo: SUPPORT_REPLY_TO,
     to:      params.toEmail,
