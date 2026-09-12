@@ -75,6 +75,8 @@ interface Props {
    * the identity the report is priced on already prefers the registry.
    */
   adYear?:           string | null
+  /** The variant the advert itself gave (listing intake). Compared with the record in Semakan Varian. */
+  adVariant?:        string | null
   jomcheckData?:     JomCheckResult | null
   jomcheckStatus?:   JomCheckStatus
   jomcheckManualPending?: boolean
@@ -135,7 +137,7 @@ interface Props {
   cohortBrand?:   string | null
 }
 
-export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null, cohortBrand = null, cohortMarket = 'used', cohortVariantToken = null, adYear = null }: Props) {
+export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehicleData, marketPrices, addJomCheck, jomcheckData, jomcheckStatus, jomcheckManualPending, generatedAt, upsellJomCheck, claimedMileageKm, mileageSource = 'buyer_claimed', rollbackSuppressed = false, plateSupplied = true, reviewerDecision = null, reviewerNextAction = null, reviewerSellerQuestions = null, cohortYear = null, cohortModel = null, cohortVariant = null, cohortBrand = null, cohortMarket = 'used', cohortVariantToken = null, adYear = null, adVariant = null }: Props) {
   // The reading that may support a TAMPERING claim — null unless a human
   // confirmed it. Distinct from claimedMileageKm, which is still displayed as
   // context. Conflating the two is what published a false rollback warning
@@ -1104,6 +1106,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
         description={vehicleData?.description}
         registrationYear={vehicleData?.registrationYear}
         isSpecialVariant={isSpecialVariant}
+        adVariant={adVariant}
       />
 
       {/* 4b. Semakan Mileage — plausibility of the seller's CLAIMED reading.

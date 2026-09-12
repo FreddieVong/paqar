@@ -13,7 +13,7 @@ import { isExtractable } from '@/lib/listing-fetch'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
 import { FreeResultGate }      from '@/components/report/FreeResultGate'
-import { intakeMileageForCheck } from '@/lib/db/listing-intake'
+import { intakeMileageForCheck, intakeExtractedForCheck } from '@/lib/db/listing-intake'
 import { UnderReviewNotice }   from '@/components/report/UnderReviewNotice'
 import { UndeliverableNotice } from '@/components/report/UndeliverableNotice'
 import { ReviewerNote }        from '@/components/report/ReviewerNote'
@@ -267,6 +267,9 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
     // The reviewer's corrections win over both. If a human changed the year
     // from 2019 to 2018, the comparables must be 2018 cars; pulling the
     // uncorrected cohort would quietly undo the correction the buyer paid for.
+    // What the advert itself said, so Semakan Varian can compare it with
+    // the record instead of asking the buyer to.
+    const adVariant = (await intakeExtractedForCheck(params.checkId).catch(() => null))?.variant ?? null
     const identity = resolveCarIdentity({ check: row.check, vehicleData, overrides })
     const reviewedLabel = correctedCarLabel(overrides, {
       brand: row.check.brand, model: row.check.model, year: identity?.year ?? row.check.year,
@@ -350,6 +353,7 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               askingPriceRm={reviewed.askingPriceRm}
               vehicleData={vehicleData}
               adYear={row.check.year ?? null}
+              adVariant={adVariant}
               marketPrices={marketPrices}
               addJomCheck={report.add_jomcheck}
               jomcheckData={jomcheckData}

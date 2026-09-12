@@ -1,5 +1,6 @@
 import { MIN_LISTINGS_FOR_NORMAL_VERDICT } from '@/lib/comparables'
 import type { ReviewDraftFacts } from './facts'
+import { missingTrimWords } from '@/lib/variant-match'
 
 /**
  * What is odd about this order, found deterministically.
@@ -45,20 +46,6 @@ export interface Issue {
   correction?: { field: 'year'; value: string }
 }
 
-/**
- * Words in an advert's variant text that are not trim names: engine sizes,
- * transmissions, body notes. Anything else is a trim word the record must
- * carry, or the reviewer hears about it. Single letters stay — E / S / V /
- * X / H / G are real Malaysian trims — but numbers and "A"/"M" (auto/manual
- * in brackets) do not.
- */
-const NOT_A_TRIM = new Set([
-  'A', 'M', 'AT', 'MT', 'CVT', 'AUTO', 'MANUAL', 'FACELIFT', 'CKD', 'CBU', 'NEW', 'USED',
-  'SPEC', 'FULL', 'LOAN', 'TIPTOP', 'TIP', 'TOP', 'WARRANTY', 'ORI', 'ORIGINAL', 'SEDAN', 'HATCHBACK',
-])
-const trimWords = (text: string): string[] =>
-  text.toUpperCase().split(/[^A-Z0-9]+/).filter(w => w && !/^\d/.test(w) && !NOT_A_TRIM.has(w))
-
 const rm = (n: number) => `RM${Math.round(n).toLocaleString('en-MY')}`
 const km = (n: number) => `${Math.round(n).toLocaleString('en-MY')} km`
 
@@ -85,9 +72,9 @@ export function detectIssues(f: ReviewDraftFacts): Issue[] {
   }
 
   // Labelled, never ranked: the record's text is what the seller must match.
-  const recordText = [car.regVariant, car.regDescription].filter(Boolean).join(' ').toUpperCase()
+  const recordText = [car.regVariant, car.regDescription].filter(Boolean).join(' ')
   if (f.ad.variant && recordText) {
-    const missing = trimWords(f.ad.variant).filter(w => !recordText.includes(w))
+    const missing = missingTrimWords(f.ad.variant, recordText)
     if (missing.length > 0) {
       out.push({
         code: 'variant_unconfirmed',
