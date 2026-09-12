@@ -143,6 +143,11 @@ On `/admin/review`, in **"Dilepaskan 7 hari lepas"**, every released row shows:
 - **"WhatsApp: tiada nombor"** — the buyer never gave one. E-mail is the only
   route; nothing more to do unless they contact us.
 
+Under those two lines, every released row also says **👁 Belum dibuka oleh
+pembeli** or **👁 Dibuka 3× · pertama 10:12**. "Belum dibuka" a day after
+release means neither e-mail nor WhatsApp got through — that is the row to
+chase. (Your own admin preview is not counted.)
+
 Do this right after **Lepaskan laporan & hantar** — the same minute. It is
 the message that actually gets read.
 

@@ -437,6 +437,33 @@ export async function markWhatsappSent(buyerReportId: string): Promise<boolean> 
   return updateReceiptState(buyerReportId, { whatsapp_sent_at: new Date().toISOString() }, 'whatsapp_sent')
 }
 
+// ── Opened (migration 038) ───────────────────────────────────────────────────
+
+/**
+ * The buyer opened their released report. First and last moment, and a
+ * count — enough for the queue to say "Belum dibuka" or "Dibuka 3×, terakhir
+ * 10:12", which is the question "did they get it?" actually means.
+ *
+ * Read-then-write rather than a SQL increment: the service client has no RPC
+ * for this and the race (two tabs opening at once) costs at most one count.
+ */
+export async function markReportOpened(buyerReportId: string): Promise<boolean> {
+  try {
+    const supabase = createServiceClient()
+    const { data } = await supabase
+      .from('buyer_reports').select('first_opened_at, open_count').eq('id', buyerReportId).single()
+    const now = new Date().toISOString()
+    return updateReceiptState(buyerReportId, {
+      first_opened_at: (data?.first_opened_at as string | null) ?? now,
+      last_opened_at:  now,
+      open_count:      ((data?.open_count as number | null) ?? 0) + 1,
+    }, 'opened')
+  } catch (err) {
+    console.error('[receipt-state:opened]', { buyerReportId, error: String(err) })
+    return false
+  }
+}
+
 export async function getUndeliveredReceipts(limit = 50): Promise<BuyerReport[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase

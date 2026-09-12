@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import { Nav }                  from '@/components/layout/Nav'
 import { Shell }                from '@/components/layout/Shell'
 import { getCheck }             from '@/lib/db/checks'
-import { getBuyerReport, setVehicleApiData } from '@/lib/db/buyer-reports'
+import { getBuyerReport, setVehicleApiData, markReportOpened } from '@/lib/db/buyer-reports'
 import { lookupJomCheck, normalisePlate, isJomCheckManual, type JomCheckResult, type JomCheckStatus } from '@/lib/jomcheck'
 import { setJomCheckStatus, setJomCheckSuccess, setJomCheckFailed } from '@/lib/jomcheck/db'
 import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
@@ -164,6 +164,13 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
 
   // ── Paid AND released — full report ───────────────────────────────────────
   if ((mayRenderReport(report) || (adminPreview && isPaid)) && report) {
+    // The buyer opened it. Recorded so the queue can answer "did they get
+    // it?" without a PostHog query; never for the reviewer's own preview,
+    // and never on the render path — a bookkeeping failure must not cost a
+    // paying buyer their report.
+    if (!adminPreview && mayRenderReport(report)) {
+      markReportOpened(report.id).catch(() => {})
+    }
     // WHAT THE REVIEWER CORRECTED, applied to what the buyer reads.
     //
     // reviewed_overrides used to be written on release and read by nothing, so

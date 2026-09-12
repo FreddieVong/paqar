@@ -163,6 +163,24 @@ function WhatsappStatus({ report }: { report: BuyerReport }) {
   )
 }
 
+/**
+ * Did the buyer open it? The line the two e-mail and WhatsApp lines above
+ * exist to make true. "Belum dibuka" a day after release is the cue to
+ * WhatsApp; a count says they came back.
+ */
+function OpenedStatus({ report }: { report: BuyerReport }) {
+  if (!report.first_opened_at) {
+    return <p className="font-body text-[11px] text-[#B45309] mt-1">👁 Belum dibuka oleh pembeli</p>
+  }
+  const n = report.open_count ?? 1
+  return (
+    <p className="font-body text-[11px] text-[#15803D] mt-1">
+      👁 Dibuka {n}× · pertama {formatDateTime(report.first_opened_at)}
+      {n > 1 && report.last_opened_at ? ` · terakhir ${formatDateTime(report.last_opened_at)}` : ''}
+    </p>
+  )
+}
+
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -884,6 +902,7 @@ export default async function AdminReviewPage(
                       out. NULL is shown as "not recorded", never as sent. */}
                   <ReadyEmailStatus report={report} />
                   <WhatsappStatus report={report} />
+                  <OpenedStatus report={report} />
                 </div>
               ))}
             </div>

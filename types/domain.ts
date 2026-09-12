@@ -172,6 +172,10 @@ export interface BuyerReport {
   review_draft_error?:        string | null
   /** When the operator tapped "WhatsApp pembeli" for the released report (migration 037). */
   whatsapp_sent_at?:          string | null
+  /** The buyer opened the released report (migration 038). NULL = not yet. */
+  first_opened_at?:           string | null
+  last_opened_at?:            string | null
+  open_count?:                number | null
   created_at:         string
   updated_at:         string
 }
