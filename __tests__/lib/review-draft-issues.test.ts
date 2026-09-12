@@ -143,3 +143,55 @@ describe('detectIssues — other shapes', () => {
     expect(codes(f)).toContain('mileage_high')
   })
 })
+
+/**
+ * The advert's own variant, from the listing intake. "Premium" advertised on
+ * a car registered as Executive is the oldest trick there is, and it is one
+ * word comparison. Labelled, never verified: the issue says the two texts
+ * disagree and tells the reviewer to confirm — it does not rank them
+ * (hierarchy claims need a variant guide, which most models lack).
+ */
+describe('detectIssues — the advert\'s variant', () => {
+  const withAd = (adVariant: string | null, recordVariant = 'EXORA PREMIUM') => buildReviewDraftFacts({
+    ...exora,
+    check:  { ...exora.check, year: '2019' },
+    report: { ...exora.report, asking_price_rm: 24_000, claimed_mileage_km: 90_000,
+      vehicleapi_data: { ...(exora.report.vehicleapi_data as object), valuation: { variant: recordVariant }, description: 'PROTON EXORA' } },
+    prices: { ...exora.prices, gapFromMedian: -400, cheaperThanAsking: 6 },
+    intake: adVariant == null ? null : { variant: adVariant },
+  })
+
+  it('is quiet when the advert\'s trim words all appear in the record', () => {
+    expect(codes(withAd('1.6 Premium'))).not.toContain('variant_unconfirmed')
+    expect(codes(withAd('1.6 Premium (A) Facelift'))).not.toContain('variant_unconfirmed')
+  })
+
+  it('flags a trim word the record does not carry', () => {
+    const issue = detectIssues(withAd('1.6 Executive')).find(i => i.code === 'variant_unconfirmed')!
+    expect(issue).toBeDefined()
+    expect(issue.text).toContain('Executive')
+    expect(issue.text).toContain('EXORA PREMIUM')
+    expect(issue.text.toLowerCase()).not.toMatch(/lebih tinggi|lebih rendah|tipu/)
+  })
+
+  it('treats a single-letter trim as a word, not noise', () => {
+    // Honda City E / S / V — "V" advertised on an E.
+    expect(codes(withAd('1.5 V', 'CITY 1.5 E'))).toContain('variant_unconfirmed')
+    expect(codes(withAd('1.5 E', 'CITY 1.5 E'))).not.toContain('variant_unconfirmed')
+  })
+
+  it('ignores engine sizes and generic words', () => {
+    expect(codes(withAd('1.6 Auto CKD Facelift', 'EXORA PREMIUM'))).not.toContain('variant_unconfirmed')
+  })
+
+  it('says nothing without an advert variant or without a record', () => {
+    expect(codes(withAd(null))).not.toContain('variant_unconfirmed')
+    const noRecord = buildReviewDraftFacts({ ...exora, check: { ...exora.check, plate_encrypted: null }, report: { ...exora.report, vehicleapi_data: null }, intake: { variant: '1.6 Executive' } })
+    expect(codes(noRecord)).not.toContain('variant_unconfirmed')
+  })
+
+  it('carries the advert\'s figures into the facts for the prompt', () => {
+    const f = buildReviewDraftFacts({ ...exora, intake: { variant: '1.6 Premium', mileageKm: 38_000, askingPriceRm: 28_999 } })
+    expect(f.ad).toEqual({ variant: '1.6 Premium', mileageKm: 38_000, askingPriceRm: 28_999 })
+  })
+})

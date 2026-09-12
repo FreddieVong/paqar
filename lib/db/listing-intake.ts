@@ -255,3 +255,33 @@ export async function intakeIdForCheck(checkId: string): Promise<string | null> 
   if (error) return null
   return (data?.id as string | undefined) ?? null
 }
+
+/**
+ * The advert's own figures for the check it became, unwrapped to values.
+ *
+ * The intake stores each field as { value, status, provenance }. The reviewer
+ * draft wants the values only, and only when they were actually read (a
+ * 'missing' field is null). Null when there was no intake — a plate-only
+ * check has nothing here, and that is fine.
+ */
+export async function intakeExtractedForCheck(
+  checkId: string,
+): Promise<{ variant: string | null; mileageKm: number | null; askingPriceRm: number | null } | null> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('listing_intake')
+    .select('extracted')
+    .eq('converted_check_id', checkId)
+    .maybeSingle()
+  if (!data?.extracted) return null
+  type Field = { value?: unknown; status?: unknown } | undefined
+  const ex  = data.extracted as Record<string, Field>
+  const val = (f: Field) => (f && f.status !== 'missing' && f.value != null ? f.value : null)
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+  const txt = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null)
+  return {
+    variant:       txt(val(ex.variant)),
+    mileageKm:     num(val(ex.mileageKm)),
+    askingPriceRm: num(val(ex.askingPriceRm)),
+  }
+}

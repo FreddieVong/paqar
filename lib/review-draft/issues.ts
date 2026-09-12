@@ -26,6 +26,7 @@ import type { ReviewDraftFacts } from './facts'
 
 export type IssueCode =
   | 'year_mismatch'
+  | 'variant_unconfirmed'
   | 'price_above_range'
   | 'price_above_median'
   | 'price_below_range'
@@ -43,6 +44,20 @@ export interface Issue {
   /** A pre-fill for the correction box, when the fix is unambiguous. */
   correction?: { field: 'year'; value: string }
 }
+
+/**
+ * Words in an advert's variant text that are not trim names: engine sizes,
+ * transmissions, body notes. Anything else is a trim word the record must
+ * carry, or the reviewer hears about it. Single letters stay — E / S / V /
+ * X / H / G are real Malaysian trims — but numbers and "A"/"M" (auto/manual
+ * in brackets) do not.
+ */
+const NOT_A_TRIM = new Set([
+  'A', 'M', 'AT', 'MT', 'CVT', 'AUTO', 'MANUAL', 'FACELIFT', 'CKD', 'CBU', 'NEW', 'USED',
+  'SPEC', 'FULL', 'LOAN', 'TIPTOP', 'TIP', 'TOP', 'WARRANTY', 'ORI', 'ORIGINAL', 'SEDAN', 'HATCHBACK',
+])
+const trimWords = (text: string): string[] =>
+  text.toUpperCase().split(/[^A-Z0-9]+/).filter(w => w && !/^\d/.test(w) && !NOT_A_TRIM.has(w))
 
 const rm = (n: number) => `RM${Math.round(n).toLocaleString('en-MY')}`
 const km = (n: number) => `${Math.round(n).toLocaleString('en-MY')} km`
@@ -67,6 +82,18 @@ export function detectIssues(f: ReviewDraftFacts): Issue[] {
       text: `Iklan kata ${car.adYear}, tapi rekod JPJ kata kereta ini didaftar ${car.regYear}. Laporan guna ${car.regYear}.`,
       correction: { field: 'year', value: car.regYear },
     })
+  }
+
+  // Labelled, never ranked: the record's text is what the seller must match.
+  const recordText = [car.regVariant, car.regDescription].filter(Boolean).join(' ').toUpperCase()
+  if (f.ad.variant && recordText) {
+    const missing = trimWords(f.ad.variant).filter(w => !recordText.includes(w))
+    if (missing.length > 0) {
+      out.push({
+        code: 'variant_unconfirmed',
+        text: `Iklan kata varian "${f.ad.variant}", tapi rekod JPJ kata "${car.regVariant ?? car.regDescription}" — perkataan "${missing.join(', ')}" tiada dalam rekod. Sahkan varian sebelum bayar harga varian itu.`,
+      })
+    }
   }
 
   // ── Price ─────────────────────────────────────────────────────────────

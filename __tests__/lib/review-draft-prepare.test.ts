@@ -12,6 +12,8 @@ vi.mock('@/lib/db/report-review',        () => ({ getReportForReview: (...a: unk
 vi.mock('@/lib/db/checks',               () => ({ getCheck: (...a: unknown[]) => getCheck(...a) }))
 vi.mock('@/lib/review-price-context',    () => ({ reviewPriceContext: (...a: unknown[]) => reviewPriceContext(...a) }))
 vi.mock('@/lib/review-draft/generate',   () => ({ generateReviewDraft: (...a: unknown[]) => generateReviewDraft(...a) }))
+const intakeExtractedForCheck = vi.fn()
+vi.mock('@/lib/db/listing-intake',       () => ({ intakeExtractedForCheck: (...a: unknown[]) => intakeExtractedForCheck(...a) }))
 vi.mock('@/lib/db/buyer-reports',        () => ({
   saveReviewDraft:      (...a: unknown[]) => saveReviewDraft(...a),
   saveReviewDraftError: (...a: unknown[]) => saveReviewDraftError(...a),
@@ -40,6 +42,7 @@ beforeEach(() => {
   generateReviewDraft.mockResolvedValue({ ok: true, draft })
   saveReviewDraft.mockResolvedValue(true)
   saveReviewDraftError.mockResolvedValue(true)
+  intakeExtractedForCheck.mockResolvedValue({ variant: '1.6 Premium', mileageKm: 37_000, askingPriceRm: 28_999 })
 })
 
 describe('prepareReviewDraft', () => {
@@ -50,6 +53,9 @@ describe('prepareReviewDraft', () => {
     expect(input.check).toBe(checkRow.check)
     expect(reviewPriceContext).toHaveBeenCalledWith({ check: checkRow.check, askingPriceRm: 28_999 })
     expect(input.prices).toEqual({ median: 24_400, min: 21_000, max: 28_800, count: 14 })
+    // And what the advert itself said, so the draft can compare advert with record.
+    expect(intakeExtractedForCheck).toHaveBeenCalledWith('ch_1')
+    expect(input.intake).toEqual({ variant: '1.6 Premium', mileageKm: 37_000, askingPriceRm: 28_999 })
   })
 
   it('stores the draft on the row', async () => {
