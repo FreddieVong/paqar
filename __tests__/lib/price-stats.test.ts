@@ -75,4 +75,27 @@ describe('filterOutlierPrices', () => {
   it('returns small samples untouched', () => {
     expect(filterOutlierPrices([20_000, 90_000])).toEqual([20_000, 90_000])
   })
+
+  /**
+   * The 12 Sep 2026 Exora cohort, verbatim. RM11,900 was a direct-owner ad
+   * at 49% of the median — deleted from Mudah within hours (a "sambung
+   * bayar" or a scam; both get pulled) — and the buyer's report showed it as
+   * evidence with a link that led nowhere. The old 35% floor kept it.
+   *
+   * Across every cohort ever cached, 52 of 6,365 ads sat between 35% and 50%
+   * of their median, and every one was junk: wrong-year cars the year filter
+   * missed, a Hilux in a Toyota C cohort, a "WHOLE SALE" Civic. None was a
+   * genuine same-year comparable. Half the median is the honest floor.
+   */
+  it('drops an ad priced below half the median — the deleted RM11,900 Exora', () => {
+    const exora = [28_800, 22_999, 21_000, 24_900, 24_800, 24_000, 11_900, 22_999, 23_800, 22_999, 28_800, 25_800, 29_800, 27_800]
+    const kept = filterOutlierPrices(exora)
+    expect(kept).not.toContain(11_900)
+    expect(kept).toHaveLength(13)
+  })
+
+  it('keeps a genuinely cheap same-year ad that is above half the median', () => {
+    // A rough unit at 60% of the median is a real price for a real car.
+    expect(filterOutlierPrices([12_000, 18_000, 20_000, 21_000, 22_000])).toContain(12_000)
+  })
 })
