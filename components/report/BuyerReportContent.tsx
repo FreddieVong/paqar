@@ -1194,6 +1194,11 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           'Kereta masih ada loan bank?',
           'Geran atas nama siapa?',
           'Boleh buat inspection sebelum bayar deposit?',
+          // The advert's year against the registration's — the first thing
+          // to ask when they differ, and the question the 12 Sep buyer was
+          // never handed. Same comparison as YearCheckCard.
+          ...(adYear && vehicleData?.registrationYear && adYear !== vehicleData.registrationYear
+            ? [`Iklan tulis ${adYear} tapi geran ${vehicleData.registrationYear} — kenapa?`] : []),
           // Skip for a mixed-variant cohort — "listing serupa" would overclaim
           // when the comps span multiple variants of the model.
           ...((effectiveVerdict === 'overpriced' || effectiveVerdict === 'slightly_high') && cohort.mode !== 'mixed_variants'

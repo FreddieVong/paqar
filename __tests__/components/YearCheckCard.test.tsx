@@ -70,3 +70,13 @@ describe('wiring', () => {
     expect(page.indexOf('const identity = resolveCarIdentity')).toBeLessThan(page.indexOf('const reviewedLabel'))
   })
 })
+
+describe('the seller questions carry the year gap', () => {
+  it('adds the question, right after the generic five, only when the years disagree', () => {
+    const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+    const content = strip(readFileSync('components/report/BuyerReportContent.tsx', 'utf8'))
+    const block = content.slice(content.indexOf("'Ada accident besar sebelum ini?'"), content.indexOf('].slice(0, 7)'))
+    expect(block).toMatch(/adYear && vehicleData\?\.registrationYear && adYear !== vehicleData\.registrationYear/)
+    expect(block).toMatch(/Iklan tulis \$\{adYear\} tapi geran \$\{vehicleData\.registrationYear\} — kenapa\?/)
+  })
+})

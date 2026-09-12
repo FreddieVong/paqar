@@ -120,7 +120,7 @@ A buyer who never sees the e-mail can still find their report **on the phone
 they paid with**: the browser remembers the report link (an httpOnly cookie,
 60 days), so on that device
 
-- the homepage shows a one-line banner *"Laporan PPD… dah siap — Buka →"*,
+- every page shows a one-line banner under the menu *"Laporan PPD… dah siap — Buka →"*,
 - **Laporan Saya** lists their report(s) with a status badge,
 - a bare `paqar.my/laporan-pembeli/ch_…` typed from history still opens.
 
