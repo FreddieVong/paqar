@@ -1,6 +1,7 @@
 import { redirect }                  from 'next/navigation'
 import { Nav }                       from '@/components/layout/Nav'
 import { Shell }                     from '@/components/layout/Shell'
+import { formatMalayDate }            from '@/lib/format-date-my'
 import { ExpiryCard }                from '@/components/dashboard/ExpiryCard'
 import { createClient }              from '@/lib/supabase/server'
 import { getUserDocumentExpiries }   from '@/lib/db/document-expiries'
@@ -28,11 +29,7 @@ function overallStatus(expiries: DocumentExpiry[]): 'all_clear' | 'attention' | 
   return 'all_clear'
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('ms-MY', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  })
-}
+const formatDate = formatMalayDate
 
 export default async function DashboardPage() {
   const supabase = createClient()

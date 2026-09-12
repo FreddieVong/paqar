@@ -364,6 +364,46 @@ export async function markReceiptFailed(buyerReportId: string, reason: string): 
 }
 
 /** Operational queue: paid purchases whose receipt did not land. */
+// ── Release ("laporan anda dah siap") email delivery state ──────────────────
+//
+// Migration 035. The same idea as the receipt columns above, for the message
+// that actually delivers the product. Until then the release email was fired
+// through waitUntil and recorded nowhere; only a failure logged, and only to
+// the platform console. A real buyer, a `sent` receipt and an empty provider
+// dashboard is what it took to notice.
+//
+// No claim/idempotency step here: the release itself is guarded
+// (recordTransition's unique index), so exactly one release wins and sends.
+// These writers record what that one attempt did.
+
+export type ReadyEmailKind = 'first' | 'history'
+
+/** Writes the provider's message id so an operator can find the email in Resend. */
+export async function markReadyEmailSent(
+  buyerReportId: string,
+  detail: { kind: ReadyEmailKind; providerId: string },
+): Promise<boolean> {
+  return updateReceiptState(buyerReportId, {
+    ready_email_status:      'sent',
+    ready_email_kind:        detail.kind,
+    ready_email_provider_id: detail.providerId,
+    ready_email_sent_at:     new Date().toISOString(),
+    ready_email_last_error:  null,
+  }, 'ready_sent')
+}
+
+/** `reason` must already be safe: no token, no address, no credentials. */
+export async function markReadyEmailFailed(
+  buyerReportId: string,
+  detail: { kind: ReadyEmailKind; reason: string },
+): Promise<boolean> {
+  return updateReceiptState(buyerReportId, {
+    ready_email_status:     'failed',
+    ready_email_kind:       detail.kind,
+    ready_email_last_error: detail.reason.slice(0, 300),
+  }, 'ready_failed')
+}
+
 export async function getUndeliveredReceipts(limit = 50): Promise<BuyerReport[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase

@@ -50,10 +50,17 @@ function noteHtml(note: string): string {
     .replace(/\n/g, '<br />')
 }
 
-export async function sendReportReadyEmail(params: ReportReadyParams): Promise<void> {
+/**
+ * Resolves to the provider's message id, or NULL when nothing was sent because
+ * Resend is not configured. The distinction is the point: this used to return
+ * void on both paths, so a skipped send was indistinguishable from a real one
+ * and the release path had nothing to record. lib/report-ready-delivery treats
+ * null as a failure, never as a delivery.
+ */
+export async function sendReportReadyEmail(params: ReportReadyParams): Promise<string | null> {
   if (!env.RESEND_API_KEY) {
     console.warn('[report-ready] RESEND_API_KEY not set — skipping')
-    return
+    return null
   }
 
   const resend     = new Resend(env.RESEND_API_KEY)
@@ -106,7 +113,7 @@ export async function sendReportReadyEmail(params: ReportReadyParams): Promise<v
     </div>
   `
 
-  await sendEmail(resend, 'report-ready', {
+  return sendEmail(resend, 'report-ready', {
     from:    'Paqar <noreply@paqar.my>',
     to:      params.toEmail,
     replyTo: SUPPORT_REPLY_TO,

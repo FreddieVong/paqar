@@ -1,6 +1,8 @@
 import { RELEASE_BLOCK_HELP, type ReleaseBlockCode } from '@/lib/release-validation'
 import { JomCheckSection } from '@/components/report/JomCheckSection'
 import type { JomCheckResult } from '@/lib/jomcheck/core'
+import { formatMalayDateTime } from '@/lib/format-date-my'
+import type { BuyerReport } from '@/types/domain'
 import { notFound } from 'next/navigation'
 import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
@@ -25,12 +27,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 }
 
-function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('ms-MY', {
-    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-  })
-}
+const formatDateTime = formatMalayDateTime
 
 function safePlate(plateEncrypted: string | null | undefined): string {
   if (!plateEncrypted) return '(tiada plat)'
@@ -81,6 +78,40 @@ function AgeBadge({ hours, serviceMinutes }: { hours: number | null; serviceMinu
     <span className={`font-heading font-bold text-[11px] px-2 py-1 rounded-full border ${cls}`}>
       {label}
     </span>
+  )
+}
+
+/**
+ * One line under a released row: did "laporan anda dah siap" go out?
+ *
+ * Three honest states. `sent` carries the time and the provider id (so the
+ * email can be found in Resend); `failed` carries the safe reason so the
+ * operator can WhatsApp the buyer; NULL says so in words, because a row
+ * released before tracking existed is not evidence either way.
+ */
+function ReadyEmailStatus({ report }: { report: BuyerReport }) {
+  const label = report.ready_email_kind === 'history' ? 'E-mel rekod claim' : 'E-mel laporan siap'
+  if (report.ready_email_status === 'sent') {
+    return (
+      <p className="font-body text-[11px] text-[#15803D] mt-1">
+        ✓ {label} dihantar {formatDateTime(report.ready_email_sent_at)}
+        {report.ready_email_provider_id && (
+          <span className="text-[#9CA3AF]"> · Resend {report.ready_email_provider_id}</span>
+        )}
+      </p>
+    )
+  }
+  if (report.ready_email_status === 'failed') {
+    return (
+      <p className="font-body text-[11px] text-[#B91C1C] mt-1 break-words">
+        ✗ {label} GAGAL — {report.ready_email_last_error ?? 'sebab tidak direkod'}. Hubungi pembeli melalui WhatsApp.
+      </p>
+    )
+  }
+  return (
+    <p className="font-body text-[11px] text-[#9CA3AF] mt-1">
+      E-mel laporan siap: tidak direkod (dilepaskan sebelum penjejakan)
+    </p>
   )
 }
 
@@ -729,13 +760,20 @@ export default async function AdminReviewPage(
             </p>
             <div className="space-y-2">
               {released.map(({ report, check }) => (
-                <div key={report.id} className="bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3 flex items-center justify-between gap-3">
-                  <span className="font-heading font-bold text-[13px] text-[#111827] tracking-wide">
-                    {safePlate(check?.plate_encrypted)}
-                  </span>
-                  <span className="font-body text-[12px] text-[#9CA3AF]">
-                    {formatDateTime(report.released_at)}
-                  </span>
+                <div key={report.id} className="bg-white border border-[#E5E7EB] rounded-[12px] px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-heading font-bold text-[13px] text-[#111827] tracking-wide">
+                      {safePlate(check?.plate_encrypted)}
+                    </span>
+                    <span className="font-body text-[12px] text-[#9CA3AF]">
+                      {formatDateTime(report.released_at)}
+                    </span>
+                  </div>
+                  {/* Did the delivery email land? Released is not delivered:
+                      the buyer learns the report exists from this email, and
+                      until migration 035 nothing recorded whether it went
+                      out. NULL is shown as "not recorded", never as sent. */}
+                  <ReadyEmailStatus report={report} />
                 </div>
               ))}
             </div>

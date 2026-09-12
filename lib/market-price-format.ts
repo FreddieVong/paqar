@@ -6,13 +6,11 @@
  * boundary, and Malay date copy is not a database concern.
  */
 
-const MONTHS_MS = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogos', 'Sep', 'Okt', 'Nov', 'Dis']
+import { formatMalayMonthYear } from '@/lib/format-date-my'
 
 /** 'Ogos 2026'. Empty string for an unparseable value, so callers can skip the label. */
 export function formatFetchedAt(value: string | Date): string {
-  const d = value instanceof Date ? value : new Date(value)
-  if (isNaN(d.getTime())) return ''
-  return `${MONTHS_MS[d.getMonth()]} ${d.getFullYear()}`
+  return formatMalayMonthYear(value)
 }
 
 /**

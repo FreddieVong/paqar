@@ -1,4 +1,5 @@
 import { REVIEW_SLA_HOURS } from '@/lib/report-release'
+import { formatMalayDate } from '@/lib/format-date-my'
 import type { CachedMarketPrices } from '@/lib/db/market-prices'
 import type { JomCheckResult, JomCheckStatus } from '@/lib/jomcheck'
 import { buildComparableCohort, evaluateVerdictEligibility, comparableConfidence } from '@/lib/comparables'
@@ -60,13 +61,6 @@ interface VehicleData {
   } | null
 }
 
-const MALAY_MONTHS = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogos', 'Sep', 'Okt', 'Nov', 'Dis']
-
-function formatMalayDate(isoString: string): string {
-  const d = new Date(isoString)
-  if (isNaN(d.getTime())) return ''
-  return `${d.getDate()} ${MALAY_MONTHS[d.getMonth()]} ${d.getFullYear()}`
-}
 
 interface Props {
   plate:             string
