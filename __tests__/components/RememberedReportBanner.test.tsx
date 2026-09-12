@@ -3,13 +3,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, cleanup } from '@testing-library/react'
 import { RememberedReportBanner } from '@/components/report/RememberedReportBanner'
 
+const { pathnameState } = vi.hoisted(() => ({ pathnameState: { value: '/' } }))
+vi.mock('next/navigation', () => ({ usePathname: () => pathnameState.value }))
+
 /**
  * One line on the homepage for the phone that paid. Renders nothing for
  * everyone else, prefers a paid report over a free result, and links with
  * the credential the route returned.
  */
 const fetchMock = vi.fn()
-beforeEach(() => { vi.stubGlobal('fetch', fetchMock); fetchMock.mockReset() })
+beforeEach(() => { vi.stubGlobal('fetch', fetchMock); fetchMock.mockReset(); pathnameState.value = '/'; sessionStorage.clear() })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 const reply = (reports: unknown[]) => ({ ok: true, json: async () => ({ reports }) })
@@ -45,6 +48,38 @@ describe('RememberedReportBanner', () => {
     render(<RememberedReportBanner />)
     const link = await screen.findByRole('link')
     expect(link.textContent).toContain('Semakan Perodua Myvi 2019 anda masih ada.')
+  })
+
+  it('stays off the report page itself and off Laporan Saya, without even asking', async () => {
+    fetchMock.mockResolvedValue(reply([released]))
+    for (const path of ['/laporan-pembeli/ch_1', '/laporan-saya']) {
+      pathnameState.value = path
+      const { container, unmount } = render(<RememberedReportBanner />)
+      await new Promise(r => setTimeout(r, 10))
+      expect(container.innerHTML).toBe('')
+      unmount()
+    }
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('asks the route once per tab, not once per page', async () => {
+    fetchMock.mockResolvedValue(reply([released]))
+    const first = render(<RememberedReportBanner />)
+    await screen.findByRole('link')
+    first.unmount()
+    render(<RememberedReportBanner />)
+    await screen.findByRole('link')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('remembers an empty answer too, so a visitor with nothing is not re-queried', async () => {
+    fetchMock.mockResolvedValue(reply([]))
+    const first = render(<RememberedReportBanner />)
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    first.unmount()
+    render(<RememberedReportBanner />)
+    await new Promise(r => setTimeout(r, 10))
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   it('stays silent when the route fails', async () => {

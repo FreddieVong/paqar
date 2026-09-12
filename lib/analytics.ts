@@ -265,12 +265,12 @@ export const analytics = {
 
   /** The phone that paid was shown its report on a page it did not ask for it. */
   rememberedReportShown: (props: {
-    surface: 'home'
+    surface: 'nav'
     state:   'released' | 'under_review' | 'undeliverable' | 'free_result'
   }) => posthog.capture('remembered_report_shown', props),
 
   rememberedReportOpened: (props: {
-    surface: 'home'
+    surface: 'nav'
     state:   'released' | 'under_review' | 'undeliverable' | 'free_result'
   }) => posthog.capture('remembered_report_opened', props),
 }

@@ -26,8 +26,8 @@ describe('the delivery features report whether they are used', () => {
 
   it('the banner fires when shown and when tapped, with the state but never the URL', () => {
     const b = read('components/report/RememberedReportBanner.tsx')
-    expect(b).toContain('analytics.rememberedReportShown({ surface: \'home\', state: ')
-    expect(b).toContain('analytics.rememberedReportOpened({ surface: \'home\', state: ')
+    expect(b).toContain('analytics.rememberedReportShown({ surface: \'nav\', state: ')
+    expect(b).toContain('analytics.rememberedReportOpened({ surface: \'nav\', state: ')
     expect(b).not.toMatch(/Shown\(\{[^}]*url/)
     expect(b).not.toMatch(/Opened\(\{[^}]*url/)
   })

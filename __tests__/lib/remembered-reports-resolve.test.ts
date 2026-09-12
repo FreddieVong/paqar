@@ -113,13 +113,16 @@ describe('wiring', () => {
     for (const state of ['released', 'under_review', 'undeliverable', 'free_result']) expect(page, state).toMatch(new RegExp(`\\b${state}\\b`))
   })
 
-  it('the homepage shows a returning buyer their report without giving up static rendering', () => {
-    const home = read('app/page.tsx')
-    expect(home).toContain('<RememberedReportBanner')
-    expect(home).not.toContain('cookies()')
+  it('every page with the shared Nav shows a returning buyer their report, without giving up static rendering', () => {
+    const nav = read('components/layout/Nav.tsx')
+    expect(nav).toContain('<RememberedReportBanner')
+    expect(read('app/page.tsx')).not.toContain('cookies()')
     const banner = read('components/report/RememberedReportBanner.tsx')
     expect(banner).toContain("'use client'")
     expect(banner).toContain('/api/laporan-saya')
+    // Not on the report page it would point to, nor on the list page.
+    expect(banner).toMatch(/startsWith\('\/laporan-pembeli'\)/)
+    expect(banner).toContain("pathname === '/laporan-saya'")
   })
 
   it('the banner route reads the cookie server-side and resolves it', () => {
