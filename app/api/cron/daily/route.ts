@@ -7,6 +7,7 @@ import { GET as retargetModel }     from '../retarget-model/route'
 import { GET as warmCache }         from '../warm-cache/route'
 import { GET as metaAds }           from '../meta-ads/route'
 import { GET as screenshotCleanup } from '../screenshot-cleanup/route'
+import { GET as unopenedReports }   from '../unopened-reports/route'
 
 /**
  * Every daily job, behind ONE schedule.
@@ -47,6 +48,7 @@ export const maxDuration = 300
 const JOBS: [name: string, run: (r: NextRequest) => Promise<Response>][] = [
   ['screenshot-cleanup', screenshotCleanup],
   ['check-expiries',     checkExpiries],
+  ['unopened-reports',   unopenedReports],
   ['retarget-model',     retargetModel],
   ['retarget',           retarget],
   ['meta-ads',           metaAds],

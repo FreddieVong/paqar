@@ -148,6 +148,11 @@ pembeli** or **👁 Dibuka 3× · pertama 10:12**. "Belum dibuka" a day after
 release means neither e-mail nor WhatsApp got through — that is the row to
 chase. (Your own admin preview is not counted.)
 
+You do not have to go looking: every morning at 10:00 the daily cron sends a
+Telegram — *"2 laporan belum dibuka oleh pembeli: • PPD769 — dilepaskan 1
+hari lepas, tiada nombor — e-mel sahaja …"* — listing only reports released
+a day or more ago and still unopened. No message means nothing to chase.
+
 Do this right after **Lepaskan laporan & hantar** — the same minute. It is
 the message that actually gets read.
 
