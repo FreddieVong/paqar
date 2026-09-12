@@ -42,3 +42,17 @@ export function normaliseMyMobile(raw: string | null | undefined): string | null
 
   return null // unrecognised — send nothing rather than risk the bill
 }
+
+/**
+ * A stored, normalised mobile (60XXXXXXXXX) the way a Malaysian reads it:
+ * '012-345 6789' or '011-2345 6789'. Anything else is returned as given —
+ * this is for display, never for validation.
+ */
+export function formatMyMobile(normalised: string | null | undefined): string {
+  if (!normalised) return ''
+  if (!INTERNATIONAL.test(normalised)) return normalised
+  const national = '0' + normalised.slice(2)            // 60123456789 → 0123456789
+  const prefix   = national.slice(0, 3)                  // 012
+  const rest     = national.slice(3)                     // 3456789 (7) or 23456789 (8)
+  return `${prefix}-${rest.slice(0, rest.length - 4)} ${rest.slice(-4)}`
+}

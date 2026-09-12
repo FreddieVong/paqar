@@ -16,6 +16,9 @@ import { decrypt } from '@/lib/crypto'
 import { sendUndeliverableEmail, sendRefundCompletedEmail } from '@/lib/email/refund-notice'
 import { deliverReportReadyEmail } from '@/lib/report-ready-delivery'
 import { prepareReviewDraft } from '@/lib/review-draft/prepare'
+import { buildReportReadyWhatsapp } from '@/lib/whatsapp-handoff'
+import { buildBuyerReportAccessUrl } from '@/lib/report-access'
+import { markWhatsappSent } from '@/lib/db/buyer-reports'
 
 const PATH = '/admin/review'
 
@@ -412,4 +415,39 @@ export async function regenerateDraftAction(formData: FormData): Promise<void> {
   if (!reportId) { revalidatePath(PATH); return }
   await prepareReviewDraft(reportId)
   revalidatePath(PATH)
+}
+
+/**
+ * "WhatsApp pembeli →" on a released row.
+ *
+ * Records the tap, then hands the operator to WhatsApp with the message
+ * already written (lib/whatsapp-handoff). The order matters: the row shows
+ * "✓ WhatsApp dihantar" from the tap, not from any confirmation WhatsApp
+ * could give — there is none — so the honest reading of that tick is "you
+ * opened it". At a few orders a day that is what happened.
+ *
+ * Refuses, silently back to the queue, when there is nothing honest to send:
+ * no number, no released report, or no claim token for the link.
+ */
+export async function openWhatsappAction(formData: FormData): Promise<void> {
+  if (!isAdminAuthenticated()) throw new Error('Unauthorized')
+  const reportId = String(formData.get('reportId') ?? '')
+  const report   = reportId ? await getReportForReview(reportId) : null
+  if (!report || !report.buyer_phone || report.status !== 'paid' || !report.released_at) {
+    revalidatePath(PATH); return
+  }
+
+  const row = await getCheck(report.check_id)
+  const reportUrl = buildBuyerReportAccessUrl({ checkId: report.check_id, claimToken: row?.check.claim_token ?? null })
+  if (!reportUrl) { revalidatePath(PATH); return }
+
+  let plate: string | null = null
+  try { plate = decrypt(row!.check.plate_encrypted as string).toUpperCase() } catch { /* cosmetic */ }
+
+  const handoff = buildReportReadyWhatsapp({ phone: report.buyer_phone, plate, reportUrl })
+  if (!handoff) { revalidatePath(PATH); return }
+
+  await markWhatsappSent(report.id)
+  revalidatePath(PATH)
+  redirect(handoff.url)
 }

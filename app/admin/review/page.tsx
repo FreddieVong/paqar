@@ -3,6 +3,7 @@ import { JomCheckSection } from '@/components/report/JomCheckSection'
 import type { JomCheckResult } from '@/lib/jomcheck/core'
 import { formatMalayDateTime } from '@/lib/format-date-my'
 import type { BuyerReport } from '@/types/domain'
+import { formatMyMobile } from '@/lib/phone-my'
 import { notFound } from 'next/navigation'
 import { env } from '@/lib/env'
 import { isAdminAuthenticated } from '@/lib/admin-auth'
@@ -17,7 +18,7 @@ import { decrypt } from '@/lib/crypto'
 import { ReviewerScreenshots } from '@/components/admin/ReviewerScreenshots'
 import {
   adminLogin, startReviewAction, releaseReportAction, releaseHistoryAction, markUnableAction,
-  startRefundAction, completeRefundAction, failRefundAction, regenerateDraftAction,
+  startRefundAction, completeRefundAction, failRefundAction, regenerateDraftAction, openWhatsappAction,
 } from './_actions'
 
 export const dynamic = 'force-dynamic'
@@ -116,6 +117,37 @@ function ReadyEmailStatus({ report }: { report: BuyerReport }) {
     <p className="font-body text-[11px] text-[#9CA3AF] mt-1">
       E-mel laporan siap: tidak direkod (dilepaskan sebelum penjejakan)
     </p>
+  )
+}
+
+/**
+ * One line under a released row: has the buyer been WhatsApped?
+ *
+ * The button is a form, not a link, so the tap is recorded on the row before
+ * WhatsApp opens — and so a row can show "✓ dihantar" with a time. No number
+ * means the buyer never gave one (at checkout or on the waiting screen); the
+ * line says so rather than hiding, because "tiada nombor" is the reason an
+ * unopened report can only be chased by e-mail.
+ */
+function WhatsappStatus({ report }: { report: BuyerReport }) {
+  if (!report.buyer_phone) {
+    return <p className="font-body text-[11px] text-[#9CA3AF] mt-1">WhatsApp: tiada nombor</p>
+  }
+  if (report.whatsapp_sent_at) {
+    return (
+      <p className="font-body text-[11px] text-[#15803D] mt-1">
+        ✓ WhatsApp dihantar {formatDateTime(report.whatsapp_sent_at)} · {formatMyMobile(report.buyer_phone)}
+      </p>
+    )
+  }
+  return (
+    <form action={openWhatsappAction} className="mt-2">
+      <input type="hidden" name="reportId" value={report.id} />
+      <button type="submit"
+              className="w-full bg-[#25D366] text-white font-heading font-extrabold text-[13px] rounded-[10px] py-2.5">
+        WhatsApp pembeli ({formatMyMobile(report.buyer_phone)}) →
+      </button>
+    </form>
   )
 }
 
@@ -839,6 +871,7 @@ export default async function AdminReviewPage(
                       until migration 035 nothing recorded whether it went
                       out. NULL is shown as "not recorded", never as sent. */}
                   <ReadyEmailStatus report={report} />
+                  <WhatsappStatus report={report} />
                 </div>
               ))}
             </div>

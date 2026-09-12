@@ -170,6 +170,8 @@ export interface BuyerReport {
   review_draft?:              ReviewDraftRecord | null
   review_draft_generated_at?: string | null
   review_draft_error?:        string | null
+  /** When the operator tapped "WhatsApp pembeli" for the released report (migration 037). */
+  whatsapp_sent_at?:          string | null
   created_at:         string
   updated_at:         string
 }

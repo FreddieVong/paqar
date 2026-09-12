@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { whatsappUrl } from '@/lib/site'
 import { REVIEW_SLA_HOURS } from '@/lib/report-release'
 import { expectedDeliveryCopy } from '@/lib/review-capacity'
+import { formatMyMobile } from '@/lib/phone-my'
+import { WhatsappOptIn } from './WhatsappOptIn'
 
 /**
  * What the buyer sees between paying and a human releasing their report.
@@ -16,19 +18,24 @@ import { expectedDeliveryCopy } from '@/lib/review-capacity'
  * makes this screen reassuring; a number appearing for the first time after the
  * money has moved would read as a walk-back.
  *
- * E-MAIL ONLY, because e-mail is the only channel that exists. This screen
- * used to promise "mesej WhatsApp dan e-mel"; sendReportReadyEmail is the
- * whole of the release notification and no WhatsApp sender is implemented
- * anywhere in the codebase. The operator can still message a buyer by hand
- * from the queue, but a promise the code cannot keep is not the place to say
- * so.
+ * E-MAIL is what the copy promises, because e-mail is what the code sends.
+ * This screen once promised "mesej WhatsApp dan e-mel" with no WhatsApp
+ * sender anywhere, and that line was removed. WhatsApp is back, differently:
+ * the buyer may leave a number below (WhatsappOptIn), and the promise it
+ * makes — "kami akan WhatsApp bila siap" — is kept by the operator tapping the
+ * "WhatsApp pembeli" button on the released row in the queue, which opens
+ * WhatsApp with the message written. A human mechanism, but a mechanism, and
+ * __tests__/lib/whatsapp-wiring pins both halves.
  *
  * The report URL is stable and revisitable: the claim token in it still governs
  * access, so the same link the buyer already has flips from this screen to the
  * full report with nothing for them to do. Saying so removes the obvious worry
  * — that they need to keep this tab open, or that the link expires.
  */
-export function UnderReviewNotice({ checkId }: { checkId: string }) {
+export function UnderReviewNotice(
+  { checkId, claimToken, buyerPhone }:
+  { checkId: string; claimToken?: string | null; buyerPhone?: string | null },
+) {
   const support = whatsappUrl(
     `Hai Paqar, saya nak tanya tentang laporan saya.\n\nCheck ID: ${checkId}`,
   )
@@ -71,7 +78,21 @@ export function UnderReviewNotice({ checkId }: { checkId: string }) {
           Kami e-mel anda bila laporan siap. Simpan link halaman ini &mdash;
           ia akan bertukar jadi laporan penuh dengan sendirinya.
         </p>
+        {/* E-mail from a new domain lands in Junk more often than not. Saying
+            so here — before the wait, not after a complaint — is the cheapest
+            deliverability fix there is, and marking one "Not junk" teaches
+            the inbox for the next one. */}
+        <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed mt-2">
+          Tak nampak e-mel nanti? Semak folder Junk/Spam dan tandakan &ldquo;Not junk&rdquo;.
+        </p>
       </div>
+
+      {/* Only with the credential that authorised this page: the opt-in
+          writes to the order, and a signed-in owner without a token in the
+          URL has no token to send. */}
+      {claimToken && (
+        <WhatsappOptIn checkId={checkId} claimToken={claimToken} initialPhone={buyerPhone ? formatMyMobile(buyerPhone) : null} />
+      )}
 
       <p className="font-body text-[12px] text-[#9CA3AF] leading-relaxed mb-4">
         Rujukan: {checkId}
