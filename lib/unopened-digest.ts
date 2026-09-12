@@ -33,11 +33,14 @@ export function buildUnopenedDigest(rows: UnopenedRow[], now: Date): string | nu
 
   const lines = stale.map(r => {
     const days  = Math.floor((now.getTime() - new Date(r.released_at!).getTime()) / DAY_MS)
-    const reach =
-      r.ready_email_status === 'failed' ? 'e-mel GAGAL'
-      : r.whatsapp_sent_at              ? 'WhatsApp dah dihantar'
-      : r.buyer_phone                   ? 'ada nombor — WhatsApp dari senarai'
-      : 'tiada nombor — e-mel sahaja'
+    // Everything that applies, so a failed e-mail on a row already WhatsApped
+    // does not read as "WhatsApp them" — the owner would send it twice.
+    const reach = [
+      r.ready_email_status === 'failed' ? 'e-mel GAGAL' : null,
+      r.whatsapp_sent_at ? 'WhatsApp dah dihantar'
+        : r.buyer_phone  ? 'ada nombor — WhatsApp dari senarai'
+        : 'tiada nombor — e-mel sahaja',
+    ].filter(Boolean).join(', ')
     return `• ${r.plate ?? r.check_id} — dilepaskan ${days} hari lepas, ${reach}`
   })
 

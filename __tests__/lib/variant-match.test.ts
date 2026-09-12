@@ -39,6 +39,12 @@ describe('missingTrimWords', () => {
     expect(missingTrimWords('1.5 GR-S', 'YARIS 1.5 G')).toEqual(['GR-S'])
   })
 
+  it('reports a trim as the trim, not as a mangled engine fragment', () => {
+    // Found in review: "1.5-E" against "1.5 S" reported "5-E" to the buyer.
+    expect(missingTrimWords('1.5-E', 'CITY 1.5 S')).toEqual(['E'])
+    expect(missingTrimWords('1.5-E', 'CITY 1.5 E')).toEqual([])
+  })
+
   it('is empty when there is nothing to compare', () => {
     expect(missingTrimWords(null, 'EXORA PREMIUM')).toEqual([])
     expect(missingTrimWords('Premium', '')).toEqual([])

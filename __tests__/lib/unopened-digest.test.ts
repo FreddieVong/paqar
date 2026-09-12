@@ -48,6 +48,11 @@ describe('buildUnopenedDigest', () => {
     expect(msg).toMatch(/PPD769.*e-mel GAGAL/)
   })
 
+  it('says both when the e-mail failed AND WhatsApp was already sent — never invites a second WhatsApp', () => {
+    const msg = buildUnopenedDigest([row({ ready_email_status: 'failed', buyer_phone: '60123456789', whatsapp_sent_at: '2026-09-12T01:00:00Z' })], NOW)!
+    expect(msg).toMatch(/PPD769.*e-mel GAGAL.*WhatsApp dah dihantar/)
+  })
+
   it('never includes an e-mail address or a claim token', () => {
     const msg = buildUnopenedDigest([row({})], NOW)!
     expect(msg).not.toMatch(/@/)
@@ -64,5 +69,7 @@ describe('wiring', () => {
     expect(job).toContain('buildUnopenedDigest')
     expect(job).toContain('sendTelegramMessage')
     expect(job).toContain('CRON_SECRET')
+    // Internal test purchases are not work — the same rule the queue applies.
+    expect(job).toContain('isTeamEmail(')
   })
 })

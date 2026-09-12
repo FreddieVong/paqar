@@ -439,23 +439,32 @@ export async function markWhatsappSent(buyerReportId: string): Promise<boolean> 
 
 // ── Opened (migration 038) ───────────────────────────────────────────────────
 
+/** Renders within this window are one open: the market poller re-renders every 5 s, and a second tab is not a return. */
+const OPEN_DEDUPE_MS = 10 * 60 * 1000
+
 /**
  * The buyer opened their released report. First and last moment, and a
  * count — enough for the queue to say "Belum dibuka" or "Dibuka 3×, terakhir
  * 10:12", which is the question "did they get it?" actually means.
  *
- * Read-then-write rather than a SQL increment: the service client has no RPC
- * for this and the race (two tabs opening at once) costs at most one count.
+ * Read-then-write rather than a SQL increment (no RPC for it). Two things
+ * the first version got wrong: the report page re-renders every 5 s while
+ * prices load, so one visit counted as 25; and a failed read-back still
+ * wrote, resetting the history to 1. Now a render within ten minutes of the
+ * last is the same open, and a failed read writes nothing.
  */
-export async function markReportOpened(buyerReportId: string): Promise<boolean> {
+export async function markReportOpened(buyerReportId: string, now: Date = new Date()): Promise<boolean> {
   try {
     const supabase = createServiceClient()
-    const { data } = await supabase
-      .from('buyer_reports').select('first_opened_at, open_count').eq('id', buyerReportId).single()
-    const now = new Date().toISOString()
+    const { data, error } = await supabase
+      .from('buyer_reports').select('first_opened_at, last_opened_at, open_count').eq('id', buyerReportId).single()
+    if (error) throw error
+    const last = data?.last_opened_at ? new Date(data.last_opened_at as string).getTime() : null
+    if (last != null && now.getTime() - last < OPEN_DEDUPE_MS) return true
+    const iso = now.toISOString()
     return updateReceiptState(buyerReportId, {
-      first_opened_at: (data?.first_opened_at as string | null) ?? now,
-      last_opened_at:  now,
+      first_opened_at: (data?.first_opened_at as string | null) ?? iso,
+      last_opened_at:  iso,
       open_count:      ((data?.open_count as number | null) ?? 0) + 1,
     }, 'opened')
   } catch (err) {

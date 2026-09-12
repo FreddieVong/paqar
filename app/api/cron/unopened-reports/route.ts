@@ -4,6 +4,7 @@ import { env }                       from '@/lib/env'
 import { decrypt }                   from '@/lib/crypto'
 import { sendTelegramMessage }       from '@/lib/notify/telegram'
 import { buildUnopenedDigest, type UnopenedRow } from '@/lib/unopened-digest'
+import { isTeamEmail }               from '@/lib/team-emails'
 
 /**
  * Daily: Telegram the owner the released reports nobody has opened.
@@ -22,14 +23,15 @@ export async function GET(request: NextRequest) {
   const since = new Date(Date.now() - 7 * 86_400_000).toISOString()
   const { data, error } = await supabase
     .from('buyer_reports')
-    .select('id, check_id, released_at, first_opened_at, buyer_phone, whatsapp_sent_at, ready_email_status, checks!inner(plate_encrypted)')
+    .select('id, check_id, buyer_email, released_at, first_opened_at, buyer_phone, whatsapp_sent_at, ready_email_status, checks!inner(plate_encrypted)')
     .eq('status', 'paid')
     .not('released_at', 'is', null)
     .gte('released_at', since)
     .is('first_opened_at', null)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const rows: UnopenedRow[] = (data ?? []).map(r => {
+  // Internal test purchases are not work — the queue applies the same rule.
+  const rows: UnopenedRow[] = (data ?? []).filter(r => !isTeamEmail(r.buyer_email as string)).map(r => {
     const enc = (r as unknown as { checks?: { plate_encrypted?: string | null } }).checks?.plate_encrypted ?? null
     let plate: string | null = null
     try { plate = enc ? decrypt(enc).toUpperCase() : null } catch { /* cosmetic */ }

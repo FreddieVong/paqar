@@ -26,7 +26,9 @@ import { parseOverrides, applyOverrides, correctedCarLabel } from '@/lib/reviewe
 import { isAdminAuthenticated } from '@/lib/admin-auth'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
-import { cookies }              from 'next/headers'
+import { cookies, headers }     from 'next/headers'
+import { waitUntil }            from '@vercel/functions'
+import { isHumanNavigation }    from '@/lib/human-navigation'
 import { REMEMBERED_COOKIE, decodeRemembered, rememberedTokenFor } from '@/lib/remembered-reports'
 import { SESSION_COOKIE }       from '@/lib/attribution'
 import { getOrFetchVehicleData }      from '@/lib/db/plate-lookups'
@@ -168,8 +170,12 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
     // it?" without a PostHog query; never for the reviewer's own preview,
     // and never on the render path — a bookkeeping failure must not cost a
     // paying buyer their report.
-    if (!adminPreview && mayRenderReport(report)) {
-      markReportOpened(report.id).catch(() => {})
+    // Only a person navigating here counts (lib/human-navigation): WhatsApp's
+    // link preview and e-mail scanners fetch this URL too. Held by waitUntil
+    // so the instance is not frozen before the write lands.
+    if (!adminPreview && mayRenderReport(report) && isHumanNavigation(headers())) {
+      const work = markReportOpened(report.id).catch(() => {})
+      try { waitUntil(work) } catch { /* not on Vercel — the promise still runs */ }
     }
     // WHAT THE REVIEWER CORRECTED, applied to what the buyer reads.
     //

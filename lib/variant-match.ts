@@ -23,10 +23,15 @@ const NOT_A_TRIM = new Set([
 
 const isTrim = (w: string) => w !== '' && !/^\d/.test(w) && !NOT_A_TRIM.has(w)
 
-/** The advert's trim words, hyphenated groups kept whole ("GR-S"), as written in upper case. */
+/**
+ * The advert's trim words, hyphenated groups kept whole ("GR-S"), in upper
+ * case — with the non-trim parts dropped from each group, so "1.5-E" is the
+ * trim "E" and not the fragment "5-E".
+ */
 export function trimWords(text: string): string[] {
-  return text.toUpperCase().split(/[^A-Z0-9-]+/).map(g => g.replace(/^-+|-+$/g, ''))
-    .filter(g => g !== '' && g.split('-').some(isTrim))
+  return text.toUpperCase().split(/[^A-Z0-9-]+/)
+    .map(g => g.split('-').filter(isTrim).join('-'))
+    .filter(g => g !== '')
 }
 
 /** Every word of the record, plus every hyphenated group joined ("GR-S" → GRS) and split. */
