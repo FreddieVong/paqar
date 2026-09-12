@@ -19,13 +19,21 @@
  * the buyer may have typed it, the seller may not know. The buyer's job is
  * to ask and to pay the registered year's price — that is all the card says.
  */
-export function YearCheckCard({ adYear, registrationYear }: {
+export function YearCheckCard({ adYear, registrationYear, reportYear }: {
   adYear?:           string | null
+  /** What JPJ says. */
   registrationYear?: string | null
+  /** The year the report is actually priced on — registry, unless a reviewer overrode it. */
+  reportYear?:       string | null
 }) {
   const ad  = adYear?.trim()
   const reg = registrationYear?.trim()
-  if (!ad || !reg || ad === reg) return null
+  const used = reportYear?.trim()
+  // Speak only when the report's year differs from the advert's AND the
+  // registry backs the report's year. A reviewer who priced the car on the
+  // advert's year after all gets no card; a reviewer who set some third year
+  // gets no card either, because "Rekod JPJ" would not be true of it.
+  if (!ad || !reg || !used || ad === used || reg !== used) return null
 
   return (
     <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[14px] p-5">

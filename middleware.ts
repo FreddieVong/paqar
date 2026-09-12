@@ -71,7 +71,10 @@ function rememberReportLink(request: NextRequest, response: NextResponse): void 
   const m = REPORT_PATH.exec(request.nextUrl.pathname)
   const token = request.nextUrl.searchParams.get('claim_token')
   if (!m || !token) return
-  const checkId = decodeURIComponent(m[1]!)
+  // No decoding: a check id is 'ch_' + url-safe characters, so the raw
+  // segment either is one or is refused by the codec. decodeURIComponent
+  // threw on malformed percent-encoding and turned a bad URL into a 500.
+  const checkId = m[1]!
 
   const current = decodeRemembered(request.cookies.get(REMEMBERED_COOKIE)?.value)
   const next    = remember(current, { checkId, token })

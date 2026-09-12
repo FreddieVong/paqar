@@ -56,6 +56,12 @@ describe('POST /api/laporan-pembeli/[checkId]/whatsapp', () => {
     expect(setBuyerPhone).not.toHaveBeenCalled()
   })
 
+  it('answers 400, not 500, when the phone is not even a string', async () => {
+    const res = await POST(req('ch_1', { claimToken: 'tok', phone: 123456789 }), params)
+    expect(res.status).toBe(400)
+    expect(setBuyerPhone).not.toHaveBeenCalled()
+  })
+
   it('refuses without a valid claim token', async () => {
     getCheck.mockResolvedValue(null)
     const res = await POST(req('ch_1', { claimToken: 'wrong', phone: '0123456789' }), params)

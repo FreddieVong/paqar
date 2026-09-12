@@ -634,7 +634,7 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
       {/* 1b. Semakan Tahun — only when the advert and the registry disagree.
           Before the price comparison: a year is roughly a year of
           depreciation, and the figures below are for the registered year. */}
-      <YearCheckCard adYear={adYear} registrationYear={vehicleData?.registrationYear} />
+      <YearCheckCard adYear={adYear} registrationYear={vehicleData?.registrationYear} reportYear={cohortYear} />
 
       {/* 2. Perbandingan Harga */}
       {!vehicleNotFound && (vehicleData?.valuation || askingPriceRm != null || (marketPrices?.listings.length ?? 0) > 0) && (() => {
@@ -1187,6 +1187,10 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           ? new Date().getFullYear() - parseInt(vehicleData.registrationYear)
           : null
         const insuranceExpired = ins != null && !ins.policyStatus?.toLowerCase().includes('active')
+        // Same gate as YearCheckCard: the advert differs from the year the
+        // report is priced on, and the registry backs that year.
+        const yearGap = !!adYear && !!cohortYear && adYear !== cohortYear
+          && vehicleData?.registrationYear === cohortYear
 
         const questions = [
           'Ada accident besar sebelum ini?',
@@ -1197,8 +1201,8 @@ export function BuyerReportContent({ plate, askingPriceRm, vehicleData: rawVehic
           // The advert's year against the registration's — the first thing
           // to ask when they differ, and the question the 12 Sep buyer was
           // never handed. Same comparison as YearCheckCard.
-          ...(adYear && vehicleData?.registrationYear && adYear !== vehicleData.registrationYear
-            ? [`Iklan tulis ${adYear} tapi geran ${vehicleData.registrationYear} — kenapa?`] : []),
+          ...(yearGap
+            ? [`Iklan tulis ${adYear} tapi geran ${cohortYear} — kenapa?`] : []),
           // Skip for a mixed-variant cohort — "listing serupa" would overclaim
           // when the comps span multiple variants of the model.
           ...((effectiveVerdict === 'overpriced' || effectiveVerdict === 'slightly_high') && cohort.mode !== 'mixed_variants'

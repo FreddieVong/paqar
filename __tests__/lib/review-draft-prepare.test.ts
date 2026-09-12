@@ -106,6 +106,12 @@ describe('wiring', () => {
     expect(afterWarm).toContain('await prepareReviewDraft(buyerReport.id)')
     // And the no-plate order, which has no warm-up to wait for, still gets one.
     expect(afterWarm).toContain('waitUntil(prepareReviewDraft(buyerReport.id))')
+    // Found in review: an early `return` for a failed plate lookup used to
+    // skip the draft entirely — that order got neither a draft nor a reason.
+    // The warm-up is its own function now, so nothing it returns from can
+    // skip what follows.
+    const iife = src.slice(src.indexOf('waitUntil((async () => {'), src.indexOf('await prepareReviewDraft(buyerReport.id)'))
+    expect(iife).not.toMatch(/if \(!apiResult\) return/)
   })
 
   it('the review card pre-fills every box from the draft and shows the issues', () => {

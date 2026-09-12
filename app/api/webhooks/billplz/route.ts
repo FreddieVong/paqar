@@ -360,20 +360,26 @@ export async function POST(request: NextRequest) {
       // on view if it is missing, so losing this costs a slower first load and
       // nothing else. Still held by waitUntil rather than left floating.
       if (plate) {
+        // Its own function so that its early returns (a failed lookup) end the
+        // warm-up and nothing else — the draft below used to be skipped with
+        // it, leaving that order with neither a draft nor a reason.
+        const warmUp = async (): Promise<void> => {
+          const apiResult = await getOrFetchVehicleData(plate)
+          if (!apiResult) return
+          const valuation = await getValuationByNvic(
+            apiResult.nvic,
+            { make: apiResult.make, year: apiResult.registrationYear, model: apiResult.model }
+          ).catch(() => null)
+          await setVehicleApiData(buyerReport.id, { ...apiResult, valuation: valuation ?? null })
+          const mo = buildMarketModelKeyword(apiResult.model, apiResult.description ?? '')
+          const cached = await getCachedMarketPrices(apiResult.make, mo, apiResult.registrationYear).catch(() => null)
+          if (!cached) {
+            await fetchAndCacheMarketPrices(apiResult.make, mo, apiResult.registrationYear).catch(() => {})
+          }
+        }
         waitUntil((async () => {
           try {
-            const apiResult = await getOrFetchVehicleData(plate)
-            if (!apiResult) return
-            const valuation = await getValuationByNvic(
-              apiResult.nvic,
-              { make: apiResult.make, year: apiResult.registrationYear, model: apiResult.model }
-            ).catch(() => null)
-            await setVehicleApiData(buyerReport.id, { ...apiResult, valuation: valuation ?? null })
-            const mo = buildMarketModelKeyword(apiResult.model, apiResult.description ?? '')
-            const cached = await getCachedMarketPrices(apiResult.make, mo, apiResult.registrationYear).catch(() => null)
-            if (!cached) {
-              await fetchAndCacheMarketPrices(apiResult.make, mo, apiResult.registrationYear).catch(() => {})
-            }
+            await warmUp()
           } catch (err) {
             console.error('[post-payment:cache-warmup] failed', {
               op: 'cache_warmup', billId, buyerReportId: buyerReport.id,

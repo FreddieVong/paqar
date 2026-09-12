@@ -20,9 +20,21 @@ export function trimWords(text: string): string[] {
   return text.toUpperCase().split(/[^A-Z0-9]+/).filter(w => w && !/^\d/.test(w) && !NOT_A_TRIM.has(w))
 }
 
-/** Trim words in the advert that the record does not carry. Empty = match, or nothing to compare. */
+/** Every word of the record, as words — including the ones the trim filter drops. */
+function recordWords(text: string): Set<string> {
+  return new Set(text.toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean))
+}
+
+/**
+ * Trim words in the advert that the record does not carry. Empty = match, or
+ * nothing to compare.
+ *
+ * Whole words, never substrings: "E" is a trim and also the fourth letter of
+ * SEDAN, and a substring check let a City E "match" a City S SEDAN — the
+ * paid report then printed "sepadan dengan rekod" for the wrong trim.
+ */
 export function missingTrimWords(adVariant: string | null | undefined, recordText: string | null | undefined): string[] {
   if (!adVariant || !recordText) return []
-  const record = recordText.toUpperCase()
-  return trimWords(adVariant).filter(w => !record.includes(w))
+  const record = recordWords(recordText)
+  return trimWords(adVariant).filter(w => !record.has(w))
 }

@@ -18,8 +18,8 @@ export async function POST(
     phone?:      string
   }
 
-  const mobile = normaliseMyMobile(phone)
-  if (!claimToken || !mobile) {
+  const mobile = typeof phone === 'string' ? normaliseMyMobile(phone) : null
+  if (typeof claimToken !== 'string' || !claimToken || !mobile) {
     return NextResponse.json({ error: 'Nombor tak sah — contoh: 012-345 6789' }, { status: 400 })
   }
 

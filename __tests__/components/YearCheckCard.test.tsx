@@ -17,18 +17,18 @@ afterEach(cleanup)
  */
 describe('YearCheckCard', () => {
   it('renders nothing when the years agree', () => {
-    const { container } = render(<YearCheckCard adYear="2019" registrationYear="2019" />)
+    const { container } = render(<YearCheckCard adYear="2019" registrationYear="2019" reportYear="2019" />)
     expect(container.innerHTML).toBe('')
   })
 
   it('renders nothing when either year is unknown', () => {
-    expect(render(<YearCheckCard adYear={null} registrationYear="2019" />).container.innerHTML).toBe('')
+    expect(render(<YearCheckCard adYear={null} registrationYear="2019" reportYear="2019" />).container.innerHTML).toBe('')
     cleanup()
-    expect(render(<YearCheckCard adYear="2020" registrationYear={undefined} />).container.innerHTML).toBe('')
+    expect(render(<YearCheckCard adYear="2020" registrationYear={undefined} reportYear="2020" />).container.innerHTML).toBe('')
   })
 
   it('names both years plainly and says which one the report uses', () => {
-    render(<YearCheckCard adYear="2020" registrationYear="2019" />)
+    render(<YearCheckCard adYear="2020" registrationYear="2019" reportYear="2019" />)
     expect(screen.getByText('Semakan Tahun')).toBeTruthy()
     expect(screen.getByText(/Iklan kata 2020/)).toBeTruthy()
     expect(screen.getByText(/didaftar 2019/)).toBeTruthy()
@@ -36,7 +36,7 @@ describe('YearCheckCard', () => {
   })
 
   it('tells the buyer what to do, in the house words', () => {
-    render(<YearCheckCard adYear="2020" registrationYear="2019" />)
+    render(<YearCheckCard adYear="2020" registrationYear="2019" reportYear="2019" />)
     const text = document.body.textContent ?? ''
     expect(text).toMatch(/Tanya seller/)
     expect(text).toMatch(/jangan bayar harga 2020/)
@@ -44,8 +44,21 @@ describe('YearCheckCard', () => {
     expect(text).not.toMatch(/tipu|scam|penipu/i)
   })
 
+  it('stays silent when the reviewer priced the car on the advert\'s year after all', () => {
+    // Found in review: the report is priced on identity.year, which an
+    // override can set. If the reviewer decided the advert was right, a card
+    // insisting "Laporan ini guna 2019" would contradict the report.
+    const { container } = render(<YearCheckCard adYear="2020" registrationYear="2019" reportYear="2020" />)
+    expect(container.innerHTML).toBe('')
+  })
+
+  it('stays silent when the report\'s year is not the registry\'s — it cannot say JPJ backs it', () => {
+    const { container } = render(<YearCheckCard adYear="2020" registrationYear="2019" reportYear="2021" />)
+    expect(container.innerHTML).toBe('')
+  })
+
   it('handles the other direction too — an advert that understates the year', () => {
-    render(<YearCheckCard adYear="2018" registrationYear="2019" />)
+    render(<YearCheckCard adYear="2018" registrationYear="2019" reportYear="2019" />)
     expect(screen.getByText(/Iklan kata 2018/)).toBeTruthy()
     expect(screen.getByText(/didaftar 2019/)).toBeTruthy()
   })
@@ -59,6 +72,7 @@ describe('wiring', () => {
     expect(page).toMatch(/adYear=\{row\.check\.year/)
     const content = strip(readFileSync('components/report/BuyerReportContent.tsx', 'utf8'))
     expect(content).toContain('<YearCheckCard')
+    expect(content).toMatch(/<YearCheckCard[\s\S]*?reportYear=\{cohortYear\}/)
     // Before the price comparison: the mismatch changes how the figures read.
     expect(content.indexOf('<YearCheckCard')).toBeLessThan(content.indexOf('Perbandingan Harga'))
   })
@@ -76,7 +90,8 @@ describe('the seller questions carry the year gap', () => {
     const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
     const content = strip(readFileSync('components/report/BuyerReportContent.tsx', 'utf8'))
     const block = content.slice(content.indexOf("'Ada accident besar sebelum ini?'"), content.indexOf('].slice(0, 7)'))
-    expect(block).toMatch(/adYear && vehicleData\?\.registrationYear && adYear !== vehicleData\.registrationYear/)
-    expect(block).toMatch(/Iklan tulis \$\{adYear\} tapi geran \$\{vehicleData\.registrationYear\} — kenapa\?/)
+    // Same gate as the card: the year the report uses, backed by the registry.
+    expect(block).toMatch(/yearGap/)
+    expect(block).toMatch(/Iklan tulis \$\{adYear\} tapi geran \$\{cohortYear\} — kenapa\?/)
   })
 })
