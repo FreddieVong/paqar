@@ -6,8 +6,9 @@ import { Shell } from '@/components/layout/Shell'
 import { whatsappUrl } from '@/lib/site'
 import { REVIEW_SLA_HOURS } from '@/lib/pricing'
 import { cookies } from 'next/headers'
-import { REMEMBERED_COOKIE, decodeRemembered } from '@/lib/remembered-reports'
-import { resolveRememberedReports, type RememberedState } from '@/lib/server/remembered-reports'
+import { REMEMBERED_COOKIE } from '@/lib/remembered-reports'
+import { SESSION_COOKIE } from '@/lib/attribution'
+import { gatherRemembered, resolveRememberedReports, type RememberedState } from '@/lib/server/remembered-reports'
 import { formatMalayDate } from '@/lib/format-date-my'
 
 // Reads the buyer's cookie, so it renders per request. It is noindex anyway.
@@ -65,9 +66,11 @@ const STATE_COPY: Record<RememberedState, { badge: string; cls: string; cta: str
 
 export default async function MyReportPage() {
   const support = whatsappUrl('Hai Paqar, saya tak jumpa laporan saya.')
-  const remembered = await resolveRememberedReports(
-    decodeRemembered(cookies().get(REMEMBERED_COOKIE)?.value),
-  ).catch(() => [])
+  const jar = cookies()
+  const remembered = await gatherRemembered({
+    cookieValue: jar.get(REMEMBERED_COOKIE)?.value,
+    sessionId:   jar.get(SESSION_COOKIE)?.value,
+  }).then(resolveRememberedReports).catch(() => [])
 
   return (
     <>

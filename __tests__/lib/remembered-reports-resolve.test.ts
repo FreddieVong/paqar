@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs'
 const getCheck       = vi.fn()
 const getBuyerReport = vi.fn()
 
-vi.mock('@/lib/db/checks',        () => ({ getCheck: (...a: unknown[]) => getCheck(...a) }))
+const listChecksForSession = vi.fn()
+vi.mock('@/lib/db/checks',        () => ({ getCheck: (...a: unknown[]) => getCheck(...a), listChecksForSession: (...a: unknown[]) => listChecksForSession(...a) }))
 vi.mock('@/lib/db/buyer-reports', () => ({ getBuyerReport: (...a: unknown[]) => getBuyerReport(...a) }))
 vi.mock('@/lib/crypto',           () => ({ decrypt: (v: string) => v === 'enc' ? 'ppd1234' : (() => { throw new Error('bad') })() }))
 
@@ -126,5 +127,48 @@ describe('wiring', () => {
     expect(route).toContain('REMEMBERED_COOKIE')
     expect(route).toContain('resolveRememberedReports')
     expect(route).toMatch(/Cache-Control.*no-store/)
+  })
+})
+
+/**
+ * The cookie only exists for visits AFTER it shipped. The buyer it was built
+ * for last opened their report the morning before. But their browser holds
+ * the 90-day session cookie, and checks.session_id links that session to the
+ * check — the same link getCachedCheck already uses to hand a returning
+ * visitor their check and its token. So the session counts as memory too.
+ */
+describe('gatherRemembered — cookie plus session', () => {
+  it('adds the session\'s own checks after the cookie\'s, without duplicates', async () => {
+    listChecksForSession.mockResolvedValue([
+      { id: A.checkId, claim_token: A.token },            // already in the cookie
+      { id: B.checkId, claim_token: B.token },
+    ])
+    const { gatherRemembered } = await import('@/lib/server/remembered-reports')
+    const out = await gatherRemembered({ cookieValue: JSON.stringify([[A.checkId, A.token]]), sessionId: 'sid_1' })
+    expect(out).toEqual([A, B])
+    expect(listChecksForSession).toHaveBeenCalledWith('sid_1')
+  })
+
+  it('works with no cookie at all — the case the 12 Sep buyer is in', async () => {
+    listChecksForSession.mockResolvedValue([{ id: A.checkId, claim_token: A.token }])
+    const { gatherRemembered } = await import('@/lib/server/remembered-reports')
+    expect(await gatherRemembered({ cookieValue: undefined, sessionId: 'sid_1' })).toEqual([A])
+  })
+
+  it('asks nothing of the database without a session', async () => {
+    listChecksForSession.mockClear()
+    const { gatherRemembered } = await import('@/lib/server/remembered-reports')
+    expect(await gatherRemembered({ cookieValue: undefined, sessionId: null })).toEqual([])
+    expect(listChecksForSession).not.toHaveBeenCalled()
+  })
+
+  it('the readers gather from both — Laporan Saya, the banner route, and the report page', () => {
+    const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+    const read  = (p: string) => strip(readFileSync(p, 'utf8'))
+    expect(read('app/laporan-saya/page.tsx')).toContain('gatherRemembered(')
+    expect(read('app/api/laporan-saya/route.ts')).toContain('gatherRemembered(')
+    const page = read('app/laporan-pembeli/[checkId]/page.tsx')
+    expect(page).toContain('SESSION_COOKIE')
+    expect(page.indexOf('SESSION_COOKIE')).toBeLessThan(page.indexOf('supabase.auth.getUser()'))
   })
 })

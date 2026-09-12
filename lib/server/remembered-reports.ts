@@ -1,4 +1,5 @@
-import { getCheck }       from '@/lib/db/checks'
+import { getCheck, listChecksForSession } from '@/lib/db/checks'
+import { decodeRemembered, isRememberable } from '@/lib/remembered-reports'
 import { getBuyerReport } from '@/lib/db/buyer-reports'
 import { decrypt }        from '@/lib/crypto'
 import { isReportAccessible } from '@/lib/report-workflow'
@@ -58,6 +59,33 @@ export async function resolveRememberedReports(entries: RememberedReport[]): Pro
     } catch {
       continue
     }
+  }
+  return out
+}
+
+/**
+ * Everything this browser can be reminded of: the cookie's entries first
+ * (what it was explicitly shown), then the checks its session made.
+ *
+ * The session half is what reaches a buyer from BEFORE the cookie existed —
+ * the 12 Sep buyer's phone holds a 90-day session cookie that
+ * checks.session_id links to their paid report. Same boundary getCachedCheck
+ * has always used; see lib/db/checks.
+ */
+export async function gatherRemembered(input: {
+  cookieValue: string | null | undefined
+  sessionId:   string | null | undefined
+}): Promise<RememberedReport[]> {
+  const fromCookie = decodeRemembered(input.cookieValue)
+  if (!input.sessionId) return fromCookie
+  const fromSession = await listChecksForSession(input.sessionId).catch(() => [])
+  const seen = new Set(fromCookie.map(e => e.checkId))
+  const out = [...fromCookie]
+  for (const c of fromSession) {
+    const e = { checkId: c.id, token: c.claim_token }
+    if (seen.has(e.checkId) || !isRememberable(e)) continue
+    seen.add(e.checkId)
+    out.push(e)
   }
   return out
 }

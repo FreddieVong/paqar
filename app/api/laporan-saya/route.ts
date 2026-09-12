@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { cookies }      from 'next/headers'
-import { REMEMBERED_COOKIE, decodeRemembered } from '@/lib/remembered-reports'
-import { resolveRememberedReports } from '@/lib/server/remembered-reports'
+import { REMEMBERED_COOKIE } from '@/lib/remembered-reports'
+import { SESSION_COOKIE } from '@/lib/attribution'
+import { gatherRemembered, resolveRememberedReports } from '@/lib/server/remembered-reports'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,10 @@ export const dynamic = 'force-dynamic'
  * the browser that receives them is the browser that already holds them.
  */
 export async function GET() {
-  const entries = decodeRemembered(cookies().get(REMEMBERED_COOKIE)?.value)
-  const reports = await resolveRememberedReports(entries).catch(() => [])
+  const jar = cookies()
+  const reports = await gatherRemembered({
+    cookieValue: jar.get(REMEMBERED_COOKIE)?.value,
+    sessionId:   jar.get(SESSION_COOKIE)?.value,
+  }).then(resolveRememberedReports).catch(() => [])
   return NextResponse.json({ reports }, { headers: { 'Cache-Control': 'private, no-store' } })
 }

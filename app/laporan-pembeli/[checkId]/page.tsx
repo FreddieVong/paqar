@@ -28,6 +28,7 @@ import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
 import { cookies }              from 'next/headers'
 import { REMEMBERED_COOKIE, decodeRemembered, rememberedTokenFor } from '@/lib/remembered-reports'
+import { SESSION_COOKIE }       from '@/lib/attribution'
 import { getOrFetchVehicleData }      from '@/lib/db/plate-lookups'
 import { getValuationByNvic }         from '@/lib/db/vehicle-valuations'
 import { getCachedMarketPrices,
@@ -61,12 +62,23 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
   // token stripped by a messaging app — still opens on the device that was
   // shown the link. Validated exactly like a URL token; nothing else changes.
   if (!row && !claimToken) {
+    const jar = cookies()
     const remembered = rememberedTokenFor(
-      decodeRemembered(cookies().get(REMEMBERED_COOKIE)?.value), params.checkId,
+      decodeRemembered(jar.get(REMEMBERED_COOKIE)?.value), params.checkId,
     )
     if (remembered) {
       row = await getCheck(params.checkId, remembered).catch(() => null)
       if (row) claimToken = remembered
+    }
+    // Or the check this session made — the boundary getCachedCheck already
+    // uses to hand a returning visitor their check and its token.
+    if (!row) {
+      const sid = jar.get(SESSION_COOKIE)?.value
+      const candidate = sid ? await getCheck(params.checkId).catch(() => null) : null
+      if (candidate && candidate.check.session_id === sid && candidate.check.claim_token) {
+        row = candidate
+        claimToken = candidate.check.claim_token
+      }
     }
   }
   // Fallback: if claim_token lookup failed, try auth ownership check
