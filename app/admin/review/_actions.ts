@@ -451,3 +451,31 @@ export async function openWhatsappAction(formData: FormData): Promise<void> {
   revalidatePath(PATH)
   redirect(handoff.url)
 }
+
+/**
+ * "Hantar semula e-mel" on a released row.
+ *
+ * On 12 Sep re-sending the delivery e-mail meant a hand-written script. This
+ * is the same tracked path the release uses (lib/report-ready-delivery), so
+ * the row shows the new outcome and the new Resend id. Sends the note the
+ * buyer already has; if the accident records were released too, it sends the
+ * 'history' wording, because that is the latest state of their report.
+ *
+ * Deliberate and synchronous: the operator pressed it and wants to see the
+ * row change. No idempotency guard — a re-send is the operator overriding
+ * "already sent" on purpose, the way Force works for receipts.
+ */
+export async function resendReadyEmailAction(formData: FormData): Promise<void> {
+  if (!isAdminAuthenticated()) throw new Error('Unauthorized')
+  const reportId = String(formData.get('reportId') ?? '')
+  const report   = reportId ? await getReportForReview(reportId) : null
+  if (!report || report.status !== 'paid' || !report.released_at || !report.reviewer_note) {
+    revalidatePath(PATH); return
+  }
+  await deliverReportReadyEmail({
+    buyerReportId: report.id, checkId: report.check_id, toEmail: report.buyer_email,
+    reviewerNote:  report.reviewer_note,
+    kind:          report.jomcheck_status === 'reviewed' ? 'history' : 'first',
+  })
+  revalidatePath(PATH)
+}

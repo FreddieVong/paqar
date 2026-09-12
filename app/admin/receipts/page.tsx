@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { isAdminAuthenticated }   from '@/lib/admin-auth'
 import { getUndeliveredReceipts } from '@/lib/db/buyer-reports'
 import { RetryButton }            from './RetryButton'
+import { formatMalayDateTime }    from '@/lib/format-date-my'
 
 export const metadata: Metadata = { robots: { index: false } }
 export const dynamic = 'force-dynamic'
@@ -71,7 +72,7 @@ export default async function AdminReceiptsPage() {
                   <p className="font-body text-[12px] text-[#6B7280] mt-0.5">
                     status: <strong>{r.receipt_status ?? 'unknown (pre-tracking)'}</strong>
                     {' · '}attempts: {r.receipt_attempts ?? 0}
-                    {r.paid_at ? ` · paid ${new Date(r.paid_at).toISOString().slice(0, 16).replace('T', ' ')}` : ''}
+                    {r.paid_at ? ` · paid ${formatMalayDateTime(r.paid_at)}` : ''}
                   </p>
                   {/* The reference that ties this row to Billplz's own
                       dashboard. Without it, reconciling "did the money
