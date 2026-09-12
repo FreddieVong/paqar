@@ -114,6 +114,20 @@ in, and a **Draf Paqar** panel above them lists what the numbers show — e.g.
 - Generated once, in the background, right after payment. Needs
   `ANTHROPIC_API_KEY` in Vercel (already required for "Baca dari gambar").
 
+## The phone that paid remembers its report
+
+A buyer who never sees the e-mail can still find their report **on the phone
+they paid with**: the browser remembers the report link (an httpOnly cookie,
+60 days), so on that device
+
+- the homepage shows a one-line banner *"Laporan PPD… dah siap — Buka →"*,
+- **Laporan Saya** lists their report(s) with a status badge,
+- a bare `paqar.my/laporan-pembeli/ch_…` typed from history still opens.
+
+On any other device the e-mail link is still the only way in — nothing about
+who can open a report has changed. If a buyer says "I can't find it", ask
+which phone they paid on and tell them to open paqar.my there.
+
 ## WhatsApp the buyer when the report is released
 
 E-mail from paqar.my lands in Junk more often than we'd like (Hotmail

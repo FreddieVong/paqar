@@ -26,6 +26,8 @@ import { parseOverrides, applyOverrides, correctedCarLabel } from '@/lib/reviewe
 import { isAdminAuthenticated } from '@/lib/admin-auth'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
+import { cookies }              from 'next/headers'
+import { REMEMBERED_COOKIE, decodeRemembered, rememberedTokenFor } from '@/lib/remembered-reports'
 import { getOrFetchVehicleData }      from '@/lib/db/plate-lookups'
 import { getValuationByNvic }         from '@/lib/db/vehicle-valuations'
 import { getCachedMarketPrices,
@@ -44,13 +46,28 @@ interface Props {
 }
 
 export default async function BuyerReportPage({ params, searchParams }: Props) {
-  const claimToken = searchParams.claim_token
+  // Reassigned below when the remembered cookie opens the row, so every form
+  // further down carries the same credential the URL would have.
+  let claimToken: string | undefined = searchParams.claim_token
 
   type CheckRow = NonNullable<Awaited<ReturnType<typeof getCheck>>>
   let row: CheckRow | null = null
 
   if (claimToken) {
     row = await getCheck(params.checkId, claimToken)
+  }
+  // The phone that paid remembers its report (lib/remembered-reports). A
+  // bare /laporan-pembeli/{id} — typed from history, or the URL with the
+  // token stripped by a messaging app — still opens on the device that was
+  // shown the link. Validated exactly like a URL token; nothing else changes.
+  if (!row && !claimToken) {
+    const remembered = rememberedTokenFor(
+      decodeRemembered(cookies().get(REMEMBERED_COOKIE)?.value), params.checkId,
+    )
+    if (remembered) {
+      row = await getCheck(params.checkId, remembered).catch(() => null)
+      if (row) claimToken = remembered
+    }
   }
   // Fallback: if claim_token lookup failed, try auth ownership check
   if (!row) {

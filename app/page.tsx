@@ -1,3 +1,4 @@
+import { RememberedReportBanner } from '@/components/report/RememberedReportBanner'
 import type { Metadata } from 'next'
 import { homeFaq, homeLimits, faqMainEntity } from '@/lib/faq/home'
 
@@ -99,6 +100,9 @@ export default async function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema) }} />
       <Nav />
+      {/* For the phone that paid: one line, one tap, straight to the report.
+          Client-fetched so this page stays static for everyone else. */}
+      <RememberedReportBanner />
 
       {/* The skip-link target. The homepage does not use Shell — it lays out
           its own full-bleed sections — so it needs its own anchor, or "Terus
