@@ -114,6 +114,20 @@ in, and a **Draf Paqar** panel above them lists what the numbers show — e.g.
 - Generated once, in the background, right after payment. Needs
   `ANTHROPIC_API_KEY` in Vercel (already required for "Baca dari gambar").
 
+## The phone that paid remembers its report
+
+A buyer who never sees the e-mail can still find their report **on the phone
+they paid with**: the browser remembers the report link (an httpOnly cookie,
+60 days), so on that device
+
+- every page shows a one-line banner under the menu *"Laporan PPD… dah siap — Buka →"*,
+- **Laporan Saya** lists their report(s) with a status badge,
+- a bare `paqar.my/laporan-pembeli/ch_…` typed from history still opens.
+
+On any other device the e-mail link is still the only way in — nothing about
+who can open a report has changed. If a buyer says "I can't find it", ask
+which phone they paid on and tell them to open paqar.my there.
+
 ## WhatsApp the buyer when the report is released
 
 E-mail from paqar.my lands in Junk more often than we'd like (Hotmail
@@ -128,6 +142,16 @@ On `/admin/review`, in **"Dilepaskan 7 hari lepas"**, every released row shows:
   **✓ WhatsApp dihantar 09:41** so you don't message twice.
 - **"WhatsApp: tiada nombor"** — the buyer never gave one. E-mail is the only
   route; nothing more to do unless they contact us.
+
+Under those two lines, every released row also says **👁 Belum dibuka oleh
+pembeli** or **👁 Dibuka 3× · pertama 10:12**. "Belum dibuka" a day after
+release means neither e-mail nor WhatsApp got through — that is the row to
+chase. (Your own admin preview is not counted.)
+
+You do not have to go looking: every morning at 10:00 the daily cron sends a
+Telegram — *"2 laporan belum dibuka oleh pembeli: • PPD769 — dilepaskan 1
+hari lepas, tiada nombor — e-mel sahaja …"* — listing only reports released
+a day or more ago and still unopened. No message means nothing to chase.
 
 Do this right after **Lepaskan laporan & hantar** — the same minute. It is
 the message that actually gets read.

@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { nanoid } from 'nanoid'
 import { isSensitivePath } from '@/lib/sensitive-routes'
+import {
+  REMEMBERED_COOKIE, REMEMBERED_MAX_AGE_SECONDS, decodeRemembered, encodeRemembered, remember,
+} from '@/lib/remembered-reports'
 
 const SESSION_COOKIE = 'paqar_sid'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 90
@@ -46,8 +49,44 @@ export async function middleware(request: NextRequest) {
     })
   }
 
+  rememberReportLink(request, response)
+
   applySecurityHeaders(response, request.nextUrl.pathname)
   return response
+}
+
+/**
+ * The phone that paid remembers its report — see lib/remembered-reports.
+ *
+ * Any visit to /laporan-pembeli/{checkId}[/selesai]?claim_token=… is the
+ * browser being shown the credential; this keeps it in an httpOnly cookie
+ * so "Laporan Saya" and a bare report URL work on this device later. Nothing
+ * is verified here (middleware has no database): the readers validate the
+ * token exactly as they validate one from the URL, so a bad entry opens
+ * nothing. Runs after the Supabase block because setAll() rebuilds `response`.
+ */
+const REPORT_PATH = /^\/laporan-pembeli\/([^/]+)(?:\/selesai)?\/?$/
+
+function rememberReportLink(request: NextRequest, response: NextResponse): void {
+  const m = REPORT_PATH.exec(request.nextUrl.pathname)
+  const token = request.nextUrl.searchParams.get('claim_token')
+  if (!m || !token) return
+  // No decoding: a check id is 'ch_' + url-safe characters, so the raw
+  // segment either is one or is refused by the codec. decodeURIComponent
+  // threw on malformed percent-encoding and turned a bad URL into a 500.
+  const checkId = m[1]!
+
+  const current = decodeRemembered(request.cookies.get(REMEMBERED_COOKIE)?.value)
+  const next    = remember(current, { checkId, token })
+  if (next === current) return   // malformed — refused by the codec
+
+  response.cookies.set(REMEMBERED_COOKIE, encodeRemembered(next), {
+    httpOnly: true,
+    secure:   process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path:     '/',
+    maxAge:   REMEMBERED_MAX_AGE_SECONDS,
+  })
 }
 
 /**

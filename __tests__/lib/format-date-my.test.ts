@@ -101,6 +101,7 @@ describe('no buyer- or operator-facing surface formats a date in the server time
     'app/dashboard/page.tsx',
     'app/admin/review/page.tsx',
     'app/admin/jomcheck/page.tsx',
+    'app/admin/receipts/page.tsx',
   ]
 
   for (const file of SURFACES) {
@@ -111,6 +112,7 @@ describe('no buyer- or operator-facing surface formats a date in the server time
       expect(src, 'must not read calendar fields in process time').not.toMatch(/\.getDate\(\)/)
       // toLocale*String without an explicit timeZone is the same bug in
       // different clothing: Vercel is UTC.
+      expect(src, 'must not print a UTC ISO slice as a date').not.toMatch(/toISOString\(\)\.slice\(0, 1[06]\)/)
       for (const m of src.matchAll(/toLocale(?:Date|Time)?String\('ms-MY'[\s\S]*?\)/g)) {
         expect(m[0], `${file}: ${m[0]}`).toContain('timeZone')
       }

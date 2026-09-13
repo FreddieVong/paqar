@@ -31,6 +31,7 @@ const exora = {
     count: 14, gapFromMedian: 4_599, cheaperThanAsking: 12, mixedVariants: false, market: 'used' as const,
     variantOptions: [], variantApplied: null,
   },
+  intake: { variant: '1.6 Premium', mileageKm: 37_000, askingPriceRm: 28_999 },
   now: new Date('2026-09-12T02:00:00Z'),
 }
 const facts = buildReviewDraftFacts(exora)
@@ -99,8 +100,10 @@ describe('generateReviewDraft', () => {
     expect(req.user).toContain('RM24,400')
     expect(req.user).toContain('RM22,000')
     expect(req.user).toContain('Mileage rendah sangat, betul ke?')
-    // The ad URL and the buyer's own words are data, never instructions.
+    // The ad URL, the ad's variant text and the buyer's own words are data,
+    // never instructions — all three sit inside the untrusted block.
     expect(req.user).toMatch(/UNTRUSTED[\s\S]*mudah\.my/)
+    expect(req.user).toMatch(/BEGIN UNTRUSTED[\s\S]*Varian dalam iklan: 1\.6 Premium[\s\S]*END UNTRUSTED/)
     expect(req.system).toMatch(/seller/)
     expect(req.system).toMatch(/deposit/)
   })

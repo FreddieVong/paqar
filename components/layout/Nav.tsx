@@ -1,9 +1,11 @@
 import Link  from 'next/link'
 import Image from 'next/image'
 import { NAV_LINK_CLS, NavAuthLink } from './NavAuthLink'
+import { RememberedReportBanner } from '@/components/report/RememberedReportBanner'
 
 export function Nav() {
   return (
+    <>
     <nav className="sticky top-0 z-10 bg-white border-b border-[#F3F4F6]">
       <div className="max-w-5xl mx-auto px-5 min-h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center">
@@ -53,5 +55,11 @@ export function Nav() {
         </div>
       </div>
     </nav>
+    {/* For the phone that paid: one line, one tap, straight to the report —
+        on every page, because the buyer who could not find their e-mail
+        came back to /panduan three times, not to the homepage. Renders
+        nothing for everyone else, and nothing on the report page itself. */}
+    <RememberedReportBanner />
+    </>
   )
 }

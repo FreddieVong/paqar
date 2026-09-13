@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import { Nav }                  from '@/components/layout/Nav'
 import { Shell }                from '@/components/layout/Shell'
 import { getCheck }             from '@/lib/db/checks'
-import { getBuyerReport, setVehicleApiData } from '@/lib/db/buyer-reports'
+import { getBuyerReport, setVehicleApiData, markReportOpened } from '@/lib/db/buyer-reports'
 import { lookupJomCheck, normalisePlate, isJomCheckManual, type JomCheckResult, type JomCheckStatus } from '@/lib/jomcheck'
 import { setJomCheckStatus, setJomCheckSuccess, setJomCheckFailed } from '@/lib/jomcheck/db'
 import { BuyerReportContent }   from '@/components/report/BuyerReportContent'
@@ -13,7 +13,7 @@ import { isExtractable } from '@/lib/listing-fetch'
 import { LockedReportPreview }  from '@/components/report/LockedReportPreview'
 import { CollapsibleSampleReport } from '@/components/report/CollapsibleSampleReport'
 import { FreeResultGate }      from '@/components/report/FreeResultGate'
-import { intakeMileageForCheck } from '@/lib/db/listing-intake'
+import { intakeMileageForCheck, intakeExtractedForCheck } from '@/lib/db/listing-intake'
 import { UnderReviewNotice }   from '@/components/report/UnderReviewNotice'
 import { UndeliverableNotice } from '@/components/report/UndeliverableNotice'
 import { ReviewerNote }        from '@/components/report/ReviewerNote'
@@ -26,6 +26,11 @@ import { parseOverrides, applyOverrides, correctedCarLabel } from '@/lib/reviewe
 import { isAdminAuthenticated } from '@/lib/admin-auth'
 import { decrypt }              from '@/lib/crypto'
 import { createClient }         from '@/lib/supabase/server'
+import { cookies, headers }     from 'next/headers'
+import { waitUntil }            from '@vercel/functions'
+import { isHumanNavigation }    from '@/lib/human-navigation'
+import { REMEMBERED_COOKIE, decodeRemembered, rememberedTokenFor } from '@/lib/remembered-reports'
+import { SESSION_COOKIE }       from '@/lib/attribution'
 import { getOrFetchVehicleData }      from '@/lib/db/plate-lookups'
 import { getValuationByNvic }         from '@/lib/db/vehicle-valuations'
 import { getCachedMarketPrices,
@@ -44,13 +49,39 @@ interface Props {
 }
 
 export default async function BuyerReportPage({ params, searchParams }: Props) {
-  const claimToken = searchParams.claim_token
+  // Reassigned below when the remembered cookie opens the row, so every form
+  // further down carries the same credential the URL would have.
+  let claimToken: string | undefined = searchParams.claim_token
 
   type CheckRow = NonNullable<Awaited<ReturnType<typeof getCheck>>>
   let row: CheckRow | null = null
 
   if (claimToken) {
     row = await getCheck(params.checkId, claimToken)
+  }
+  // The phone that paid remembers its report (lib/remembered-reports). A
+  // bare /laporan-pembeli/{id} — typed from history, or the URL with the
+  // token stripped by a messaging app — still opens on the device that was
+  // shown the link. Validated exactly like a URL token; nothing else changes.
+  if (!row && !claimToken) {
+    const jar = cookies()
+    const remembered = rememberedTokenFor(
+      decodeRemembered(jar.get(REMEMBERED_COOKIE)?.value), params.checkId,
+    )
+    if (remembered) {
+      row = await getCheck(params.checkId, remembered).catch(() => null)
+      if (row) claimToken = remembered
+    }
+    // Or the check this session made — the boundary getCachedCheck already
+    // uses to hand a returning visitor their check and its token.
+    if (!row) {
+      const sid = jar.get(SESSION_COOKIE)?.value
+      const candidate = sid ? await getCheck(params.checkId).catch(() => null) : null
+      if (candidate && candidate.check.session_id === sid && candidate.check.claim_token) {
+        row = candidate
+        claimToken = candidate.check.claim_token
+      }
+    }
   }
   // Fallback: if claim_token lookup failed, try auth ownership check
   if (!row) {
@@ -135,6 +166,17 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
 
   // ── Paid AND released — full report ───────────────────────────────────────
   if ((mayRenderReport(report) || (adminPreview && isPaid)) && report) {
+    // The buyer opened it. Recorded so the queue can answer "did they get
+    // it?" without a PostHog query; never for the reviewer's own preview,
+    // and never on the render path — a bookkeeping failure must not cost a
+    // paying buyer their report.
+    // Only a person navigating here counts (lib/human-navigation): WhatsApp's
+    // link preview and e-mail scanners fetch this URL too. Held by waitUntil
+    // so the instance is not frozen before the write lands.
+    if (!adminPreview && mayRenderReport(report) && isHumanNavigation(headers())) {
+      const work = markReportOpened(report.id).catch(() => {})
+      try { waitUntil(work) } catch { /* not on Vercel — the promise still runs */ }
+    }
     // WHAT THE REVIEWER CORRECTED, applied to what the buyer reads.
     //
     // reviewed_overrides used to be written on release and read by nothing, so
@@ -148,9 +190,10 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
       askingPriceRm: report.asking_price_rm ?? null,
       mileageKm:     report.claimed_mileage_km ?? null,
     })
-    const reviewedLabel = correctedCarLabel(overrides, {
-      brand: row.check.brand, model: row.check.model, year: row.check.year,
-    })
+    // The headline's year is decided AFTER identity is resolved (below), so
+    // it is the year the report is priced on — registry over advert — and
+    // not the advert's. A report headed "Exora 2020" over "Didaftar 2019" was
+    // contradicting itself in its first two lines.
     // Lazy fetch: call VehicleAPI once, store in DB, serve from cache on subsequent views
     let vehicleData = report.vehicleapi_data as Record<string, unknown> | null ?? null
     if (!vehicleData) {
@@ -237,7 +280,13 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
     // The reviewer's corrections win over both. If a human changed the year
     // from 2019 to 2018, the comparables must be 2018 cars; pulling the
     // uncorrected cohort would quietly undo the correction the buyer paid for.
+    // What the advert itself said, so Semakan Varian can compare it with
+    // the record instead of asking the buyer to.
+    const adVariant = (await intakeExtractedForCheck(params.checkId).catch(() => null))?.variant ?? null
     const identity = resolveCarIdentity({ check: row.check, vehicleData, overrides })
+    const reviewedLabel = correctedCarLabel(overrides, {
+      brand: row.check.brand, model: row.check.model, year: identity?.year ?? row.check.year,
+    })
 
     let marketPrices: CachedMarketPrices | null = null
     // Whether a background scrape is genuinely in flight. The spinner and the
@@ -316,6 +365,8 @@ export default async function BuyerReportPage({ params, searchParams }: Props) {
               cohortVariantToken={identity?.variantToken ?? null}
               askingPriceRm={reviewed.askingPriceRm}
               vehicleData={vehicleData}
+              adYear={row.check.year ?? null}
+              adVariant={adVariant}
               marketPrices={marketPrices}
               addJomCheck={report.add_jomcheck}
               jomcheckData={jomcheckData}

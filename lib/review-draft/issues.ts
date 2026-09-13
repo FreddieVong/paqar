@@ -1,5 +1,6 @@
 import { MIN_LISTINGS_FOR_NORMAL_VERDICT } from '@/lib/comparables'
 import type { ReviewDraftFacts } from './facts'
+import { missingTrimWords } from '@/lib/variant-match'
 
 /**
  * What is odd about this order, found deterministically.
@@ -26,6 +27,7 @@ import type { ReviewDraftFacts } from './facts'
 
 export type IssueCode =
   | 'year_mismatch'
+  | 'variant_unconfirmed'
   | 'price_above_range'
   | 'price_above_median'
   | 'price_below_range'
@@ -67,6 +69,18 @@ export function detectIssues(f: ReviewDraftFacts): Issue[] {
       text: `Iklan kata ${car.adYear}, tapi rekod JPJ kata kereta ini didaftar ${car.regYear}. Laporan guna ${car.regYear}.`,
       correction: { field: 'year', value: car.regYear },
     })
+  }
+
+  // Labelled, never ranked: the record's text is what the seller must match.
+  const recordText = [car.regVariant, car.regDescription].filter(Boolean).join(' ')
+  if (f.ad.variant && recordText) {
+    const missing = missingTrimWords(f.ad.variant, recordText)
+    if (missing.length > 0) {
+      out.push({
+        code: 'variant_unconfirmed',
+        text: `Iklan kata varian "${f.ad.variant}", tapi rekod JPJ kata "${car.regVariant ?? car.regDescription}" — perkataan "${missing.join(', ')}" tiada dalam rekod. Sahkan varian sebelum bayar harga varian itu.`,
+      })
+    }
   }
 
   // ── Price ─────────────────────────────────────────────────────────────

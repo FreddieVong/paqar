@@ -168,3 +168,27 @@ describe('the release queue shows whether the delivery email landed', () => {
     expect(actions).not.toContain('sendReportReadyEmail')
   })
 })
+
+/**
+ * Re-sending the delivery e-mail took a hand-written script on 12 Sep. It is
+ * now a button on the released row, through the same tracked path, so the
+ * row shows the new outcome and the Resend id.
+ */
+describe('the operator can re-send the delivery e-mail from the queue', () => {
+  const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+
+  it('every released row offers a re-send', () => {
+    const page = strip(require('node:fs').readFileSync('app/admin/review/page.tsx', 'utf8'))
+    const status = page.slice(page.indexOf('function ReadyEmailStatus'), page.indexOf('function ', page.indexOf('function ReadyEmailStatus') + 10))
+    expect(status).toContain('<form action={resendReadyEmailAction}')
+  })
+
+  it('the action is admin-gated and goes through the tracked delivery', () => {
+    const actions = strip(require('node:fs').readFileSync('app/admin/review/_actions.ts', 'utf8'))
+    const fn = actions.slice(actions.indexOf('export async function resendReadyEmailAction'))
+    expect(fn).toContain('isAdminAuthenticated()')
+    expect(fn).toContain('deliverReportReadyEmail')
+    // Only a released report has anything to announce.
+    expect(fn).toMatch(/released_at/)
+  })
+})

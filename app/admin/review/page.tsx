@@ -19,6 +19,7 @@ import { ReviewerScreenshots } from '@/components/admin/ReviewerScreenshots'
 import {
   adminLogin, startReviewAction, releaseReportAction, releaseHistoryAction, markUnableAction,
   startRefundAction, completeRefundAction, failRefundAction, regenerateDraftAction, openWhatsappAction,
+  resendReadyEmailAction,
 } from './_actions'
 
 export const dynamic = 'force-dynamic'
@@ -96,6 +97,14 @@ function AgeBadge({ hours, serviceMinutes }: { hours: number | null; serviceMinu
  */
 function ReadyEmailStatus({ report }: { report: BuyerReport }) {
   const label = report.ready_email_kind === 'history' ? 'E-mel rekod claim' : 'E-mel laporan siap'
+  const resend = (
+    <form action={resendReadyEmailAction} className="inline">
+      <input type="hidden" name="reportId" value={report.id} />
+      <button type="submit" className="font-body text-[11px] text-[#6B7280] underline underline-offset-2 ml-2">
+        Hantar semula
+      </button>
+    </form>
+  )
   if (report.ready_email_status === 'sent') {
     return (
       <p className="font-body text-[11px] text-[#15803D] mt-1">
@@ -103,6 +112,7 @@ function ReadyEmailStatus({ report }: { report: BuyerReport }) {
         {report.ready_email_provider_id && (
           <span className="text-[#9CA3AF]"> · Resend {report.ready_email_provider_id}</span>
         )}
+        {resend}
       </p>
     )
   }
@@ -110,12 +120,14 @@ function ReadyEmailStatus({ report }: { report: BuyerReport }) {
     return (
       <p className="font-body text-[11px] text-[#B91C1C] mt-1 break-words">
         ✗ {label} GAGAL — {report.ready_email_last_error ?? 'sebab tidak direkod'}. Hubungi pembeli melalui WhatsApp.
+        {resend}
       </p>
     )
   }
   return (
     <p className="font-body text-[11px] text-[#9CA3AF] mt-1">
       E-mel laporan siap: tidak direkod (dilepaskan sebelum penjejakan)
+      {resend}
     </p>
   )
 }
@@ -148,6 +160,24 @@ function WhatsappStatus({ report }: { report: BuyerReport }) {
         WhatsApp pembeli ({formatMyMobile(report.buyer_phone)}) →
       </button>
     </form>
+  )
+}
+
+/**
+ * Did the buyer open it? The line the two e-mail and WhatsApp lines above
+ * exist to make true. "Belum dibuka" a day after release is the cue to
+ * WhatsApp; a count says they came back.
+ */
+function OpenedStatus({ report }: { report: BuyerReport }) {
+  if (!report.first_opened_at) {
+    return <p className="font-body text-[11px] text-[#B45309] mt-1">👁 Belum dibuka oleh pembeli</p>
+  }
+  const n = report.open_count ?? 1
+  return (
+    <p className="font-body text-[11px] text-[#15803D] mt-1">
+      👁 Dibuka {n}× · pertama {formatDateTime(report.first_opened_at)}
+      {n > 1 && report.last_opened_at ? ` · terakhir ${formatDateTime(report.last_opened_at)}` : ''}
+    </p>
   )
 }
 
@@ -430,7 +460,7 @@ async function QueueCard(
           Buka draf laporan →
         </a>
         <span className="font-body text-[12px] text-[#9CA3AF]">
-          {report.buyer_email} · {report.buyer_phone ?? 'tiada telefon'}
+          {report.buyer_email} · {report.buyer_phone ? formatMyMobile(report.buyer_phone) : 'tiada telefon'}
         </span>
       </div>
 
@@ -872,6 +902,7 @@ export default async function AdminReviewPage(
                       out. NULL is shown as "not recorded", never as sent. */}
                   <ReadyEmailStatus report={report} />
                   <WhatsappStatus report={report} />
+                  <OpenedStatus report={report} />
                 </div>
               ))}
             </div>

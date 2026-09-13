@@ -151,6 +151,39 @@ export async function getCachedCheck(
   return data ?? null
 }
 
+/**
+ * The checks this visitor's session made, newest first, with their tokens.
+ *
+ * Same boundary as getCachedCheck above, used for the same purpose: the
+ * session cookie is what identifies a returning anonymous visitor, and
+ * getCachedCheck already hands that visitor their check and its claim token
+ * when they type the same plate. This hands them the list without the
+ * plate, so "Laporan Saya" can show a buyer the report they paid for on the
+ * phone they paid with. Rows written before the column existed carry NULL
+ * and are never returned.
+ */
+export async function listChecksForSession(
+  sessionId: string,
+  limit = 5,
+): Promise<{ id: string; claim_token: string; created_at: string }[]> {
+  if (!sessionId) return []
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('checks')
+    .select('id, claim_token, created_at')
+    .eq('session_id', sessionId)
+    .eq('status', 'complete')
+    .not('claim_token', 'is', null)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) {
+    console.error('[checks:listChecksForSession] lookup failed', { code: error.code, message: error.message })
+    return []
+  }
+  return (data ?? []) as { id: string; claim_token: string; created_at: string }[]
+}
+
 export async function getCheckByIdempotencyKey(
   key: string
 ): Promise<{ id: string; claim_token: string | null } | null> {

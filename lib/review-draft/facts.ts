@@ -57,6 +57,12 @@ export interface ReviewDraftFacts {
     carAgeYears: number | null
     kmPerYear:   number | null
   }
+  /** What the advert itself said, from the listing intake. Null when there was no intake. */
+  ad: {
+    variant:       string | null
+    mileageKm:     number | null
+    askingPriceRm: number | null
+  }
   listingUrl:     string | null
   buyerConcern:   string | null
   jomcheckStatus: string | null
@@ -88,6 +94,8 @@ export function buildReviewDraftFacts(input: {
     buyer_concern?: string | null
   } | null
   prices: ReviewPrices | null
+  /** The listing intake's extracted fields, already unwrapped to values. */
+  intake?: { variant?: string | null; mileageKm?: number | null; askingPriceRm?: number | null } | null
   now?: Date
 }): ReviewDraftFacts {
   const v = (input.report.vehicleapi_data ?? null) as VehicleLookup
@@ -146,6 +154,11 @@ export function buildReviewDraftFacts(input: {
       verdict, targetLowRm: targetLow, targetHighRm: targetHigh,
     },
     mileage: { claimedKm, carAgeYears: carAge, kmPerYear },
+    ad: {
+      variant:       str(input.intake?.variant),
+      mileageKm:     input.intake?.mileageKm ?? null,
+      askingPriceRm: input.intake?.askingPriceRm ?? null,
+    },
     listingUrl:     str(input.check?.listing_url),
     buyerConcern:   str(input.check?.buyer_concern),
     jomcheckStatus: str(input.report.jomcheck_status),

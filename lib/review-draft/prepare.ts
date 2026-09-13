@@ -3,6 +3,7 @@ import { getCheck }            from '@/lib/db/checks'
 import { reviewPriceContext }  from '@/lib/review-price-context'
 import { generateReviewDraft } from './generate'
 import { saveReviewDraft, saveReviewDraftError } from '@/lib/db/buyer-reports'
+import { intakeExtractedForCheck } from '@/lib/db/listing-intake'
 
 export type PrepareResult = { ok: true } | { ok: false; reason: string }
 
@@ -32,7 +33,11 @@ export async function prepareReviewDraft(reportId: string): Promise<PrepareResul
     ? await reviewPriceContext({ check, askingPriceRm: report.asking_price_rm ?? null }).catch(() => null)
     : null
 
-  const result = await generateReviewDraft({ report, check, prices })
+  // What the advert itself said (variant, mileage, price) — so the draft can
+  // compare the advert with the record, not just the buyer's typing.
+  const intake = await intakeExtractedForCheck(report.check_id).catch(() => null)
+
+  const result = await generateReviewDraft({ report, check, prices, intake })
   if (result.ok) {
     await saveReviewDraft(reportId, result.draft)
     return { ok: true }

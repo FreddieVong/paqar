@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { missingTrimWords } from '@/lib/variant-match'
 import {
   findGuideByMakeModel,
   findVariantPosition,
@@ -12,6 +13,8 @@ interface Props {
   description?:      string | null   // official JPJ description — extra match signal
   registrationYear?: string | null   // picks the right generation ladder
   isSpecialVariant?: boolean         // new price ≫ family floor — nothing meaningful sits above it
+  /** What the advert itself said, from the listing intake. Compared with the record below. */
+  adVariant?:        string | null
 }
 
 /**
@@ -22,7 +25,7 @@ interface Props {
  * a wrong arrow on a paid report is worse than asking the buyer to match
  * the record themselves.
  */
-export function VariantCheckCard({ make, model, officialVariant, description, registrationYear, isSpecialVariant }: Props) {
+export function VariantCheckCard({ make, model, officialVariant, description, registrationYear, isSpecialVariant, adVariant }: Props) {
   const guide = findGuideByMakeModel(make, model)
 
   // Nothing authoritative AND nothing to teach — render nothing
@@ -54,6 +57,21 @@ export function VariantCheckCard({ make, model, officialVariant, description, re
           <p className="font-heading font-extrabold text-[16px] text-[#111827] leading-snug">
             {officialVariant}
           </p>
+          {/* We read the advert, so we do the comparison the buyer used to be
+              asked to do. Labelled, never ranked — see lib/variant-match. */}
+          {adVariant && (() => {
+            const missing = missingTrimWords(adVariant, [officialVariant, description].filter(Boolean).join(' '))
+            return missing.length === 0 ? (
+              <p className="font-body text-[13px] text-[#15803D] mt-2">
+                ✓ Iklan kata &ldquo;{adVariant}&rdquo; — sepadan dengan rekod.
+              </p>
+            ) : (
+              <p className="font-body text-[13px] text-[#B45309] mt-2 leading-relaxed">
+                ✗ Iklan kata &ldquo;{adVariant}&rdquo; — perkataan &ldquo;{missing.join(', ')}&rdquo; tiada dalam rekod.
+                Sahkan varian pada geran, dan jangan bayar harga varian itu tanpa bukti.
+              </p>
+            )
+          })()}
         </>
       ) : (
         <>
